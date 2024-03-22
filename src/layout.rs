@@ -1,12 +1,12 @@
 use dioxus::prelude::*;
 
 pub fn ThemeLayout<'a>(cx: Scope<'a, PureWrapProps<'a>>) -> Element {
-    let active_theme = use_state(cx, || "cupcake");
+    let active_theme = use_state(cx, || "emerald");
     let themes = vec![
         // "dark",
         "cupcake",
         // "bumblebee",
-        // "emerald",
+        "emerald",
         // "corporate",
         // "synthwave",
         // "retro",
@@ -18,14 +18,14 @@ pub fn ThemeLayout<'a>(cx: Scope<'a, PureWrapProps<'a>>) -> Element {
         // "aqua",
         // "lofi",
         // "pastel",
-        // "fantasy",
+        "fantasy",
         // "wireframe",
         // "black",
         // "luxury",
         // "dracula",
         // "cmyk",
         // "autumn",
-        // "business",
+        "business",
         // "acid",
         // "lemonade",
         // "night",
