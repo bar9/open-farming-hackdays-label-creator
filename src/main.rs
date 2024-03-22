@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
 // import the prelude to get access to the `rsx!` macro and the `Scope` and `Element` types
 use dioxus::prelude::*;
+use crate::layout::ThemeLayout;
+
+mod layout;
 
 fn main() {
     // launch the web app
@@ -10,8 +13,10 @@ fn main() {
 // create a component that renders a div with the text "Hello, world!"
 fn App(cx: Scope) -> Element {
     cx.render(rsx! {
-        div {
-            "Hello, world!"
+        ThemeLayout{
+            h1 { class: "text-4xl text-center p-8",
+                "Label Creator"
+            }
         }
     })
 }
