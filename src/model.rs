@@ -39,3 +39,13 @@ pub struct BasicIngredientItem {
     pub name: String,
     pub amount: i32,
 }
+
+pub fn sorted_ingredient_list(ingredients: Vec<IngredientItem>) -> String {
+    let mut ingredients = ingredients;
+    ingredients.sort_by(|a, b| a.basicInfo.amount.cmp(&b.basicInfo.amount));
+
+    ingredients.iter()
+        .map(|ele| ele.basicInfo.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
