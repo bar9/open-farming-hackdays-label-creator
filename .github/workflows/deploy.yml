@@ -29,6 +29,10 @@ jobs:
           # rustup target
           rustup target add wasm32-unknown-unknown
 
+      - name: NPM Install
+        run: |
+          npm install
+
       - name: Tailwind CSS Generation
         run: |
           # Build Tailwind CSS Styles
