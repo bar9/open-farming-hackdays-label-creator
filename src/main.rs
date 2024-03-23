@@ -93,10 +93,17 @@ fn App(cx: Scope) -> Element {
                                 rsx! {
                                     div { class: "flex",
                                     input {
+                                            list: "ingredients",
                                             r#type: "flex",
                                             placeholder: "Name",
                                             class: "input input-bordered input-accent",
-                                            oninput: move |evt| name_to_add.set(evt.value.clone())
+                                            oninput: move |evt| name_to_add.set(evt.value.clone()),
+                                            datalist {
+                                                id: "ingredients",
+                                                option { value: "Hafer" }
+                                                option { value: "Honig" }
+                                                option { value: "Mandelmus" }
+                                            }
                                     }
                                     button { class: "btn btn-outline",
                                         onclick: move |evt|  {
@@ -130,11 +137,14 @@ fn App(cx: Scope) -> Element {
 
                     if ingredients.read().len() > 0 {
                         rsx! {
-                            h3 {
-                                "Zutaten"
-                            }
-                            span {
-                                sorted_ingredient_list(ingredients.read().clone())
+                            div {
+                                class: "border",
+                                h3 {
+                                    "Zutaten"
+                                }
+                                span {
+                                    sorted_ingredient_list(ingredients.read().clone())
+                                }
                             }
                         }
                     }
