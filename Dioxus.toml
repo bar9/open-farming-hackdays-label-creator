@@ -17,7 +17,7 @@ asset_dir = "public"
 
 # HTML title tag content
 title = "Label Creator"
-build_path = ""Open Farming Hackdays - Label Creator"
+build_path = "Open Farming Hackdays - Label Creator"
 
 [web.watcher]
 
