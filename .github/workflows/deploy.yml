@@ -10,12 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
-      - name: rust target
-        uses: actions-rs/toolchain@v1.0.6
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
         with:
+            toolchain: nightly
+            override: true
+            components: rustfmt, clippy
             target: wasm32-unknown-unknown
+
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            override: true
+            components: rustfmt, clippy
 
       - name: Install Dioxus CLI
         run: |
