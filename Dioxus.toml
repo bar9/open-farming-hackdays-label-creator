@@ -8,7 +8,7 @@ name = "Label Creator"
 default_platform = "web"
 
 # `build` & `serve` dist path
-out_dir = "docs"
+out_dir = "public"
 
 # resource (public) file folder
 asset_dir = "public"
