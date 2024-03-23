@@ -21,11 +21,11 @@ jobs:
       - name: Build with Dioxus
         run: |
           # Build your application with dx
-          dx build
+          dx build --release
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./docs
           clean: true
