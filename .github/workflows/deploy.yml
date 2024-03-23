@@ -8,15 +8,24 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: rust target
+        uses: actions-rs/toolchain@v1
+        with:
+            target: wasm32-unknown-unknown
 
       - name: Install Dioxus CLI
         run: |
           # Install Dioxus CLI
           cargo install dioxus-cli
+
+      - name: Install Rustup + add target
+        run: | 
+          # rustup target
+          rustup target add wasm32-unknown-unknown
 
       - name: Build with Dioxus
         run: |
