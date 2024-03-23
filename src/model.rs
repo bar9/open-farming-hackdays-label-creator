@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::io::{Read};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct IngredientItem {
@@ -67,34 +68,44 @@ pub fn sorted_ingredient_list(ingredients: HashMap<String, IngredientItem>) -> S
 }
 
 pub fn lookup_allergen(name: &str) -> bool {
-    match name {
-        "Erdnüsse" => true,
-        "Haselnüsse" => true,
-        _ => false
+    let mut is_allergen = false;
+    for entry in food_db() {
+        if(entry.0.as_str() == name && entry.1 == true) {
+            is_allergen = true;
+        }
     }
+    is_allergen
 }
 
 pub fn food_db() -> Vec<(String, bool)> {
-    // let mut db = Vec::new();
-    // let db_csv = include_bytes!("food_db.csv");
-    // let mut reader = csv::Reader::from_reader(db_csv);
-    // for record in reader.records() {
-    //     let record = record.unwrap();
-    //     db.push((record.get(0).unwrap().to_string(), {
-    //         if record.get(1).unwrap() == "1" {
-    //             true
-    //         } else {
-    //             false
-    //         }
-    //     }));
-    // }
+    let mut db: Vec<(String, bool)> = Vec::new();
+    let db_csv = include_str!("food_db.csv");
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(db_csv.as_bytes());
+    // let mut reader = csv::Reader::from_reader(db_csv.into());
+    // reader.
+    for record in rdr.records() {
+        let record = record.unwrap();
+        db.push((
+            record.get(0).unwrap().to_string(), {
+                if record.get(1).unwrap().eq("1") {
+                    true
+                } else {
+                    false
+                }
+                // true
+            })
+        );
+    }
+    db
     // db
-    vec![
-        (String::from("Hafer"), false),
-        (String::from("Honig"), false),
-        (String::from("Erdnüsse"), true),
-        (String::from("Haselnüsse"), true),
-        (String::from("Honig"), false),
-        (String::from("Mandelmus"), false),
-    ]
+    // vec![
+    //     (String::from("Hafer"), false),
+    //     (String::from("Honig"), false),
+    //     (String::from("Erdnüsse"), true),
+    //     (String::from("Haselnüsse"), true),
+    //     (String::from("Honig"), false),
+    //     (String::from("Mandelmus"), false),
+    // ]
 }
