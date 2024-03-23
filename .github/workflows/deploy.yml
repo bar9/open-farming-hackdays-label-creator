@@ -17,15 +17,7 @@ jobs:
         with:
             toolchain: nightly
             override: true
-            components: rustfmt, clippy
             target: wasm32-unknown-unknown
-
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: nightly
-            override: true
-            components: rustfmt, clippy
 
       - name: Install Dioxus CLI
         run: |
