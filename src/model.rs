@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
@@ -40,9 +41,9 @@ pub struct BasicIngredientItem {
     pub amount: i32,
 }
 
-pub fn sorted_ingredient_list(ingredients: Vec<IngredientItem>) -> String {
-    let mut ingredients = ingredients;
-    ingredients.sort_by(|a, b| a.basicInfo.amount.cmp(&b.basicInfo.amount));
+pub fn sorted_ingredient_list(ingredients: HashMap<String, IngredientItem>) -> String {
+    let mut ingredients = ingredients.values().cloned().into_iter().collect::<Vec<IngredientItem>>();
+    ingredients.sort_by(|a, b| b.basicInfo.amount.cmp(&a.basicInfo.amount));
 
     ingredients.iter()
         .map(|ele| ele.basicInfo.name.clone())
