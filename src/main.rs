@@ -4,7 +4,7 @@ use std::collections::HashMap;
 // import the prelude to get access to the `rsx!` macro and the `Scope` and `Element` types
 use dioxus::prelude::*;
 use crate::layout::ThemeLayout;
-use crate::model::{IngredientItem, sorted_ingredient_list};
+use crate::model::{food_db, IngredientItem, sorted_ingredient_list};
 
 mod layout;
 mod model;
@@ -50,7 +50,7 @@ fn App(cx: Scope) -> Element {
                                             rsx! {
                                                 tr {
                                                     td {
-                                                        {ingredient.1.clone().basicInfo.name}
+                                                        {ingredient.1.clone().basicInfo.standard_ingredient.name}
                                                     }
                                                     td {
                                                         input {
@@ -65,7 +65,7 @@ fn App(cx: Scope) -> Element {
                                                                     }
                                                                 }
                                                         }
-                                                        "g"
+                                                        " g"
                                                     }
                                                     td {
                                                         button {
@@ -100,9 +100,9 @@ fn App(cx: Scope) -> Element {
                                             oninput: move |evt| name_to_add.set(evt.value.clone()),
                                             datalist {
                                                 id: "ingredients",
-                                                option { value: "Hafer" }
-                                                option { value: "Honig" }
-                                                option { value: "Mandelmus" }
+                                                for item in food_db().clone() {
+                                                    option { value: "{item.0}" }
+                                                }
                                             }
                                     }
                                     button { class: "btn btn-outline",
@@ -143,7 +143,7 @@ fn App(cx: Scope) -> Element {
                                     "Zutaten"
                                 }
                                 span {
-                                    sorted_ingredient_list(ingredients.read().clone())
+                                    dangerous_inner_html: "{sorted_ingredient_list(ingredients.read().clone())}"
                                 }
                             }
                         }
