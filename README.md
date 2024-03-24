@@ -1,6 +1,10 @@
 # open-farming-hackdays-label-creator
 Lebensmittel Label Creator für Manufakturen und Direktvermarkter (Schweiz)
 
+Challenge: https://hack.farming.opendata.ch/project/111
+
+Live Demo: https://jarheadcore.github.io/open-farming-hackdays-label-creator/
+
 
 ## prerequisites
 
