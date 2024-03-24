@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Home</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.8.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body data-theme="light" class="min-h-screen">
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div class="flex flex-col gap-6 bg-neutral-200 p-8 pb-12 min-h-screen">
+                <h1 class="text-4xl mb-4">LMK Creator | Lebensmittelkennzeichnung</h1>
+                <div>
+                    <label class="flex gap-2 flex-col">
+                        Sachbezeichnung
+                        <input type="text" placeholder="Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig" class="input input-bordered w-full" />
+                    </label>
+                </div>
+                <div class="flex items-end gap-2">
+                    <label class="flex gap-2 flex-col w-full">
+                        <label for="ice-cream-choice">Zutaten</label>
+                        <input class="input input-bordered w-full" list="ingredientsList" id="ingredientsInput" name="ingredients" />
+                        <datalist id="ingredientsList">
+                            <option value="Schokolade"></option>
+                            <option value="Kokosnuss"></option>
+                            <option value="Erdnuss"></option>
+                            <option value="Milch"></option>
+                            <option value="Zucker"></option>
+                        </datalist>
+                    </label>
+                    <button class="btn btn-primary">Hinzufügen</button>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="flex gap-2 flex-col">
+                        <label>Produkt</label>
+                        <input type="text" placeholder="Joghurt" class="input input-bordered w-full" disabled />
+                    </div>
+                    <div class="flex gap-2 flex-col">
+                        <label>Menge</label>
+                        <input type="text" placeholder="50g" class="input input-bordered w-full" />
+                    </div>
+                    <div class="flex gap-2 flex-col">
+                        <label>Herkunft</label>
+                        <input type="text" placeholder="Schweiz" value="Schweiz" class="input input-bordered w-full" />
+                    </div>
+                    <!--<div class="flex flex-col gap-2 justify-center">
+                        <label>Allergen</label>
+                        <div>
+                            <input type="checkbox" checked="checked" class="checkbox" />
+                        </div>
+                    </div>-->
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex gap-2 flex-col">
+                            <label>Datumseingabe</label>
+                            <input class="input input-bordered w-full" type="date" id="haltbarBis" name="haltbarBis" value="2024-03-23" min="2024-03-23" max="2028-03-23" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex gap-2 flex-col">
+                            <label>Zusatzinformationen</label>
+                            <textarea class="textarea textarea-bordered w-full" rows="4" placeholder="Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex gap-2 flex-col">
+                            <label>Aufbewahrung + Lagerung</label>
+                            <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="z.B. dunkel und kühl bei max. 5°C lagern"></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex gap-2 flex-col">
+                            <label>Produktionsland</label>
+                            <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="">Schweiz</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex gap-2 flex-col">
+                            <label>Nettogewicht</label>
+                            <input type="text" placeholder="300g" value="" class="input input-bordered w-full" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex gap-2 flex-col">
+                            <label>Abtropfgewicht</label>
+                            <input type="text" placeholder="125g" value="" class="input input-bordered w-full" />
+                        </div>
+                    </div>
+                </div>
+                <hr class="border-1 border-dashed border-neutral-400 my-2" />
+                <div class="flex flex-col">
+                    <h4 class="text-xl mb-2">Adresse</h4>
+                    <div class="flex gap-1 flex-col mb-2">
+                        <label>Vorname / Name / Firma</label>
+                        <input type="text" placeholder="Hans Muster AG" value="" class="input input-bordered w-full" />
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="flex gap-1 flex-col">
+                            <label>Adresse</label>
+                            <input type="text" placeholder="Teststrasse 1" value="" class="input input-bordered w-full" />
+                        </div>
+                        <div class="flex gap-1 flex-col">
+                            <label>PLZ</label>
+                            <input type="text" placeholder="CH-4001" value="" class="input input-bordered w-full" />
+                        </div>
+                        <div class="flex gap-1 flex-col">
+                            <label>Ort</label>
+                            <input type="text" placeholder="Basel" value="" class="input input-bordered w-full" />
+                        </div>
+                    </div>
+                </div>
+                <hr class="border-1 border-dashed border-neutral-400 my-2" />
+                <div class="flex flex-col">
+                    <h4 class="text-xl mb-2">Preis</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex gap-2 flex-col">
+                            <label class="text-sm">Preis pro 100g</label>
+                            <input type="text" placeholder="Teststrasse 1" value="" class="input input-bordered w-full" />
+                        </div>
+                        <div class="flex gap-2 flex-col">
+                            <label class="text-sm">Preis Total</label>
+                            <input type="text" placeholder="CH-4001" value="" class="input input-bordered w-full" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-8">
+                <div>[Generated Output]</div>
+            </div>
+        </main>
+    </body>
+</html>
