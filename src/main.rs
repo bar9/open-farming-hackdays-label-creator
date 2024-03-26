@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 // import the prelude to get access to the `rsx!` macro and the `Scope` and `Element` types
 use dioxus::prelude::*;
 use crate::layout::ThemeLayout;
@@ -18,9 +18,10 @@ fn main() {
 #[component]
 fn App(cx: Scope) -> Element {
     // let ingredients = use_ref(cx, || Vec::<IngredientItem>::new());
-    let ingredients = use_ref(cx, || HashMap::<String, IngredientItem>::new());
+    let ingredients = use_ref(cx, || BTreeMap::<usize, IngredientItem>::new());
     let adding = use_state(cx, || false);
     let name_to_add = use_state(cx, || String::new());
+    let mut last_id = use_state(cx, || 0_usize);
 
     render! {
         ThemeLayout{
@@ -45,12 +46,15 @@ fn App(cx: Scope) -> Element {
                                     for ingredient in ingredients.read().clone() {
                                         // let key = ingredient.0.clone();
                                         {
-                                            let ingr1 = ingredient.0.clone();
-                                            let ingr2  = ingredient.0.clone(); // I like to move it, move it..
+                                            let key = ingredient.0;
+                                            let ingr  = ingredient.1.clone();
                                             rsx! {
-                                                tr {
+                                                tr { key: "{key}",
                                                     td {
-                                                        {ingredient.1.clone().basicInfo.standard_ingredient.name}
+                                                        "{key}"
+                                                    }
+                                                    td {
+                                                        {ingr.clone().basicInfo.standard_ingredient.name}
                                                     }
                                                     td {
                                                         input {
@@ -61,7 +65,7 @@ fn App(cx: Scope) -> Element {
                                                                     let mut new_amount_ingredient = ingredient.1.clone();
                                                                     if let Ok(new_amount) = evt.value.clone().parse::<i32>() {
                                                                         new_amount_ingredient.basicInfo.amount = new_amount;
-                                                                        ingredients.write().insert(ingr1.clone(), new_amount_ingredient).unwrap();
+                                                                        ingredients.write().insert(key, new_amount_ingredient).unwrap();
                                                                     }
                                                                 }
                                                         }
@@ -72,8 +76,6 @@ fn App(cx: Scope) -> Element {
                                                             class: "btn btn-square",
                                                             dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
                                                             onclick: move |_| {
-                                                                let key = ingredient.0.clone();
-                                                                // let key_to_remove = ingredient.0.clone();
                                                                 ingredients.write().remove(&key);
                                                             }
                                                         }
@@ -108,9 +110,10 @@ fn App(cx: Scope) -> Element {
                                     button { class: "btn btn-outline",
                                         onclick: move |evt|  {
                                             ingredients.write().insert(
-                                                name_to_add.get().clone(),
+                                                last_id + 1,
                                                 IngredientItem::from_name(String::from(name_to_add.get()))
                                             );
+                                            last_id += 1;
                                             adding.set(false);
                                         },
                                         "Hinzufügen"

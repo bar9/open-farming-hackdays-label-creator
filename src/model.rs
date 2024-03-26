@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::io::{Read};
@@ -49,7 +49,7 @@ pub struct StandardIngredient {
     pub name: String,
     pub is_allergen: bool
 }
-pub fn sorted_ingredient_list(ingredients: HashMap<String, IngredientItem>) -> String {
+pub fn sorted_ingredient_list(ingredients: BTreeMap<usize, IngredientItem>) -> String {
     let mut ingredients = ingredients.values().cloned().into_iter().collect::<Vec<IngredientItem>>();
     ingredients.sort_by(|a, b| b.basicInfo.amount.cmp(&a.basicInfo.amount));
 
