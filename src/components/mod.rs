@@ -2,8 +2,9 @@
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use dioxus::html::textarea;
 use dioxus::prelude::*;
-use crate::model::{sorted_ingredient_list, IngredientItem};
+use crate::model::{sorted_ingredient_list, IngredientItem, AdditionalInfo};
 
 #[component]
 pub fn SeparatorLine(cx: Scope) -> Element {
@@ -18,6 +19,24 @@ pub fn TextInput<'a>(cx: Scope, placeholder: &'a str, bound_value: &'a UseState<
         input {
             class: "input input-bordered w-full",
             r#type: "text",
+            placeholder: "{placeholder}",
+            value: "{bound_value}",
+            oninput: move |evt| bound_value.set(evt.value.clone())
+        }
+    })
+}
+
+#[component]
+pub fn TextareaInput<'a>(
+    cx: Scope,
+    placeholder: &'a str,
+    bound_value: &'a UseState<String>,
+    rows: &'a str
+) -> Element {
+    cx.render( rsx! {
+        textarea {
+            class: "textarea textarea-bordered w-full",
+            rows: "{rows}",
             placeholder: "{placeholder}",
             value: "{bound_value}",
             oninput: move |evt| bound_value.set(evt.value.clone())
@@ -80,7 +99,9 @@ pub fn AddNewIngredientButton<'a>(cx: Scope, on_click: EventHandler<'a, MouseEve
 pub fn LabelPreview<'a>(
     cx: Scope,
     ingredients: &'a UseRef<BTreeMap<usize, IngredientItem>>,
-    product_title: &'a UseState<String>
+    product_title: &'a UseState<String>,
+    additional_info: &'a UseState<String>,
+    storage_info: &'a UseState<String>,
 ) -> Element {
     cx.render( rsx! {
         div { class: "p-8 flex flex-col bg-primary",
@@ -93,6 +114,26 @@ pub fn LabelPreview<'a>(
                 h4 { class: "text-xl mb-2", "Zutaten" }
                 span {
                     dangerous_inner_html: "{sorted_ingredient_list(ingredients.read().clone())}"
+                }
+                if additional_info.get() != "" {
+                    rsx! {
+                        h4 { class: "text-xl mb-w",
+                            "Zusatzinformationen"
+                        }
+                        span {
+                            "{additional_info}"
+                        }
+                    }
+                }
+                if storage_info.get() != "" {
+                    rsx! {
+                        h4 { class: "text-xl mb-w",
+                            "Aufbewahrung + Lagerung"
+                        }
+                        span {
+                            "{storage_info}"
+                        }
+                    }
                 }
             }
         },

@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 use dioxus::prelude::*;
-use crate::components::{AddNewIngredientButton, FieldGroup1, FieldGroup2, FormField, LabelPreview, SeparatorLine, TextInput, TextInputDummy};
+use crate::components::{AddNewIngredientButton, FieldGroup1, FieldGroup2, FormField, LabelPreview, SeparatorLine, TextareaInput, TextInput, TextInputDummy};
 use crate::layout::ThemeLayout;
 use crate::model::{food_db, IngredientItem, sorted_ingredient_list};
 
@@ -22,6 +22,8 @@ fn App(cx: Scope) -> Element {
     let name_to_add = use_state(cx, || String::new());
     let mut last_id = use_state(cx, || 0_usize);
     let product_title = use_state(cx, || String::new());
+    let additional_info = use_state(cx, || String::new());
+    let storage_info = use_state(cx, || String::new());
 
     render! {
         ThemeLayout{
@@ -127,15 +129,19 @@ fn App(cx: Scope) -> Element {
                         input {class: "input input-bordered w-full", r#type: "date", value: "2024-03-23"}
                     }
                     FormField { label: "Zusatzinformationen",
-                        textarea {class: "textarea textarea-bordered w-full", rows: "4",
-                            placeholder: "Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung"
+                        TextareaInput {
+                            placeholder: "Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung",
+                            rows: "4",
+                            bound_value: &additional_info
                         }
                     }
                 }
                 FieldGroup2 {
                     FormField { label: "Aufbewahrung + Lagerung",
-                        textarea {class: "textarea textarea-bordered w-full", rows: "2",
-                            placeholder: "z.B. dunkel und kühl bei max. 5°C lagern"
+                        TextareaInput{
+                            rows: "2",
+                            placeholder: "z.B. dunkel und kühl bei max. 5°C lagern",
+                            bound_value: &storage_info
                         }
                     }
                     FormField { label: "Produktionsland",
@@ -169,7 +175,12 @@ fn App(cx: Scope) -> Element {
                     }
                 }
             },
-            LabelPreview{ ingredients: &ingredients, product_title: &product_title }
+            LabelPreview{
+                ingredients: &ingredients,
+                product_title: &product_title,
+                additional_info: &additional_info,
+                storage_info: &storage_info
+            }
         }
     }
 }
