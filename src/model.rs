@@ -70,7 +70,7 @@ pub fn sorted_ingredient_list(ingredients: BTreeMap<usize, IngredientItem>) -> S
 pub fn lookup_allergen(name: &str) -> bool {
     let mut is_allergen = false;
     for entry in food_db() {
-        if(entry.0.as_str() == name && entry.1 == true) {
+        if entry.0.as_str() == name && entry.1 == true {
             is_allergen = true;
         }
     }

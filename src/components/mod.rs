@@ -6,136 +6,161 @@ use dioxus::html::textarea;
 use dioxus::prelude::*;
 use crate::model::{sorted_ingredient_list, IngredientItem, AdditionalInfo};
 
-#[component]
-pub fn SeparatorLine(cx: Scope) -> Element {
-    cx.render( rsx! {
+pub fn SeparatorLine() -> Element {
+    rsx! {
         hr { class: "border-1 border-dashed border-neutral-400 my-2" }
-    })
+    }
 }
 
-#[component]
-pub fn TextInput<'a>(cx: Scope, placeholder: &'a str, bound_value: &'a UseState<String>) -> Element {
-    cx.render( rsx! {
+#[derive(Props, Clone, PartialEq)]
+pub struct TextInputProps {
+    #[props(into)]
+    placeholder: String,
+    bound_value: Signal<String>
+}
+pub fn TextInput(mut props: TextInputProps) -> Element {
+    rsx! {
         input {
             class: "input input-bordered w-full",
             r#type: "text",
-            placeholder: "{placeholder}",
-            value: "{bound_value}",
-            oninput: move |evt| bound_value.set(evt.value.clone())
+            placeholder: "{props.placeholder}",
+            value: "{props.bound_value}",
+            oninput: move |evt| props.bound_value.set(evt.data.value())
         }
-    })
+    }
 }
 
-#[component]
-pub fn TextareaInput<'a>(
-    cx: Scope,
-    placeholder: &'a str,
-    bound_value: &'a UseState<String>,
-    rows: &'a str
-) -> Element {
-    cx.render( rsx! {
+#[derive(Props, Clone, PartialEq)]
+pub struct TextareaInputProps {
+    #[props(into)]
+    placeholder: String,
+    bound_value: Signal<String>,
+    #[props(into)]
+    rows: String
+}
+pub fn TextareaInput(mut props: TextareaInputProps) -> Element {
+    rsx! {
         textarea {
             class: "textarea textarea-bordered w-full",
-            rows: "{rows}",
-            placeholder: "{placeholder}",
-            value: "{bound_value}",
-            oninput: move |evt| bound_value.set(evt.value.clone())
+            rows: "{props.rows}",
+            placeholder: "{props.placeholder}",
+            value: "{props.bound_value}",
+            oninput: move |evt| props.bound_value.set(evt.data.value())
         }
-    })
+    }
 }
 
-#[component]
-pub fn TextInputDummy<'a>(cx: Scope, placeholder: &'a str) -> Element {
-    cx.render( rsx! {
+#[derive(Props, Clone, PartialEq)]
+pub struct TextInputDummyProps {
+    #[props(into)]
+    placeholder: String
+}
+pub fn TextInputDummy(props: TextInputDummyProps) -> Element {
+    rsx! {
         input {
             class: "input input-bordered w-full",
             r#type: "text",
-            placeholder: "{placeholder}",
+            placeholder: "{props.placeholder}",
         }
-    })
+    }
 }
-#[component]
-pub fn FormField<'a>(cx: Scope, label: &'a str, children: Element<'a>) -> Element {
-    cx.render(rsx! {
+#[derive(Props, Clone, PartialEq)]
+pub struct FormFieldProps {
+    #[props(into)]
+    label: String,
+    children: Element
+}
+pub fn FormField(props: FormFieldProps) -> Element {
+    rsx! {
         div {
             class: "flex gap-2 flex-col",
-            label { "{label}" }
-            &children
+            label { "{props.label}" }
+            {props.children}
         }
-    })
+    }
 }
 
-#[component]
-pub fn FieldGroup2<'a>(cx: Scope, children: Element<'a>) -> Element {
-    cx.render(rsx! {
+#[derive(Props, Clone, PartialEq)]
+pub struct FieldGroup2Props {
+    children: Element
+}
+pub fn FieldGroup2(props: FieldGroup2Props) -> Element {
+    rsx! {
         div {
             class: "grid grid-cols-2 gap-4 ",
-            &children
+            {props.children}
         }
-    })
+    }
 }
 
-#[component]
-pub fn FieldGroup1<'a>(cx: Scope, label: &'a str, children: Element<'a>) -> Element {
-    cx.render( rsx! {
+#[derive(Props, Clone, PartialEq)]
+pub struct FieldGroup1Props {
+    #[props(into)]
+    label: String,
+    children: Element
+}
+pub fn FieldGroup1(props: FieldGroup1Props) -> Element {
+    rsx! {
         div { class: "flex flex-col gap-4",
-            h4 { class: "text-xl mb-2", "{label}" }
-            &children
+            h4 { class: "text-xl mb-2", "{props.label}" }
+            {props.children}
         }
-    })
+    }
 }
 
 #[component]
-pub fn AddNewIngredientButton<'a>(cx: Scope, on_click: EventHandler<'a, MouseEvent>) -> Element {
-    cx.render(rsx! {
+pub fn AddNewIngredientButton(on_click: EventHandler<MouseEvent>) -> Element {
+    rsx! {
         button { class: "btn btn-outline",
-            onclick: move |evt| cx.props.on_click.call(evt),
+            onclick: move |evt| on_click.call(evt),
             "Eine Zutat hinzufügen",
         },
-    },)
+    }
 }
 
 #[component]
-pub fn LabelPreview<'a>(
-    cx: Scope,
-    ingredients: &'a UseRef<BTreeMap<usize, IngredientItem>>,
-    product_title: &'a UseState<String>,
-    additional_info: &'a UseState<String>,
-    storage_info: &'a UseState<String>,
+pub fn LabelPreview(
+    ingredients: Signal<BTreeMap<usize, IngredientItem>>,
+    product_title: Signal<String>,
+    additional_info: Signal<String>,
+    storage_info: Signal<String>,
 ) -> Element {
-    cx.render( rsx! {
-        div { class: "p-8 flex flex-col bg-primary",
+    rsx! {
+        div { class: "p-8 flex flex-col bg-base-200",
             h2 { class: "pb-4 text-4xl",
                 "Etiketten Vorschau"
             }
-            div {
-                class: "bg-white border p-4 grid grid-col-1 gap-4",
+            div { class: "bg-white border p-4 grid grid-col-1 gap-4",
                 h3 { class: "text-2xl mb-2", "{product_title}" }
                 h4 { class: "text-xl mb-2", "Zutaten" }
                 span {
                     dangerous_inner_html: "{sorted_ingredient_list(ingredients.read().clone())}"
                 }
-                if additional_info.get() != "" {
-                    rsx! {
-                        h4 { class: "text-xl mb-w",
-                            "Zusatzinformationen"
-                        }
-                        span {
-                            "{additional_info}"
+                if additional_info.to_string() != "" {
+                    {
+                        rsx! {
+                            h4 { class: "text-xl mb-w",
+                                "Zusatzinformationen"
+                            }
+                            span {
+                                "{additional_info}"
+                            }
                         }
                     }
                 }
-                if storage_info.get() != "" {
-                    rsx! {
-                        h4 { class: "text-xl mb-w",
-                            "Aufbewahrung + Lagerung"
-                        }
-                        span {
-                            "{storage_info}"
+                if storage_info.to_string() != "" {
+                    {
+                        rsx! {
+                            h4 { class: "text-xl mb-w",
+                                "Aufbewahrung + Lagerung"
+                            }
+                            span {
+                                "{storage_info}"
+                            }
                         }
                     }
                 }
             }
-        },
-    })
+        }
+    }
 }

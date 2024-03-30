@@ -16,6 +16,10 @@ cargo install dioxus-cli
 ```
 
 ```bash
+cargo install cargo-make
+```
+
+```bash
 rustup target add wasm32-unknown-unknown
 ```
 
@@ -26,7 +30,7 @@ npm install
 ## Local Development
 
 ```bash
-npx tailwindcss -i input.css -o public/tailwind.css && dx serve --hot-reload
+cargo make dev
 ```
 
 ## Eingabefelder und Feldtypen

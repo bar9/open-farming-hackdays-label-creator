@@ -1,46 +1,20 @@
 use dioxus::prelude::*;
 
-#[derive(Props)]
-pub struct PureWrapProps<'a> {
-    children: Element<'a>,
+#[derive(Props, Clone, PartialEq)]
+pub struct PureWrapProps {
+    children: Element,
 }
-pub fn ThemeLayout<'a>(cx: Scope<'a, PureWrapProps<'a>>) -> Element {
-    let active_theme = use_state(cx, || "emerald");
+pub fn ThemeLayout<'a>(props: PureWrapProps) -> Element {
+    let mut active_theme = use_signal(|| "emerald");
     let themes = vec![
-        "dark",
-        "cupcake",
-        "bumblebee",
-        "emerald",
-        "corporate",
-        "synthwave",
-        "retro",
-        "cyberpunk",
-        "valentine",
-        "halloween",
-        "garden",
-        "forest",
-        "aqua",
-        "lofi",
-        "pastel",
-        "fantasy",
-        "wireframe",
-        "black",
-        "luxury",
-        "dracula",
-        "cmyk",
-        "autumn",
-        "business",
-        "acid",
-        "lemonade",
-        "night",
-        "coffee",
-        "winter",
-        "dim",
-        "nord",
-        "sunset",
+        "dark", "cupcake", "bumblebee", "emerald", "corporate", "synthwave",
+        "retro", "cyberpunk", "valentine", "halloween", "garden", "forest",
+        "aqua", "lofi", "pastel", "fantasy", "wireframe", "black", "luxury",
+        "dracula", "cmyk", "autumn", "business", "acid", "lemonade", "night",
+        "coffee", "winter", "dim", "nord", "sunset",
     ];
 
-    render! {
+    {rsx! {
         div {
             class: "min-h-screen",
             "data-theme": "{active_theme}",
@@ -64,9 +38,9 @@ pub fn ThemeLayout<'a>(cx: Scope<'a, PureWrapProps<'a>>) -> Element {
                     }
                 }
                 main { class: "grid grid-cols-1 md:grid-cols-2 gap-12 flex-grow",
-                    &cx.props.children
+                    {props.children}
                 }
             }
         }
-    }
+    }}
 }
