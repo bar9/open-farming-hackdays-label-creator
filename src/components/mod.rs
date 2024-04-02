@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use dioxus::html::textarea;
 use dioxus::prelude::*;
-use crate::model::{sorted_ingredient_list, IngredientItem, AdditionalInfo};
+use crate::model::{sorted_ingredient_list, IngredientItem, AdditionalInfo, food_db};
 
 pub fn SeparatorLine() -> Element {
     rsx! {
@@ -164,3 +164,130 @@ pub fn LabelPreview(
         }
     }
 }
+
+#[derive(Props, Clone, PartialEq)]
+pub struct IngredientsTableProps {
+    #[props(into)]
+    label: String,
+    ingredients: Signal<BTreeMap<usize, IngredientItem>>
+}
+pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
+    let mut ingredients_lock = props.ingredients.read();
+    // let mut delete_callback = |key| ingredients_lock.remove(key);
+    let mut name_to_add = use_signal(|| String::new());
+    let mut amount_to_add = use_signal(|| 0);
+    let mut last_id = use_signal(|| 0);
+    rsx! {
+        div { class: "flex flex-col gap-4",
+            h4 { class: "text-xl mb-2", "{props.label}" }
+            table { class: "table border-solid",
+                tr { th { "Zutat" } th { "Menge" } }
+                {ingredients_lock.iter().map(|(key, ingr)| {
+                    rsx! {
+                        tr { key: "{key}",
+                            td {
+                                "{ingr.basicInfo.standard_ingredient.name}"
+                            }
+                            td {
+                                "{ingr.basicInfo.amount} g"
+                            }
+                            // td {
+                            //     button {
+                            //         class: "btn btn-square",
+                            //         dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                            //         onclick: move |_| {
+                            //             // delete_callback(key);
+                            //         }
+                            //     }
+                            // }
+                        }
+                    }
+                })}
+            }
+        }
+        div { class: "flex flex-row gap-4",
+            input {
+                list: "ingredients",
+                r#type: "flex",
+                placeholder: "Name",
+                class: "input input-bordered input-accent w-full",
+                oninput: move |evt| name_to_add.set(evt.data.value()),
+                value: "{name_to_add}",
+                datalist {
+                    id: "ingredients",
+                    for item in food_db().clone() {
+                        option { value: "{item.0}" }
+                    }
+                }
+            }
+            input {
+                r#type: "number",
+                placeholder: "Menge",
+                class: "input input-bordered input-accent w-full",
+                oninput: move |evt| {
+                    if let Ok(amount) = evt.data.value().parse::<i32>() {
+                        amount_to_add.set(amount);
+                    }
+                },
+                value: "{amount_to_add}"
+            }
+            "g"
+            button { class: "btn btn-accent",
+                onclick: move |evt|  {
+                    props.ingredients.write().insert(
+                        last_id + 1,
+                        IngredientItem::from_name_amount((&*name_to_add)(), (&*amount_to_add)())
+                    );
+                    last_id += 1;
+                    name_to_add.set(String::new());
+                    amount_to_add.set(0);
+                },
+                "Hinzufügen"
+            }
+        }
+    }
+}
+                    // for (key, ingr) in ingredients_lock.iter() {
+                    //     {
+                    //         { rsx! {
+                    //             tr { key: "{key}",
+                    //                 td {
+                                        // input {
+                                        //         r#type: "number",
+                                        //         placeholder: "",
+                                        //         class: "input input-bordered input-accent",
+                                        //         oninput: move |evt| {
+                                        //             let mut new_amount_ingredient = ingredient.1.clone();
+                                        //             if let Ok(new_amount) = evt.data.value.clone().parse::<i32>() {
+                                        //                 new_amount_ingredient.basicInfo.amount = new_amount;
+                                        //                 ingredients.write().insert(key, new_amount_ingredient).unwrap();
+                                        //             }
+                                        //         }
+                                        // }
+                                        // " g"
+    //                                 }
+    //
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+
+    //                 if ingredients.len() > 0 {
+    //                     {rsx! {
+    //                     }}
+    //                 }
+    //                 div {
+    //                     if *adding.get() == true {
+    //                         {rsx! {
+    //
+    //                             }
+    //                         }}
+    //                     } else {
+    //                         {rsx! { AddNewIngredientButton{ on_click: move |evt| adding.set(true) } }}
+    //                     }
+    //                 }

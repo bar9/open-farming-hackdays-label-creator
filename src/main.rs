@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 use dioxus::prelude::*;
-use crate::components::{AddNewIngredientButton, FieldGroup1, FieldGroup2, FormField, LabelPreview, SeparatorLine, TextareaInput, TextInput, TextInputDummy};
+use crate::components::{AddNewIngredientButton, FieldGroup1, FieldGroup2, FormField, IngredientsTable, LabelPreview, SeparatorLine, TextareaInput, TextInput, TextInputDummy};
 use crate::layout::ThemeLayout;
 use crate::model::{food_db, IngredientItem, sorted_ingredient_list};
 
@@ -26,7 +26,7 @@ fn app() -> Element {
 
     rsx! {
         ThemeLayout {
-            div { class: "flex flex-col gap-6 bg-neutral p-8 pb-12 h-full",
+            div { class: "flex flex-col gap-6 p-8 pb-12 h-full",
                 h1 { class: "text-4xl text-accent mb-4", "LMK Creator | Lebensmittelkennzeichnung" }
                 FormField { label: "Sachbezeichnung",
                     TextInput {
@@ -34,6 +34,9 @@ fn app() -> Element {
                         bound_value: product_title
                     }
                 }
+                SeparatorLine {}
+                IngredientsTable { label: "Zutaten", ingredients: ingredients}
+                SeparatorLine {}
                 FieldGroup2 {
                     FormField { label: "Datumseingabe",
                         input {class: "input input-bordered w-full", r#type: "date", value: "2024-03-23"}
@@ -93,98 +96,4 @@ fn app() -> Element {
             }
         }
     }
-
-    // {rsx! {
-    //     ThemeLayout{
-    //             h2 { class: "pb-4",
-    //                 "Zutaten"
-    //                 if ingredients.len() > 0 {
-    //                     {rsx! {
-    //                         table { class: "table border-solid",
-    //                             tr {
-    //                                 th {
-    //                                     "Zutat"
-    //                                 }
-    //                                 th {
-    //                                     "Menge"
-    //                                 }
-    //                             }
-    //                             for ingredient in ingredients {
-    //                                 {
-    //                                     let (key, ingr) = ingredient.clone();
-    //                                     let ingr  = ingr.clone();
-    //                                     { rsx! {
-    //                                         tr { key: "{key}",
-    //                                             td {
-    //                                                 {ingr.basicInfo.standard_ingredient.name}
-    //                                             }
-    //                                             td {
-    //                                                 input {
-    //                                                         r#type: "number",
-    //                                                         placeholder: "",
-    //                                                         class: "input input-bordered input-accent",
-    //                                                         oninput: move |evt| {
-    //                                                             let mut new_amount_ingredient = ingredient.1.clone();
-    //                                                             if let Ok(new_amount) = evt.data.value.clone().parse::<i32>() {
-    //                                                                 new_amount_ingredient.basicInfo.amount = new_amount;
-    //                                                                 ingredients.write().insert(key, new_amount_ingredient).unwrap();
-    //                                                             }
-    //                                                         }
-    //                                                 }
-    //                                                 " g"
-    //                                             }
-    //                                             td {
-    //                                                 button {
-    //                                                     class: "btn btn-square",
-    //                                                     dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
-    //                                                     onclick: move |_| {
-    //                                                         ingredients.write().remove(&key);
-    //                                                     }
-    //                                                 }
-    //                                             }
-    //                                         }
-    //                                     }}
-    //                                 }
-    //
-    //                             }
-    //                         }
-    //                     }}
-    //                 }
-    //                 div {
-    //                     if *adding.get() == true {
-    //                         {rsx! {
-    //                             div { class: "flex",
-    //                             input {
-    //                                     list: "ingredients",
-    //                                     r#type: "flex",
-    //                                     placeholder: "Name",
-    //                                     class: "input input-bordered input-accent",
-    //                                     oninput: move |evt| name_to_add.set(evt.value.clone()),
-    //                                     datalist {
-    //                                         id: "ingredients",
-    //                                         for item in food_db().clone() {
-    //                                             option { value: "{item.0}" }
-    //                                         }
-    //                                     }
-    //                             }
-    //                             button { class: "btn btn-outline",
-    //                                 onclick: move |evt|  {
-    //                                     ingredients.write().insert(
-    //                                         last_id + 1,
-    //                                         IngredientItem::from_name(String::from(name_to_add.get()))
-    //                                     );
-    //                                     last_id += 1;
-    //                                     adding.set(false);
-    //                                 },
-    //                                 "Hinzufügen"
-    //                             }
-    //                             }
-    //                         }}
-    //                     } else {
-    //                         {rsx! { AddNewIngredientButton{ on_click: move |evt| adding.set(true) } }}
-    //                     }
-    //                 }
-    //             }
-    //
-    // }
 }
