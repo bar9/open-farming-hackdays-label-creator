@@ -120,7 +120,7 @@ pub fn AddNewIngredientButton(on_click: EventHandler<MouseEvent>) -> Element {
 
 #[component]
 pub fn LabelPreview(
-    ingredients: Signal<BTreeMap<usize, IngredientItem>>,
+    ingredients: Signal<Vec<IngredientItem>>,
     product_title: Signal<String>,
     additional_info: Signal<String>,
     storage_info: Signal<String>,
@@ -169,40 +169,38 @@ pub fn LabelPreview(
 pub struct IngredientsTableProps {
     #[props(into)]
     label: String,
-    ingredients: Signal<BTreeMap<usize, IngredientItem>>
+    ingredients: Signal<Vec<IngredientItem>>
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
-    let mut ingredients_lock = props.ingredients.read();
-    // let mut delete_callback = |key| ingredients_lock.remove(key);
+    // let mut ingredients_lock = props.ingredients.read();
+    // let mut delete_callback = |index| &props.ingredients.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
-    let mut last_id = use_signal(|| 0);
+    // let mut last_id = use_signal(|| 0);
     rsx! {
         div { class: "flex flex-col gap-4",
             h4 { class: "text-xl mb-2", "{props.label}" }
             table { class: "table border-solid",
                 tr { th { "Zutat" } th { "Menge" } }
-                {ingredients_lock.iter().map(|(key, ingr)| {
-                    rsx! {
-                        tr { key: "{key}",
-                            td {
-                                "{ingr.basicInfo.standard_ingredient.name}"
+                for (key, &ref ingr) in props.ingredients.read().iter().enumerate() {
+                    tr { key: "{key}",
+                        td {
+                            "{ingr.basicInfo.standard_ingredient.name}"
+                        }
+                        td {
+                            "{ingr.basicInfo.amount} g"
+                        }
+                        td {
+                            button {
+                                class: "btn btn-square",
+                                dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                onclick: move |_| {
+                                    // delete_callback(key);
+                                }
                             }
-                            td {
-                                "{ingr.basicInfo.amount} g"
-                            }
-                            // td {
-                            //     button {
-                            //         class: "btn btn-square",
-                            //         dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
-                            //         onclick: move |_| {
-                            //             // delete_callback(key);
-                            //         }
-                            //     }
-                            // }
                         }
                     }
-                })}
+                }
             }
         }
         div { class: "flex flex-row gap-4",
@@ -234,11 +232,12 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             "g"
             button { class: "btn btn-accent",
                 onclick: move |evt|  {
-                    props.ingredients.write().insert(
-                        last_id + 1,
+                    // props.ingredients.write().insert(
+                    props.ingredients.write().push(
+                        // last_id + 1,
                         IngredientItem::from_name_amount((&*name_to_add)(), (&*amount_to_add)())
                     );
-                    last_id += 1;
+                    // last_id += 1;
                     name_to_add.set(String::new());
                     amount_to_add.set(0);
                 },
@@ -247,47 +246,3 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
         }
     }
 }
-                    // for (key, ingr) in ingredients_lock.iter() {
-                    //     {
-                    //         { rsx! {
-                    //             tr { key: "{key}",
-                    //                 td {
-                                        // input {
-                                        //         r#type: "number",
-                                        //         placeholder: "",
-                                        //         class: "input input-bordered input-accent",
-                                        //         oninput: move |evt| {
-                                        //             let mut new_amount_ingredient = ingredient.1.clone();
-                                        //             if let Ok(new_amount) = evt.data.value.clone().parse::<i32>() {
-                                        //                 new_amount_ingredient.basicInfo.amount = new_amount;
-                                        //                 ingredients.write().insert(key, new_amount_ingredient).unwrap();
-                                        //             }
-                                        //         }
-                                        // }
-                                        // " g"
-    //                                 }
-    //
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-
-    //                 if ingredients.len() > 0 {
-    //                     {rsx! {
-    //                     }}
-    //                 }
-    //                 div {
-    //                     if *adding.get() == true {
-    //                         {rsx! {
-    //
-    //                             }
-    //                         }}
-    //                     } else {
-    //                         {rsx! { AddNewIngredientButton{ on_click: move |evt| adding.set(true) } }}
-    //                     }
-    //                 }

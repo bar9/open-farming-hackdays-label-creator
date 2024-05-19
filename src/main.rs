@@ -1,6 +1,5 @@
 #![allow(non_snake_case)]
 
-use std::collections::BTreeMap;
 use dioxus::prelude::*;
 use crate::components::{AddNewIngredientButton, FieldGroup1, FieldGroup2, FormField, IngredientsTable, LabelPreview, SeparatorLine, TextareaInput, TextInput, TextInputDummy};
 use crate::layout::ThemeLayout;
@@ -16,7 +15,7 @@ fn main() {
 }
 
 fn app() -> Element {
-    let ingredients = use_signal(|| BTreeMap::<usize, IngredientItem>::new());
+    let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| Vec::new());
     let adding = use_signal(|| false);
     let name_to_add = use_signal(|| String::new());
     let mut last_id = use_signal(|| 0_usize);
