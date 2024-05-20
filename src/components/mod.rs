@@ -173,7 +173,8 @@ pub struct IngredientsTableProps {
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     // let mut ingredients_lock = props.ingredients.read();
-    // let mut delete_callback = |index| &props.ingredients.remove(index);
+    let mut delete_callback =
+        |index, mut list: Signal<Vec<IngredientItem>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
     // let mut last_id = use_signal(|| 0);
@@ -195,7 +196,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 class: "btn btn-square",
                                 dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
                                 onclick: move |_| {
-                                    // delete_callback(key);
+                                    delete_callback(key, props.ingredients.clone());
                                 }
                             }
                         }
