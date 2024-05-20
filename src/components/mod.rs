@@ -22,7 +22,7 @@ pub struct TextInputProps {
 pub fn TextInput(mut props: TextInputProps) -> Element {
     rsx! {
         input {
-            class: "input input-bordered w-full",
+            class: "input bg-white input-bordered w-full",
             r#type: "text",
             placeholder: "{props.placeholder}",
             value: "{props.bound_value}",
@@ -44,14 +44,14 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
     rsx! {
         select {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
-            class: "select select-bordered w-full max-w-xs",
+            class: "select bg-white select-bordered w-full max-w-xs",
             // oninput: move |evt| props.bound_value.set(evt.data.value()),
             option {selected: true, "mindestens haltbar bis"}
             option {"zu verbrauchen bis"}
         }
         input {
             oninput: move |evt| props.date_value.set(evt.data.value()),
-            class: "input input-bordered w-full", r#type: "date", value: "{formatted_date}"}
+            class: "input bg-white input-bordered w-full", r#type: "date", value: "{formatted_date}"}
     }
 }
 
@@ -66,7 +66,7 @@ pub struct TextareaInputProps {
 pub fn TextareaInput(mut props: TextareaInputProps) -> Element {
     rsx! {
         textarea {
-            class: "textarea textarea-bordered w-full",
+            class: "textarea bg-white textarea-bordered w-full",
             rows: "{props.rows}",
             placeholder: "{props.placeholder}",
             value: "{props.bound_value}",
@@ -251,12 +251,10 @@ pub struct IngredientsTableProps {
     ingredients: Signal<Vec<IngredientItem>>
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
-    // let mut ingredients_lock = props.ingredients.read();
     let delete_callback =
         |index, mut list: Signal<Vec<IngredientItem>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
-    // let mut last_id = use_signal(|| 0);
     rsx! {
         div { class: "flex flex-col gap-4",
             table { class: "table border-solid",
@@ -287,7 +285,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 list: "ingredients",
                 r#type: "flex",
                 placeholder: "Name",
-                class: "input input-bordered input-accent w-full",
+                class: "input input-bordered bg-white input-accent w-full",
                 oninput: move |evt| name_to_add.set(evt.data.value()),
                 value: "{name_to_add}",
                 datalist {
@@ -300,7 +298,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             input {
                 r#type: "number",
                 placeholder: "Menge",
-                class: "input input-bordered input-accent w-full",
+                class: "input input-bordered bg-white input-accent w-full",
                 oninput: move |evt| {
                     if let Ok(amount) = evt.data.value().parse::<i32>() {
                         amount_to_add.set(amount);
