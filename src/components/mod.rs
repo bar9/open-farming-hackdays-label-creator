@@ -159,8 +159,8 @@ pub fn LabelPreview(
 
 ) -> Element {
     rsx! {
-        div { class: "p-8 flex flex-col bg-base-200",
-            h2 { class: "pb-4 text-4xl",
+        div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",
+            h2 { class: "text-primary-content pb-4 text-4xl",
                 "Etiketten Vorschau"
             }
             div { class: "bg-white border p-4 grid grid-col-1 divide-y divide-dotted",
@@ -350,7 +350,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                 open: "{is_open}",
                 class: "modal",
                 div {
-                    class: "modal-box",
+                    class: "modal-box bg-base-100",
                     h3 { class:"font-bold text-lg", "{props.label}" }
                     {props.help}
                     div {class: "modal-action",

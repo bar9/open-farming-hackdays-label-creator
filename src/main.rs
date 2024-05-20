@@ -47,13 +47,19 @@ fn app() -> Element {
                             h1 { class: "text-4xl text-accent mb-4", "LMK Creator | Lebensmittelkennzeichnung" }
                             FormField {
                                 label: "Produktname",
-                                help: rsx!{div{ "Produktname Hilfe"}},
+                                help: rsx!{
+                                    p { "Markennamen unmittelbar mit Sachbezeichnung ergänzen, gemäss entsprechenden Verordnungen"}
+                                },
                                 TextInput {
                                     placeholder: "Produktname (optional)",
                                     bound_value: product_title
                                 }
                             }
-                            FormField { label: "Sachbezeichnung",
+                            FormField {
+                                label: "Sachbezeichnung",
+                                help: rsx!{
+                                    p {"Verkehrsübliche Bezeichnung oder eine beschreibende Bezeichnung, zur Illustration passend"}
+                                },
                                 TextInput {
                                     placeholder: "Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig",
                                     bound_value: product_subtitle
@@ -62,12 +68,18 @@ fn app() -> Element {
                             SeparatorLine {}
                             FormField {
                                 label: "Zutaten",
-                                help: rsx!{p{"Wählen Sie hier Ihre Zutaten+++"}},
+                                help: rsx!{p{"Wenn die gesuchte Zutat nicht im Dropdown vorhanden ist, können Sie sie im Textfeld eingeben."}},
                                 IngredientsTable {ingredients: ingredients}
                             }
                             SeparatorLine {}
                             FieldGroup2 {
-                                FormField { label: "Datumseingabe",
+                                FormField {
+                                    label: "Datumseingabe",
+                                    help: rsx!{
+                                        p{ "Lebensmittel, die kühl gehalten werden müssen -> zu verbrauchen bis.."}
+                                        hr{}
+                                        p{ "Übrige Lebensmittel: mindestens haltbar bis.."}
+                                    },
                                     DateInput {
                                         date_value: date,
                                         date_prefix: date_prefix
@@ -75,6 +87,18 @@ fn app() -> Element {
 
                                 }
                                 FormField { label: "Zusatzinformationen",
+                                    help: rsx! {
+                                        table{ class: "table",
+                                            tbody{
+                                                tr{td{"Tiefkühlprodukte Bemerkung anbringen: Im Tiefkühler bei -18°C gut verpackt lagern, nach dem Auftauen nicht wieder einfrieren"}}
+                                                tr{td{"Gebrauchsanleitung / Zubereitung / Verwendungstipps"}}
+                                                tr{td{"Anweisung Aufbewahrung z.B. nach dem Öffnen gekühlt aufbewahren"}}
+                                                tr{td{"Alkoholgehalt, Koffeingehalt"}}
+                                                tr{td{"Freiwillige Angaben (vegetarisch/allergenfrei etc..)"}}
+                                                tr{td{"Nährwertbezogene angaben, Health claims müssen bestimmte Anforderungen erfüllen  -> link anhängen"}}
+                                            }
+                                        }
+                                    },
                                     TextareaInput {
                                         placeholder: "Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung",
                                         rows: "4",
@@ -83,7 +107,52 @@ fn app() -> Element {
                                 }
                             }
                             FieldGroup2 {
-                                FormField { label: "Aufbewahrung + Lagerung",
+                                FormField {
+                                    label: "Aufbewahrung + Lagerung",
+                                    help: rsx!{
+                                        br{}
+                                        br{}
+                                        div {
+                                            table { class: "table",
+                                                thead {
+                                                    tr {
+                                                        th { "Aufbewahrungsarten" }
+                                                        th { "Bedingungen" }
+                                                    }
+                                                }
+                                                tbody {
+                                                    tr {
+                                                        td { "Tiefgekühlt" }
+                                                        td { "mind. -18°C" }
+                                                    }
+                                                    tr {
+                                                        td { "Gekühlt" }
+                                                        td { "+2 - +5°C (8°C Käse, zubereitete Spesen)" }
+                                                    }
+                                                    tr {
+                                                        td { "Kühl lagern" }
+                                                        td { "bei Temperaturen bis +15°C" }
+                                                    }
+                                                    tr {
+                                                        td { "Bei Zimmertemperatur lagern" }
+                                                        td { "+18 - +22°C" }
+                                                    }
+                                                    tr {
+                                                        td { "Trocken Lagern" }
+                                                        td { "an einem trockenen Ort bei max. 70% lagern" }
+                                                    }
+                                                    tr {
+                                                        td { "Lichtgeschützt" }
+                                                        td { "vor direktem Lichteinfall" }
+                                                    }
+                                                    tr {
+                                                        td { "Feucht und kühl lagern" }
+                                                        td { "bei +6 – 15°C und 70-90% Luftfeuchtigkeit lagern" }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
                                     TextareaInput{
                                         rows: "2",
                                         placeholder: "z.B. dunkel und kühl bei max. 5°C lagern",
