@@ -20,6 +20,7 @@ fn app() -> Element {
     let name_to_add = use_signal(|| String::new());
     let mut last_id = use_signal(|| 0_usize);
     let product_title = use_signal(|| String::new());
+    let product_subtitle = use_signal(|| String::new());
     let additional_info = use_signal(|| String::new());
     let storage_info = use_signal(|| String::new());
     let date = use_signal(|| (String::new(), String::new()));
@@ -28,10 +29,16 @@ fn app() -> Element {
         ThemeLayout {
             div { class: "flex flex-col gap-6 p-8 pb-12 h-full",
                 h1 { class: "text-4xl text-accent mb-4", "LMK Creator | Lebensmittelkennzeichnung" }
+                FormField { label: "Produktname",
+                    TextInput {
+                        placeholder: "Produktname (optional)",
+                        bound_value: product_title
+                    }
+                }
                 FormField { label: "Sachbezeichnung",
                     TextInput {
                         placeholder: "Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig",
-                        bound_value: product_title
+                        bound_value: product_subtitle
                     }
                 }
                 SeparatorLine {}
@@ -94,6 +101,7 @@ fn app() -> Element {
             LabelPreview{
                 ingredients: ingredients,
                 product_title: product_title,
+                product_subtitle: product_subtitle,
                 additional_info: additional_info,
                 storage_info: storage_info
             }

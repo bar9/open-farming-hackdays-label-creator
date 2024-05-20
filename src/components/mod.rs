@@ -145,6 +145,7 @@ pub fn AddNewIngredientButton(on_click: EventHandler<MouseEvent>) -> Element {
 pub fn LabelPreview(
     ingredients: Signal<Vec<IngredientItem>>,
     product_title: Signal<String>,
+    product_subtitle: Signal<String>,
     additional_info: Signal<String>,
     storage_info: Signal<String>,
 ) -> Element {
@@ -154,7 +155,16 @@ pub fn LabelPreview(
                 "Etiketten Vorschau"
             }
             div { class: "bg-white border p-4 grid grid-col-1 gap-4",
-                h3 { class: "text-2xl mb-2", "{product_title}" }
+                if *product_title.read() != "" {
+                    {rsx! {
+                        h3 { class: "text-2xl", "{product_title}" }
+                        h3 { class: "text-lg mb-2", "{product_subtitle}" }
+                    }}
+                } else {
+                    {rsx! {
+                        h3 { class: "text-2xl mb-2", "{product_subtitle}" }
+                    }}
+                }
                 h4 { class: "text-xl mb-2", "Zutaten" }
                 span {
                     dangerous_inner_html: "{sorted_ingredient_list(ingredients.read().clone())}"
