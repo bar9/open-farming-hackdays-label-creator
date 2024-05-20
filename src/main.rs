@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use crate::components::{AddNewIngredientButton, FieldGroup1, FieldGroup2, FormField, IngredientsTable, LabelPreview, SeparatorLine, TextareaInput, TextInput, TextInputDummy};
+use crate::components::*;
 use crate::layout::ThemeLayout;
 use crate::model::{food_db, IngredientItem, sorted_ingredient_list};
 
@@ -22,6 +22,7 @@ fn app() -> Element {
     let product_title = use_signal(|| String::new());
     let additional_info = use_signal(|| String::new());
     let storage_info = use_signal(|| String::new());
+    let date = use_signal(|| (String::new(), String::new()));
 
     rsx! {
         ThemeLayout {
@@ -38,7 +39,10 @@ fn app() -> Element {
                 SeparatorLine {}
                 FieldGroup2 {
                     FormField { label: "Datumseingabe",
-                        input {class: "input input-bordered w-full", r#type: "date", value: "2024-03-23"}
+                        DateInput {
+                            bound_value: date
+                        }
+
                     }
                     FormField { label: "Zusatzinformationen",
                         TextareaInput {

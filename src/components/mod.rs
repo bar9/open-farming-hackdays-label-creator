@@ -1,9 +1,12 @@
 #![allow(non_snake_case)]
 
 use std::collections::{BTreeMap, HashMap};
+use std::ops::Add;
 use std::sync::Arc;
 use dioxus::html::textarea;
 use dioxus::prelude::*;
+use chrono::prelude::*;
+use chrono::TimeDelta;
 use crate::model::{sorted_ingredient_list, IngredientItem, AdditionalInfo, food_db};
 
 pub fn SeparatorLine() -> Element {
@@ -18,6 +21,7 @@ pub struct TextInputProps {
     placeholder: String,
     bound_value: Signal<String>
 }
+#[component]
 pub fn TextInput(mut props: TextInputProps) -> Element {
     rsx! {
         input {
@@ -27,6 +31,25 @@ pub fn TextInput(mut props: TextInputProps) -> Element {
             value: "{props.bound_value}",
             oninput: move |evt| props.bound_value.set(evt.data.value())
         }
+    }
+}
+
+#[derive(Props, Clone, PartialEq)]
+pub struct DateInputProps {
+    bound_value: Signal<(String, String)>
+}
+
+pub fn DateInput(mut props: DateInputProps) -> Element {
+    let in_a_year: DateTime<Utc> = Utc::now().add(TimeDelta::days(365));
+    let formatted_date = in_a_year.format("%Y-%m-%d").to_string();
+    rsx! {
+        select {
+            class: "select select-bordered w-full max-w-xs",
+            // oninput: move |evt| props.bound_value.set(evt.data.value()),
+            option {selected: true, "mindestens haltbar bis"}
+            option {"zu verbrauchen bis"}
+        }
+        input {class: "input input-bordered w-full", r#type: "date", value: "{formatted_date}"}
     }
 }
 
