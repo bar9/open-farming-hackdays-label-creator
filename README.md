@@ -11,9 +11,11 @@ Live Demo / Prototype: https://jarheadcore.github.io/open-farming-hackdays-label
 * install rust platform
 * install node platform
 
+Install latest dioxus-cli from git (because of https://github.com/DioxusLabs/dioxus/issues/2285)
 ```bash
-cargo install dioxus-cli
+cargo install --git https://github.com/DioxusLabs/dioxus.git dioxus-cli
 ```
+
 
 ```bash
 cargo install cargo-make
@@ -32,6 +34,7 @@ npm install
 ```bash
 cargo make dev
 ```
+and open `http://localhost:8080/open-farming-hackdays-label-creator` (without a trailing slash!)
 
 ## Eingabefelder und Feldtypen
 
