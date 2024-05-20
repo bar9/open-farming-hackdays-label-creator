@@ -215,7 +215,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
         div { class: "flex flex-col gap-4",
             h4 { class: "text-xl mb-2", "{props.label}" }
             table { class: "table border-solid",
-                tr { th { "Zutat" } th { "Menge" } }
+                tr { th { "Zutat (eingeben oder auswählen)" } th { "Menge" } }
                 for (key, &ref ingr) in props.ingredients.read().iter().enumerate() {
                     tr { key: "{key}",
                         td {
