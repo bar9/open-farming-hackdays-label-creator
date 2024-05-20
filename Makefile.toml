@@ -5,7 +5,7 @@ args = ["serve", "--hot-reload"]
 
 [tasks.tailwind-dev]
 command = "npx"
-args = ["tailwindcss", "-i",  "./input.css", "-o", "./public/tailwind.css"]
+args = ["tailwindcss", "-i",  "./input.css", "-o", "./public/tailwind.css", "--watch"]
 
 [tasks.dev]
 run_task = { name = ["tailwind-dev", "frontend-dev"], parallel = true}

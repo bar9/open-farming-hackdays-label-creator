@@ -1,6 +1,4 @@
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::io::{Read};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct IngredientItem {
