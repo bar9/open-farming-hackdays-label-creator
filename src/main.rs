@@ -16,9 +16,6 @@ fn main() {
 
 fn app() -> Element {
     let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| Vec::new());
-    let adding = use_signal(|| false);
-    let name_to_add = use_signal(|| String::new());
-    // let mut last_id = use_signal(|| 0_usize);
     let product_title = use_signal(|| String::new());
     let product_subtitle = use_signal(|| String::new());
     let additional_info = use_signal(|| String::new());
@@ -40,7 +37,9 @@ fn app() -> Element {
         ThemeLayout {
             div { class: "flex flex-col gap-6 p-8 pb-12 h-full",
                 h1 { class: "text-4xl text-accent mb-4", "LMK Creator | Lebensmittelkennzeichnung" }
-                FormField { label: "Produktname",
+                FormField {
+                    label: "Produktname",
+                    help: rsx!{div{ "Produktname Hilfe"}},
                     TextInput {
                         placeholder: "Produktname (optional)",
                         bound_value: product_title
@@ -53,7 +52,11 @@ fn app() -> Element {
                     }
                 }
                 SeparatorLine {}
-                IngredientsTable { label: "Zutaten", ingredients: ingredients}
+                FormField {
+                    label: "Zutaten",
+                    help: rsx!{p{"Wählen Sie hier Ihre Zutaten+++"}},
+                    IngredientsTable {ingredients: ingredients}
+                }
                 SeparatorLine {}
                 FieldGroup2 {
                     FormField { label: "Datumseingabe",

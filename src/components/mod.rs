@@ -76,30 +76,25 @@ pub fn TextareaInput(mut props: TextareaInputProps) -> Element {
 }
 
 #[derive(Props, Clone, PartialEq)]
-pub struct TextInputDummyProps {
-    #[props(into)]
-    placeholder: String
-}
-pub fn TextInputDummy(props: TextInputDummyProps) -> Element {
-    rsx! {
-        input {
-            class: "input input-bordered w-full",
-            r#type: "text",
-            placeholder: "{props.placeholder}",
-        }
-    }
-}
-#[derive(Props, Clone, PartialEq)]
 pub struct FormFieldProps {
     #[props(into)]
     label: String,
+    help: Option<Element>,
     children: Element
 }
 pub fn FormField(props: FormFieldProps) -> Element {
     rsx! {
         div {
             class: "flex gap-2 flex-col",
-            label { "{props.label}" }
+            label {
+                "{props.label}"
+                {rsx!{
+                    FieldHelp {
+                        label: props.label,
+                        help: props.help.unwrap_or(None)
+                    }
+                }}
+            }
             {props.children}
         }
     }
@@ -253,20 +248,17 @@ pub fn LabelPreview(
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
-    #[props(into)]
-    label: String,
     ingredients: Signal<Vec<IngredientItem>>
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     // let mut ingredients_lock = props.ingredients.read();
-    let mut delete_callback =
+    let delete_callback =
         |index, mut list: Signal<Vec<IngredientItem>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
     // let mut last_id = use_signal(|| 0);
     rsx! {
         div { class: "flex flex-col gap-4",
-            h4 { class: "text-xl mb-2", "{props.label}" }
             table { class: "table border-solid",
                 tr { th { "Zutat (eingeben oder auswählen)" } th { "Menge" } }
                 for (key, &ref ingr) in props.ingredients.read().iter().enumerate() {
@@ -318,13 +310,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             }
             "g"
             button { class: "btn btn-accent",
-                onclick: move |evt|  {
-                    // props.ingredients.write().insert(
+                onclick: move |_evt|  {
                     props.ingredients.write().push(
-                        // last_id + 1,
                         IngredientItem::from_name_amount((&*name_to_add)(), (&*amount_to_add)())
                     );
-                    // last_id += 1;
                     name_to_add.set(String::new());
                     amount_to_add.set(0);
                 },
@@ -333,3 +322,74 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
         }
     }
 }
+
+#[derive(Props, Clone, PartialEq)]
+pub struct FieldHelpProps{
+    #[props(into)]
+    label: String,
+    help: Element
+}
+pub fn FieldHelp(props: FieldHelpProps) -> Element {
+    let mut is_open = use_signal(|| false);
+    if props.help.is_none() {
+        None
+    } else {
+        rsx! {
+            button {
+                class: "btn btn-xs ml-2",
+                onkeydown: move |evt| {
+                    match evt.key() {
+                        Key::Escape => {
+                            is_open.set(false);
+                        },
+                        _ => {}
+                    }
+                },
+                onclick: move |_| is_open.toggle(),
+                InfoIcon{}
+            }
+            dialog {
+                open: "{is_open}",
+                class: "modal",
+                div {
+                    class: "modal-box",
+                    h3 { class:"font-bold text-lg", "{props.label}" }
+                    {props.help}
+                    div {class: "modal-action",
+                        form {method: "dialog",
+                            button {class:"btn btn-sm",
+                                onclick: move |_| is_open.toggle(),
+                                "× Schliessen"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+#[component]
+pub fn InfoIcon() -> Element {
+    rsx! {
+        svg {
+            class: "w-6 h-6",
+            view_box: "0 0 160 160",
+            g {
+                fill: "#4b4b4b",
+                path {
+                    d: "m80 15c-35.88 0-65 29.12-65 65s29.12 65 65 65 65-29.12 65-65-29.12-65-65-65zm0 10c30.36 0 55 24.64 55 55s-24.64 55-55 55-55-24.64-55-55 24.64-55 55-55z"
+                }
+                path {
+                    d: "m57.373 18.231a9.3834 9.1153 0 1 1 -18.767 0 9.3834 9.1153 0 1 1 18.767 0z",
+                    transform: "matrix(1.1989 0 0 1.2342 21.214 28.75)"
+                }
+                path {
+                    d: "m90.665 110.96c-0.069 2.73 1.211 3.5 4.327 3.82l5.008 0.1v5.12h-39.073v-5.12l5.503-0.1c3.291-0.1 4.082-1.38 4.327-3.82v-30.813c0.035-4.879-6.296-4.113-10.757-3.968v-5.074l30.665-1.105"
+                }
+            }
+        }
+    }
+}
+

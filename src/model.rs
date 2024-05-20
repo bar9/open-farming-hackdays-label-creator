@@ -7,16 +7,6 @@ pub struct IngredientItem {
 }
 
 impl IngredientItem {
-   pub(crate) fn from_name(name: String) -> Self {
-       let is_allergen = lookup_allergen(&name);
-       IngredientItem {
-           basicInfo: BasicIngredientItem {
-               standard_ingredient: StandardIngredient {name, is_allergen},
-               amount: 0,
-           },
-           additionalInfo: AdditionalInfo::None,
-       }
-   }
     pub(crate) fn from_name_amount(name: String, amount: i32) -> Self {
         let is_allergen = lookup_allergen(&name);
         IngredientItem {
