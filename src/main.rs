@@ -1,9 +1,15 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
 use crate::components::*;
 use crate::layout::ThemeLayout;
 use crate::model::{IngredientItem};
+use serde_qs::to_string as to_query_string;
+use serde_qs::from_str as from_query_string;
+use web_sys::js_sys::Array;
+use web_sys::wasm_bindgen::JsValue;
+use web_sys::window;
 
 mod layout;
 
@@ -12,28 +18,126 @@ mod components;
 
 const _STYLE: &str = manganis::mg!(file("public/tailwind.css"));
 
+#[derive(Serialize, Deserialize, PartialEq)]
+struct AppState {
+    #[serde(default)]
+    ingredients: Vec<IngredientItem>,
+    #[serde(default)]
+    product_title: String,
+    #[serde(default)]
+    product_subtitle: String,
+    #[serde(default)]
+    additional_info: String,
+    #[serde(default)]
+    storage_info: String,
+    #[serde(default)]
+    date_prefix: String,
+    #[serde(default)]
+    date: String,
+    #[serde(default)]
+    production_country: String,
+    #[serde(default)]
+    net_weight: String,
+    #[serde(default)]
+    drained_weight: String,
+    #[serde(default)]
+    producer_name: String,
+    #[serde(default)]
+    producer_address: String,
+    #[serde(default)]
+    producer_zip: String,
+    #[serde(default)]
+    producer_city: String,
+    #[serde(default)]
+    price_per_100: String,
+    #[serde(default)]
+    total_price: String,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        if let Some(window) = web_sys::window() {
+            if let Ok(mut query_string) = window.location().search() {
+                query_string = query_string.trim_start_matches('?').to_string();
+                if let Ok(app_state_from_query_string) = from_query_string::<AppState>(
+                    &query_string
+                ) {
+                    return app_state_from_query_string;
+                }
+            }
+        }
+        AppState {
+            ingredients: Vec::new(),
+            product_title: String::new(),
+            product_subtitle: String::new(),
+            additional_info: String::new(),
+            storage_info: String::new(),
+            date_prefix: String::new(),
+            date: String::new(),
+            production_country: String::from("Schweiz"),  // Default to "Schweiz"
+            net_weight: String::new(),
+            drained_weight: String::new(),
+            producer_name: String::new(),
+            producer_address: String::new(),
+            producer_zip: String::new(),
+            producer_city: String::new(),
+            price_per_100: String::new(),
+            total_price: String::new(),
+        }
+    }
+}
+
 fn main() {
     launch(app);
+
 }
 
 fn app() -> Element {
-    let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| Vec::new());
-    let product_title = use_signal(|| String::new());
-    let product_subtitle = use_signal(|| String::new());
-    let additional_info = use_signal(|| String::new());
-    let storage_info = use_signal(|| String::new());
-    let date_prefix = use_signal(|| String::new());
-    let date = use_signal(|| String::new());
-    let production_country = use_signal(|| String::from("Schweiz"));
-    let net_weight = use_signal(|| String::new());
-    let drained_weight = use_signal(|| String::new());
-    let producer_name = use_signal(|| String::new());
-    let producer_address = use_signal(|| String::new());
-    let producer_zip = use_signal(|| String::new());
-    let producer_city = use_signal(|| String::new());
-    let price_per_100 = use_signal(|| String::new());
-    let total_price = use_signal(|| String::new());
+    let initial_app_state = use_memo(
+        move || AppState::default()
+    );
+    let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| initial_app_state.read().ingredients.clone());
+    let product_title = use_signal(|| initial_app_state.read().product_title.clone());
+    let product_subtitle = use_signal(|| initial_app_state.read().product_subtitle.clone());
+    let additional_info = use_signal(|| initial_app_state.read().additional_info.clone());
+    let storage_info = use_signal(|| initial_app_state.read().storage_info.clone());
+    let date_prefix = use_signal(|| initial_app_state.read().date_prefix.clone());
+    let date = use_signal(|| initial_app_state.read().date.clone());
+    let production_country = use_signal(|| initial_app_state.read().production_country.clone());
+    let net_weight = use_signal(|| initial_app_state.read().net_weight.clone());
+    let drained_weight = use_signal(|| initial_app_state.read().drained_weight.clone());
+    let producer_name = use_signal(|| initial_app_state.read().producer_name.clone());
+    let producer_address = use_signal(|| initial_app_state.read().producer_address.clone());
+    let producer_zip = use_signal(|| initial_app_state.read().producer_zip.clone());
+    let producer_city = use_signal(|| initial_app_state.read().producer_city.clone());
+    let price_per_100 = use_signal(|| initial_app_state.read().price_per_100.clone());
+    let total_price = use_signal(|| initial_app_state.read().total_price.clone());
 
+    let query_string = use_memo(move || {
+        let current_state = AppState {
+            ingredients: ingredients(),
+            product_title: product_title(),
+            product_subtitle: product_subtitle(),
+            additional_info: additional_info(),
+            storage_info: storage_info(),
+            date_prefix: date_prefix(),
+            date: date(),
+            production_country: production_country(),
+            net_weight: net_weight(),
+            drained_weight: drained_weight(),
+            producer_name: producer_name(),
+            producer_address: producer_address(),
+            producer_zip: producer_zip(),
+            producer_city: producer_city(),
+            price_per_100: price_per_100(),
+            total_price: total_price(),
+        };
+
+        // let js_array = Array::new();
+        // js_array.push(&JsValue::from(format!("{}", to_query_string(&current_state).unwrap())));
+        // web_sys::console::info(&js_array);
+        return format!{"?{}",to_query_string(&current_state).unwrap()};
+    });
 
     rsx! {
         ThemeLayout {
@@ -257,6 +361,19 @@ fn app() -> Element {
                 producer_city : producer_city,
                 price_per_100: price_per_100,
                 total_price: total_price
+            }
+            div {class: "fixed top-4 right-4",
+                button {class: "btn btn-primary",
+                    onclick: move |_: MouseEvent| {
+                        let window = window().expect("no global `window` exists");
+                        let navigator = window.navigator();
+                        let clipboard = navigator.clipboard();
+                        let href = window.location().href().unwrap();
+                        let text = format!("http://localhost:8080/{query_string}");
+                        let  _ = clipboard.write_text(&text);
+                    },
+                    "📋"
+                }
             }
         }
     }
