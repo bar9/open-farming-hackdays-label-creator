@@ -369,7 +369,7 @@ fn app() -> Element {
                         let navigator = window.navigator();
                         let clipboard = navigator.clipboard();
                         let href = window.location().href().unwrap();
-                        let text = format!("http://localhost:8080/{query_string}");
+                        let text = format!("{href}{query_string}");
                         let  _ = clipboard.write_text(&text);
                     },
                     "📋"
