@@ -14,4 +14,4 @@ serde = { version = "1.0.197", features = ["derive"] }
 chrono = "0.4.38"
 serde_urlencoded = "0.7.1"
 serde_qs = "0.13.0"
-web-sys = "0.3.70"
+web-sys = { version = "0.3.70", features = ["Navigator", "Clipboard"] }
