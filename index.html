@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Label Creator</title>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="/open-farming-hackdays-label-creator/tailwind.css">
+<link rel="stylesheet" href="/tailwindcsse989ffe8c4b58dd5.css">
+
+</head>
+<body>
+  <div id="main"></div>
+  <script type="module">
+    import init from "/open-farming-hackdays-label-creator/assets/dioxus/label-creator.js";
+    init("/open-farming-hackdays-label-creator/assets/dioxus/label-creator_bg.wasm").then(wasm => {
+      if (wasm.__wbindgen_start == undefined) {
+        wasm.main();
+      }
+    });
+  </script>
+  
+</body>
+</html>
