@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 
-use std::ops::Add;
-use dioxus::prelude::*;
+use crate::model::{food_db, sorted_ingredient_list, IngredientItem};
 use chrono::prelude::*;
 use chrono::TimeDelta;
-use crate::model::{sorted_ingredient_list, IngredientItem, food_db};
+use dioxus::prelude::*;
+use std::ops::Add;
 
 pub fn SeparatorLine() -> Element {
     rsx! {
@@ -16,7 +16,7 @@ pub fn SeparatorLine() -> Element {
 pub struct TextInputProps {
     #[props(into)]
     placeholder: String,
-    bound_value: Signal<String>
+    bound_value: Signal<String>,
 }
 #[component]
 pub fn TextInput(mut props: TextInputProps) -> Element {
@@ -34,7 +34,7 @@ pub fn TextInput(mut props: TextInputProps) -> Element {
 #[derive(Props, Clone, PartialEq)]
 pub struct DateInputProps {
     date_prefix: Signal<String>,
-    date_value: Signal<String>
+    date_value: Signal<String>,
 }
 
 pub fn DateInput(mut props: DateInputProps) -> Element {
@@ -61,7 +61,7 @@ pub struct TextareaInputProps {
     placeholder: String,
     bound_value: Signal<String>,
     #[props(into)]
-    rows: String
+    rows: String,
 }
 pub fn TextareaInput(mut props: TextareaInputProps) -> Element {
     rsx! {
@@ -80,7 +80,7 @@ pub struct FormFieldProps {
     #[props(into)]
     label: String,
     help: Option<Element>,
-    children: Element
+    children: Element,
 }
 pub fn FormField(props: FormFieldProps) -> Element {
     rsx! {
@@ -102,7 +102,7 @@ pub fn FormField(props: FormFieldProps) -> Element {
 
 #[derive(Props, Clone, PartialEq)]
 pub struct FieldGroup2Props {
-    children: Element
+    children: Element,
 }
 pub fn FieldGroup2(props: FieldGroup2Props) -> Element {
     rsx! {
@@ -117,7 +117,7 @@ pub fn FieldGroup2(props: FieldGroup2Props) -> Element {
 pub struct FieldGroup1Props {
     #[props(into)]
     label: String,
-    children: Element
+    children: Element,
 }
 pub fn FieldGroup1(props: FieldGroup1Props) -> Element {
     rsx! {
@@ -155,8 +155,7 @@ pub fn LabelPreview(
     producer_zip: Signal<String>,
     producer_city: Signal<String>,
     price_per_100: Signal<String>,
-    total_price: Signal<String>
-
+    total_price: Signal<String>,
 ) -> Element {
     rsx! {
         div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",
@@ -248,11 +247,10 @@ pub fn LabelPreview(
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
-    ingredients: Signal<Vec<IngredientItem>>
+    ingredients: Signal<Vec<IngredientItem>>,
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
-    let delete_callback =
-        |index, mut list: Signal<Vec<IngredientItem>>| list.remove(index);
+    let delete_callback = |index, mut list: Signal<Vec<IngredientItem>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
     rsx! {
@@ -322,10 +320,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 }
 
 #[derive(Props, Clone, PartialEq)]
-pub struct FieldHelpProps{
+pub struct FieldHelpProps {
     #[props(into)]
     label: String,
-    help: Element
+    help: Element,
 }
 pub fn FieldHelp(props: FieldHelpProps) -> Element {
     let mut is_open = use_signal(|| false);
@@ -365,7 +363,6 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
             }
         }
     }
-
 }
 
 #[component]
@@ -390,4 +387,3 @@ pub fn InfoIcon() -> Element {
         }
     }
 }
-

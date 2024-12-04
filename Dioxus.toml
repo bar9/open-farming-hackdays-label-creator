@@ -34,7 +34,7 @@ watch_path = ["src", "public"]
 [web.resource]
 
 # CSS style file
-style = ["/open-farming-hackdays-label-creator/tailwind.css"]
+style = ["/open-farming-hackdays-label-creator/assets/tailwind.css"]
 
 # Javascript code file
 script = []

@@ -1,7 +1,7 @@
 [tasks.frontend-dev]
 #install_crate = "dioxus-cli"
 command = "dx"
-args = ["serve", "--hot-reload"]
+args = ["serve"]
 
 [tasks.tailwind-dev]
 command = "npx"

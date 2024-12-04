@@ -16,7 +16,7 @@ mod layout;
 mod model;
 mod components;
 
-const _STYLE: &str = manganis::mg!(file("public/tailwind.css"));
+const _TAILWIND_URL: &str = manganis::mg!(file("public/tailwind.css"));
 
 #[derive(Serialize, Deserialize, PartialEq)]
 struct AppState {
