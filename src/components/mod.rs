@@ -307,16 +307,17 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                                     },
                                                     value: "{ingr.basicInfo.amount}"
                                                 }
+                                                pre {
+                                                    "{(&*amount_to_edit)() as f32 / props.ingredients.read().get(key).unwrap().basicInfo.amount as f32}"
+                                                }
                                                 button { class: "btn btn-accent",
                                                     onclick: move |_evt|  {
                                                         if *scale_together.read() {
-                                                            // let factor = (&*amount_to_edit)() / props.ingredients.read().get(key).unwrap().basicInfo.amount;
-                                                            let factor = &*amount_to_edit;
-                                                            let factor = 5;
+                                                            let factor: f32 = (&*amount_to_edit)() as f32 / props.ingredients.read().get(key).unwrap().basicInfo.amount as f32;
                                                             let ingredients = props.ingredients.read().clone();
                                                             for (key, elem) in ingredients.iter().enumerate() {
                                                                 let name = elem.basicInfo.standard_ingredient.name.clone();
-                                                                props.ingredients.write()[key] = IngredientItem::from_name_amount( name, elem.basicInfo.amount * factor);
+                                                                props.ingredients.write()[key] = IngredientItem::from_name_amount( name, (elem.basicInfo.amount as f32 * factor) as i32);
                                                             }
                                                         } else {
                                                             let name = (props.ingredients.read().get(key).unwrap().basicInfo.standard_ingredient.name.clone());
