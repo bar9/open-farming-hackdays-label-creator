@@ -265,13 +265,13 @@ function __wbg_adapter_50(arg0, arg1) {
 function __wbg_adapter_53(arg0, arg1, arg2) {
     _assertNum(arg0);
     _assertNum(arg1);
-    wasm.closure511_externref_shim(arg0, arg1, arg2);
+    wasm.closure526_externref_shim(arg0, arg1, arg2);
 }
 
 function __wbg_adapter_56(arg0, arg1, arg2) {
     _assertNum(arg0);
     _assertNum(arg1);
-    wasm.closure573_externref_shim(arg0, arg1, arg2);
+    wasm.closure588_externref_shim(arg0, arg1, arg2);
 }
 
 const __wbindgen_enum_ScrollBehavior = ["auto", "instant", "smooth"];
@@ -1269,16 +1269,16 @@ function __wbg_get_imports() {
         _assertBoolean(ret);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1111 = function() { return logError(function (arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 508, __wbg_adapter_50);
+    imports.wbg.__wbindgen_closure_wrapper1136 = function() { return logError(function (arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 523, __wbg_adapter_50);
         return ret;
     }, arguments) };
-    imports.wbg.__wbindgen_closure_wrapper1113 = function() { return logError(function (arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 508, __wbg_adapter_53);
+    imports.wbg.__wbindgen_closure_wrapper1138 = function() { return logError(function (arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 523, __wbg_adapter_53);
         return ret;
     }, arguments) };
-    imports.wbg.__wbindgen_closure_wrapper1232 = function() { return logError(function (arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 574, __wbg_adapter_56);
+    imports.wbg.__wbindgen_closure_wrapper1257 = function() { return logError(function (arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 589, __wbg_adapter_56);
         return ret;
     }, arguments) };
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
