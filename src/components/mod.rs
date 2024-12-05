@@ -1,10 +1,14 @@
 #![allow(non_snake_case)]
 
-use crate::model::{food_db, sorted_ingredient_list, IngredientItem};
+use crate::core::Rule;
+use crate::model::{food_db, processed_ingredient_list, IngredientItem};
 use chrono::prelude::*;
 use chrono::TimeDelta;
 use dioxus::prelude::*;
 use std::ops::Add;
+use web_sys::console;
+use crate::core::Rule::{AllGram, AllPercentages, Composite, MaxDetails, PercentagesStartsWithM};
+use crate::core::Unit::Percentage;
 
 pub fn SeparatorLine() -> Element {
     rsx! {
@@ -157,6 +161,8 @@ pub fn LabelPreview(
     price_per_100: Signal<String>,
     total_price: Signal<String>,
 ) -> Element {
+    let mut active_rules: Signal<Vec<Rule>> = use_signal(|| vec![]);
+
     rsx! {
         div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",
             h2 { class: "text-primary-content pb-4 text-4xl",
@@ -180,7 +186,7 @@ pub fn LabelPreview(
                     class: "py-2",
                     h4 { class: "font-bold", "Zutaten:" }
                     div { class: "text-sm",
-                        dangerous_inner_html: "{sorted_ingredient_list(ingredients.read().clone())}"
+                        dangerous_inner_html: "{processed_ingredient_list(ingredients.read().clone(), active_rules.read().clone())}"
                     }
                 }
 
@@ -241,6 +247,117 @@ pub fn LabelPreview(
                     }
                 }
             }
+            h2 { class: "text-primary-content pb-4 pt-8 text-4xl",
+                "Regeln"
+            }
+            div {
+                class: "py-2 bg-white",
+                form {
+                    oninput: move |ev| {
+                        let selected_rule: &str = &ev.values().get("radio-rules").unwrap().get(0).unwrap().clone();
+                        match selected_rule {
+                            "startswith" => *active_rules.write() = vec![PercentagesStartsWithM],
+                            "percent" => *active_rules.write() = vec![AllPercentages],
+                            "debug" => *active_rules.write() = vec![MaxDetails],
+                            "gram" => *active_rules.write() = vec![AllGram],
+                            "composite" => *active_rules.write() = vec![Composite],
+                            "composite-m" => *active_rules.write() = vec![PercentagesStartsWithM, Composite],
+                            _ => *active_rules.write() = vec![]
+                       }
+                    },
+                    div {
+                        class: "form-control w-52",
+                        label {
+                            class: "label cursor-pointer",
+                            span {
+                                class: "label-text",
+                                "Standard"
+                            }
+                            input {
+                                r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", checked: true, value: "standard"
+                            }
+                        }
+                    }
+                    div {
+                        class: "form-control w-52",
+                        label {
+                            class: "label cursor-pointer",
+                            span {
+                                class: "label-text",
+                                "Startbuchstabe 'M' -> %"
+                            }
+                            input {
+                                r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", value: "startswith"
+                            }
+                        }
+                    }
+                    div {
+                       class: "form-control w-52",
+                       label {
+                           class: "label cursor-pointer",
+                           span {
+                               class: "label-text",
+                               "Alle %"
+                           }
+                           input {
+                               r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", value: "percent"
+                           }
+                       }
+                    }
+                    div {
+                       class: "form-control w-52",
+                       label {
+                           class: "label cursor-pointer",
+                           span {
+                               class: "label-text",
+                               "Zusammengesetzt (Beispiel 'Brot')"
+                           }
+                           input {
+                               r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", value: "composite"
+                           }
+                       }
+                    }
+                    div {
+                       class: "form-control w-52",
+                       label {
+                           class: "label cursor-pointer",
+                           span {
+                               class: "label-text",
+                               "Zusammengesetzt Brot + Startbuchstabe M in %"
+                           }
+                           input {
+                               r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", value: "composite-m"
+                           }
+                       }
+                    }
+                    div {
+                       class: "form-control w-52",
+                       label {
+                           class: "label cursor-pointer",
+                           span {
+                               class: "label-text",
+                               "Alle Mengen in g"
+                           }
+                           input {
+                               r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", value: "gram"
+                           }
+                       }
+                    }
+                    div {
+                       class: "form-control w-52",
+                       label {
+                           class: "label cursor-pointer",
+                           span {
+                               class: "label-text",
+                               "Alle Details"
+                           }
+                           input {
+                               r#type: "radio", name: "radio-rules", class: "radio checked:bg-primary", value: "debug"
+                           }
+                       }
+                    }
+                }
+            }
         }
     }
 }
@@ -279,7 +396,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                         ul {
                                             li {
                                                 div {
-                                                    class: "form-control",
+                                                    class: "form-control w-52",
                                                     label {
                                                         class: "label cursor-pointer",
                                                         span {
@@ -306,9 +423,6 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                                         }
                                                     },
                                                     value: "{ingr.basicInfo.amount}"
-                                                }
-                                                pre {
-                                                    "{(&*amount_to_edit)() as f32 / props.ingredients.read().get(key).unwrap().basicInfo.amount as f32}"
                                                 }
                                                 button { class: "btn btn-accent",
                                                     onclick: move |_evt|  {

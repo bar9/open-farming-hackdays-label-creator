@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use crate::core::{Calculator, Ingredient, Input, Lookup, Rule};
+use crate::core::Rule::{AllPercentages, PercentagesStartsWithM};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct IngredientItem {
@@ -46,21 +48,26 @@ pub struct StandardIngredient {
     pub name: String,
     pub is_allergen: bool
 }
-pub fn sorted_ingredient_list(mut ingredients:Vec<IngredientItem>) -> String {
-    ingredients.sort_by(|a, b| b.basicInfo.amount.cmp(&a.basicInfo.amount));
+pub fn processed_ingredient_list(ingredients: Vec<IngredientItem>, rules: Vec<Rule>) -> String {
 
-    let ingredients_string =
-    ingredients.iter()
-        .map(|ele| {
-            if ele.basicInfo.standard_ingredient.is_allergen {
-                format! {"<b>{} ({} g)</b>", ele.basicInfo.standard_ingredient.name.clone(), ele.basicInfo.amount}
-            } else {
-                format! {"{} ({} g)", ele.basicInfo.standard_ingredient.name.clone(), ele.basicInfo.amount}
+    let lookup = Lookup {};
+    let mut calculator = Calculator::new();
+    calculator.registerRules(rules);
+    calculator.registerLookup(lookup);
+    let input1 = Input {
+        ingredients: ingredients.iter().map(|ing_item| {
+            Ingredient{
+                name: ing_item.clone().basicInfo.standard_ingredient.name,
+                is_allergen: ing_item.basicInfo.standard_ingredient.is_allergen,
+                amount: ing_item.basicInfo.amount as f64
             }
-        })
-        .collect::<Vec<_>>()
-        .join(", ");
-    format!("<span>{}</span>", ingredients_string)
+        }).collect()
+
+    };
+
+    let output = calculator.execute(input1);
+
+    format!("<span>{}</span>", output.label)
 }
 
 pub fn lookup_allergen(name: &str) -> bool {
