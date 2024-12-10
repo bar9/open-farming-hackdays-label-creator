@@ -1,14 +1,14 @@
 #![allow(non_snake_case)]
 
-use crate::core::Rule;
 use crate::model::{food_db, processed_ingredient_list, IngredientItem};
 use chrono::prelude::*;
 use chrono::TimeDelta;
 use dioxus::prelude::*;
 use std::ops::Add;
 use web_sys::console;
-use crate::core::Rule::{AllGram, AllPercentages, Composite, MaxDetails, PercentagesStartsWithM};
 use crate::core::Unit::Percentage;
+use crate::rules::RuleDef;
+use crate::rules::RuleDef::{AllGram, AllPercentages, Composite, MaxDetails, PercentagesStartsWithM};
 
 pub fn SeparatorLine() -> Element {
     rsx! {
@@ -161,7 +161,7 @@ pub fn LabelPreview(
     price_per_100: Signal<String>,
     total_price: Signal<String>,
 ) -> Element {
-    let mut active_rules: Signal<Vec<Rule>> = use_signal(|| vec![]);
+    let mut active_rules: Signal<Vec<RuleDef>> = use_signal(|| vec![]);
 
     rsx! {
         div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",

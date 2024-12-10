@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use crate::core::{Calculator, Ingredient, Input, Lookup, Rule};
-use crate::core::Rule::{AllPercentages, PercentagesStartsWithM};
+use crate::core::{Calculator, Ingredient, Input, Lookup};
+use crate::rules::RuleDef;
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct IngredientItem {
@@ -48,11 +48,11 @@ pub struct StandardIngredient {
     pub name: String,
     pub is_allergen: bool
 }
-pub fn processed_ingredient_list(ingredients: Vec<IngredientItem>, rules: Vec<Rule>) -> String {
+pub fn processed_ingredient_list(ingredients: Vec<IngredientItem>, rules: Vec<RuleDef>) -> String {
 
     let lookup = Lookup {};
     let mut calculator = Calculator::new();
-    calculator.registerRules(rules);
+    calculator.registerRuleDefs(rules);
     calculator.registerLookup(lookup);
     let input1 = Input {
         ingredients: ingredients.iter().map(|ing_item| {

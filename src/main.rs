@@ -16,6 +16,7 @@ mod layout;
 mod model;
 mod components;
 mod core;
+mod rules;
 
 const _STYLE: &str = manganis::mg!(file("public/tailwind.css"));
 
