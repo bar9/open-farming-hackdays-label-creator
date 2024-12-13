@@ -1,4 +1,5 @@
 use std::cmp::PartialEq;
+use std::collections::HashMap;
 use std::mem;
 use crate::rules::RuleDef;
 
@@ -18,7 +19,9 @@ impl Input {
 pub struct Output {
     pub success: bool,
     pub label: String,
-    pub total_amount: f64
+    pub total_amount: f64,
+    pub validation_messages: HashMap<String, &'static str>,
+    pub conditional_elements: HashMap<&'static str, &'static str>
 }
 
 pub struct Lookup {
@@ -115,12 +118,14 @@ impl Calculator {
     }
     pub fn registerLookup(&self, lookup: Lookup) {}
     pub fn execute(&self, input: Input) -> Output {
+        let mut validation_messages = HashMap::new();
         let mut sorted_ingredients = input.ingredients.clone();
         sorted_ingredients
             .sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
 
         for ruleDef in &self.RuleDefs {
             match ruleDef {
+                RuleDef::V_001_Menge_Immer_Benoetigt => {validate_amount(&sorted_ingredients, &mut validation_messages)}
                 _ => {}
             }
         }
@@ -135,7 +140,17 @@ impl Calculator {
                 .map(|fmt| fmt.format())
                 .collect::<Vec<_>>()
                 .join(", "),
-            total_amount
+            total_amount,
+            validation_messages,
+            conditional_elements: HashMap::new()
+        }
+    }
+}
+
+fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut HashMap<String, &str>) {
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        if ingredient.amount <= 0. {
+            validation_messages.insert(format!("ingredients[{}][amount]", i), "Die Menge muss grösser als 0 sein.");
         }
     }
 }
@@ -264,6 +279,36 @@ mod tests {
         let label = output.label;
         assert!(label.contains("<b>Milch</b> 70%, Hafer"));
     }
+
+    #[test]
+    fn amount_lt_zero_invalid() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::V_001_Menge_Immer_Benoetigt]);
+        let input = Input {
+            ingredients: vec![
+                Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 0.0 }
+            ]
+        };
+        let output = calculator.execute(input);
+        let validation_messages= output.validation_messages;
+        assert!(validation_messages.get("ingredients[0][amount]").is_some());
+        assert_eq!("Die Menge muss grösser als 0 sein.", *validation_messages.get("ingredients[0][amount]").unwrap())
+    }
+
+    #[test]
+    fn amount_gt_zero_valid() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::V_001_Menge_Immer_Benoetigt]);
+        let input = Input {
+            ingredients: vec![
+                Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 32. }
+            ]
+        };
+        let output = calculator.execute(input);
+        let validation_messages= output.validation_messages;
+        assert!(validation_messages.get("ingredients[0][amount]").is_none());
+    }
+
 
     #[test]
     fn composite_ingredients_listed_in_parentheses_on_label() {

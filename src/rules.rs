@@ -20,7 +20,9 @@ pub enum RuleDef {
     AllGram,
     Composite,
     MaxDetails,
-    I_001_Zusammengesetzte_Zutaten
+    I_001_Zusammengesetzte_Zutaten,
+    V_001_Menge_Immer_Benoetigt
+
 }
 
 impl Rule for RuleDef {
@@ -32,6 +34,7 @@ impl Rule for RuleDef {
             RuleDef::Composite => vec![],
             RuleDef::MaxDetails => vec![],
             RuleDef::I_001_Zusammengesetzte_Zutaten => vec![],
+            RuleDef::V_001_Menge_Immer_Benoetigt => vec![]
         }
     }
 
@@ -42,7 +45,8 @@ impl Rule for RuleDef {
             RuleDef::AllGram => Output,
             RuleDef::Composite => Output,
             RuleDef::MaxDetails => Output,
-            RuleDef::I_001_Zusammengesetzte_Zutaten => Input
+            RuleDef::I_001_Zusammengesetzte_Zutaten => Input,
+            RuleDef::V_001_Menge_Immer_Benoetigt => Validation
         }
     }
 
