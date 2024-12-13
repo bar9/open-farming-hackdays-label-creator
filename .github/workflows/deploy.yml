@@ -17,7 +17,7 @@ jobs:
           # Build Tailwind CSS Styles
           npx tailwindcss -i input.css -o public/tailwind.css
       - name: "Dioxus Deploy"
-        uses: DioxusLabs/deploy-action@0.1.2
+        uses: DioxusLabs/deploy-action@0.1.1
 
 
 
