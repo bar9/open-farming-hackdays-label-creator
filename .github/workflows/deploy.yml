@@ -25,9 +25,13 @@ jobs:
           cargo install dioxus-cli@0.5.7
 
       - name: Install Rustup + add target
-        run: | 
+        run: |
           # rustup target
           rustup target add wasm32-unknown-unknown
+
+      - name: Update wasm-bindgen
+        run: |
+          cargo install -f wasm-bindgen-cli --version 0.2.97
 
       - name: NPM Install
         run: |
