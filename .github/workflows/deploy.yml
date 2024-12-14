@@ -6,20 +6,46 @@ on:
       - main  # Change this to match the branch you want to deploy from
 
 jobs:
-  build-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            override: true
+            target: wasm32-unknown-unknown
+
+      - name: Install Dioxus CLI
+        run: |
+          # Install Dioxus CLI
+          cargo install dioxus-cli
+
+      - name: Install Rustup + add target
+        run: | 
+          # rustup target
+          rustup target add wasm32-unknown-unknown
+
       - name: NPM Install
         run: |
           npm install
+
       - name: Tailwind CSS Generation
         run: |
           # Build Tailwind CSS Styles
           npx tailwindcss -i input.css -o public/tailwind.css
-      - name: "Dioxus Deploy"
-        uses: DioxusLabs/deploy-action@0.1.2
 
-
-
-
-
+      - name: Build with Dioxus
+        run: |
+          # Build your application with dx
+          dx build --release
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_dir: ./dist
+          clean: true
