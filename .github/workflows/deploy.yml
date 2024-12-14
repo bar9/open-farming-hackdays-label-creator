@@ -22,7 +22,7 @@ jobs:
       - name: Install Dioxus CLI
         run: |
           # Install Dioxus CLI
-          cargo install dioxus-cli
+          cargo install dioxus-cli@0.5.7
 
       - name: Install Rustup + add target
         run: | 
