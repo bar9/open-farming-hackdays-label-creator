@@ -19,23 +19,22 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                     match evt.key() {
                         Key::Escape => {
                             is_open.set(false);
-                        },
+                        }
                         _ => {}
                     }
                 },
                 onclick: move |_| is_open.toggle(),
-                InfoIcon{}
+                InfoIcon {}
             }
-            dialog {
-                open: "{is_open}",
-                class: "modal",
-                div {
-                    class: "modal-box bg-base-100",
-                    h3 { class:"font-bold text-lg", "{props.label}" }
+            if is_open() { div { class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md" } }
+            dialog { open: "{is_open}", class: "modal",
+                div { class: "modal-box bg-base-100 backdrop-blur-3xl",
+                    h3 { class: "font-bold text-lg", "{props.label}" }
                     {props.help}
-                    div {class: "modal-action",
-                        form {method: "dialog",
-                            button {class:"btn btn-sm",
+                    div { class: "modal-action",
+                        form { method: "dialog",
+                            button {
+                                class: "btn btn-sm",
                                 onclick: move |_| is_open.toggle(),
                                 "× Schliessen"
                             }
