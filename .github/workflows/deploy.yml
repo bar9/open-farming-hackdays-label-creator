@@ -22,11 +22,11 @@ jobs:
       - name: Install Dioxus CLI
         run: |
           # Install Dioxus CLI
-          cargo install dioxus-cli@0.5.7
+          cargo install dioxus-cli
 
-      - name: Update wasm-bindgen
-        run: |
-          cargo update -p wasm-bindgen --precise 0.2.99
+#      - name: Update wasm-bindgen
+#        run: |
+#          cargo update -p wasm-bindgen --precise 0.2.99
 
       - name: NPM Install
         run: |
@@ -35,7 +35,7 @@ jobs:
       - name: Tailwind CSS Generation
         run: |
           # Build Tailwind CSS Styles
-          npx tailwindcss -i input.css -o public/tailwind.css
+          npx tailwindcss -i input.css -o assets/tailwind.css
 
       - name: Build with Dioxus
         run: |
@@ -46,5 +46,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-          publish_dir: ./dist
+          publish_dir: ./target/dx/open-farming-hackdays-label-creator/release/web/public
           clean: true

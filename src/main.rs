@@ -18,8 +18,6 @@ mod components;
 mod core;
 mod rules;
 
-const _STYLE: &str = manganis::mg!(file("public/tailwind.css"));
-
 #[derive(Serialize, Deserialize, PartialEq)]
 struct AppState {
     #[serde(default)]
@@ -142,6 +140,9 @@ fn app() -> Element {
     });
 
     rsx! {
+        document::Stylesheet {
+            href: asset!("/assets/tailwind.css")
+        }
         ThemeLayout {
             div {
                 class: "h-screen flex",
@@ -150,7 +151,7 @@ fn app() -> Element {
                     div {
                         class: "flex-1 overflow-y-scroll",
                         div { class: "flex flex-col gap-6 p-8 pb-12",
-                            h1 { class: "text-4xl text-accent mb-4", "LMK Creator | Lebensmittelkennzeichnung" }
+                            h1 { class: "text-4xl text-accent mb-4", "Creator | Lebensmittelkennzeichnung" }
                             FormField {
                                 label: "Produktname",
                                 help: rsx!{

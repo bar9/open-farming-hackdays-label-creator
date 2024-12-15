@@ -17,7 +17,7 @@ pub fn FormField(props: FormFieldProps) -> Element {
                 {rsx!{
                     FieldHelp {
                         label: props.label,
-                        help: props.help.unwrap_or(None)
+                        help: props.help.unwrap_or(rsx!{})
                     }
                 }}
             }

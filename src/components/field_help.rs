@@ -9,8 +9,8 @@ pub struct FieldHelpProps {
 }
 pub fn FieldHelp(props: FieldHelpProps) -> Element {
     let mut is_open = use_signal(|| false);
-    if props.help.is_none() {
-        None
+    if props.help.is_err() {
+        rsx!{}
     } else {
         rsx! {
             button {
