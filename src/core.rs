@@ -16,6 +16,7 @@ impl Input {
     }
 }
 
+#[derive(PartialEq)]
 pub struct Output {
     pub success: bool,
     pub label: String,
@@ -29,13 +30,13 @@ pub struct Lookup {
 }
 
 pub struct Calculator {
-    pub(crate) RuleDefs: Vec<RuleDef>
+    pub(crate) rule_defs: Vec<RuleDef>
 }
 
 impl Calculator {
     pub(crate) fn new() -> Self {
         Calculator {
-            RuleDefs: vec![]
+            rule_defs: vec![]
         }
     }
 }
@@ -113,8 +114,8 @@ impl OutputFormatter {
 }
 
 impl Calculator {
-    pub fn registerRuleDefs(&mut self, RuleDefs: Vec<RuleDef>) {
-        self.RuleDefs = RuleDefs;
+    pub fn registerRuleDefs(&mut self, rule_defs: Vec<RuleDef>) {
+        self.rule_defs = rule_defs;
     }
     pub fn registerLookup(&self, lookup: Lookup) {}
     pub fn execute(&self, input: Input) -> Output {
@@ -123,7 +124,7 @@ impl Calculator {
         sorted_ingredients
             .sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
 
-        for ruleDef in &self.RuleDefs {
+        for ruleDef in &self.rule_defs{
             match ruleDef {
                 RuleDef::V_001_Menge_Immer_Benoetigt => {validate_amount(&sorted_ingredients, &mut validation_messages)}
                 _ => {}
@@ -136,7 +137,7 @@ impl Calculator {
             success: true,
             label: sorted_ingredients
                 .into_iter()
-                .map(|item| OutputFormatter::from(item, total_amount, self.RuleDefs.clone()))
+                .map(|item| OutputFormatter::from(item, total_amount, self.rule_defs.clone()))
                 .map(|fmt| fmt.format())
                 .collect::<Vec<_>>()
                 .join(", "),
@@ -160,9 +161,9 @@ mod tests {
     use super::*;
 
     fn setup_simple_calculator() -> Calculator {
-        let RuleDefs = vec![];
+        let rule_defs= vec![];
         let lookup = Lookup {};
-        let mut calculator = Calculator{ RuleDefs };
+        let mut calculator = Calculator{ rule_defs};
         calculator.registerLookup(lookup);
         calculator
     }

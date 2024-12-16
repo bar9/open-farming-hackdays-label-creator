@@ -49,27 +49,27 @@ pub struct StandardIngredient {
     pub name: String,
     pub is_allergen: bool
 }
-pub fn processed_ingredient_list(ingredients: Vec<IngredientItem>, rules: Vec<RuleDef>) -> String {
-
-    let lookup = Lookup {};
-    let mut calculator = Calculator::new();
-    calculator.registerRuleDefs(rules);
-    calculator.registerLookup(lookup);
-    let input1 = Input {
-        ingredients: ingredients.iter().map(|ing_item| {
-            Ingredient{
-                name: ing_item.clone().basicInfo.standard_ingredient.name,
-                is_allergen: ing_item.basicInfo.standard_ingredient.is_allergen,
-                amount: ing_item.basicInfo.amount as f64
-            }
-        }).collect()
-
-    };
-
-    let output = calculator.execute(input1);
-
-    format!("<span>{}</span>", output.label)
-}
+// pub fn processed_ingredient_list(ingredients: Vec<IngredientItem>, rules: Vec<RuleDef>) -> String {
+//
+//     let lookup = Lookup {};
+//     let mut calculator = Calculator::new();
+//     calculator.registerRuleDefs(rules);
+//     calculator.registerLookup(lookup);
+//     let input1 = Input {
+//         ingredients: ingredients.iter().map(|ing_item| {
+//             Ingredient{
+//                 name: ing_item.clone().basicInfo.standard_ingredient.name,
+//                 is_allergen: ing_item.basicInfo.standard_ingredient.is_allergen,
+//                 amount: ing_item.basicInfo.amount as f64
+//             }
+//         }).collect()
+//
+//     };
+//
+//     let output = calculator.execute(input1);
+//
+//     format!("<span>{}</span>", output.label)
+// }
 
 pub fn validations(ingredients: Vec<IngredientItem>, rules: Vec<RuleDef>) -> HashMap<String, &'static str> {
 

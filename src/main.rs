@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use dioxus::html::completions::CompleteWithBraces::output;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::components::*;
@@ -10,6 +11,8 @@ use serde_qs::from_str as from_query_string;
 use web_sys::js_sys::Array;
 use web_sys::wasm_bindgen::JsValue;
 use web_sys::window;
+use crate::core::{Calculator, Ingredient, Input, Output};
+use crate::rules::{Rule, RuleDef};
 
 mod layout;
 
@@ -18,8 +21,8 @@ mod components;
 mod core;
 mod rules;
 
-#[derive(Serialize, Deserialize, PartialEq)]
-struct AppState {
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
+struct Form {
     #[serde(default)]
     ingredients: Vec<IngredientItem>,
     #[serde(default)]
@@ -54,19 +57,33 @@ struct AppState {
     total_price: String,
 }
 
-impl Default for AppState {
+impl Into<Input> for Form {
+    fn into(self) -> Input {
+        Input {
+            ingredients: self.ingredients.iter().map(|ing_item| {
+                Ingredient {
+                    name: ing_item.clone().basicInfo.standard_ingredient.name,
+                    is_allergen: ing_item.basicInfo.standard_ingredient.is_allergen,
+                    amount: ing_item.basicInfo.amount as f64
+                }
+            }).collect()
+        }
+    }
+}
+
+impl Default for Form {
     fn default() -> Self {
         if let Some(window) = web_sys::window() {
             if let Ok(mut query_string) = window.location().search() {
                 query_string = query_string.trim_start_matches('?').to_string();
-                if let Ok(app_state_from_query_string) = from_query_string::<AppState>(
+                if let Ok(app_state_from_query_string) = from_query_string::<Form>(
                     &query_string
                 ) {
                     return app_state_from_query_string;
                 }
             }
         }
-        AppState {
+        Form {
             ingredients: Vec::new(),
             product_title: String::new(),
             product_subtitle: String::new(),
@@ -93,28 +110,28 @@ fn main() {
 }
 
 fn app() -> Element {
-    let initial_app_state = use_memo(
-        move || AppState::default()
+    let initial_form = use_memo(
+        move || Form::default()
     );
-    let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| initial_app_state.read().ingredients.clone());
-    let product_title = use_signal(|| initial_app_state.read().product_title.clone());
-    let product_subtitle = use_signal(|| initial_app_state.read().product_subtitle.clone());
-    let additional_info = use_signal(|| initial_app_state.read().additional_info.clone());
-    let storage_info = use_signal(|| initial_app_state.read().storage_info.clone());
-    let date_prefix = use_signal(|| initial_app_state.read().date_prefix.clone());
-    let date = use_signal(|| initial_app_state.read().date.clone());
-    let production_country = use_signal(|| initial_app_state.read().production_country.clone());
-    let net_weight = use_signal(|| initial_app_state.read().net_weight.clone());
-    let drained_weight = use_signal(|| initial_app_state.read().drained_weight.clone());
-    let producer_name = use_signal(|| initial_app_state.read().producer_name.clone());
-    let producer_address = use_signal(|| initial_app_state.read().producer_address.clone());
-    let producer_zip = use_signal(|| initial_app_state.read().producer_zip.clone());
-    let producer_city = use_signal(|| initial_app_state.read().producer_city.clone());
-    let price_per_100 = use_signal(|| initial_app_state.read().price_per_100.clone());
-    let total_price = use_signal(|| initial_app_state.read().total_price.clone());
+    let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| initial_form.read().ingredients.clone());
+    let product_title = use_signal(|| initial_form.read().product_title.clone());
+    let product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
+    let additional_info = use_signal(|| initial_form.read().additional_info.clone());
+    let storage_info = use_signal(|| initial_form.read().storage_info.clone());
+    let date_prefix = use_signal(|| initial_form.read().date_prefix.clone());
+    let date = use_signal(|| initial_form.read().date.clone());
+    let production_country = use_signal(|| initial_form.read().production_country.clone());
+    let net_weight = use_signal(|| initial_form.read().net_weight.clone());
+    let drained_weight = use_signal(|| initial_form.read().drained_weight.clone());
+    let producer_name = use_signal(|| initial_form.read().producer_name.clone());
+    let producer_address = use_signal(|| initial_form.read().producer_address.clone());
+    let producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
+    let producer_city = use_signal(|| initial_form.read().producer_city.clone());
+    let price_per_100 = use_signal(|| initial_form.read().price_per_100.clone());
+    let total_price = use_signal(|| initial_form.read().total_price.clone());
 
-    let query_string = use_memo(move || {
-        let current_state = AppState {
+    let current_state = use_memo(move || {
+        Form {
             ingredients: ingredients(),
             product_title: product_title(),
             product_subtitle: product_subtitle(),
@@ -131,12 +148,29 @@ fn app() -> Element {
             producer_city: producer_city(),
             price_per_100: price_per_100(),
             total_price: total_price(),
-        };
+        }
+    });
 
+    let query_string = use_memo(move || {
         // let js_array = Array::new();
         // js_array.push(&JsValue::from(format!("{}", to_query_string(&current_state).unwrap())));
         // web_sys::console::info(&js_array);
-        return format!{"?{}",to_query_string(&current_state).unwrap()};
+        return format!{"?{}",to_query_string(&current_state()).unwrap()};
+    });
+
+    let rules: Signal<Vec<RuleDef>> = use_signal(|| vec![]);
+    let calc_output: Memo<Output> = use_memo(move || {
+        let mut calc = Calculator::new();
+        calc.rule_defs = vec![RuleDef::V_001_Menge_Immer_Benoetigt];
+        let form: Form = current_state.read().clone();
+        let output = calc.execute(form.into());
+        output
+    });
+    let label: Memo<String> = use_memo(move || {
+        (&calc_output.read()).label.clone()
+    });
+    let validation_messages = use_memo(move || {
+        (&calc_output.read()).validation_messages.clone()
     });
 
     rsx! {
@@ -180,7 +214,7 @@ fn app() -> Element {
                                     p{"Falls in Sachbezeichnungen (Bild, Wort) hervorgehoben oder für das Lebensmittel charakteristisch, hat die Angabe in Massenprozenten (Anteil verwendeter Rohware im fertigen Produkt) zu erfolgen. (Art. 12 und Anhang 7 LIV)"}
                                     p{"Produktionsland des Lebensmittels oder Rohstoffes (Art. 15 und 6 LIV): Deklarationspflicht sofern es nicht aus der Adresse oder der Sachbezeichnungen ersichtlich ist. Die Herkunft von Zutaten muss angegeben werden, wenn die Zutat 50 % des Enderzeugnisses oder mehr ausmacht (bei Zutaten tierischer Herkunft: ab 20 %) und die Herkunft des Rohstoffes von jenen des Produktes abweicht."}
                                 },
-                                IngredientsTable {ingredients: ingredients}
+                                IngredientsTable {ingredients: ingredients, validation_messages: validation_messages}
                             }
                             SeparatorLine {}
                             FieldGroup2 {
@@ -348,7 +382,7 @@ fn app() -> Element {
                 }
             }
             LabelPreview {
-                ingredients: ingredients,
+                label: label,
                 product_title : product_title,
                 product_subtitle : product_subtitle,
                 additional_info : additional_info,

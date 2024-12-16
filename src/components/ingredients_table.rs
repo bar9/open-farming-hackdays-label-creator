@@ -1,10 +1,12 @@
+use std::collections::HashMap;
 use dioxus::prelude::*;
 use crate::components::FormField;
 use crate::model::{food_db, IngredientItem};
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
-    ingredients: Signal<Vec<IngredientItem>>
+    ingredients: Signal<Vec<IngredientItem>>,
+    validation_messages: Memo<HashMap<String, &'static str>>
     // TODO: accept validation messages
     // TODO: accept
 }
@@ -25,7 +27,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
                     tr { key: "{key}",
                         td { "{ingr.basicInfo.standard_ingredient.name}" }
-                        td { "{ingr.basicInfo.amount} g" }
+                        td {
+                            "{ingr.basicInfo.amount} g"
+                            "{props.validation_messages.read():?}"
+                        }
                         td {
                             IngredientDetail {}
                             // ul { class: "rounded-box menu",
