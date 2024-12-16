@@ -19,10 +19,20 @@ jobs:
             override: true
             target: wasm32-unknown-unknown
 
-      - name: Install Dioxus CLI
-        run: |
-          # Install Dioxus CLI
-          cargo install dioxus-cli
+      - name: Download Dioxus CLI binary
+        run: wget https://github.com/DioxusLabs/dioxus/releases/download/v0.6.0/dx-x86_64-unknown-linux-gnu-v0.6.0.tar.gz
+
+      - name: Extract binary
+        run: tar -xzf dx-x86_64-unknown-linux-gnu-v0.6.0.tar.gz
+
+      - name: Make binary executable
+        run: chmod +x dx
+
+      - name: Move binary to PATH
+        run: sudo mv dx /usr/local/bin/
+
+      - name: Verify installation
+        run: dx --version
 
 #      - name: Update wasm-bindgen
 #        run: |
