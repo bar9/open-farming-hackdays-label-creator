@@ -22,6 +22,7 @@ mod field_help;
 mod info_icon;
 mod ingredients_table;
 mod label_preview;
+mod validation_display;
 
 
 

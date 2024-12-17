@@ -120,16 +120,18 @@ impl Calculator {
     pub fn registerLookup(&self, lookup: Lookup) {}
     pub fn execute(&self, input: Input) -> Output {
         let mut validation_messages = HashMap::new();
+
+        for ruleDef in &self.rule_defs{
+            match ruleDef {
+                RuleDef::V_001_Menge_Immer_Benoetigt => {validate_amount(&input.ingredients, &mut validation_messages)}
+                _ => {}
+            }
+        }
+
         let mut sorted_ingredients = input.ingredients.clone();
         sorted_ingredients
             .sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
 
-        for ruleDef in &self.rule_defs{
-            match ruleDef {
-                RuleDef::V_001_Menge_Immer_Benoetigt => {validate_amount(&sorted_ingredients, &mut validation_messages)}
-                _ => {}
-            }
-        }
 
         let total_amount = input.ingredients.iter().map(|x|x.amount).sum();
 

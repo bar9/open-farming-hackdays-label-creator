@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use dioxus::prelude::*;
 use crate::components::FormField;
+use crate::components::validation_display::ValidationDisplay;
 use crate::model::{food_db, IngredientItem};
 
 #[derive(Props, Clone, PartialEq)]
@@ -25,93 +26,95 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     th { "Menge" }
                 }
                 for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
-                    tr { key: "{key}",
-                        td { "{ingr.basicInfo.standard_ingredient.name}" }
-                        td {
-                            "{ingr.basicInfo.amount} g"
-                            "{props.validation_messages.read():?}"
-                        }
-                        td {
-                            IngredientDetail {}
-                            // ul { class: "rounded-box menu",
-                            //     li {
-                            //         details {
-                            //             summary { "Menge Anpassen" }
-                            //             ul {
-                            //                 li {
-                            //                     div { class: "form-control w-52",
-                            //                         label { class: "label cursor-pointer",
-                            //                             span { class: "label-text",
-                            //                                 "Verhältnisse beibehalten"
-                            //                             }
-                            //                             input {
-                            //                                 class: "checkbox",
-                            //                                 r#type: "checkbox",
-                            //                                 checked: "{scale_together}",
-                            //                                 oninput: move |e| scale_together.set(e.value() == "true"),
-                            //                             }
-                            //                         }
-                            //                     }
-                            //                 }
-                            //                 li {
-                            //                     input {
-                            //                         r#type: "number",
-                            //                         placeholder: "Menge",
-                            //                         class: "input input-bordered bg-white input-accent w-full",
-                            //                         onchange: move |evt| {
-                            //                             if let Ok(amount) = evt.data.value().parse::<i32>() {
-                            //                                 amount_to_edit.set(amount);
-                            //                             }
-                            //                         },
-                            //                         value: "{ingr.basicInfo.amount}",
-                            //                     }
-                            //                     button {
-                            //                         class: "btn btn-accent",
-                            //                         onclick: move |_evt| {
-                            //                             if *scale_together.read() {
-                            //                                 let factor: f32 = (&*amount_to_edit)() as f32
-                            //                                     / props.ingredients.read().get(key).unwrap().basicInfo.amount as f32;
-                            //                                 let ingredients = props.ingredients.read().clone();
-                            //                                 for (key, elem) in ingredients.iter().enumerate() {
-                            //                                     let name = elem.basicInfo.standard_ingredient.name.clone();
-                            //                                     props.ingredients.write()[key] = IngredientItem::from_name_amount(
-                            //                                         name,
-                            //                                         (elem.basicInfo.amount as f32 * factor) as i32,
-                            //                                     );
-                            //                                 }
-                            //                             } else {
-                            //                                 let name = (props
-                            //                                     .ingredients
-                            //                                     .read()
-                            //                                     .get(key)
-                            //                                     .unwrap()
-                            //                                     .basicInfo
-                            //                                     .standard_ingredient
-                            //                                     .name
-                            //                                     .clone());
-                            //                                 props.ingredients.write()[key] = IngredientItem::from_name_amount(
-                            //                                     name,
-                            //                                     (&*amount_to_edit)(),
-                            //                                 );
-                            //                             }
-                            //                         },
-                            //                         "Anpassen"
-                            //                     }
-                            //                 }
-                            //             }
-                            //         }
-                            //     }
-                            // }
-                        }
-                        td {
-                            button {
-                                class: "btn btn-square",
-                                dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
-                                onclick: move |_| {
-                                    delete_callback(key, props.ingredients.clone());
-                                },
+                    ValidationDisplay {
+                        paths: vec![format!("ingredients[{}][amount]", key)],
+                        tr { key: "{key}",
+                            td { "{ingr.basicInfo.standard_ingredient.name}" }
+                            td {
+                                "{ingr.basicInfo.amount} g"
                             }
-                        
+                            td {
+                                IngredientDetail {}
+                                // ul { class: "rounded-box menu",
+                                //     li {
+                                //         details {
+                                //             summary { "Menge Anpassen" }
+                                //             ul {
+                                //                 li {
+                                //                     div { class: "form-control w-52",
+                                //                         label { class: "label cursor-pointer",
+                                //                             span { class: "label-text",
+                                //                                 "Verhältnisse beibehalten"
+                                //                             }
+                                //                             input {
+                                //                                 class: "checkbox",
+                                //                                 r#type: "checkbox",
+                                //                                 checked: "{scale_together}",
+                                //                                 oninput: move |e| scale_together.set(e.value() == "true"),
+                                //                             }
+                                //                         }
+                                //                     }
+                                //                 }
+                                //                 li {
+                                //                     input {
+                                //                         r#type: "number",
+                                //                         placeholder: "Menge",
+                                //                         class: "input input-bordered bg-white input-accent w-full",
+                                //                         onchange: move |evt| {
+                                //                             if let Ok(amount) = evt.data.value().parse::<i32>() {
+                                //                                 amount_to_edit.set(amount);
+                                //                             }
+                                //                         },
+                                //                         value: "{ingr.basicInfo.amount}",
+                                //                     }
+                                //                     button {
+                                //                         class: "btn btn-accent",
+                                //                         onclick: move |_evt| {
+                                //                             if *scale_together.read() {
+                                //                                 let factor: f32 = (&*amount_to_edit)() as f32
+                                //                                     / props.ingredients.read().get(key).unwrap().basicInfo.amount as f32;
+                                //                                 let ingredients = props.ingredients.read().clone();
+                                //                                 for (key, elem) in ingredients.iter().enumerate() {
+                                //                                     let name = elem.basicInfo.standard_ingredient.name.clone();
+                                //                                     props.ingredients.write()[key] = IngredientItem::from_name_amount(
+                                //                                         name,
+                                //                                         (elem.basicInfo.amount as f32 * factor) as i32,
+                                //                                     );
+                                //                                 }
+                                //                             } else {
+                                //                                 let name = (props
+                                //                                     .ingredients
+                                //                                     .read()
+                                //                                     .get(key)
+                                //                                     .unwrap()
+                                //                                     .basicInfo
+                                //                                     .standard_ingredient
+                                //                                     .name
+                                //                                     .clone());
+                                //                                 props.ingredients.write()[key] = IngredientItem::from_name_amount(
+                                //                                     name,
+                                //                                     (&*amount_to_edit)(),
+                                //                                 );
+                                //                             }
+                                //                         },
+                                //                         "Anpassen"
+                                //                     }
+                                //                 }
+                                //             }
+                                //         }
+                                //     }
+                                // }
+                            }
+                            td {
+                                button {
+                                    class: "btn btn-square",
+                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                    onclick: move |_| {
+                                        delete_callback(key, props.ingredients.clone());
+                                    },
+                                }
+
+                            }
                         }
                     }
                 }

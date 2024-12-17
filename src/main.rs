@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use std::collections::HashMap;
 use dioxus::html::completions::CompleteWithBraces::output;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -104,6 +105,9 @@ impl Default for Form {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct Validations(Memo<HashMap<String, &'static str>>);
+
 fn main() {
     launch(app);
 
@@ -172,6 +176,8 @@ fn app() -> Element {
     let validation_messages = use_memo(move || {
         (&calc_output.read()).validation_messages.clone()
     });
+
+    use_context_provider(|| Validations(validation_messages));
 
     rsx! {
         document::Stylesheet {
