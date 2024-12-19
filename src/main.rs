@@ -58,12 +58,16 @@ struct Form {
     price_per_100: String,
     #[serde(default)]
     total_price: String,
+    #[serde(default)]
+    manual_total: Option<f64>
 }
 
 impl Into<Input> for Form {
     fn into(self) -> Input {
         Input {
-            ingredients: self.ingredients
+            ingredients: self.ingredients,
+            total: self.manual_total,
+            ..Default::default()
         }
     }
 }
@@ -97,6 +101,7 @@ impl Default for Form {
             producer_city: String::new(),
             price_per_100: String::new(),
             total_price: String::new(),
+            manual_total: None,
         }
     }
 }
@@ -136,6 +141,7 @@ fn app() -> Element {
     let producer_city = use_signal(|| initial_form.read().producer_city.clone());
     let price_per_100 = use_signal(|| initial_form.read().price_per_100.clone());
     let total_price = use_signal(|| initial_form.read().total_price.clone());
+    let manual_total: Signal<Option<f64>> = use_signal(|| None);
 
     let configuration= use_signal(|| Configuration::Conventional);
 
@@ -157,6 +163,7 @@ fn app() -> Element {
             producer_city: producer_city(),
             price_per_100: price_per_100(),
             total_price: total_price(),
+            manual_total: manual_total(),
         }
     });
 
@@ -170,7 +177,12 @@ fn app() -> Element {
     let rules:  Memo<Vec<RuleDef>> = use_memo(move || {
         match configuration() {
             Configuration::Conventional =>
-                vec![RuleDef::AP1_1_ZutatMengeValidierung, AP1_2_ProzentOutputNamensgebend, AP1_3_EingabeNamensgebendeZutat]
+                vec![
+                    RuleDef::AP1_1_ZutatMengeValidierung,
+                    AP1_2_ProzentOutputNamensgebend,
+                    AP1_3_EingabeNamensgebendeZutat,
+                    RuleDef::AP1_4_ManuelleEingabeTotal,
+                ]
         }
     });
     //let rules: Signal<Vec<RuleDef>> = use_signal(|| vec![]);
@@ -237,7 +249,11 @@ fn app() -> Element {
                                     p{"Falls in Sachbezeichnungen (Bild, Wort) hervorgehoben oder für das Lebensmittel charakteristisch, hat die Angabe in Massenprozenten (Anteil verwendeter Rohware im fertigen Produkt) zu erfolgen. (Art. 12 und Anhang 7 LIV)"}
                                     p{"Produktionsland des Lebensmittels oder Rohstoffes (Art. 15 und 6 LIV): Deklarationspflicht sofern es nicht aus der Adresse oder der Sachbezeichnungen ersichtlich ist. Die Herkunft von Zutaten muss angegeben werden, wenn die Zutat 50 % des Enderzeugnisses oder mehr ausmacht (bei Zutaten tierischer Herkunft: ab 20 %) und die Herkunft des Rohstoffes von jenen des Produktes abweicht."}
                                 },
-                                IngredientsTable {ingredients: ingredients, validation_messages: validation_messages}
+                                IngredientsTable {
+                                    ingredients: ingredients,
+                                    validation_messages: validation_messages,
+                                    manual_total: manual_total
+                                }
                             }
                             SeparatorLine {}
                             FieldGroup2 {

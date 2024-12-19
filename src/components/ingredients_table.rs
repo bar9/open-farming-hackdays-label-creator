@@ -8,6 +8,7 @@ use crate::model::{food_db};
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
     ingredients: Signal<Vec<Ingredient>>,
+    manual_total: Signal<Option<f64>>,
     validation_messages: Memo<HashMap<String, &'static str>>
     // TODO: accept
 }
@@ -15,6 +16,9 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
+    let total_amount = use_memo (move || {
+        props.ingredients.read().iter().map(|x: &Ingredient|x.amount).sum::<f64>()
+    });
     rsx! {
         div { class: "flex flex-col gap-4",
             table { class: "table border-solid",
@@ -42,6 +46,33 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                     },
                                 }
 
+                            }
+                        }
+                    }
+                },
+                if props.ingredients.len() > 0 {
+                    ConditionalDisplay {
+                        path: "manuelles_total",
+                        tr {
+                            td {
+                                "Total: {total_amount} g"
+                            }
+                            td {
+                                label {
+                                    "Manuelles total:"
+                                }
+                                input {
+                                    r#type: "number",
+                                    placeholder: "Manuelles total",
+                                    class: "input input-bordered bg-white input-accent w-full",
+                                    onchange: move |evt| {
+                                        if let Ok(amount) = evt.data.value().parse::<f64>() {
+                                            props.manual_total.set(Some(amount));
+                                        } else {
+                                            props.manual_total.set(None);
+                                        }
+                                    },
+                                }
                             }
                         }
                     }

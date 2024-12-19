@@ -7,13 +7,23 @@ use crate::rules::RuleDef;
 
 #[derive(Clone)]
 pub struct Input {
-    pub(crate) ingredients: Vec<Ingredient>
+    pub(crate) ingredients: Vec<Ingredient>,
+    pub total: Option<f64>
 }
 
 impl Input {
     pub fn scale(&mut self, factor: f64) {
         for ingredient in self.ingredients.iter_mut() {
             ingredient.amount *=factor;
+        }
+    }
+}
+
+impl Default for Input {
+    fn default() -> Self {
+        Input {
+            ingredients: vec![],
+            total: None
         }
     }
 }
@@ -177,7 +187,13 @@ impl Calculator {
             .sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
 
 
-        let total_amount = input.ingredients.iter().map(|x|x.amount).sum();
+        let mut total_amount = input.ingredients.iter().map(|x|x.amount).sum();
+        if (self.rule_defs.iter().find(|x| **x == RuleDef::AP1_4_ManuelleEingabeTotal)).is_some() {
+            conditionals.insert(String::from("manuelles_total"), true);
+            if let Some(tot) = input.total {
+                total_amount = tot;
+            }
+        }
 
         Output {
             success: true,
@@ -204,7 +220,6 @@ fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut Hash
 
 #[cfg(test)]
 mod tests {
-    use dioxus::html::track::default;
     use super::*;
 
     fn setup_simple_calculator() -> Calculator {
@@ -218,7 +233,7 @@ mod tests {
     #[test]
     fn simple_run_of_process() {
         let calculator = setup_simple_calculator();
-        let input = Input{ ingredients: vec![] };
+        let input = Input{ ingredients: vec![], ..Default::default() };
 
         let output = calculator.execute(input);
         assert!(output.success);
@@ -230,7 +245,8 @@ mod tests {
         let input = Input {
             ingredients: vec![
                 Ingredient{name: "Hafer".to_string(), is_allergen: false, amount: 42., ..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -244,7 +260,8 @@ mod tests {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 42., ..Default::default()},
                 Ingredient{ name: "Zucker".to_string(), is_allergen: false, amount: 42., ..Default::default()},
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -258,7 +275,8 @@ mod tests {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 300., ..Default::default()},
                 Ingredient{ name: "Zucker".to_string(), is_allergen: false, amount: 700., ..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -271,7 +289,8 @@ mod tests {
         let input = Input {
             ingredients: vec![
                 Ingredient{ name: "Weizenmehl".to_string(), is_allergen: true, amount: 300., ..Default::default()},
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -285,7 +304,8 @@ mod tests {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 300., ..Default::default()},
                 Ingredient{ name: "Zucker".to_string(), is_allergen: false, amount: 700., ..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let mut input2 = input1.clone();
         input2.scale(2.);
@@ -305,7 +325,8 @@ mod tests {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 300., ..Default::default()},
                 Ingredient{ name: "Zucker".to_string(), is_allergen: false, amount: 700., ..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -321,7 +342,8 @@ mod tests {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 300., ..Default::default()},
                 Ingredient{ name: "Milch".to_string(), is_allergen: true, amount: 700.,..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -335,7 +357,8 @@ mod tests {
         let input = Input {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 0.0, ..Default::default() }
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let validation_messages= output.validation_messages;
@@ -350,7 +373,8 @@ mod tests {
         let input = Input {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 32., ..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let validation_messages= output.validation_messages;
@@ -365,7 +389,8 @@ mod tests {
             ingredients: vec![
                 Ingredient{ name: "Hafer".to_string(), is_allergen: false, amount: 300., ..Default::default()},
                 Ingredient{ name: "Milch".to_string(), is_allergen: true, amount: 700., is_namensgebend: Some(true), ..Default::default()}
-            ]
+            ],
+            ..Default::default()
         };
         let output = calculator.execute(input);
         let label = output.label;
@@ -376,18 +401,47 @@ mod tests {
     fn ap1_3_eingabe_namensgebende_zutat() {
         let mut calculator = setup_simple_calculator();
         calculator.registerRuleDefs(vec![RuleDef::AP1_3_EingabeNamensgebendeZutat]);
-        let input = Input {
-            ingredients: vec![]
-        };
+        let input = Input { ..Default::default() };
         let output = calculator.execute(input);
         let conditionals = output.conditional_elements;
         assert!(conditionals.get("namensgebende_zutat").is_some());
         assert_eq!(true, *conditionals.get("namensgebende_zutat").unwrap());
     }
 
+    #[test]
+    fn ap1_4_manuelle_eingabe_total() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::AP1_4_ManuelleEingabeTotal]);
+        let input = Input { ..Default::default()  };
+        let output = calculator.execute(input);
+        let conditionals = output.conditional_elements;
+        assert!(conditionals.get("manuelles_total").is_some());
+        assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
+    }
 
     #[test]
-    fn composite_ingredients_listed_in_parentheses_on_label() {
+    fn ap1_4_manualTotalChangesPercent() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![
+            RuleDef::AP1_2_ProzentOutputNamensgebend,
+            RuleDef::AP1_4_ManuelleEingabeTotal
+        ]);
+        let input = Input {
+            ingredients: vec![
+                Ingredient{
+                    name: "Milch".to_string(),
+                    is_allergen: true,
+                    amount: 700.,
+                    is_namensgebend: Some(true),
+                    ..Default::default()
+                }
+            ],
+            total: Some(350.)
+        };
+        let output = calculator.execute(input);
+        let conditionals = output.conditional_elements;
+        assert!(conditionals.get("manuelles_total").is_some());
+        assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
     }
 
 }
