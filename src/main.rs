@@ -439,6 +439,10 @@ fn app() -> Element {
                 price_per_100: price_per_100,
                 total_price: total_price
             }
+            div {class: "fixed bottom-2 right-2 flex gap-2",
+                span {"Version 2.2.0 vom 19.12.2024"}
+                a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
+            }
             div {class: "fixed top-4 right-4 flex gap-2",
                 button {class: "btn btn-primary",
                     onclick: move |_: MouseEvent| {
