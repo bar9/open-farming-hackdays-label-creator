@@ -6,14 +6,16 @@ use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::components::*;
 use crate::layout::ThemeLayout;
-use crate::model::{IngredientItem};
 use serde_qs::to_string as to_query_string;
 use serde_qs::from_str as from_query_string;
 use web_sys::js_sys::Array;
 use web_sys::wasm_bindgen::JsValue;
 use web_sys::window;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::rules::{Rule, RuleDef};
+use crate::rules::RuleDef::{AP1_2_ProzentOutputNamensgebend, AP1_3_EingabeNamensgebendeZutat};
 
 mod layout;
 
@@ -25,7 +27,7 @@ mod rules;
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 struct Form {
     #[serde(default)]
-    ingredients: Vec<IngredientItem>,
+    ingredients: Vec<Ingredient>,
     #[serde(default)]
     product_title: String,
     #[serde(default)]
@@ -61,13 +63,7 @@ struct Form {
 impl Into<Input> for Form {
     fn into(self) -> Input {
         Input {
-            ingredients: self.ingredients.iter().map(|ing_item| {
-                Ingredient {
-                    name: ing_item.clone().basicInfo.standard_ingredient.name,
-                    is_allergen: ing_item.basicInfo.standard_ingredient.is_allergen,
-                    amount: ing_item.basicInfo.amount as f64
-                }
-            }).collect()
+            ingredients: self.ingredients
         }
     }
 }
@@ -108,6 +104,13 @@ impl Default for Form {
 #[derive(Clone, Copy)]
 pub struct Validations(Memo<HashMap<String, &'static str>>);
 
+#[derive(Clone, Copy)]
+pub struct Conditionals(Memo<HashMap<String, bool>>);
+
+#[derive(Clone, Copy, EnumIter)]
+pub enum Configuration {
+    Conventional
+}
 fn main() {
     launch(app);
 
@@ -117,7 +120,7 @@ fn app() -> Element {
     let initial_form = use_memo(
         move || Form::default()
     );
-    let ingredients: Signal<Vec<IngredientItem>> = use_signal(|| initial_form.read().ingredients.clone());
+    let ingredients: Signal<Vec<Ingredient>> = use_signal(|| initial_form.read().ingredients.clone());
     let product_title = use_signal(|| initial_form.read().product_title.clone());
     let product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
     let additional_info = use_signal(|| initial_form.read().additional_info.clone());
@@ -133,6 +136,8 @@ fn app() -> Element {
     let producer_city = use_signal(|| initial_form.read().producer_city.clone());
     let price_per_100 = use_signal(|| initial_form.read().price_per_100.clone());
     let total_price = use_signal(|| initial_form.read().total_price.clone());
+
+    let configuration= use_signal(|| Configuration::Conventional);
 
     let current_state = use_memo(move || {
         Form {
@@ -162,10 +167,16 @@ fn app() -> Element {
         return format!{"?{}",to_query_string(&current_state()).unwrap()};
     });
 
-    let rules: Signal<Vec<RuleDef>> = use_signal(|| vec![]);
+    let rules:  Memo<Vec<RuleDef>> = use_memo(move || {
+        match configuration() {
+            Configuration::Conventional =>
+                vec![RuleDef::AP1_1_ZutatMengeValidierung, AP1_2_ProzentOutputNamensgebend, AP1_3_EingabeNamensgebendeZutat]
+        }
+    });
+    //let rules: Signal<Vec<RuleDef>> = use_signal(|| vec![]);
     let calc_output: Memo<Output> = use_memo(move || {
         let mut calc = Calculator::new();
-        calc.rule_defs = vec![RuleDef::V_001_Menge_Immer_Benoetigt];
+        calc.rule_defs = rules();
         let form: Form = current_state.read().clone();
         let output = calc.execute(form.into());
         output
@@ -176,12 +187,18 @@ fn app() -> Element {
     let validation_messages = use_memo(move || {
         (&calc_output.read()).validation_messages.clone()
     });
+    let conditional_display = use_memo(move || {
+        (&calc_output.read()).conditional_elements.clone()
+    });
 
     use_context_provider(|| Validations(validation_messages));
+    use_context_provider(|| Conditionals(conditional_display));
+
+    let mut config_modal_open = use_signal(|| false);
 
     rsx! {
         document::Stylesheet {
-            href: asset!("/assets/tailwind.css")
+            href: asset!("assets/tailwind.css")
         }
         ThemeLayout {
             div {
@@ -405,7 +422,7 @@ fn app() -> Element {
                 price_per_100: price_per_100,
                 total_price: total_price
             }
-            div {class: "fixed top-4 right-4",
+            div {class: "fixed top-4 right-4 flex gap-2",
                 button {class: "btn btn-primary",
                     onclick: move |_: MouseEvent| {
                         let window = window().expect("no global `window` exists");
@@ -415,7 +432,40 @@ fn app() -> Element {
                         let text = format!("{href}{query_string}");
                         let  _ = clipboard.write_text(&text);
                     },
-                    "📋"
+                    "📋 Ctrl-C"
+                }
+
+                button {class: "btn btn-primary",
+                    onclick: move |_| config_modal_open.toggle(),
+                    "🥬|🍓 Konfiguration"
+                }
+
+                if config_modal_open() {
+                    div { class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md" }
+                    dialog {
+                        open: "{config_modal_open}", class: "modal",
+                        div { class: "modal-box bg-base-100 backdrop-blur-3xl",
+                            h3 { class: "font-bold text-lg", "Konfiguration" }
+                            div {
+                                class: "prose",
+                                label {"Aktive Regeln:"}
+                                ul {
+                                    {rules().into_iter().map(|rule| {
+                                        rsx! {li {"{rule:?}"}}
+                                    })}
+                                }
+                            }
+                            div { class: "modal-action",
+                                form { method: "dialog",
+                                    button {
+                                        class: "btn btn-sm",
+                                        onclick: move |_| config_modal_open.toggle(),
+                                        "× Schliessen"
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

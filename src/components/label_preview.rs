@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use crate::model::IngredientItem;
 
 #[component]
 pub fn LabelPreview(

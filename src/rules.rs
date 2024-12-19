@@ -1,3 +1,4 @@
+use crate::rules::RuleDef::AP1_3_EingabeNamensgebendeZutat;
 use crate::rules::RuleType::{Input, Output, Validation};
 
 pub enum RuleType {
@@ -12,8 +13,8 @@ pub trait Rule {
     fn get_specs_url(&self) -> &'static str;
 }
 
-#[derive(Clone)]
-#[allow(non_c)]
+#[derive(Clone, Debug)]
+#[allow(non_camel_case_types)]
 pub enum RuleDef {
     AllPercentages,
     PercentagesStartsWithM,
@@ -21,20 +22,19 @@ pub enum RuleDef {
     Composite,
     MaxDetails,
     I_001_Zusammengesetzte_Zutaten,
-    V_001_Menge_Immer_Benoetigt
+    AP1_1_ZutatMengeValidierung,
+    AP1_2_ProzentOutputNamensgebend,
+    AP1_3_EingabeNamensgebendeZutat
 
 }
 
 impl Rule for RuleDef {
     fn deps(&self) -> Vec<Self> {
         match self {
-            RuleDef::AllPercentages =>  vec![],
-            RuleDef::PercentagesStartsWithM => vec![],
-            RuleDef::AllGram => vec![],
-            RuleDef::Composite => vec![],
-            RuleDef::MaxDetails => vec![],
-            RuleDef::I_001_Zusammengesetzte_Zutaten => vec![],
-            RuleDef::V_001_Menge_Immer_Benoetigt => vec![]
+            RuleDef::AP1_2_ProzentOutputNamensgebend => vec![
+                AP1_3_EingabeNamensgebendeZutat
+            ],
+            _ => vec![]
         }
     }
 
@@ -46,7 +46,9 @@ impl Rule for RuleDef {
             RuleDef::Composite => Output,
             RuleDef::MaxDetails => Output,
             RuleDef::I_001_Zusammengesetzte_Zutaten => Input,
-            RuleDef::V_001_Menge_Immer_Benoetigt => Validation
+            RuleDef::AP1_1_ZutatMengeValidierung => Validation,
+            RuleDef::AP1_2_ProzentOutputNamensgebend => Output,
+            RuleDef::AP1_3_EingabeNamensgebendeZutat => Input,
         }
     }
 

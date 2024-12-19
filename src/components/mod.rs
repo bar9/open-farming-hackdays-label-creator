@@ -9,6 +9,8 @@ pub use field_help::FieldHelp;
 pub use info_icon::InfoIcon;
 pub use label_preview::LabelPreview;
 pub use ingredients_table::IngredientsTable;
+pub use conditional_display::ConditionalDisplay;
+pub use navbar::Navbar;
 
 
 mod text_input;
@@ -23,7 +25,8 @@ mod info_icon;
 mod ingredients_table;
 mod label_preview;
 mod validation_display;
-
+mod navbar;
+mod conditional_display;
 
 
 

@@ -1,23 +1,20 @@
 use std::collections::HashMap;
 use dioxus::prelude::*;
-use crate::components::FormField;
+use crate::components::{ConditionalDisplay, FormField};
 use crate::components::validation_display::ValidationDisplay;
-use crate::model::{food_db, IngredientItem};
+use crate::core::{Ingredient, SubIngredient};
+use crate::model::{food_db};
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
-    ingredients: Signal<Vec<IngredientItem>>,
+    ingredients: Signal<Vec<Ingredient>>,
     validation_messages: Memo<HashMap<String, &'static str>>
-    // TODO: accept validation messages
     // TODO: accept
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
-    let delete_callback = |index, mut list: Signal<Vec<IngredientItem>>| list.remove(index);
+    let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
-    let mut scale_together = use_signal(|| false);
-    let mut amount_to_edit = use_signal(|| 0);
-    let mut key_to_edit = use_signal(|| 0);
     rsx! {
         div { class: "flex flex-col gap-4",
             table { class: "table border-solid",
@@ -29,81 +26,12 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     ValidationDisplay {
                         paths: vec![format!("ingredients[{}][amount]", key)],
                         tr { key: "{key}",
-                            td { "{ingr.basicInfo.standard_ingredient.name}" }
+                            td { "{ingr.name}" if ingr.is_namensgebend.unwrap_or(false) {" (namensgebend)"} }
                             td {
-                                "{ingr.basicInfo.amount} g"
+                                "{ingr.amount} g"
                             }
                             td {
-                                IngredientDetail {}
-                                // ul { class: "rounded-box menu",
-                                //     li {
-                                //         details {
-                                //             summary { "Menge Anpassen" }
-                                //             ul {
-                                //                 li {
-                                //                     div { class: "form-control w-52",
-                                //                         label { class: "label cursor-pointer",
-                                //                             span { class: "label-text",
-                                //                                 "Verhältnisse beibehalten"
-                                //                             }
-                                //                             input {
-                                //                                 class: "checkbox",
-                                //                                 r#type: "checkbox",
-                                //                                 checked: "{scale_together}",
-                                //                                 oninput: move |e| scale_together.set(e.value() == "true"),
-                                //                             }
-                                //                         }
-                                //                     }
-                                //                 }
-                                //                 li {
-                                //                     input {
-                                //                         r#type: "number",
-                                //                         placeholder: "Menge",
-                                //                         class: "input input-bordered bg-white input-accent w-full",
-                                //                         onchange: move |evt| {
-                                //                             if let Ok(amount) = evt.data.value().parse::<i32>() {
-                                //                                 amount_to_edit.set(amount);
-                                //                             }
-                                //                         },
-                                //                         value: "{ingr.basicInfo.amount}",
-                                //                     }
-                                //                     button {
-                                //                         class: "btn btn-accent",
-                                //                         onclick: move |_evt| {
-                                //                             if *scale_together.read() {
-                                //                                 let factor: f32 = (&*amount_to_edit)() as f32
-                                //                                     / props.ingredients.read().get(key).unwrap().basicInfo.amount as f32;
-                                //                                 let ingredients = props.ingredients.read().clone();
-                                //                                 for (key, elem) in ingredients.iter().enumerate() {
-                                //                                     let name = elem.basicInfo.standard_ingredient.name.clone();
-                                //                                     props.ingredients.write()[key] = IngredientItem::from_name_amount(
-                                //                                         name,
-                                //                                         (elem.basicInfo.amount as f32 * factor) as i32,
-                                //                                     );
-                                //                                 }
-                                //                             } else {
-                                //                                 let name = (props
-                                //                                     .ingredients
-                                //                                     .read()
-                                //                                     .get(key)
-                                //                                     .unwrap()
-                                //                                     .basicInfo
-                                //                                     .standard_ingredient
-                                //                                     .name
-                                //                                     .clone());
-                                //                                 props.ingredients.write()[key] = IngredientItem::from_name_amount(
-                                //                                     name,
-                                //                                     (&*amount_to_edit)(),
-                                //                                 );
-                                //                             }
-                                //                         },
-                                //                         "Anpassen"
-                                //                     }
-                                //                 }
-                                //             }
-                                //         }
-                                //     }
-                                // }
+                                IngredientDetail {ingredients: props.ingredients, index: key}
                             }
                             td {
                                 button {
@@ -153,7 +81,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                         .ingredients
                         .write()
                         .push(
-                            IngredientItem::from_name_amount((&*name_to_add)(), (&*amount_to_add)()),
+                            Ingredient::from_name_amount((&*name_to_add)(), (&*amount_to_add)() as f64),
                         );
                     name_to_add.set(String::new());
                     amount_to_add.set(0);
@@ -166,10 +94,21 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientDetailProps {
-
+    ingredients: Signal<Vec<Ingredient>>,
+    index: usize
 }
-pub fn IngredientDetail(props: IngredientDetailProps) -> Element {
+pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut is_open = use_signal(|| false);
+    let mut scale_together = use_signal(|| false);
+    let mut amount_to_edit = use_signal(|| 0.);
+    let mut is_composite = use_signal(|| props.ingredients.get(props.index).unwrap().clone().sub_components.unwrap_or_default().len() > 0);
+    let mut is_namensgebend = use_signal(|| props.ingredients.get(props.index).unwrap().is_namensgebend.unwrap_or(false));
+    let ingredient = props.ingredients.get(props.index).unwrap().clone();
+    let old_ingredient = props.ingredients.get(props.index).unwrap().clone();
+    let old_ingredient_2 = props.ingredients.get(props.index).unwrap().clone();
+    let mut update_name = move |new_name| {
+        props.ingredients.write()[props.index] = Ingredient { name: new_name, ..old_ingredient.clone() };
+    };
     rsx! {
         button {
             class: "btn btn-square",
@@ -187,8 +126,8 @@ pub fn IngredientDetail(props: IngredientDetailProps) -> Element {
                         r#type: "flex",
                         placeholder: "Name",
                         class: "input input-bordered bg-white input-accent w-full",
-                        // oninput: move |evt| name_to_add.set(evt.data.value()),
-                        // value: "{name_to_add}",
+                        oninput: move |evt| update_name(evt.data.value()),
+                        value: "{ingredient.name}",
                         datalist { id: "ingredients",
                             for item in food_db().clone() {
                                 option { value: "{item.0}" }
@@ -197,13 +136,97 @@ pub fn IngredientDetail(props: IngredientDetailProps) -> Element {
                     }
                 }
                 FormField {
-                    label: "Menge"
+                    label: "Menge",
+                    ValidationDisplay {
+                        paths: vec![
+                            format!("ingredients[{}][amount]", props.index)
+                        ],
+                        input {
+                            r#type: "number",
+                            placeholder: "Menge",
+                            class: "input input-bordered bg-white input-accent w-full",
+                            onchange: move |evt| {
+                                if let Ok(amount) = evt.data.value().parse::<f64>() {
+                                    amount_to_edit.set(amount);
+                                }
+                            },
+                            value: "{ingredient.amount}",
+                        }
+                    }
+                    label { class: "label cursor-pointer",
+                        input {
+                            class: "checkbox",
+                            r#type: "checkbox",
+                            checked: "{scale_together}",
+                            oninput: move |e| scale_together.set(e.value() == "true"),
+                        }
+                        span { class: "label-text",
+                            "Verhältnisse beibehalten"
+                        }
+                    }
+                    button {
+                        class: "btn btn-accent",
+                        onclick: move |_evt| {
+                            let old_ingredient = props.ingredients.get(props.index).unwrap().clone();
+                            if *scale_together.read() {
+                                let factor: f64 = (&*amount_to_edit)()
+                                    / old_ingredient.amount;
+                                let ingredients = props.ingredients.read().clone();
+                                for (key, elem) in ingredients.iter().enumerate() {
+                                    let old_ingredient = elem.clone();
+                                    props.ingredients.write()[key] = Ingredient {
+                                        amount: (elem.amount * factor),
+                                        ..old_ingredient.clone()
+                                    }
+                                }
+                            } else {
+                                // let name = (props.ingredients.read().get(props.index).unwrap().name.clone());
+                                props.ingredients.write()[props.index] = Ingredient {
+                                    amount: (&*amount_to_edit)(),
+                                    ..old_ingredient.clone()
+                                }
+                            }
+                        },
+                        "Anpassen"
+                    }
                 }
+
                 FormField {
-                    label: "Namensgebende Zutat"
+                    label: "Zusammengesetzte Zutat",
+                    label { class: "label cursor-pointer",
+                        input {
+                            class: "checkbox",
+                            r#type: "checkbox",
+                            checked: "{is_composite}",
+                            oninput: move |e| is_composite.set(e.value() == "true"),
+                        }
+                        span { class: "label-text",
+                            "Zusammengesetzte Zutat"
+                        }
+                    }
                 }
-                FormField {
-                    label: "Zusammengesetyte Zutat"
+                ConditionalDisplay {
+                    path: "namensgebende_zutat",
+                    FormField {
+                        label: "Namensgebende Zutat",
+                        label { class: "label cursor-pointer",
+                            input {
+                                class: "checkbox",
+                                r#type: "checkbox",
+                                checked: "{is_namensgebend}",
+                                oninput: move |e| {
+                                    is_namensgebend.set(e.value() == "true");
+                                    props.ingredients.write()[props.index] = Ingredient {
+                                        is_namensgebend: Some(e.value() == "true"),
+                                        ..old_ingredient_2.clone()
+                                    }
+                                },
+                            }
+                            span { class: "label-text",
+                                "Namensgebende Zutat"
+                            }
+                        }
+                    }
                 }
                 // ROW name amount
                 // Name
