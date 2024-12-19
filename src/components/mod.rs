@@ -10,6 +10,7 @@ pub use info_icon::InfoIcon;
 pub use label_preview::LabelPreview;
 pub use ingredients_table::IngredientsTable;
 pub use conditional_display::ConditionalDisplay;
+pub use sub_ingredients_table::SubIngredientsTable;
 pub use navbar::Navbar;
 
 
@@ -27,6 +28,7 @@ mod label_preview;
 mod validation_display;
 mod navbar;
 mod conditional_display;
+mod sub_ingredients_table;
 
 
 

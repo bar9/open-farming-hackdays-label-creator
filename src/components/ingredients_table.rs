@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use dioxus::prelude::*;
-use crate::components::{ConditionalDisplay, FormField};
+use crate::components::{ConditionalDisplay, FormField, SubIngredientsTable};
 use crate::components::validation_display::ValidationDisplay;
 use crate::core::{Ingredient, SubIngredient};
 use crate::model::{food_db};
@@ -27,10 +27,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     th { "Menge" }
                 }
                 for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
-                    ValidationDisplay {
-                        paths: vec![format!("ingredients[{}][amount]", key)],
+                    // ValidationDisplay {
+                    //     paths: vec![format!("ingredients[{}][amount]", key)],
                         tr { key: "{key}",
-                            td { "{ingr.name}" if ingr.is_namensgebend.unwrap_or(false) {" (namensgebend)"} }
+                            td { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" (namensgebend)"} }
                             td {
                                 "{ingr.amount} g"
                             }
@@ -48,7 +48,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 
                             }
                         }
-                    }
+                    // }
                 },
                 if props.ingredients.len() > 0 {
                     ConditionalDisplay {
@@ -59,11 +59,11 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                             }
                             td {
                                 label {
-                                    "Manuelles total:"
+                                    "Manuelles Total:"
                                 }
                                 input {
                                     r#type: "number",
-                                    placeholder: "Manuelles total",
+                                    placeholder: "Manuelles Total",
                                     class: "input input-bordered bg-white input-accent w-full",
                                     onchange: move |evt| {
                                         if let Ok(amount) = evt.data.value().parse::<f64>() {
@@ -222,6 +222,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     }
                 }
 
+                br {}
+                br {}
+
                 FormField {
                     label: "Zusammengesetzte Zutat",
                     label { class: "label cursor-pointer",
@@ -235,7 +238,14 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             "Zusammengesetzte Zutat"
                         }
                     }
+                    if is_composite() {
+                        SubIngredientsTable {
+                            ingredients: props.ingredients,
+                            index:  props.index
+                        }
+                    }
                 }
+                br {}
                 ConditionalDisplay {
                     path: "namensgebende_zutat",
                     FormField {

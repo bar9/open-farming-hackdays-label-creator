@@ -25,7 +25,8 @@ pub enum RuleDef {
     AP1_1_ZutatMengeValidierung,
     AP1_2_ProzentOutputNamensgebend,
     AP1_3_EingabeNamensgebendeZutat,
-    AP1_4_ManuelleEingabeTotal
+    AP1_4_ManuelleEingabeTotal,
+    AP2_1_ZusammegesetztOutput,
 
 }
 
@@ -51,6 +52,7 @@ impl Rule for RuleDef {
             RuleDef::AP1_2_ProzentOutputNamensgebend => Output,
             RuleDef::AP1_3_EingabeNamensgebendeZutat => Input,
             RuleDef::AP1_4_ManuelleEingabeTotal => Input,
+            RuleDef::AP2_1_ZusammegesetztOutput => Output,
         }
     }
 

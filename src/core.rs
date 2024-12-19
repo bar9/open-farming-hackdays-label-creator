@@ -68,9 +68,33 @@ impl Ingredient {
             name: name.clone(),
             is_allergen: lookup_allergen(&name),
             amount,
-            sub_components: None,
-            is_namensgebend: None
+            ..Default::default()
         }
+    }
+
+    pub fn composite_name(&self) -> String {
+        let mut name = String::new();
+        name.push_str(&self.name);
+        if let Some(subs) = &self.sub_components {
+            if subs.len() > 0 {
+                name.push_str(" (");
+                name.push_str(&subs.iter().map(|sub| sub.name.clone()).collect::<Vec<String>>().join(", "));
+                name.push_str(" )");
+            }
+        }
+        name
+    }
+
+    pub fn composites(&self) -> String {
+        let mut name = String::new();
+        if let Some(subs) = &self.sub_components {
+            if subs.len() > 0 {
+                name.push_str(" (");
+                name.push_str(&subs.iter().map(|sub| sub.name.clone()).collect::<Vec<String>>().join(", "));
+                name.push_str(")");
+            }
+        }
+        name
     }
 }
 
@@ -80,7 +104,7 @@ impl Default for Ingredient {
             name: String::new(),
             is_allergen: false,
             amount: 0.,
-            sub_components: None,
+            sub_components: Some(vec![]),
             is_namensgebend: None
         }
     }
@@ -139,16 +163,16 @@ impl OutputFormatter {
             output = format!{"{:?}", self.ingredient}
         }
         if (self.RuleDefs.iter().find(|x| **x == RuleDef::AllGram)).is_some() {
-            output = format!{"{} {}g", self.ingredient.name, self.ingredient.amount}
+            output = format!{"{} {}g", self.ingredient.name, self.ingredient.amount};
         }
         if (self.RuleDefs.iter().find(|x| **x == RuleDef::AP1_2_ProzentOutputNamensgebend)).is_some() {
             if let Some(true) = self.ingredient.is_namensgebend {
                 output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
             }
         }
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::Composite)).is_some() {
-            if self.ingredient.name == "Brot" {
-                output = format!{"{} (<b>Weizenmehl</b>, Wasser, Hefe, Salz)", output}
+        if (self.RuleDefs.iter().find(|x| **x == RuleDef::AP2_1_ZusammegesetztOutput)).is_some() {
+            if self.ingredient.sub_components.is_some() {
+                output = format!{"{} {}", output, self.ingredient.composites()};
             }
         }
         output

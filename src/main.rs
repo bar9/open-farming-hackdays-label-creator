@@ -182,6 +182,7 @@ fn app() -> Element {
                     AP1_2_ProzentOutputNamensgebend,
                     AP1_3_EingabeNamensgebendeZutat,
                     RuleDef::AP1_4_ManuelleEingabeTotal,
+                    RuleDef::AP2_1_ZusammegesetztOutput
                 ]
         }
     });
