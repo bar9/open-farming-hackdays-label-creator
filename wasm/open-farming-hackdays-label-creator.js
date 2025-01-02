@@ -229,15 +229,15 @@ function __wbg_adapter_50(arg0, arg1) {
 }
 
 function __wbg_adapter_53(arg0, arg1, arg2) {
-    wasm.closure597_externref_shim(arg0, arg1, arg2);
+    wasm.closure599_externref_shim(arg0, arg1, arg2);
 }
 
 function __wbg_adapter_56(arg0, arg1, arg2) {
-    wasm.closure601_externref_shim(arg0, arg1, arg2);
+    wasm.closure603_externref_shim(arg0, arg1, arg2);
 }
 
 function __wbg_adapter_59(arg0, arg1, arg2) {
-    wasm.closure890_externref_shim(arg0, arg1, arg2);
+    wasm.closure892_externref_shim(arg0, arg1, arg2);
 }
 
 const __wbindgen_enum_ScrollBehavior = ["auto", "instant", "smooth"];
@@ -1353,20 +1353,20 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1463 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 598, __wbg_adapter_50);
-        return ret;
-    };
-    imports.wbg.__wbindgen_closure_wrapper1464 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 598, __wbg_adapter_53);
+    imports.wbg.__wbindgen_closure_wrapper1465 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 600, __wbg_adapter_50);
         return ret;
     };
     imports.wbg.__wbindgen_closure_wrapper1466 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 598, __wbg_adapter_56);
+        const ret = makeMutClosure(arg0, arg1, 600, __wbg_adapter_53);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1889 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 891, __wbg_adapter_59);
+    imports.wbg.__wbindgen_closure_wrapper1468 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 600, __wbg_adapter_56);
+        return ret;
+    };
+    imports.wbg.__wbindgen_closure_wrapper1891 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 893, __wbg_adapter_59);
         return ret;
     };
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
