@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::components::InfoIcon;
+use crate::components::icons;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct FieldHelpProps {
@@ -24,7 +24,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                     }
                 },
                 onclick: move |_| is_open.toggle(),
-                InfoIcon {}
+                icons::Info{}
             }
             if is_open() { div { class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md" } }
             dialog { open: "{is_open}", class: "modal",
