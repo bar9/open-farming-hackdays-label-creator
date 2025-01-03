@@ -35,20 +35,19 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 "{ingr.amount} g"
                             }
                             td {
-                                IngredientDetail {ingredients: props.ingredients, index: key}
-                            }
-                            td {
-                                button {
-                                    class: "btn btn-square",
-                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
-                                    onclick: move |_| {
-                                        delete_callback(key, props.ingredients.clone());
-                                    },
+                                div {
+                                    class: "join",
+                                    IngredientDetail {ingredients: props.ingredients, index: key}
+                                    button {
+                                        class: "btn join-item",
+                                        dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                        onclick: move |_| {
+                                            delete_callback(key, props.ingredients.clone());
+                                        },
+                                    }
                                 }
-
                             }
                         }
-                    // }
                 },
                 if props.ingredients.len() > 0 {
                     ConditionalDisplay {
@@ -79,7 +78,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 }
             }
         }
-        div { class: "flex flex-row gap-4",
+        div { class: "flex flex-row gap-4 items-center",
             input {
                 list: "ingredients",
                 r#type: "flex",

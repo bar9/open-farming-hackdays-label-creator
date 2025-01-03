@@ -23,7 +23,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     };
     rsx! {
         button {
-            class: "btn btn-square",
+            class: "btn join-item",
             onclick: move |_| is_open.toggle(),
             icons::ListDetail {}
         }
