@@ -20,13 +20,7 @@ pub fn Navbar(props: NavbarProps) -> Element {
                         details {
                             summary { "Konfiguration" }
                             ul { class: "p-2",
-                                // Configuration::iter().map(|conf| {
-                                //     rsx! {
-                                //         li {
-                                //             a { "{conf:?}" }
-                                //         }
-                                //     }
-                                // })
+                                // todo
                             }
                         }
                     }

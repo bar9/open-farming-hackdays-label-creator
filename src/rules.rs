@@ -63,8 +63,3 @@ impl Rule for RuleDef {
         }
     }
 }
-
-// struct RuleList(Vec<dyn Rule>);
-// impl RuleList {
-//
-// }

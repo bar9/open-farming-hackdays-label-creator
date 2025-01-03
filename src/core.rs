@@ -126,10 +126,6 @@ struct OutputFormatter {
     ingredient: Ingredient,
     RuleDefs: Vec<RuleDef>,
     total_amount: f64
-    // bold: FnOnce(),
-    // amount_unit: Unit,
-    // parentheses: bool,
-    // show_provenance: bool
 }
 
 impl PartialEq for RuleDef {
@@ -155,7 +151,7 @@ impl OutputFormatter {
             output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
         }
         if (self.RuleDefs.iter().find(|x| **x == RuleDef::PercentagesStartsWithM)).is_some() {
-            if (self.ingredient.name.starts_with("M")) {
+            if self.ingredient.name.starts_with("M") {
                 output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
             }
         }

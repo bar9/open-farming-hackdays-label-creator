@@ -16,7 +16,6 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
         select {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
             class: "select bg-white select-bordered w-full max-w-xs",
-            // oninput: move |evt| props.bound_value.set(evt.data.value()),
             option {selected: true, "mindestens haltbar bis"}
             option {"zu verbrauchen bis"}
         }
