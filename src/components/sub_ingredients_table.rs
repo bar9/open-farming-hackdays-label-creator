@@ -7,7 +7,7 @@ pub struct SubIngredientsTableProps {
     ingredients: Signal<Vec<Ingredient>>,
     index: usize,
 }
-pub fn SubIngredientsTable(mut props: SubIngredientsTableProps) -> Element {
+pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
     let mut name_to_add = use_signal(|| String::new());
 
     let mut delete_callback = {
@@ -21,7 +21,7 @@ pub fn SubIngredientsTable(mut props: SubIngredientsTableProps) -> Element {
         }
     };
 
-    let mut add_callback = {
+    let add_callback = {
         let mut ingredients = props.ingredients.clone();
         let mut name_to_add = name_to_add.clone();
         move |_evt| {

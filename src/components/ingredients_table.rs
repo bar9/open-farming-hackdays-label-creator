@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use dioxus::prelude::*;
-use crate::components::{icons, ConditionalDisplay, FormField, SubIngredientsTable};
+use crate::components::ConditionalDisplay;
 use crate::components::ingredient_detail::IngredientDetail;
-use crate::components::validation_display::ValidationDisplay;
-use crate::core::{Ingredient, SubIngredient};
+use crate::core::Ingredient;
 use crate::model::{food_db};
 
 #[derive(Props, Clone, PartialEq)]

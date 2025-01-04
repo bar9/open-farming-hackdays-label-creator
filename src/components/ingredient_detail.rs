@@ -1,6 +1,5 @@
 use dioxus::prelude::*;
 use crate::components::*;
-use std::collections::HashMap;
 use crate::core::Ingredient;
 use crate::model::food_db;
 

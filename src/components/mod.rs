@@ -8,12 +8,9 @@ pub use field_group_1::FieldGroup1;
 pub use field_help::FieldHelp;
 pub use label_preview::LabelPreview;
 pub use ingredients_table::IngredientsTable;
-pub use ingredient_detail::IngredientDetail;
 pub use conditional_display::ConditionalDisplay;
 pub use sub_ingredients_table::SubIngredientsTable;
 pub use validation_display::ValidationDisplay;
-pub use navbar::Navbar;
-
 
 pub mod icons;
 mod text_input;

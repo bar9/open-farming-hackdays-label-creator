@@ -1,21 +1,17 @@
 #![allow(non_snake_case)]
 
-use std::collections::HashMap;
-use dioxus::html::completions::CompleteWithBraces::output;
+use crate::components::*;
+use crate::core::{Calculator, Ingredient, Input, Output};
+use crate::layout::ThemeLayout;
+use crate::rules::RuleDef::{AP1_2_ProzentOutputNamensgebend, AP1_3_EingabeNamensgebendeZutat};
+use crate::rules::RuleDef;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::components::*;
-use crate::layout::ThemeLayout;
-use serde_qs::to_string as to_query_string;
 use serde_qs::from_str as from_query_string;
-use web_sys::js_sys::Array;
-use web_sys::wasm_bindgen::JsValue;
-use web_sys::window;
-use strum::IntoEnumIterator;
+use serde_qs::to_string as to_query_string;
+use std::collections::HashMap;
 use strum_macros::EnumIter;
-use crate::core::{Calculator, Ingredient, Input, Output};
-use crate::rules::{Rule, RuleDef};
-use crate::rules::RuleDef::{AP1_2_ProzentOutputNamensgebend, AP1_3_EingabeNamensgebendeZutat};
+use web_sys::window;
 
 mod layout;
 
@@ -122,9 +118,7 @@ fn main() {
 }
 
 fn app() -> Element {
-    let initial_form = use_memo(
-        move || Form::default()
-    );
+    let initial_form = use_memo( Form::default );
     let ingredients: Signal<Vec<Ingredient>> = use_signal(|| initial_form.read().ingredients.clone());
     let product_title = use_signal(|| initial_form.read().product_title.clone());
     let product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
@@ -168,7 +162,7 @@ fn app() -> Element {
     });
 
     let query_string = use_memo(move || {
-        return format!{"?{}",to_query_string(&current_state()).unwrap()};
+        format!{"?{}",to_query_string(&current_state()).unwrap()}
     });
 
     let rules:  Memo<Vec<RuleDef>> = use_memo(move || {
@@ -188,17 +182,16 @@ fn app() -> Element {
         let mut calc = Calculator::new();
         calc.rule_defs = rules();
         let form: Form = current_state.read().clone();
-        let output = calc.execute(form.into());
-        output
+        calc.execute(form.into())
     });
     let label: Memo<String> = use_memo(move || {
-        (&calc_output.read()).label.clone()
+        calc_output.read().label.clone()
     });
     let validation_messages = use_memo(move || {
-        (&calc_output.read()).validation_messages.clone()
+        calc_output.read().validation_messages.clone()
     });
     let conditional_display = use_memo(move || {
-        (&calc_output.read()).conditional_elements.clone()
+        calc_output.read().conditional_elements.clone()
     });
 
     use_context_provider(|| Validations(validation_messages));
@@ -437,7 +430,7 @@ fn app() -> Element {
                 total_price: total_price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.2.3 vom 04.01.2025"}
+                span {"Version 0.2.4 vom 05.01.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",

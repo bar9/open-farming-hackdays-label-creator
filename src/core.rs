@@ -37,10 +37,6 @@ pub struct Output {
     pub conditional_elements: HashMap<String, bool>
 }
 
-pub struct Lookup {
-
-}
-
 pub struct Calculator {
     pub(crate) rule_defs: Vec<RuleDef>
 }
@@ -116,12 +112,6 @@ pub struct SubIngredient {
     pub is_allergen: bool,
 }
 
-pub enum Unit {
-    Percentage,
-    Gramm,
-    None
-}
-
 struct OutputFormatter {
     ingredient: Ingredient,
     RuleDefs: Vec<RuleDef>,
@@ -142,34 +132,29 @@ impl OutputFormatter {
     }
 
     pub fn format(&self) -> String {
-        let mut output = "".to_string();
-        output = match self.ingredient.is_allergen {
+        let mut output = match self.ingredient.is_allergen {
             true => format!{"<b>{}</b>", self.ingredient.name},
             false => String::from(self.ingredient.name.clone()),
         };
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::AllPercentages)).is_some() {
+        if self.RuleDefs.iter().find(|x| **x == RuleDef::AllPercentages).is_some() {
             output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
         }
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::PercentagesStartsWithM)).is_some() {
-            if self.ingredient.name.starts_with("M") {
-                output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
-            }
+        if self.RuleDefs.iter().find(|x| **x == RuleDef::PercentagesStartsWithM).is_some() && self.ingredient.name.starts_with("M") {
+            output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
         }
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::MaxDetails)).is_some() {
-            output = format!{"{:?}", self.ingredient}
-        }
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::AllGram)).is_some() {
+        // if self.RuleDefs.iter().find(|x| **x == RuleDef::MaxDetails).is_some() {
+        //     output = format!{"{:?}", self.ingredient}
+        // }
+        if self.RuleDefs.iter().find(|x| **x == RuleDef::AllGram).is_some() {
             output = format!{"{} {}g", self.ingredient.name, self.ingredient.amount};
         }
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::AP1_2_ProzentOutputNamensgebend)).is_some() {
+        if self.RuleDefs.iter().find(|x| **x == RuleDef::AP1_2_ProzentOutputNamensgebend).is_some() {
             if let Some(true) = self.ingredient.is_namensgebend {
                 output = format!("{} {}%", output, (self.ingredient.amount / self.total_amount * 100.) as u8)
             }
         }
-        if (self.RuleDefs.iter().find(|x| **x == RuleDef::AP2_1_ZusammegesetztOutput)).is_some() {
-            if self.ingredient.sub_components.is_some() {
-                output = format!{"{} {}", output, self.ingredient.composites()};
-            }
+        if self.RuleDefs.iter().find(|x| **x == RuleDef::AP2_1_ZusammegesetztOutput).is_some() && self.ingredient.sub_components.is_some() {
+            output = format!{"{} {}", output, self.ingredient.composites()};
         }
         output
     }
@@ -179,7 +164,6 @@ impl Calculator {
     pub fn registerRuleDefs(&mut self, rule_defs: Vec<RuleDef>) {
         self.rule_defs = rule_defs;
     }
-    pub fn registerLookup(&self, lookup: Lookup) {}
     pub fn execute(&self, input: Input) -> Output {
         let mut validation_messages = HashMap::new();
         let mut conditionals = HashMap::new();
@@ -208,7 +192,7 @@ impl Calculator {
 
 
         let mut total_amount = input.ingredients.iter().map(|x|x.amount).sum();
-        if (self.rule_defs.iter().find(|x| **x == RuleDef::AP1_4_ManuelleEingabeTotal)).is_some() {
+        if self.rule_defs.iter().find(|x| **x == RuleDef::AP1_4_ManuelleEingabeTotal).is_some() {
             conditionals.insert(String::from("manuelles_total"), true);
             if let Some(tot) = input.total {
                 total_amount = tot;
@@ -244,10 +228,7 @@ mod tests {
 
     fn setup_simple_calculator() -> Calculator {
         let rule_defs= vec![];
-        let lookup = Lookup {};
-        let mut calculator = Calculator{ rule_defs};
-        calculator.registerLookup(lookup);
-        calculator
+        Calculator{ rule_defs }
     }
 
     #[test]
