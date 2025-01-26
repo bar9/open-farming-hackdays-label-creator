@@ -303,7 +303,7 @@ fn app() -> Element {
                                                     }
                                                     tr {
                                                         td { "Gekühlt" }
-                                                        td { "+2 - +5°C (8°C Käse, zubereitete Spesen)" }
+                                                        td { "+2 - +5°C (8°C Käse, zubereitete Speisen)" }
                                                     }
                                                     tr {
                                                         td { "Kühl lagern" }
@@ -430,7 +430,7 @@ fn app() -> Element {
                 total_price: total_price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.2.4 vom 05.01.2025"}
+                span {"Version 0.2.5 vom 27.01.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",
