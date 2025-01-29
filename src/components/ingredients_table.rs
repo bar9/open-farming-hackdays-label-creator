@@ -106,12 +106,17 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             button {
                 class: "btn btn-accent",
                 onclick: move |_evt| {
-                    props
-                        .ingredients
-                        .write()
-                        .push(
-                            Ingredient::from_name_amount((&*name_to_add)(), (&*amount_to_add)() as f64),
-                        );
+                    let mut binding = props.ingredients.write();
+                    let existing_ingredient = binding.iter_mut().find(|x| x.name == (&*name_to_add)());
+                    if let Some(ingredient) = existing_ingredient {
+                        ingredient.amount += (&*amount_to_add)() as f64;
+                    } else {
+                        binding
+                            .push(
+                                Ingredient::from_name_amount((&*name_to_add)(), (&*amount_to_add)() as f64),
+                            );
+                    }
+
                     name_to_add.set(String::new());
                     amount_to_add.set(0);
                 },
