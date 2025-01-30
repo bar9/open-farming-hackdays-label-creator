@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use crate::nl2br::Nl2Br;
 
 #[component]
 pub fn LabelPreview(
@@ -70,11 +71,11 @@ pub fn LabelPreview(
 
                 div { class: "py-2",
                     span { class: "text-sm",
-                        "{additional_info}"
+                        {additional_info().nl2br()}
                     }
                     br {}
                     span { class: "text-sm",
-                        "{storage_info}"
+                        {storage_info().nl2br()}
                     }
                     br {}
                     span{ class: "text-sm pr-1",
