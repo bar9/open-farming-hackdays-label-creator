@@ -5,7 +5,8 @@ use crate::components::FieldHelp;
 pub struct FormFieldProps {
     #[props(into)]
     label: String,
-    help: Option<Element>,
+    #[props(into)]
+    help: Option<String>,
     children: Element,
 }
 pub fn FormField(props: FormFieldProps) -> Element {
@@ -18,7 +19,7 @@ pub fn FormField(props: FormFieldProps) -> Element {
                 {rsx!{
                     FieldHelp {
                         label: props.label,
-                        help: props.help.unwrap_or(rsx!{})
+                        help: props.help.unwrap_or_default()
                     }
                 }}
             }

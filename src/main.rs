@@ -218,9 +218,7 @@ fn app() -> Element {
                             h1 { class: "text-4xl text-accent mb-4", "Creator | Lebensmittelkennzeichnung" }
                             FormField {
                                 label: {t!("label.produktname")},
-                                help: rsx!{
-                                    p { "Markennamen unmittelbar mit Sachbezeichnung ergänzen, gemäss Art. 6 LIV"}
-                                },
+                                help: Some((t!("help.produktname")).into()),
                                 TextInput {
                                     placeholder: "Produktname (optional)",
                                     bound_value: product_title
@@ -228,9 +226,7 @@ fn app() -> Element {
                             }
                             FormField {
                                 label: t!("label.sachbezeichnung"),
-                                help: rsx!{
-                                    p {"Verkehrsübliche Bezeichnung oder eine beschreibende Bezeichnung, zur Illustration passend"}
-                                },
+                                help: Some((t!("help.sachbezeichnung")).into()),
                                 TextInput {
                                     placeholder: "Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig",
                                     bound_value: product_subtitle
@@ -239,11 +235,7 @@ fn app() -> Element {
                             SeparatorLine {}
                             FormField {
                                 label: "Zutaten",
-                                help: rsx!{
-                                    p{"Wenn die gesuchte Zutat nicht im Dropdown vorhanden ist, können Sie sie im Textfeld eingeben."}
-                                    p{"Falls in Sachbezeichnungen (Bild, Wort) hervorgehoben oder für das Lebensmittel charakteristisch, hat die Angabe in Massenprozenten (Anteil verwendeter Rohware im fertigen Produkt) zu erfolgen. (Art. 12 und Anhang 7 LIV)"}
-                                    p{"Produktionsland des Lebensmittels oder Rohstoffes (Art. 15 und 6 LIV): Deklarationspflicht sofern es nicht aus der Adresse oder der Sachbezeichnungen ersichtlich ist. Die Herkunft von Zutaten muss angegeben werden, wenn die Zutat 50 % des Enderzeugnisses oder mehr ausmacht (bei Zutaten tierischer Herkunft: ab 20 %) und die Herkunft des Rohstoffes von jenen des Produktes abweicht."}
-                                },
+                                help: Some((t!("help.zutaten")).into()),
                                 IngredientsTable {
                                     ingredients: ingredients,
                                     validation_messages: validation_messages,
@@ -254,11 +246,7 @@ fn app() -> Element {
                             FieldGroup2 {
                                 FormField {
                                     label: "Datumseingabe",
-                                    help: rsx!{
-                                        p{ "Lebensmittel, die kühl gehalten werden müssen -> zu verbrauchen bis.."}
-                                        hr{}
-                                        p{ "Übrige Lebensmittel: mindestens haltbar bis.."}
-                                    },
+                                    help: Some((t!("help.datumseingabe")).into()),
                                     DateInput {
                                         date_value: date,
                                         date_prefix: date_prefix
@@ -266,19 +254,7 @@ fn app() -> Element {
 
                                 }
                                 FormField { label: "Zusatzinformationen",
-                                    help: rsx! {
-                                        table{ class: "table",
-                                            tbody{
-                                                tr{td{"Tiefkühlprodukte Bemerkung anbringen: Im Tiefkühler bei -18°C gut verpackt lagern, nach dem Auftauen nicht wieder einfrieren"}}
-                                                tr{td{"Gebrauchsanleitung / Zubereitung / Verwendungstipps"}}
-                                                tr{td{"Anweisung Aufbewahrung z.B. nach dem Öffnen gekühlt aufbewahren"}}
-                                                tr{td{"Alkoholgehalt, Koffeingehalt"}}
-                                                tr{td{"Freiwillige Angaben (vegetarisch/allergenfrei etc..)"}}
-                                                tr{td{"Nährwertbezogene angaben, Health claims müssen bestimmte Anforderungen erfüllen  -> link anhängen"}}
-                                                tr{td{"Nährwertdeklaration: ist obligatorisch (Energiewert, Gehalt an Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker, Eiweiss und Salz). Ausgenommen von der Nährwertdeklaration sind Lebensmittel nach Anhang 9 (z.B. handwerklich hergestellte Lebensmittel, die lokal abgegeben werden, Radius unter 50 km)"}}
-                                            }
-                                        }
-                                    },
+                                    help: Some((t!("help.zusatzinformationen")).into()),
                                     TextareaInput {
                                         placeholder: "Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung",
                                         rows: "4",
@@ -289,50 +265,7 @@ fn app() -> Element {
                             FieldGroup2 {
                                 FormField {
                                     label: "Aufbewahrungshinweis",
-                                    help: rsx!{
-                                        br{}
-                                        br{}
-                                        div {
-                                            table { class: "table",
-                                                thead {
-                                                    tr {
-                                                        th { "Aufbewahrungsarten" }
-                                                        th { "Bedingungen" }
-                                                    }
-                                                }
-                                                tbody {
-                                                    tr {
-                                                        td { "Tiefgekühlt" }
-                                                        td { "mind. -18°C" }
-                                                    }
-                                                    tr {
-                                                        td { "Gekühlt" }
-                                                        td { "+2 - +5°C (8°C Käse, zubereitete Speisen)" }
-                                                    }
-                                                    tr {
-                                                        td { "Kühl lagern" }
-                                                        td { "bei Temperaturen bis +15°C" }
-                                                    }
-                                                    tr {
-                                                        td { "Bei Zimmertemperatur lagern" }
-                                                        td { "+18 - +22°C" }
-                                                    }
-                                                    tr {
-                                                        td { "Trocken Lagern" }
-                                                        td { "an einem trockenen Ort bei max. 70% lagern" }
-                                                    }
-                                                    tr {
-                                                        td { "Lichtgeschützt" }
-                                                        td { "vor direktem Lichteinfall" }
-                                                    }
-                                                    tr {
-                                                        td { "Feucht und kühl lagern" }
-                                                        td { "bei +6 – 15°C und 70-90% Luftfeuchtigkeit lagern" }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
+                                    help: Some((t!("help.aufbewahrungshinweis")).into()),
                                     TextareaInput{
                                         rows: "2",
                                         placeholder: "z.B. dunkel und kühl bei max. 5°C lagern",
@@ -350,15 +283,7 @@ fn app() -> Element {
                             FieldGroup2 {
                                 FormField {
                                     label: "Nettogewicht",
-                                    help: rsx!{
-                                        p{"Die Aufschrift muss folgende Mindesthöhe haben:"}
-                                        ul{
-                                            li{"bei einer Nennfüllmenge von mehr als 1000 g oder 100 cl: mindestens 6 mm"}
-                                            li{"bei einer Nennfüllmenge von mehr als 200 g oder 20 cl bis 1000 g oder 100 cl: mindestens 4 mm"}
-                                            li{"bei einer Nennfüllmenge von mehr als 50 g oder 5 cl bis 200 g oder 20 cl: mindestens 3 mm"}
-                                            li{"bei einer Nennfüllmenge von 50 g und darunter oder 5 cl und darunter: mindestens 2 mm"}
-                                        }
-                                    },
+                                    help: Some((t!("help.nettogewicht")).into()),
                                     TextInput {
                                         bound_value: net_weight,
                                         placeholder: "300g"
