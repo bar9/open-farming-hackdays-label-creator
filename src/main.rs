@@ -12,6 +12,7 @@ use serde_qs::to_string as to_query_string;
 use std::collections::HashMap;
 use strum_macros::EnumIter;
 use web_sys::window;
+use rust_i18n::{i18n, t};
 
 mod layout;
 
@@ -20,6 +21,8 @@ mod components;
 mod core;
 mod rules;
 mod nl2br;
+
+i18n!();
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 struct Form {
@@ -114,8 +117,8 @@ pub enum Configuration {
     Conventional
 }
 fn main() {
+    rust_i18n::set_locale("de-CH");
     launch(app);
-
 }
 
 fn app() -> Element {
@@ -214,7 +217,7 @@ fn app() -> Element {
                         div { class: "flex flex-col gap-6 p-8 pb-12",
                             h1 { class: "text-4xl text-accent mb-4", "Creator | Lebensmittelkennzeichnung" }
                             FormField {
-                                label: "Produktname",
+                                label: {t!("label.produktname")},
                                 help: rsx!{
                                     p { "Markennamen unmittelbar mit Sachbezeichnung ergänzen, gemäss Art. 6 LIV"}
                                 },
@@ -224,7 +227,7 @@ fn app() -> Element {
                                 }
                             }
                             FormField {
-                                label: "Sachbezeichnung",
+                                label: t!("label.sachbezeichnung"),
                                 help: rsx!{
                                     p {"Verkehrsübliche Bezeichnung oder eine beschreibende Bezeichnung, zur Illustration passend"}
                                 },
@@ -431,7 +434,7 @@ fn app() -> Element {
                 total_price: total_price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.2.7 vom 30.01.2025"}
+                span {"Version 0.2.8 vom 06.02.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",

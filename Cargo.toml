@@ -1,6 +1,6 @@
 [package]
 name = "open-farming-hackdays-label-creator"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,8 +15,7 @@ serde_qs = "0.13.0"
 wasm-bindgen = "0.2"
 strum = "0.26.3"
 strum_macros = "0.26.4"
-
-[profile]
+rust-i18n = "3.1.2"
 
 [profile.wasm-dev]
 inherits = "dev"
@@ -27,3 +26,15 @@ inherits = "dev"
 
 [profile.android-dev]
 inherits = "dev"
+
+[package.metadata.i18n]
+# The available locales for your application, default: ["en"].
+available-locales = ["de-CH"]
+
+# The default locale, default: "en".
+default-locale = "de-CH"
+
+# Path for your translations YAML file, default: "locales".
+# This config for let `cargo i18n` command line tool know where to find your translations.
+# You must keep this path same as the one you pass to method `rust_i18n::i18n!`.
+load-path = "locales"
