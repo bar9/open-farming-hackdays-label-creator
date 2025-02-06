@@ -1,38 +1,35 @@
 _version: 1
 label: 
+  Produktname: 
+  Sachbezeichnung: 
   produktname: Produktname
   sachbezeichnung: Sachbezeichnung
 help:
   produktname: |
     Markennamen unmittelbar mit Sachbezeichnung ergänzen, gemäss Art. 6 LIV
-
   sachbezeichnung: |
     Verkehrsübliche Bezeichnung oder eine beschreibende Bezeichnung, zur Illustration passend
-
   zutaten: |
     Wenn die gesuchte Zutat nicht im Dropdown vorhanden ist, können Sie sie im Textfeld eingeben.
-
+    
     Falls in Sachbezeichnungen (Bild, Wort) hervorgehoben oder für das Lebensmittel charakteristisch, hat die Angabe in Massenprozenten (Anteil verwendeter Rohware im fertigen Produkt) zu erfolgen. (Art. 12 und Anhang 7 LIV)
-
+    
     Produktionsland des Lebensmittels oder Rohstoffes (Art. 15 und 6 LIV):
     Deklarationspflicht sofern es nicht aus der Adresse oder der Sachbezeichnungen ersichtlich ist. Die Herkunft von Zutaten muss angegeben werden, wenn die Zutat 50 % des Enderzeugnisses oder mehr ausmacht (bei Zutaten tierischer Herkunft: ab 20 %) und die Herkunft des Rohstoffes von jenen des Produktes abweicht.
-
   datumseingabe: |
     Lebensmittel, die kühl gehalten werden müssen -> zu verbrauchen bis..
-
+    
     * * * * *
-
-    Übrige Lebensmittel: mindestens haltbar bis..
-
+    
+    Übrige Lebensmittel: mindestens haltbar bis ...
   zusatzinformationen: |
-    * Tiefkühlprodukte Bemerkung anbringen: Im Tiefkühler bei -18°C gut verpackt lagern, nach dem Auftauen nicht wieder einfrieren 
-    * Gebrauchsanleitung / Zubereitung / Verwendungstipps 
-    * Anweisung Aufbewahrung z.B. nach dem Öffnen gekühlt aufbewahren 
-    * Alkoholgehalt, Koffeingehalt 
-    * Freiwillige Angaben (vegetarisch/allergenfrei etc..) 
-    * Nährwertbezogene angaben, Health claims müssen bestimmte Anforderungen erfüllen -> link anhängen 
-    * Nährwertdeklaration: ist obligatorisch (Energiewert, Gehalt an Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker, Eiweiss und Salz). Ausgenommen von der Nährwertdeklaration sind Lebensmittel nach Anhang 9 (z.B. handwerklich hergestellte Lebensmittel, die lokal abgegeben werden, Radius unter 50 km) 
-
+    * Tiefkühlprodukte Bemerkung anbringen: Im Tiefkühler bei -18°C gut verpackt lagern, nach dem Auftauen nicht wieder einfrieren
+    * Gebrauchsanleitung / Zubereitung / Verwendungstipps
+    * Anweisung Aufbewahrung z.B. nach dem Öffnen gekühlt aufbewahren
+    * Alkoholgehalt, Koffeingehalt
+    * Freiwillige Angaben (vegetarisch/allergenfrei etc..)
+    * Nährwertbezogene angaben, Health claims müssen bestimmte Anforderungen erfüllen -> link anhängen
+    * Nährwertdeklaration: ist obligatorisch (Energiewert, Gehalt an Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker, Eiweiss und Salz). Ausgenommen von der Nährwertdeklaration sind Lebensmittel nach Anhang 9 (z.B. handwerklich hergestellte Lebensmittel, die lokal abgegeben werden, Radius unter 50 km)
   aufbewahrungshinweis: |
     | Aufbewahrungsarten | Bedingungen |
     | --- | --- |
@@ -43,10 +40,9 @@ help:
     | Trocken Lagern | an einem trockenen Ort bei max. 70% lagern |
     | Lichtgeschützt | vor direktem Lichteinfall |
     | Feucht und kühl lagern | bei +6 -- 15°C und 70-90% Luftfeuchtigkeit lagern |
-
   nettogewicht: |
     Die Aufschrift muss folgende Mindesthöhe haben:
-
+    
     -   bei einer Nennfüllmenge von mehr als 1000 g oder 100 cl: mindestens 6 mm
     -   bei einer Nennfüllmenge von mehr als 200 g oder 20 cl bis 1000 g oder 100 cl: mindestens 4 mm
     -   bei einer Nennfüllmenge von mehr als 50 g oder 5 cl bis 200 g oder 20 cl: mindestens 3 mm
