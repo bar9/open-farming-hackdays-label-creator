@@ -33,3 +33,26 @@ pub fn food_db() -> Vec<(String, bool)> {
     }
     db
 }
+
+
+pub enum Unit {
+    Milliliter,
+    Centiliter,
+    Liter,
+    Milligram,
+    Gram,
+    Kilogram,
+}
+
+impl Unit {
+    pub fn scaling_factor(&self) -> usize {
+        match (&self) {
+            Unit::Milliliter => {1}
+            Unit::Centiliter => {10}
+            Unit::Liter => {1000}
+            Unit::Milligram => {1}
+            Unit::Gram => {1000}
+            Unit::Kilogram => {1000000}
+        }
+    }
+}
