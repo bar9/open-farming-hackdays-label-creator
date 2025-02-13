@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use crate::components::ConditionalDisplay;
 use crate::components::ingredient_detail::IngredientDetail;
 use crate::core::Ingredient;
-use crate::model::{food_db};
+use crate::model::{food_db, Unit};
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
@@ -15,6 +15,8 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
     let mut name_to_add = use_signal(|| String::new());
     let mut amount_to_add = use_signal(|| 0);
+    let mut unit_to_add = use_signal(|| Unit::Gram);
+    let all_units = Unit::all_input();
     let total_amount = use_memo (move || {
         props.ingredients.read().iter().map(|x: &Ingredient|x.amount).sum::<f64>()
     });
@@ -102,7 +104,21 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 },
                 value: "{amount_to_add}",
             }
-            "g"
+            select {
+                onchange: move |evt| {
+                    if let Some(value) = Unit::all_input().iter().find(|v| v.label() == evt.data.value()) {
+                        unit_to_add.set(value.clone());
+                    }
+                },
+                {all_units.iter().map(|&option| rsx! {
+                    option {
+                        key: "{option.label()}",
+                        value: "{option.label()}",
+                        selected: "{unit_to_add() == option}",
+                        "{option.label()}"
+                    }
+                })}
+            }
             button {
                 class: "btn btn-accent",
                 onclick: move |_evt| {
@@ -113,7 +129,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     } else {
                         binding
                             .push(
-                                Ingredient::from_name_amount((&*name_to_add)(), (&*amount_to_add)() as f64),
+                                Ingredient::from_name_amount((&*name_to_add)(), (&*amount_to_add)() as f64, (&*unit_to_add)()),
                             );
                     }
 

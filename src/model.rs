@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use crate::model::Unit::{Centiliter, Gram, Kilogram, Liter, Milligram, Milliliter};
+use crate::model::UnitKind::{Volume, Weight};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub enum Country {
@@ -35,6 +37,7 @@ pub fn food_db() -> Vec<(String, bool)> {
 }
 
 
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Unit {
     Milliliter,
     Centiliter,
@@ -44,15 +47,33 @@ pub enum Unit {
     Kilogram,
 }
 
+pub enum UnitKind {
+    Volume,
+    Weight
+}
+
 impl Unit {
-    pub fn scaling_factor(&self) -> usize {
+    pub fn scaling_factor(&self) -> (UnitKind, Unit, f64) {
         match (&self) {
-            Unit::Milliliter => {1}
-            Unit::Centiliter => {10}
-            Unit::Liter => {1000}
-            Unit::Milligram => {1}
-            Unit::Gram => {1000}
-            Unit::Kilogram => {1000000}
+            Unit::Milliliter => (Volume, Unit::Liter, 0.001),
+            Unit::Centiliter => (Volume, Unit::Liter, 0.01),
+            Unit::Liter => (Volume, Unit::Liter, 1.),
+            Unit::Milligram => (Weight, Unit::Kilogram, 0.000001),
+            Unit::Gram => (Weight, Unit::Kilogram, 0.001),
+            Unit::Kilogram => (Weight, Unit::Kilogram, 1.)
         }
+    }
+    pub fn label(&self) -> &'static str {
+        match (&self) {
+            Unit::Milliliter => "ml",
+            Unit::Centiliter => "cl",
+            Unit::Liter => "l",
+            Unit::Milligram => "mg",
+            Unit::Gram => "g",
+            Unit::Kilogram => "kg"
+        }
+    }
+    pub fn all_input() -> &'static [Unit] {
+        &[Milliliter, Centiliter, Liter, Milligram, Gram, Kilogram]
     }
 }

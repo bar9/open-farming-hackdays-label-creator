@@ -2,7 +2,7 @@ use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::mem;
 use serde::{Deserialize, Serialize};
-use crate::model::lookup_allergen;
+use crate::model::{lookup_allergen, Unit};
 use crate::rules::RuleDef;
 
 #[derive(Clone)]
@@ -54,16 +54,18 @@ pub struct Ingredient {
     pub name: String,
     pub is_allergen: bool,
     pub amount: f64,
+    pub unit: Unit,
     pub sub_components: Option<Vec<SubIngredient>>,
     pub is_namensgebend: Option<bool>,
 }
 
 impl Ingredient {
-    pub fn from_name_amount(name: String, amount: f64) -> Self {
+    pub fn from_name_amount(name: String, amount: f64, unit: Unit) -> Self {
         Self {
             name: name.clone(),
             is_allergen: lookup_allergen(&name),
             amount,
+            unit,
             ..Default::default()
         }
     }
@@ -100,6 +102,7 @@ impl Default for Ingredient {
             name: String::new(),
             is_allergen: false,
             amount: 0.,
+            unit: Unit::Gram,
             sub_components: Some(vec![]),
             is_namensgebend: None
         }
