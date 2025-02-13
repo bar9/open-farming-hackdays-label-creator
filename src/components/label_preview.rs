@@ -17,9 +17,29 @@ pub fn LabelPreview(
     producer_address: Signal<String>,
     producer_zip: Signal<String>,
     producer_city: Signal<String>,
+    producer_email: Signal<String>,
+    producer_website: Signal<String>,
+    producer_phone: Signal<String>,
     price_per_100: Signal<String>,
     total_price: Signal<String>,
 ) -> Element {
+
+    let address_combined: Memo<String> = use_memo(move || {
+        let parts = vec![
+            producer_name(),
+            producer_address(),
+            {
+                let zip = producer_zip();
+                let city = producer_city();
+                if zip.is_empty() { city } else if city.is_empty() { zip } else { format!("{zip} {city}") }
+            }
+        ];
+
+        parts.into_iter()
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(", ")
+    });
 
     rsx! {
         div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",
@@ -78,30 +98,52 @@ pub fn LabelPreview(
                         {storage_info().nl2br()}
                     }
                     br {}
-                    span{ class: "text-sm pr-1",
-                        if (*production_country)() == "Schweiz" {
-                            {"Hergestellt in der"}
-                        } else {
-                            {"Hergestellt in"}
+                    if !production_country().is_empty() {
+                        span{ class: "text-sm pr-1",
+                            if (*production_country)() == "Schweiz" {
+                                {"Hergestellt in der"}
+                            } else {
+                                {"Hergestellt in"}
+                            }
                         }
-                    }
-                    span {class: "text-sm",
-                        "{production_country}"
+                        span {class: "text-sm",
+                            "{production_country}"
+                        }
                     }
                 }
 
                 div { class: "py-2",
                     span {class: "text-sm",
-                        "{producer_name}, {producer_address}, {producer_zip} {producer_city}"
+                        if address_combined.read().len() > 0 {
+                            "{address_combined}"
+                        }
+                    }
+                    if producer_phone.read().len() > 0 {
+                        div {class: "text-sm",
+                            "Tel: {producer_phone}"
+                        }
+                    }
+                    if producer_email.read().len() > 0 {
+                        div {class: "text-sm",
+                            "Email: {producer_email}"
+                        }
+                    }
+
+                    if producer_website.read().len() > 0 {
+                        div {class: "text-sm",
+                            "Website: {producer_website}"
+                        }
                     }
                 }
 
-                div { class: "py-2 grid grid-cols-2 gap-4",
-                    div {
-                        span {class: "font-bold pr-2", "Preis pro 100g"} "{price_per_100} CHF"
-                    }
-                    div {
-                        span {class: "font-bold pr-2", "Preis total"} "{total_price} CHF"
+                if !(price_per_100().is_empty() && total_price().is_empty()) {
+                    div { class: "py-2 grid grid-cols-2 gap-4",
+                        div {
+                            span {class: "font-bold pr-2", "Preis pro 100g"} "{price_per_100} CHF"
+                        }
+                        div {
+                            span {class: "font-bold pr-2", "Preis total"} "{total_price} CHF"
+                        }
                     }
                 }
             }

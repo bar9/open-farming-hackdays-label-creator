@@ -51,6 +51,12 @@ struct Form {
     #[serde(default)]
     producer_address: String,
     #[serde(default)]
+    producer_phone: String,
+    #[serde(default)]
+    producer_email: String,
+    #[serde(default)]
+    producer_website: String,
+    #[serde(default)]
     producer_zip: String,
     #[serde(default)]
     producer_city: String,
@@ -97,6 +103,9 @@ impl Default for Form {
             drained_weight: String::new(),
             producer_name: String::new(),
             producer_address: String::new(),
+            producer_email: String::new(),
+            producer_website: String::new(),
+            producer_phone: String::new(),
             producer_zip: String::new(),
             producer_city: String::new(),
             price_per_100: String::new(),
@@ -135,6 +144,9 @@ fn app() -> Element {
     let drained_weight = use_signal(|| initial_form.read().drained_weight.clone());
     let producer_name = use_signal(|| initial_form.read().producer_name.clone());
     let producer_address = use_signal(|| initial_form.read().producer_address.clone());
+    let producer_email = use_signal(|| initial_form.read().producer_email.clone());
+    let producer_website = use_signal(|| initial_form.read().producer_website.clone());
+    let producer_phone = use_signal(|| initial_form.read().producer_phone.clone());
     let producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
     let producer_city = use_signal(|| initial_form.read().producer_city.clone());
     let price_per_100 = use_signal(|| initial_form.read().price_per_100.clone());
@@ -157,6 +169,9 @@ fn app() -> Element {
             drained_weight: drained_weight(),
             producer_name: producer_name(),
             producer_address: producer_address(),
+            producer_phone: producer_phone(),
+            producer_website: producer_website(),
+            producer_email: producer_email(),
             producer_zip: producer_zip(),
             producer_city: producer_city(),
             price_per_100: price_per_100(),
@@ -315,6 +330,18 @@ fn app() -> Element {
                                         label: "Ort",
                                         TextInput { bound_value: producer_city, placeholder: "Basel" }
                                     }
+                                    FormField {
+                                        label: "Telefon",
+                                        TextInput { bound_value: producer_phone, placeholder: "079 123 45 67" }
+                                    }
+                                    FormField {
+                                        label: "Email",
+                                        TextInput { bound_value: producer_email, placeholder: "hof@qualitaet.ch" }
+                                    }
+                                    FormField {
+                                        label: "Website",
+                                        TextInput { bound_value: producer_website, placeholder: "hof.qualitaet.ch" }
+                                    }
                                 }
                             }
                             SeparatorLine {}
@@ -355,11 +382,14 @@ fn app() -> Element {
                 producer_address : producer_address,
                 producer_zip : producer_zip,
                 producer_city : producer_city,
+                producer_email: producer_email,
+                producer_phone: producer_phone,
+                producer_website: producer_website,
                 price_per_100: price_per_100,
                 total_price: total_price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.2.8 vom 06.02.2025"}
+                span {"Version 0.2.9 vom 13.02.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",
