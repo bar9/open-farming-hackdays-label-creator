@@ -18,7 +18,7 @@ mod layout;
 
 mod model;
 mod components;
-mod core;
+pub mod core;
 mod rules;
 mod nl2br;
 
@@ -232,8 +232,8 @@ fn app() -> Element {
                         div { class: "flex flex-col gap-6 p-8 pb-12",
                             h1 { class: "text-4xl text-accent mb-4", "Creator | Lebensmittelkennzeichnung" }
                             FormField {
-                                label: {t!("label.produktname")},
-                                help: Some((t!("help.produktname")).into()),
+                                label: t!("label.produktname"),
+                                help: Some(t!("help.produktname").into()),
                                 TextInput {
                                     placeholder: "Produktname (optional)",
                                     bound_value: product_title
