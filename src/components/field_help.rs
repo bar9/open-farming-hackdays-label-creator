@@ -17,14 +17,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
         rsx! {
             button {
                 class: "btn btn-xs ml-2",
-                onkeydown: move |evt| {
-                    match evt.key() {
-                        Key::Escape => {
-                            is_open.set(false);
-                        }
-                        _ => {}
-                    }
-                },
+                onkeydown: move |evt| { if evt.key() == Key::Escape {is_open.set(false); },
                 onclick: move |_| is_open.toggle(),
                 icons::Info{}
             }
