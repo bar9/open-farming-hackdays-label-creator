@@ -20,64 +20,64 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     });
     rsx! {
         div { class: "flex flex-col gap-4",
-            table { class: "table border-solid",
-                tr {
-                    th { "Zutat (eingeben oder auswählen)" }
-                    th { "Menge" }
-                }
-                for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
-                    // ValidationDisplay {
-                    //     paths: vec![format!("ingredients[{}][amount]", key)],
-                        tr { key: "{key}",
-                            td { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" (namensgebend)"} }
-                            td {
-                                "{ingr.amount} g"
-                            }
-                            td {
-                                div {
-                                    class: "join",
-                                    IngredientDetail {ingredients: props.ingredients, index: key}
-                                    button {
-                                        class: "btn join-item",
-                                        dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
-                                        onclick: move |_| {
-                                            delete_callback(key, props.ingredients.clone());
-                                        },
-                                    }
-                                }
+            div { class: "grid gap-4 grid-cols-3 border-bottom",
+                span { class: "font-bold", "Zutat (eingeben oder auswählen)" }
+                span { class: "font-bold", "Menge" }
+                span {}
+            }
+            for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
+                // ValidationDisplay {
+                //     paths: vec![format!("ingredients[{}][amount]", key)],
+                div { class: "grid gap-4 grid-cols-3 odd:bg-gray-100 even:bg-white", key: "{key}",
+                    div { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" (namensgebend)"} }
+                    div {
+                        "{ingr.amount} g"
+                    }
+                    div {
+                        div {
+                            class: "join",
+                            IngredientDetail {ingredients: props.ingredients, index: key}
+                            button {
+                                class: "btn btn-outline join-item",
+                                dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                onclick: move |_| {
+                                    delete_callback(key, props.ingredients.clone());
+                                },
                             }
                         }
-                },
-                if props.ingredients.len() > 0 {
-                    ConditionalDisplay {
-                        path: "manuelles_total",
-                        tr {
-                            td {
-                                "Total: {total_amount} g"
+                    }
+                }
+            },
+            if props.ingredients.len() > 0 {
+                ConditionalDisplay {
+                    path: "manuelles_total",
+                    div {
+                        class: "grid grid-cols-3 gap-4 border",
+                        div {"Total"}
+                        div {"{total_amount} g"}
+
+                        div {
+                            label {
+                                "Manuelles Total:"
                             }
-                            td {
-                                label {
-                                    "Manuelles Total:"
-                                }
-                                input {
-                                    r#type: "number",
-                                    placeholder: "Manuelles Total",
-                                    class: "input input-bordered bg-white input-accent w-full",
-                                    onchange: move |evt| {
-                                        if let Ok(amount) = evt.data.value().parse::<f64>() {
-                                            props.manual_total.set(Some(amount));
-                                        } else {
-                                            props.manual_total.set(None);
-                                        }
-                                    },
-                                }
+                            input {
+                                r#type: "number",
+                                placeholder: "Manuelles Total",
+                                class: "input input-bordered bg-white input-accent w-full",
+                                onchange: move |evt| {
+                                    if let Ok(amount) = evt.data.value().parse::<f64>() {
+                                        props.manual_total.set(Some(amount));
+                                    } else {
+                                        props.manual_total.set(None);
+                                    }
+                                },
                             }
                         }
                     }
                 }
             }
         }
-        div { class: "flex flex-row gap-4 items-center",
+        div { class: "grid grid-cols-3 gap-4 items-center border-top",
             input {
                 list: "ingredients",
                 r#type: "flex",
@@ -91,18 +91,21 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     }
                 }
             }
-            input {
-                r#type: "number",
-                placeholder: "Menge",
-                class: "input input-bordered bg-white input-accent w-full",
-                oninput: move |evt| {
-                    if let Ok(amount) = evt.data.value().parse::<i32>() {
-                        amount_to_add.set(amount);
-                    }
-                },
-                value: "{amount_to_add}",
+            div {
+                class: "flex flex-row gap-4 items-center",
+                input {
+                    r#type: "number",
+                    placeholder: "Menge",
+                    class: "input input-bordered bg-white input-accent w-full",
+                    oninput: move |evt| {
+                        if let Ok(amount) = evt.data.value().parse::<i32>() {
+                            amount_to_add.set(amount);
+                        }
+                    },
+                    value: "{amount_to_add}",
+                }
+                "g"
             }
-            "g"
             button {
                 class: "btn btn-accent",
                 onclick: move |_evt| {

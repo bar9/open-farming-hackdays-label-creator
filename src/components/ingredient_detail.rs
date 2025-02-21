@@ -22,7 +22,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     };
     rsx! {
         button {
-            class: "btn join-item",
+            class: "btn join-item btn-outline",
             onclick: move |_| is_open.toggle(),
             onkeydown: move |evt: KeyboardEvent| if evt.key() == Key::Escape { is_open.set(false); },
             icons::ListDetail {}
