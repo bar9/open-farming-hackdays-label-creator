@@ -1,7 +1,31 @@
 _version: 1
+title: Creator | Lebensmittelkennzeichnung
 label:
   produktname: Produktname
   sachbezeichnung: Sachbezeichnung
+  zutaten: Zutaten
+  datumseingabe: Datumseingabe
+  zusatzinformationen: Zusatzinformationen
+  aufbewahrungshinweis: Aufbewahrungshinweis
+  produktionsland: Produktionsland
+  nettogewicht: Nettogewicht
+  abtropfgewicht: Abtropfgewicht
+  adresse: Adresse
+  name: Vorname / Name / Firma
+  plz: PLZ
+  ort: Ort
+  telefon: Telefon
+  email: E-Mail
+  website: Website
+  preis: Preis
+  preisProX: Preis pro {x}
+  preisTotal: Preis Total
+nav:
+  linkKopieren: 📋 Link kopieren
+  konfiguration: Konfiguration
+  aktiveRegeln: Aktive Regeln
+  schliessen: Schliessen
+
 help:
   produktname: |
     Der Produktname kann phantasiereich sein. 
@@ -45,3 +69,22 @@ help:
   nettogewicht: |
     Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit. 
     Achtung: Rückzug bei eingekochten Produkten berücksichtigen Bsp. Sirup
+
+placeholder:
+  produktname: Produktname (optional)
+  sachbezeichnung: Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig
+  zusatzinformationen: Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung
+  aufbewahrungshinweis: z.B. dunkel und kühl bei max. 5°C lagern
+  produktionsland: Schweiz
+  nettogewicht: 300g
+  abtropfgewicht: 125g
+  name: Hans Muster AG
+
+  addresse: Teststrasse 1
+  plz: CH-4001
+  ort: Basel
+  telefon: 079 123 45 67
+  email: hof@qualitaet.ch
+  website: hof.qualitaet.ch
+  preixProX: 4.00 CHF
+  preisTotal: 12.00 CHF

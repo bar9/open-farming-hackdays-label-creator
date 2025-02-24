@@ -27,7 +27,7 @@ pub fn Modal(mut props: ModalProps) -> Element {
                                 button {
                                     class: "btn btn-sm",
                                     onclick: move |_| props.open.set(false),
-                                    "× Schliesss"
+                                    "× Schliessen"
                                 }
                             }
                         }

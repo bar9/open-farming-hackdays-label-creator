@@ -230,12 +230,12 @@ fn app() -> Element {
                     div {
                         class: "flex-1 overflow-y-scroll",
                         div { class: "flex flex-col gap-6 p-8 pb-12",
-                            h1 { class: "text-4xl text-accent mb-4", "Creator | Lebensmittelkennzeichnung" }
+                            h1 { class: "text-4xl text-accent mb-4","title" }
                             FormField {
                                 label: t!("label.produktname"),
                                 help: Some(t!("help.produktname").into()),
                                 TextInput {
-                                    placeholder: "Produktname (optional)",
+                                    placeholder: t!("placeholder.produktname"),
                                     bound_value: product_title
                                 }
                             }
@@ -243,13 +243,13 @@ fn app() -> Element {
                                 label: t!("label.sachbezeichnung"),
                                 help: Some((t!("help.sachbezeichnung")).into()),
                                 TextInput {
-                                    placeholder: "Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig",
+                                    placeholder: t!("placeholder.sachbezeichnung"),
                                     bound_value: product_subtitle
                                 }
                             }
                             SeparatorLine {}
                             FormField {
-                                label: "Zutaten",
+                                label: t!("label.zutaten"),
                                 help: Some((t!("help.zutaten")).into()),
                                 IngredientsTable {
                                     ingredients: ingredients,
@@ -260,7 +260,7 @@ fn app() -> Element {
                             SeparatorLine {}
                             FieldGroup2 {
                                 FormField {
-                                    label: "Datumseingabe",
+                                    label: t!("label.datumseingabe"),
                                     help: Some((t!("help.datumseingabe")).into()),
                                     DateInput {
                                         date_value: date,
@@ -268,10 +268,10 @@ fn app() -> Element {
                                     }
 
                                 }
-                                FormField { label: "Zusatzinformationen",
+                                FormField { label: t!("label.zusatzinformationen"),
                                     help: Some((t!("help.zusatzinformationen")).into()),
                                     TextareaInput {
-                                        placeholder: "Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung",
+                                        placeholder: t!("placeholder.zusatzinformationen"),
                                         rows: "4",
                                         bound_value: additional_info
                                     }
@@ -279,83 +279,83 @@ fn app() -> Element {
                             }
                             FieldGroup2 {
                                 FormField {
-                                    label: "Aufbewahrungshinweis",
+                                    label: t!("label.aufbewahrungshinweis"),
                                     help: Some((t!("help.aufbewahrungshinweis")).into()),
                                     TextareaInput{
                                         rows: "2",
-                                        placeholder: "z.B. dunkel und kühl bei max. 5°C lagern",
+                                        placeholder: t!("placeholder.aufbewahrungshinweis"),
                                         bound_value: storage_info
                                     }
                                 }
-                                FormField { label: "Produktionsland",
+                                FormField { label: t!("label.produktionsland"),
                                     TextareaInput {
                                         rows: "2",
-                                        placeholder: "Schweiz",
+                                        placeholder: t!("placeholder.produktionsland"),
                                         bound_value: production_country
                                     }
                                 }
                             }
                             FieldGroup2 {
                                 FormField {
-                                    label: "Nettogewicht",
+                                    label: t!("label.nettogewicht"),
                                     help: Some((t!("help.nettogewicht")).into()),
                                     TextInput {
                                         bound_value: net_weight,
-                                        placeholder: "300g"
+                                        placeholder: t!("placeholder.nettogewicht")
                                     }
                                 }
-                                FormField { label: "Abtropfgewicht",
+                                FormField { label: t!("label.abtropfgewicht"),
                                     TextInput {
                                         bound_value: drained_weight,
-                                        placeholder: "125g"
+                                        placeholder: t!("placeholder.abtropfgewicht")
                                     }
                                 }
                             }
                             SeparatorLine {}
-                            FieldGroup1 { label: "Adresse",
+                            FieldGroup1 { label: t!("label.adresse"),
                                 FormField {
-                                    label: "Vorname / Name / Firma",
-                                    TextInput { bound_value: producer_name, placeholder: "Hans Muster AG" }
+                                    label: t!("label.name"),
+                                    TextInput { bound_value: producer_name, placeholder: t!("placeholder.name") }
                                 }
                                 div { class: "grid grid-cols-3 gap-4",
                                     FormField {
-                                    label: "Adresse",
-                                        TextInput { bound_value: producer_address, placeholder: "Teststrasse 1" }
+                                    label: t!("label.adresse"),
+                                        TextInput { bound_value: producer_address, placeholder: t!("placeholder.adresse")}
                                     }
                                     FormField {
-                                        label: "PLZ",
-                                        TextInput { bound_value: producer_zip, placeholder: "CH-4001" }
+                                        label: t!("label.plz"),
+                                        TextInput { bound_value: producer_zip, placeholder: t!("placeholder.plz")}
                                     }
                                     FormField {
-                                        label: "Ort",
-                                        TextInput { bound_value: producer_city, placeholder: "Basel" }
+                                        label: t!("label.ort"),
+                                        TextInput { bound_value: producer_city, placeholder: t!("placeholder.ort")}
                                     }
                                     FormField {
-                                        label: "Telefon",
-                                        TextInput { bound_value: producer_phone, placeholder: "079 123 45 67" }
+                                        label: t!("label.telefon"),
+                                        TextInput { bound_value: producer_phone, placeholder: t!("placeholder.telefon")}
                                     }
                                     FormField {
-                                        label: "Email",
-                                        TextInput { bound_value: producer_email, placeholder: "hof@qualitaet.ch" }
+                                        label: t!("label.email"),
+                                        TextInput { bound_value: producer_email, placeholder: t!("placeholder.email")}
                                     }
                                     FormField {
-                                        label: "Website",
-                                        TextInput { bound_value: producer_website, placeholder: "hof.qualitaet.ch" }
+                                        label: t!("label.website"),
+                                        TextInput { bound_value: producer_website, placeholder: t!("placeholder.website")}
                                     }
                                 }
                             }
                             SeparatorLine {}
-                            FieldGroup1 { label: "Preis",
+                            FieldGroup1 { label: t!("label.preis"),
                                 div { class: "grid grid-cols-2 gap-4",
                                     FormField {
-                                        label: "Preis pro 100g",
+                                        label: t!("label.preisProX"),
                                         TextInput {
                                             placeholder: "4.00 CHF",
                                             bound_value: price_per_100
                                         }
                                     }
                                     FormField {
-                                        label: "Preis Total",
+                                        label: t!("label.preisTotal"),
                                         TextInput {
                                             placeholder: "12.00 CHF",
                                             bound_value: total_price
@@ -402,12 +402,12 @@ fn app() -> Element {
                         let text = format!("{href}{query_string}");
                         let  _ = clipboard.write_text(&text);
                     },
-                    "📋 Link kopieren"
+                    "{t!(\"nav.linkKopieren\")}"
                 }
 
                 button {class: "btn btn-primary",
                     onclick: move |_| config_modal_open.toggle(),
-                    "🥬|🍓 Konfiguration"
+                    "{t!(\"nav.konfiguration\")}"
                 }
 
                 if config_modal_open() {
@@ -415,10 +415,10 @@ fn app() -> Element {
                     dialog {
                         open: "{config_modal_open}", class: "modal",
                         div { class: "modal-box bg-base-100 backdrop-blur-3xl",
-                            h3 { class: "font-bold text-lg", "Konfiguration" }
+                            h3 { class: "font-bold text-lg", "{t!(\"nav.konfiguration\")}" }
                             div {
                                 class: "prose",
-                                label {"Aktive Regeln:"}
+                                label { "{t!(\"nav.aktiveRegeln\")}" }
                                 ul {
                                     {rules().into_iter().map(|rule| {
                                         rsx! {li {"{rule:?}"}}
@@ -430,7 +430,7 @@ fn app() -> Element {
                                     button {
                                         class: "btn btn-sm",
                                         onclick: move |_| config_modal_open.toggle(),
-                                        "× Schliessen"
+                                        "{t!(\"nav.schliessen\")}"
                                     }
                                 }
                             }
