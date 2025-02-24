@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 use crate::components::icons;
 use markdown::{to_html_with_options, Options};
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct FieldHelpProps {
@@ -33,7 +34,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                                 button {
                                     class: "btn btn-sm",
                                     onclick: move |_| is_open.toggle(),
-                                    "× Schliessen"
+                                    "{t!(\"nav.close\")}"
                                     }
                                 }
                             }

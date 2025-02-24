@@ -1,6 +1,7 @@
 use std::ops::Add;
 use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
 use dioxus::prelude::*;
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct DateInputProps {
@@ -25,8 +26,8 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
         select {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
             class: "select bg-white select-bordered w-full max-w-xs",
-            option {selected: true, "mindestens haltbar bis"}
-            option {"zu verbrauchen bis"}
+            option {selected: true, "{t!(\"label.mindestensHaltbar\")}"}
+            option {"{t!(\"label.zuVerbrauchen\")}"}
         }
         input {
             oninput: move |evt| {

@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::model::food_db;
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientDetailProps {
@@ -29,13 +30,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
         Modal {
             open: is_open,
-            title: "Zutat Details",
+            title: "{t!(\"label.zutatDetails\")}",
             FormField {
-                label: "Zutat",
+                label: t!("label.zutat"),
                 input {
                     list: "ingredients",
                     r#type: "flex",
-                    placeholder: "Name",
+                    placeholder: t!("placeholder.zutatName").as_ref(),
                     class: "input input-bordered bg-white input-accent w-full",
                     oninput: move |evt| update_name(evt.data.value()),
                     value: "{ingredient.name}",
@@ -47,7 +48,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }
             }
             FormField {
-                label: "Menge",
+                label: t!("label.menge"),
                 ValidationDisplay {
                     paths: vec![
                         format!("ingredients[{}][amount]", props.index)
@@ -143,7 +144,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             },
                         }
                         span { class: "label-text",
-                            "Namensgebende Zutat"
+                            "{t!(\"label.namensgebendeZutat\")}"
                         }
                     }
                 }
