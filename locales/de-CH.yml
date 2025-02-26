@@ -26,12 +26,15 @@ label:
   zutat: Zutat
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
+  zusammengesetzteZutat: Zusammengesetzte Zutat
 
 nav:
   linkKopieren: 📋 Link kopieren
   konfiguration: Konfiguration
   aktiveRegeln: Aktive Regeln
   schliessen: Schliessen
+  verhaeltnisseBeibehalten: Verhältnisse beibehalten
+  anpassen: Anpassen
 
 help:
   produktname: |

@@ -73,7 +73,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         oninput: move |e| scale_together.set(e.value() == "true"),
                     }
                     span { class: "label-text",
-                        "Verhältnisse beibehalten"
+                        "{t!(\"nav.verhaeltnisseBeibehalten\")}"
                     }
                 }
                 button {
@@ -98,7 +98,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             }
                         }
                     },
-                    "Anpassen"
+                    "{t!(\"nav.anpassen\")}"
                 }
             }
 
@@ -106,7 +106,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             br {}
 
             FormField {
-                label: "Zusammengesetzte Zutat",
+                label: t!("label.zusammengesetzteZutat"),
                 label { class: "label cursor-pointer",
                     input {
                         class: "checkbox",
@@ -115,7 +115,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         oninput: move |e| is_composite.set(e.value() == "true"),
                     }
                     span { class: "label-text",
-                        "Zusammengesetzte Zutat"
+                        "{t!(\"label.zusammengesetzteZutat\")}"
                     }
                 }
                 if is_composite() {
@@ -129,7 +129,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             ConditionalDisplay {
                 path: "namensgebende_zutat",
                 FormField {
-                    label: "Namensgebende Zutat",
+                    label: t!("label.namensgebendeZutat"),
                     label { class: "label cursor-pointer",
                         input {
                             class: "checkbox",
