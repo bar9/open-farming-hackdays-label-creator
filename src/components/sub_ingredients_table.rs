@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 use crate::core::{Ingredient, SubIngredient};
 use crate::model::{food_db};
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct SubIngredientsTableProps {
@@ -49,7 +50,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         div { class: "flex flex-col gap-4",
             table { class: "table border-solid",
                 tr {
-                    th { "Zutat (eingeben oder auswählen)" }
+                    th { "{t!(\"label.zutatEingeben\")}" }
                 }
                 if let Some(sub_components) = props.ingredients.clone().get(props.index).and_then(|ingredient| ingredient.sub_components.clone()) {
                     for (key, ingr) in sub_components.iter().enumerate() {
@@ -73,7 +74,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             input {
                 list: "ingredients",
                 r#type: "flex",
-                placeholder: "Name",
+                placeholder: t!("placeholder.zutatName").as_ref(),
                 class: "input input-bordered bg-white input-accent w-full",
                 oninput: move |evt| name_to_add.set(evt.data.value()),
                 value: "{name_to_add}",
@@ -86,7 +87,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             button {
                 class: "btn btn-accent",
                 onclick: add_callback,
-                "Hinzufügen"
+                "{t!(\"nav.hinzufuegen\")}"
             }
         }
     }

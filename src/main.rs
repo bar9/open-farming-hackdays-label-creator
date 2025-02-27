@@ -287,13 +287,13 @@ fn app() -> Element {
                                         bound_value: storage_info
                                     }
                                 }
-                                FormField { label: t!("label.produktionsland"),
-                                    TextareaInput {
-                                        rows: "2",
-                                        placeholder: t!("placeholder.produktionsland"),
-                                        bound_value: production_country
-                                    }
-                                }
+                                // FormField { label: t!("label.produktionsland"),
+                                //     TextareaInput {
+                                //         rows: "2",
+                                //         placeholder: t!("placeholder.produktionsland"),
+                                //         bound_value: production_country
+                                //     }
+                                // }
                             }
                             FieldGroup2 {
                                 FormField {
@@ -304,7 +304,9 @@ fn app() -> Element {
                                         placeholder: t!("placeholder.nettogewicht")
                                     }
                                 }
-                                FormField { label: t!("label.abtropfgewicht"),
+                                FormField {
+                                    label: t!("label.abtropfgewicht"),
+                                    help: Some((t!("help.abtropfgewicht")).into()),
                                     TextInput {
                                         bound_value: drained_weight,
                                         placeholder: t!("placeholder.abtropfgewicht")
@@ -314,12 +316,14 @@ fn app() -> Element {
                             SeparatorLine {}
                             FieldGroup1 { label: t!("label.adresse"),
                                 FormField {
+                                    help: Some((t!("help.name")).into()),
                                     label: t!("label.name"),
                                     TextInput { bound_value: producer_name, placeholder: t!("placeholder.name") }
                                 }
                                 div { class: "grid grid-cols-3 gap-4",
                                     FormField {
-                                    label: t!("label.adresse"),
+                                        help: Some((t!("help.adresse")).into()),
+                                        label: t!("label.adresse"),
                                         TextInput { bound_value: producer_address, placeholder: t!("placeholder.adresse")}
                                     }
                                     FormField {
@@ -327,6 +331,7 @@ fn app() -> Element {
                                         TextInput { bound_value: producer_zip, placeholder: t!("placeholder.plz")}
                                     }
                                     FormField {
+                                        help: Some((t!("help.ort")).into()),
                                         label: t!("label.ort"),
                                         TextInput { bound_value: producer_city, placeholder: t!("placeholder.ort")}
                                     }
@@ -348,6 +353,7 @@ fn app() -> Element {
                             FieldGroup1 { label: t!("label.preis"),
                                 div { class: "grid grid-cols-2 gap-4",
                                     FormField {
+                                        help: Some((t!("help.preisProX")).into()),
                                         label: t!("label.preisProX"),
                                         TextInput {
                                             placeholder: "4.00 CHF",
@@ -355,6 +361,7 @@ fn app() -> Element {
                                         }
                                     }
                                     FormField {
+                                        help: Some((t!("help.preisTotal")).into()),
                                         label: t!("label.preisTotal"),
                                         TextInput {
                                             placeholder: "12.00 CHF",
@@ -389,7 +396,7 @@ fn app() -> Element {
                 total_price: total_price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.2.9 vom 13.02.2025"}
+                span {"Version 0.2.10 vom 27.02.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",

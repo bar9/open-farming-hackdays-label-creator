@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 use crate::nl2br::Nl2Br;
+use rust_i18n::t;
 
 #[component]
 pub fn LabelPreview(
@@ -44,7 +45,7 @@ pub fn LabelPreview(
     rsx! {
         div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",
             h2 { class: "text-primary-content pb-4 text-4xl",
-                "Etiketten Vorschau"
+                "{t!(\"preview.etikettenVorschau\")}"
             }
             div { class: "bg-white border p-4 grid grid-col-1 divide-y divide-dotted",
                 div {
@@ -62,7 +63,7 @@ pub fn LabelPreview(
                 }
                 div {
                     class: "py-2",
-                    h4 { class: "font-bold", "Zutaten:" }
+                    h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
                     div { class: "text-sm",
                         dangerous_inner_html: "{label}"
                     }
@@ -70,9 +71,9 @@ pub fn LabelPreview(
 
                 div {
                     class: "py-2 grid grid-cols-2 gap-4",
-                    h4 { class: "font-bold", "Haltbarkeit" }
+                    h4 { class: "font-bold", "{t!(\"preview.haltbarkeit\")}" }
                     span {
-                        span {class: "font-bold pr-2", "Nettogewicht"}
+                        span {class: "font-bold pr-2", "{t!(\"preview.nettogewicht\")}" }
                         "{net_weight}"
                     }
                     span {
@@ -83,7 +84,7 @@ pub fn LabelPreview(
                         "{date}"
                     }
                     span {
-                        span {class: "font-bold pr-2", "Abtropfgewicht"}
+                        span {class: "font-bold pr-2", "{t!(\"preview.abtropfgewicht\")}" }
                         "{drained_weight}"
                     }
 
@@ -101,9 +102,9 @@ pub fn LabelPreview(
                     if !production_country().is_empty() {
                         span{ class: "text-sm pr-1",
                             if (*production_country)() == "Schweiz" {
-                                {"Hergestellt in der"}
+                                { "{t!(\"preview.hergestelltInDer\")}" }
                             } else {
-                                {"Hergestellt in"}
+                                {"{t!(\"preview.hergestelltIn\")}"}
                             }
                         }
                         span {class: "text-sm",
@@ -120,18 +121,18 @@ pub fn LabelPreview(
                     }
                     if producer_phone.read().len() > 0 {
                         div {class: "text-sm",
-                            "Tel: {producer_phone}"
+                            "{t!(\"preview.tel\", phone=producer_phone)}"
                         }
                     }
                     if producer_email.read().len() > 0 {
                         div {class: "text-sm",
-                            "Email: {producer_email}"
+                            "{t!(\"preview.email\", email=producer_email)}"
                         }
                     }
 
                     if producer_website.read().len() > 0 {
                         div {class: "text-sm",
-                            "Website: {producer_website}"
+                            "{t!(\"preview.website\", website=producer_website)}"
                         }
                     }
                 }
@@ -139,10 +140,10 @@ pub fn LabelPreview(
                 if !(price_per_100().is_empty() && total_price().is_empty()) {
                     div { class: "py-2 grid grid-cols-2 gap-4",
                         div {
-                            span {class: "font-bold pr-2", "Preis pro 100g"} "{price_per_100} CHF"
+                            span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\")}"} "{price_per_100} CHF"
                         }
                         div {
-                            span {class: "font-bold pr-2", "Preis total"} "{total_price} CHF"
+                            span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\")}"} "{total_price} CHF"
                         }
                     }
                 }

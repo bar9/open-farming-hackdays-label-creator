@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use dioxus::prelude::*;
-use crate::components::ConditionalDisplay;
+use crate::components::*;
 use crate::components::ingredient_detail::IngredientDetail;
 use crate::core::Ingredient;
 use crate::model::{food_db};
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
@@ -21,15 +22,15 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     rsx! {
         div { class: "flex flex-col gap-4",
             div { class: "grid gap-4 grid-cols-3 border-bottom",
-                span { class: "font-bold", "Zutat (eingeben oder auswählen)" }
-                span { class: "font-bold", "Menge" }
+                span { class: "font-bold", "{t!(\"label.zutatEingeben\")}" }
+                span { class: "font-bold", "{t!(\"Menge\")}" }
                 span {}
             }
             for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
                 // ValidationDisplay {
                 //     paths: vec![format!("ingredients[{}][amount]", key)],
                 div { class: "grid gap-4 grid-cols-3 odd:bg-gray-100 even:bg-white", key: "{key}",
-                    div { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" (namensgebend)"} }
+                    div { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")}"} }
                     div {
                         "{ingr.amount} g"
                     }
@@ -56,13 +57,12 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                         div {"Total"}
                         div {"{total_amount} g"}
 
-                        div {
-                            label {
-                                "Manuelles Total:"
-                            }
+                        FormField {
+                            label: "{t!(\"label.manuellesTotal\")}",
+                            help: Some((t!("help.manuellesTotal")).into()),
                             input {
                                 r#type: "number",
-                                placeholder: "Manuelles Total",
+                                placeholder: t!("label.manuellesTotal").as_ref(),
                                 class: "input input-bordered bg-white input-accent w-full",
                                 onchange: move |evt| {
                                     if let Ok(amount) = evt.data.value().parse::<f64>() {
@@ -73,6 +73,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 },
                             }
                         }
+
+                        div {
+
+                        }
                     }
                 }
             }
@@ -81,7 +85,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             input {
                 list: "ingredients",
                 r#type: "flex",
-                placeholder: "Name",
+                placeholder: t!("placeholder.zutatName").as_ref(),
                 class: "input input-bordered bg-white input-accent w-full",
                 oninput: move |evt| name_to_add.set(evt.data.value()),
                 value: "{name_to_add}",
@@ -95,7 +99,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 class: "flex flex-row gap-4 items-center",
                 input {
                     r#type: "number",
-                    placeholder: "Menge",
+                    placeholder: t!("placeholder.menge").as_ref(),
                     class: "input input-bordered bg-white input-accent w-full",
                     oninput: move |evt| {
                         if let Ok(amount) = evt.data.value().parse::<i32>() {
@@ -123,7 +127,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     name_to_add.set(String::new());
                     amount_to_add.set(0);
                 },
-                "Hinzufügen"
+                "{t!(\"nav.hinzufuegen\")}"
             }
         }
     }

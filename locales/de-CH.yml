@@ -4,22 +4,22 @@ label:
   produktname: Produktname
   sachbezeichnung: Sachbezeichnung
   zutaten: Zutaten
-  datumseingabe: Datumseingabe
+  datumseingabe: Haltbarkeit
   zusatzinformationen: Zusatzinformationen
   aufbewahrungshinweis: Aufbewahrungshinweis
   produktionsland: Produktionsland
   nettogewicht: Nettogewicht
   abtropfgewicht: Abtropfgewicht
   adresse: Adresse
-  name: Vorname / Name / Firma
+  name: Firma / Name
   plz: PLZ
   ort: Ort
   telefon: Telefon
   email: E-Mail
   website: Website
   preis: Preis
-  preisProX: Preis pro {x}
-  preisTotal: Preis Total
+  preisProX: Grundpreis (optional)
+  preisTotal: Detailpreis (optional)
   mindestensHaltbar: Mindestens haltbar bis
   zuVerbrauchen: Zu verbrauchen bis
   zutatDetails: Zutat Details
@@ -27,6 +27,9 @@ label:
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
+  zutatEingeben: Zutat (eingeben oder auswählen)
+  namensgebend: Namensgebend
+  manuellesTotal: Gewogenes Endgewicht (optional)
 
 nav:
   linkKopieren: 📋 Link kopieren
@@ -35,6 +38,7 @@ nav:
   schliessen: Schliessen
   verhaeltnisseBeibehalten: Verhältnisse beibehalten
   anpassen: Anpassen
+  hinzufuegen: Hinzufügen
 
 help:
   produktname: |
@@ -80,22 +84,124 @@ help:
     Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit. 
     Achtung: Rückzug bei eingekochten Produkten berücksichtigen Bsp. Sirup
 
+  zusammengesetzteZutaten: |
+    Zusammengesetzte Zutaten sind Rezeptzutaten, die aus verschiedenen Zutaten bestehen (Bsp. Bouillon, Geliermittel, Schokolade). Die einzelnen Zutaten gemäss Zutatenliste hier erfassen.
+    Zusatzstoffe mit Funktion angeben Bsp. Säuerungsmittel (Zitronensäure oder E330).
+
+  namensgebendeZutaten: |
+    Werden Zutaten in der Sach- oder Phantasiebezeichnung mit Worten hervorgehoben oder auf der Etikette abgebildet muss das Symbol hinter der Zutat angewählt werden. Dadurch erfolgt in der Zutatenliste bei diesem Rohstoff automatisch die Massenprozentangabe.
+
+  manuellesTotal: |
+    **Gewogenes Endgewicht (optional)**
+    Gewogenes Gesamtgewicht nach dem Backen, Kochen, Trockenen oder Dörren. Dieses weicht vom automatischen "Total" durch den Wasserverlust ab. Dieses Feld erübrigt sich, wenn bei der Verarbeitung kein Gewichtsverlust entsteht.
+
+  haltbarkeit: |
+    Grundsatz: Wenn immer möglich "mindestens haltbar bis". Auch auf Tiefkühlprodukten. Nur heikle Lebensmittel (Bsp. Milch, Cremeschnitten, Aufschnitt), die kühl aufbewahrt werden müssen, erhalten "zu verbrauchen bis". (LIV Art. 13)
+    Kein Haltbarkeitsdatum erforderlich: Lebensmittel nach LIV Anhang 8 (Bsp. Essig ohne Zusätze, Wein)
+
+  abtropfgewicht: |
+    Bei eingelegten Lebensmitteln: Gewogenes Gewicht der eingelegten Zutaten ohne Abtropfflüssigkeit.
+
+  name: |
+    Firmenname und / oder Vor- und Nachname des Herstellers
+
+  adresse: |
+    Anschrift des Produktionsbetriebs
+
+  ort: |
+    Ortschaft der Produktions
+
+  preisProX: |
+    **Grundpreis (optional)**
+    Preis pro 100 g / 100 ml
+    Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
+
+  preisTotal: |
+    **Detailpreis (optional)**
+    Preis der Verkaufseinheit
+    Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
+    
+
 placeholder:
-  produktname: Produktname (optional)
-  sachbezeichnung: Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig
-  zusatzinformationen: Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung
+  produktname: Sommertraum
+  sachbezeichnung: Himbeerkonfitüre
+  zusatzinformationen: |
+    vegan
+    
+    100g enthalten: ...
   aufbewahrungshinweis: z.B. dunkel und kühl bei max. 5°C lagern
   produktionsland: Schweiz
-  nettogewicht: 300g
-  abtropfgewicht: 125g
-  name: Hans Muster AG
-
-  addresse: Teststrasse 1
+  nettogewicht: 300g oder 500ml
+  abtropfgewicht: 200g
+  name: Hubers Musterhof
+  adresse: Teststrasse 1
   plz: CH-4001
   ort: Basel
   telefon: 079 123 45 67
   email: hof@qualitaet.ch
   website: hof.qualitaet.ch
-  preixProX: 4.00 CHF
+  preisProX: 4.00 CHF
   preisTotal: 12.00 CHF
-  zutatName: Name
+  zutatName: Himbeeren
+  menge: Menge
+
+
+preview:
+  etikettenVorschau: Etiketten Vorschau
+  zutaten: "Zutaten:"
+  haltbarkeit: Haltbarkeit
+  nettogewicht: Nettogewicht
+  abtropfgewicht: Abtropfgewicht
+  hergestelltInDer: Hergestellt in der
+  hergestelltIn: Hergestellt in
+  tel: "Tel: %{phone}"
+  email: "Email: %{email}"
+  website: "Website: %{website}"
+  preisPro: "Preis pro %{amount}%{unit}"
+  preisTotal: Preis total
+
+impressum: |
+  #Impressum, Datenschutz 
+
+  21.02.2025 
+
+  Der Kennzeichungs-Creator ist ein Online-Tool, der  die Rezeptberechnung und das Erstellen von Lebensmitteletiketten in der Schweiz vereinfachen soll. Der Kennzeichnungs-Creator befindet sich noch in Entwicklung und erhebt keinen Anspruch auf Vollständigkeit. Eine Trägerschaft bestehend aus FiBL, Bio Suisse, das landwirtschaftliche Zentrum Liebegg, das Bildungs- und Ausbildungszentrum Arenenberg und das Hightech Zentrum Aargau AG beansprucht sämtliche Rechte daran. 
+
+  ##Impressum 
+
+  ###Kontakt-Adresse der Trägerschaft 
+
+  Bio Suisse\
+  Peter Merian-Strasse 34\
+  4052 Basel\
+  Schweiz 
+
+  ###Vertretungsberechtigte Person 
+
+  ??? 
+
+  ###Handelsregister-Eintrag 
+
+  Eingetragener Firmenname: Bio Suisse Handelsregister Nr: CH-280.6.916.318-5 
+
+  ###Mehrwertsteuer-Nummer 
+
+  CHE-106.506.215 
+
+  ##Haftungsausschluss 
+
+  Die Trägerschaft übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, Genauigkeit, Aktualität, Zuverlässigkeit und Vollständigkeit der Informationen. Haftungsansprüche gegen die Trägerschaft wegen Schäden materieller oder immaterieller Art, welche aus dem Zugriff oder der Nutzung bzw. Nichtnutzung der veröffentlichten Informationen, durch Missbrauch der Verbindung oder durch technische Störungen entstanden sind, werden ausgeschlossen. Alle Angebote sind unverbindlich. Die Trägerschaft behält es sich ausdrücklich vor, Teile der Seiten oder das gesamte Angebot ohne besondere Ankündigung zu verändern, zu ergänzen, zu löschen oder die Veröffentlichung zeitweise oder endgültig einzustellen. 
+
+  ##Haftungsausschluss für Links 
+
+  Verweise und Links auf Webseiten Dritter liegen ausserhalb unseres Verantwortungsbereichs. Es wird jegliche Verantwortung für solche Webseiten abgelehnt. Der Zugriff und die Nutzung solcher Webseiten erfolgen auf eigene Gefahr der jeweiligen Nutzenden. 
+
+  ##Urheberrechte 
+
+  Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen Dateien auf dieser Website, gehören der Trägerschaft. Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen. Basel,  
+
+  ##Datenschutzerklärung Privacybee?? 
+
+  [Vorschau deiner Datenschutzerklärung -- PrivacyBee Schweiz](https://www.privacybee.io/ch/demo/?previewId=cm7ekh4qf004hvifkc9s2rmoh) 
+
+  ##Cookies?

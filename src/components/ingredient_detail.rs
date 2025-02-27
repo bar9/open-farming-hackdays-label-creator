@@ -107,6 +107,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
 
             FormField {
                 label: t!("label.zusammengesetzteZutat"),
+                help: Some((t!("help.zusammengesetzteZutaten")).into()),
                 label { class: "label cursor-pointer",
                     input {
                         class: "checkbox",
@@ -129,6 +130,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             ConditionalDisplay {
                 path: "namensgebende_zutat",
                 FormField {
+                    help: Some((t!("help.namensgebendeZutaten")).into()),
                     label: t!("label.namensgebendeZutat"),
                     label { class: "label cursor-pointer",
                         input {

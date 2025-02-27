@@ -34,7 +34,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                                 button {
                                     class: "btn btn-sm",
                                     onclick: move |_| is_open.toggle(),
-                                    "{t!(\"nav.close\")}"
+                                    "{t!(\"nav.schliessen\")}"
                                     }
                                 }
                             }
