@@ -295,21 +295,44 @@ fn app() -> Element {
                                 //     }
                                 // }
                             }
+                            SeparatorLine {}
+
+                            FieldGroup1 {
+                                label: t!("label.gewichtUndPreis"),
+                                div { class: "grid grid-cols-2 gap-4",
+                                    FormField {
+                                        label: t!("label.nettogewicht"),
+                                        help: Some((t!("help.nettogewicht")).into()),
+                                        TextInput {
+                                            bound_value: net_weight,
+                                            placeholder: t!("placeholder.nettogewicht")
+                                        }
+                                    }
+                                    FormField {
+                                        label: t!("label.abtropfgewicht"),
+                                        help: Some((t!("help.abtropfgewicht")).into()),
+                                        TextInput {
+                                            bound_value: drained_weight,
+                                            placeholder: t!("placeholder.abtropfgewicht")
+                                        }
+                                    }
+                                }
+                            }
                             FieldGroup2 {
                                 FormField {
-                                    label: t!("label.nettogewicht"),
-                                    help: Some((t!("help.nettogewicht")).into()),
+                                    help: Some((t!("help.preisProX")).into()),
+                                    label: t!("label.preisProX"),
                                     TextInput {
-                                        bound_value: net_weight,
-                                        placeholder: t!("placeholder.nettogewicht")
+                                        placeholder: "4.00 CHF",
+                                        bound_value: price_per_100
                                     }
                                 }
                                 FormField {
-                                    label: t!("label.abtropfgewicht"),
-                                    help: Some((t!("help.abtropfgewicht")).into()),
+                                    help: Some((t!("help.preisTotal")).into()),
+                                    label: t!("label.preisTotal"),
                                     TextInput {
-                                        bound_value: drained_weight,
-                                        placeholder: t!("placeholder.abtropfgewicht")
+                                        placeholder: "12.00 CHF",
+                                        bound_value: total_price
                                     }
                                 }
                             }
@@ -349,27 +372,6 @@ fn app() -> Element {
                                     }
                                 }
                             }
-                            SeparatorLine {}
-                            FieldGroup1 { label: t!("label.preis"),
-                                div { class: "grid grid-cols-2 gap-4",
-                                    FormField {
-                                        help: Some((t!("help.preisProX")).into()),
-                                        label: t!("label.preisProX"),
-                                        TextInput {
-                                            placeholder: "4.00 CHF",
-                                            bound_value: price_per_100
-                                        }
-                                    }
-                                    FormField {
-                                        help: Some((t!("help.preisTotal")).into()),
-                                        label: t!("label.preisTotal"),
-                                        TextInput {
-                                            placeholder: "12.00 CHF",
-                                            bound_value: total_price
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -396,7 +398,7 @@ fn app() -> Element {
                 total_price: total_price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.2.10 vom 27.02.2025"}
+                span {"Version 0.2.11 vom 03.03.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",

@@ -18,6 +18,7 @@ label:
   email: E-Mail
   website: Website
   preis: Preis
+  gewichtUndPreis: Menge / Preis
   preisProX: Grundpreis (optional)
   preisTotal: Detailpreis (optional)
   mindestensHaltbar: Mindestens haltbar bis
