@@ -411,6 +411,7 @@ fn app() -> Element {
                         let text = format!("{href}{query_string}");
                         let  _ = clipboard.write_text(&text);
                     },
+                    icons::Clipboard{}
                     "{t!(\"nav.linkKopieren\")}"
                 }
 
