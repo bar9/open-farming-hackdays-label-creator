@@ -1,3 +1,39 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui";
+
+
+@plugin "daisyui/theme" {
+    name: "labelcreator";
+    default: true;
+    prefersdark: true;
+    color-scheme: "dark";
+    --color-base-100: oklch(96% 0.001 286.375);
+    --color-base-200: oklch(97% 0 0);
+    --color-base-300: oklch(92% 0 0);
+    --color-base-content: oklch(20% 0 0);
+    --color-primary: oklch(59% 0.145 163.225);
+    --color-primary-content: oklch(100% 0 0);
+    --color-secondary: oklch(89% 0.196 126.665);
+    --color-secondary-content: oklch(0% 0 0);
+    --color-accent: oklch(58% 0.233 277.117);
+    --color-accent-content: oklch(98% 0.022 95.277);
+    --color-neutral: oklch(96% 0.001 286.375);
+    --color-neutral-content: oklch(98% 0 0);
+    --color-info: oklch(88% 0.059 254.128);
+    --color-info-content: oklch(28% 0.091 267.935);
+    --color-success: oklch(76% 0.177 163.223);
+    --color-success-content: oklch(27% 0.072 132.109);
+    --color-warning: oklch(87% 0.169 91.605);
+    --color-warning-content: oklch(28% 0.066 53.813);
+    --color-error: oklch(63% 0.237 25.331);
+    --color-error-content: oklch(100% 0 0);
+    --radius-selector: 0rem;
+    --radius-field: 0rem;
+    --radius-box: 0rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+  }
+  
