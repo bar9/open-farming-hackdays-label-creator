@@ -1,138 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Home</title>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width" />
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.8.0/dist/full.min.css" rel="stylesheet" type="text/css" />
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body data-theme="light" class="min-h-screen">
-        <main class="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div class="flex flex-col gap-6 bg-neutral-200 p-8 pb-12 min-h-screen">
-                <h1 class="text-4xl mb-4">LMK Creator | Lebensmittelkennzeichnung</h1>
-                <div>
-                    <label class="flex gap-2 flex-col">
-                        Sachbezeichnung
-                        <input type="text" placeholder="Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig" class="input input-bordered w-full" />
-                    </label>
+
+<head>
+    <title>Home</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        [data-theme=pastel] {
+            --color-base-100: oklch(98% 0 0);
+            --color-base-200: oklch(97% 0 0);
+            --color-base-300: oklch(92% 0 0);
+            --color-base-content: oklch(20% 0 0);
+            --color-primary: oklch(0% 0 0);
+            --color-primary-content: oklch(100% 0 0);
+            --color-secondary: oklch(76% 0.233 130.85);
+            --color-secondary-content: oklch(0% 0 0);
+            --color-accent: oklch(69% 0.17 162.48);
+            --color-accent-content: oklch(98% 0.022 95.277);
+            --color-neutral: oklch(14% 0 0);
+            --color-neutral-content: oklch(98% 0 0);
+            --color-info: oklch(80% 0.105 251.813);
+            --color-info-content: oklch(28% 0.091 267.935);
+            --color-success: oklch(72% 0.219 149.579);
+            --color-success-content: oklch(27% 0.072 132.109);
+            --color-warning: oklch(82% 0.189 84.429);
+            --color-warning-content: oklch(28% 0.066 53.813);
+            --color-error: oklch(63% 0.237 25.331);
+            --color-error-content: oklch(100% 0 0);
+            --radius-selector: 0rem;
+            --radius-field: 0rem;
+            --radius-box: 0rem;
+            --size-selector: 0.21875rem;
+            --size-field: 0.25rem;
+            --border: 1px;
+            --depth: 0;
+            --noise: 1;
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.8.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+</head>
+<body data-theme="pastel" class="min-h-screen">
+
+    <!-- navbar -->
+    <div class="border-b-2 shadow-sm navbar bg-base-100 border-neutral-300">
+        <div class="flex-1">
+            <a class="flex flex-wrap items-center gap-2 p-4 text-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon icon-tabler icons-tabler-outline icon-tabler-checkup-list">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                    <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
+                    <path d="M9 14h.01" />
+                    <path d="M9 17h.01" />
+                    <path d="M12 16l1 1l3 -3" />
+                </svg>
+                <span>LMK Creator | Lebensmittelkennzeichnung</span></a>
+        </div>
+        <div class="flex-none">
+            <ul class="px-1 menu menu-horizontal">
+                <li>
+                    <a class="flex flex-wrap gap-2" href="#">
+                        <svg class="icon icon-tabler icons-tabler-outline icon-tabler-copy"
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path
+                                d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+                            <path
+                                d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+                        </svg>
+                        <span>Link kopieren</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="flex flex-wrap gap-2" href="#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-adjustments-horizontal">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M14 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                            <path d="M4 6l8 0" />
+                            <path d="M16 6l4 0" />
+                            <path d="M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                            <path d="M4 12l2 0" />
+                            <path d="M10 12l10 0" />
+                            <path d="M17 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                            <path d="M4 18l11 0" />
+                            <path d="M19 18l1 0" />
+                        </svg>
+                        <span>Konfiguration</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- components -->
+    <main class="grid grid-cols-1 gap-12 md:grid-cols-2">
+        <div class="flex flex-col min-h-screen gap-6 p-8 pb-12 border-r-2 border-neutral-300 bg-[#efefef]">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <!-- label + button als separate elemente -> nicht html5 valid wenn button inside <label> tag.. -->
+                        <label class="flex items-center">Nettogewicht</label>
+                        <button class="p-0 btn btn-xs btn-ghost hover:bg-transparent" data-dioxus-id="65">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-progress-help">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 16v.01" />
+                                <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+                                <path d="M10 20.777a8.942 8.942 0 0 1 -2.48 -.969" />
+                                <path d="M14 3.223a9.003 9.003 0 0 1 0 17.554" />
+                                <path d="M4.579 17.093a8.961 8.961 0 0 1 -1.227 -2.592" />
+                                <path d="M3.124 10.5c.16 -.95 .468 -1.85 .9 -2.675l.169 -.305" />
+                                <path d="M6.907 4.579a8.954 8.954 0 0 1 3.093 -1.356" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input class="w-full input input-bordered" type="text" placeholder="300g oder 500ml"
+                        data-dioxus-id="64">
                 </div>
-                <div class="flex items-end gap-2">
-                    <label class="flex gap-2 flex-col w-full">
-                        <label for="ice-cream-choice">Zutaten</label>
-                        <input class="input input-bordered w-full" list="ingredientsList" id="ingredientsInput" name="ingredients" />
-                        <datalist id="ingredientsList">
-                            <option value="Schokolade"></option>
-                            <option value="Kokosnuss"></option>
-                            <option value="Erdnuss"></option>
-                            <option value="Milch"></option>
-                            <option value="Zucker"></option>
-                        </datalist>
-                    </label>
-                    <button class="btn btn-primary">Hinzufügen</button>
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <!-- label + button als separate elemente -> nicht html5 valid wenn button inside <label> tag.. -->
+                        <label class="flex items-center">Abtropfgewicht</label>
+                        <button class="p-0 btn btn-xs btn-ghost hover:bg-transparent" data-dioxus-id="65">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-progress-help">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 16v.01" />
+                                <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+                                <path d="M10 20.777a8.942 8.942 0 0 1 -2.48 -.969" />
+                                <path d="M14 3.223a9.003 9.003 0 0 1 0 17.554" />
+                                <path d="M4.579 17.093a8.961 8.961 0 0 1 -1.227 -2.592" />
+                                <path d="M3.124 10.5c.16 -.95 .468 -1.85 .9 -2.675l.169 -.305" />
+                                <path d="M6.907 4.579a8.954 8.954 0 0 1 3.093 -1.356" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input class="w-full bg-white input input-bordered" type="text" placeholder="200g"
+                        data-dioxus-id="58">
+                </div>
+            </div>
+
+
+            <div>
+                <label class="flex flex-col gap-2">
+                    Sachbezeichnung
+                    <input type="text" placeholder="Produktname / Produktbeschrieb - z.B. Haferriegel mit Honig"
+                        class="w-full input input-bordered" />
+                </label>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <div class="flex flex-col gap-2">
+                        <label>Datumseingabe</label>
+                        <input class="w-full input input-bordered" type="date" id="haltbarBis" name="haltbarBis"
+                            value="2024-03-23" min="2024-03-23" max="2028-03-23" />
+                    </div>
+                </div>
+                <div>
+                    <div class="flex flex-col gap-2">
+                        <label>Zusatzinformationen</label>
+                        <textarea class="w-full textarea textarea-bordered" rows="4"
+                            placeholder="Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung"></textarea>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-2 border-dashed border-1 border-neutral-400" />
+            <div class="flex flex-col">
+                <h4 class="mb-2 text-xl">Adresse</h4>
+                <div class="flex flex-col gap-1 mb-2">
+                    <label>Vorname / Name / Firma</label>
+                    <input type="text" placeholder="Hans Muster AG" value="" class="w-full input input-bordered" />
                 </div>
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="flex gap-2 flex-col">
-                        <label>Produkt</label>
-                        <input type="text" placeholder="Joghurt" class="input input-bordered w-full" disabled />
+                    <div class="flex flex-col gap-1">
+                        <label>Adresse</label>
+                        <input type="text" placeholder="Teststrasse 1" value="" class="w-full input input-bordered" />
                     </div>
-                    <div class="flex gap-2 flex-col">
-                        <label>Menge</label>
-                        <input type="text" placeholder="50g" class="input input-bordered w-full" />
+                    <div class="flex flex-col gap-1">
+                        <label>PLZ</label>
+                        <input type="text" placeholder="CH-4001" value="" class="w-full input input-bordered" />
                     </div>
-                    <div class="flex gap-2 flex-col">
-                        <label>Herkunft</label>
-                        <input type="text" placeholder="Schweiz" value="Schweiz" class="input input-bordered w-full" />
-                    </div>
-                    <!--<div class="flex flex-col gap-2 justify-center">
-                        <label>Allergen</label>
-                        <div>
-                            <input type="checkbox" checked="checked" class="checkbox" />
-                        </div>
-                    </div>-->
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <div class="flex gap-2 flex-col">
-                            <label>Datumseingabe</label>
-                            <input class="input input-bordered w-full" type="date" id="haltbarBis" name="haltbarBis" value="2024-03-23" min="2024-03-23" max="2028-03-23" />
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex gap-2 flex-col">
-                            <label>Zusatzinformationen</label>
-                            <textarea class="textarea textarea-bordered w-full" rows="4" placeholder="Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <div class="flex gap-2 flex-col">
-                            <label>Aufbewahrung + Lagerung</label>
-                            <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="z.B. dunkel und kühl bei max. 5°C lagern"></textarea>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex gap-2 flex-col">
-                            <label>Produktionsland</label>
-                            <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="">Schweiz</textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <div class="flex gap-2 flex-col">
-                            <label>Nettogewicht</label>
-                            <input type="text" placeholder="300g" value="" class="input input-bordered w-full" />
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex gap-2 flex-col">
-                            <label>Abtropfgewicht</label>
-                            <input type="text" placeholder="125g" value="" class="input input-bordered w-full" />
-                        </div>
-                    </div>
-                </div>
-                <hr class="border-1 border-dashed border-neutral-400 my-2" />
-                <div class="flex flex-col">
-                    <h4 class="text-xl mb-2">Adresse</h4>
-                    <div class="flex gap-1 flex-col mb-2">
-                        <label>Vorname / Name / Firma</label>
-                        <input type="text" placeholder="Hans Muster AG" value="" class="input input-bordered w-full" />
-                    </div>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="flex gap-1 flex-col">
-                            <label>Adresse</label>
-                            <input type="text" placeholder="Teststrasse 1" value="" class="input input-bordered w-full" />
-                        </div>
-                        <div class="flex gap-1 flex-col">
-                            <label>PLZ</label>
-                            <input type="text" placeholder="CH-4001" value="" class="input input-bordered w-full" />
-                        </div>
-                        <div class="flex gap-1 flex-col">
-                            <label>Ort</label>
-                            <input type="text" placeholder="Basel" value="" class="input input-bordered w-full" />
-                        </div>
-                    </div>
-                </div>
-                <hr class="border-1 border-dashed border-neutral-400 my-2" />
-                <div class="flex flex-col">
-                    <h4 class="text-xl mb-2">Preis</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex gap-2 flex-col">
-                            <label class="text-sm">Preis pro 100g</label>
-                            <input type="text" placeholder="Teststrasse 1" value="" class="input input-bordered w-full" />
-                        </div>
-                        <div class="flex gap-2 flex-col">
-                            <label class="text-sm">Preis Total</label>
-                            <input type="text" placeholder="CH-4001" value="" class="input input-bordered w-full" />
-                        </div>
+                    <div class="flex flex-col gap-1">
+                        <label>Ort</label>
+                        <input type="text" placeholder="Basel" value="" class="w-full input input-bordered" />
                     </div>
                 </div>
             </div>
-            <div class="p-8">
-                <div>[Generated Output]</div>
+            <hr class="my-2 border-dashed border-1 border-neutral-400" />
+            <div class="flex flex-col">
+                <h4 class="mb-2 text-xl">Preis</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm">Preis pro 100g</label>
+                        <input type="text" placeholder="Teststrasse 1" value="" class="w-full input input-bordered" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm">Preis Total</label>
+                        <input type="text" placeholder="CH-4001" value="" class="w-full input input-bordered" />
+                    </div>
+                </div>
             </div>
-        </main>
-    </body>
+        </div>
+        <div class="p-8">
+            <div>[Generated Output]</div>
+        </div>
+    </main>
+    <footer class="p-8 border-t-2 footer sm:footer-horizontal bg-base-200 text-base-content border-neutral-300">
+        <span>LMK Creator | Open Farming Hackdays 2024</span>
+        <nav class="flex flex-wrap justify-start w-full gap-4 md:justify-end">
+            <span>Version 0.2.11 vom 03.03.2025</span>
+            <a class="link link-hover" onclick="impressumModal.showModal()">Impressum</a>
+            <a class="link link-hover">Release Notes</a>
+        </nav>
+    </footer>
+
+    <!-- impressum as modal -->
+    <dialog id="impressumModal" class="modal">
+        <div class="flex flex-col items-center justify-center modal-box w-[100%] max-w-none max-h-none h-full rounded-none relative">
+            <div class="absolute top-1 right-1">
+                <form method="dialog">
+                    <button class="outline-none btn btn-ghost hover:bg-transparent">
+                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+                    </button>
+                </form>
+            </div>
+            <h2 class="mb-8 text-2xl font-bold">Impressum</h2>
+            <div class="prose">[PROSE IMPRESSUM TEXT HERE]</div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-primary">Impressum schliessen</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+</body>
+
 </html>
