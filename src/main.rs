@@ -336,53 +336,6 @@ fn app() -> Element {
                                     weight_type: weight_type,
                                     volume_type: volume_type
                                 }
-                                div { class: "grid grid-cols-2 gap-4",
-                                    if *amount_type.read() == AmountType::Weight {
-                                        FormField {
-                                            label: t!("label.nettogewicht"),
-                                            help: Some((t!("help.nettogewicht")).into()),
-                                            TextInput {
-                                                bound_value: net_weight,
-                                                placeholder: t!("placeholder.nettogewicht")
-                                            }
-                                        }
-                                        FormField {
-                                            label: t!("label.abtropfgewicht"),
-                                            help: Some((t!("help.abtropfgewicht")).into()),
-                                            TextInput {
-                                                bound_value: drained_weight,
-                                                placeholder: t!("placeholder.abtropfgewicht")
-                                            }
-                                        }
-                                    } else {
-                                        FormField {
-                                            label: t!("label.volumen"),
-                                            help: Some((t!("help.volumen")).into()),
-                                            TextInput {
-                                                bound_value: volume,
-                                                placeholder: t!("placeholder.volumen")
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            FieldGroup2 {
-                                FormField {
-                                    help: Some((t!("help.preisProX")).into()),
-                                    label: t!("label.preisProX"),
-                                    TextInput {
-                                        placeholder: "4.00 CHF",
-                                        bound_value: price_per_100
-                                    }
-                                }
-                                FormField {
-                                    help: Some((t!("help.preisTotal")).into()),
-                                    label: t!("label.preisTotal"),
-                                    TextInput {
-                                        placeholder: "12.00 CHF",
-                                        bound_value: total_price
-                                    }
-                                }
                             }
                             SeparatorLine {}
                             FieldGroup1 { label: t!("label.adresse"),
