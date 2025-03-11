@@ -21,6 +21,7 @@ mod components;
 pub mod core;
 mod rules;
 mod nl2br;
+mod form;
 
 i18n!();
 
@@ -153,6 +154,9 @@ fn app() -> Element {
     let total_price = use_signal(|| initial_form.read().total_price.clone());
     let manual_total: Signal<Option<f64>> = use_signal(|| None);
 
+    let amount_type = use_signal(|| AmountType::Weight);
+    let volume = use_signal(|| String::new());
+
     let configuration= use_signal(|| Configuration::Conventional);
 
     let current_state = use_memo(move || {
@@ -217,6 +221,14 @@ fn app() -> Element {
     use_context_provider(|| Conditionals(conditional_display));
 
     let mut config_modal_open = use_signal(|| false);
+
+    let amount_type: Signal<AmountType> = use_signal(|| AmountType::Weight);
+    let weight_unit: Signal<String> = use_signal(|| "g".to_string());
+    let volume_unit: Signal<String> = use_signal(|| "ml".to_string());
+    let amount: Signal<Amount> = use_signal(|| Amount::Single(0));
+    let price: Signal<Price> = use_signal(|| Price::Single(0));
+    let weight_type: Signal<Option<WeightType>> = use_signal(|| Some(WeightType::Gewicht));
+    let volume_type: Signal<Option<VolumeType>> = use_signal(|| Some(VolumeType::Volumen));
 
     rsx! {
         document::Stylesheet {
@@ -297,23 +309,59 @@ fn app() -> Element {
                             }
                             SeparatorLine {}
 
+                            // match amount_type() {
+                            //     AmountType::Volume => rsx! {
+                            //         "volume"
+                            //     },
+                            //
+                            //     AmountType::Weight => rsx! {
+                            //         "weight"
+                            //     }
+                            // }
+
                             FieldGroup1 {
                                 label: t!("label.gewichtUndPreis"),
+                                // FormField {
+                                //     label: t!("label.mengenart"),
+                                //     AmountTypeSelect {
+                                //         amount_type: amount_type
+                                //     }
+                                // }
+                                AmountPrice {
+                                    amount_type: amount_type,
+                                    weight_unit: weight_unit,
+                                    volume_unit: volume_unit,
+                                    amount: amount,
+                                    price: price,
+                                    weight_type: weight_type,
+                                    volume_type: volume_type
+                                }
                                 div { class: "grid grid-cols-2 gap-4",
-                                    FormField {
-                                        label: t!("label.nettogewicht"),
-                                        help: Some((t!("help.nettogewicht")).into()),
-                                        TextInput {
-                                            bound_value: net_weight,
-                                            placeholder: t!("placeholder.nettogewicht")
+                                    if *amount_type.read() == AmountType::Weight {
+                                        FormField {
+                                            label: t!("label.nettogewicht"),
+                                            help: Some((t!("help.nettogewicht")).into()),
+                                            TextInput {
+                                                bound_value: net_weight,
+                                                placeholder: t!("placeholder.nettogewicht")
+                                            }
                                         }
-                                    }
-                                    FormField {
-                                        label: t!("label.abtropfgewicht"),
-                                        help: Some((t!("help.abtropfgewicht")).into()),
-                                        TextInput {
-                                            bound_value: drained_weight,
-                                            placeholder: t!("placeholder.abtropfgewicht")
+                                        FormField {
+                                            label: t!("label.abtropfgewicht"),
+                                            help: Some((t!("help.abtropfgewicht")).into()),
+                                            TextInput {
+                                                bound_value: drained_weight,
+                                                placeholder: t!("placeholder.abtropfgewicht")
+                                            }
+                                        }
+                                    } else {
+                                        FormField {
+                                            label: t!("label.volumen"),
+                                            help: Some((t!("help.volumen")).into()),
+                                            TextInput {
+                                                bound_value: volume,
+                                                placeholder: t!("placeholder.volumen")
+                                            }
                                         }
                                     }
                                 }
@@ -452,3 +500,4 @@ fn app() -> Element {
         }
     }
 }
+
