@@ -1,0 +1,534 @@
+<!-- doctype fehlt + "lang='de-CH'" attribut auf html tag hinzufügen -->
+<html>
+<head>
+    <!-- title verbessern (SEO relevant) -->
+    <title>Label Creator</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+
+    <!-- meta description tag einfügen -->
+
+    <!-- doppelt eingebunden? -->
+    <link rel="stylesheet" href="/open-farming-hackdays-label-creator/tailwind.css">
+    <link rel="stylesheet" href="/open-farming-hackdays-label-creator/assets/tailwind.css">
+
+    <!-- "new" tailwindcss -> use tailwind v4 + daisyui v5 -->
+    <link rel="stylesheet" href="./assets/tailwind.css" type="text/css">
+</head>
+<body>
+    <div id="main">
+        <!-- custom "labelcreator" theme for the future...? -->
+        <div class="min-h-screen" data-theme="pastel">
+
+            <!-- navbar / neuer aufbau -->
+            <div class="flex-wrap bg-white border-b-2 navbar border-neutral-300">
+                <div class="flex-1">
+                    <a class="flex flex-wrap items-center gap-2 p-4 text-2xl text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon icon-tabler icons-tabler-outline icon-tabler-checkup-list">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                            <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
+                            <path d="M9 14h.01" />
+                            <path d="M9 17h.01" />
+                            <path d="M12 16l1 1l3 -3" />
+                        </svg>
+                        <span>Creator | Lebensmittelkennzeichnung</span></a>
+                </div>
+                <div class="flex-none">
+                    <ul class="gap-4 px-1 menu menu-horizontal">
+                        <li>
+                            <a class="flex flex-wrap gap-2 btn" href="#">
+                                <svg class="icon icon-tabler icons-tabler-outline icon-tabler-copy"
+                                    xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path
+                                        d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+                                    <path
+                                        d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+                                </svg>
+                                <span>Link kopieren</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex flex-wrap gap-2 btn" href="#">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-adjustments-horizontal">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M14 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                    <path d="M4 6l8 0" />
+                                    <path d="M16 6l4 0" />
+                                    <path d="M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                    <path d="M4 12l2 0" />
+                                    <path d="M10 12l10 0" />
+                                    <path d="M17 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                    <path d="M4 18l11 0" />
+                                    <path d="M19 18l1 0" />
+                                </svg>
+                                <span>Konfiguration</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <main class="grid flex-grow grid-cols-1 md:grid-cols-2">
+
+                <!--
+                    <div class="border collapse bg-base-100 border-base-300">
+                        <input type="checkbox" />
+                        <div class="font-semibold collapse-title">Label / Icon</div>
+                        <div class="text-sm collapse-content">
+                            <input type="text" placeholder="this is content..." class="input input-bordered">
+                        </div>
+                    </div>
+                -->
+                
+                <!-- left side -> "md:" vor h-screen hinzufügen um ein "doppel-scroll" auf mobile zu verhindern -->
+                <div class="flex md:h-screen bg-[#dde7df]">
+                    <div class="flex flex-1 overflow-hidden">
+                        <div class="flex-1 overflow-y-scroll">
+                            <div class="flex flex-col gap-6 p-8 pb-12">
+
+                                <!-- IST-Zustand einzeiliger text input -->
+                                <div class="flex flex-col gap-2">
+                                    <label class="flex items-center">Produktname
+                                        <button class="ml-2 btn btn-xs" data-dioxus-id="396">
+                                            <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                <path d="M12 9h.01"></path>
+                                                <path d="M11 12h1v4h1"></path>
+                                            </svg>
+                                        </button>
+                                        <!--placeholder-->
+                                    </label>
+                                    <input class="w-full bg-white input input-bordered" type="text" placeholder="Sommertraum" data-dioxus-id="395">
+                                </div>
+
+                                <!-- 
+                                    SOLL-Zustand einzeliger text input
+                                    -> neues icon
+                                    -> button ausserhalb des labels (html 5 semantic)
+                                    -> label "for" attribut -> matching id auf buttons (label onclick input focus)
+                                    -> label + button in eigenem div container mit display flex
+                                    -> bg-transparent + border-0 auf info-modal button
+                                -->
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <label for="productNameInput" class="flex items-center gap-2">Produktname</label>
+                                        <button class="bg-transparent border-0 btn btn-xs">
+                                            <!-- new icon for "help modal" -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-progress-help">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M12 16v.01" />
+                                                <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+                                                <path d="M10 20.777a8.942 8.942 0 0 1 -2.48 -.969" />
+                                                <path d="M14 3.223a9.003 9.003 0 0 1 0 17.554" />
+                                                <path d="M4.579 17.093a8.961 8.961 0 0 1 -1.227 -2.592" />
+                                                <path d="M3.124 10.5c.16 -.95 .468 -1.85 .9 -2.675l.169 -.305" />
+                                                <path d="M6.907 4.579a8.954 8.954 0 0 1 3.093 -1.356" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <input id="productNameInput" class="w-full bg-white input input-bordered" type="text" placeholder="Sommertraum">
+                                </div>
+
+                                <!-- siehe notizen einzeiliger text input / "produktname" -->
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <label for="productNameInput" class="flex items-center gap-2">Sachbezeichnung</label>
+                                        <button class="bg-transparent border-0 btn btn-xs">
+                                            <!-- new icon for "help modal" -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-progress-help">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M12 16v.01" />
+                                                <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+                                                <path d="M10 20.777a8.942 8.942 0 0 1 -2.48 -.969" />
+                                                <path d="M14 3.223a9.003 9.003 0 0 1 0 17.554" />
+                                                <path d="M4.579 17.093a8.961 8.961 0 0 1 -1.227 -2.592" />
+                                                <path d="M3.124 10.5c.16 -.95 .468 -1.85 .9 -2.675l.169 -.305" />
+                                                <path d="M6.907 4.579a8.954 8.954 0 0 1 3.093 -1.356" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <input id="productNameInput" class="w-full bg-white input input-bordered" type="text" placeholder="Himbeerkonfitüre">
+                                </div>
+
+                                <!-- "neue" divider line -->
+                                <hr class="my-4 border-dashed border-neutral-400">
+
+                                <!-- 
+                                    SOLL-Zustand zutaten input table
+                                    -> button ausserhalb des labels
+                                    -> label + button in eigenem div container mit display flex
+                                    -> bg-transparent + border-0 auf info-modal button
+                                 -->
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <label class="flex items-center">Zutaten</label>
+                                        <button class="bg-transparent border-0 btn btn-xs">
+                                            <!-- new icon for "help modal" -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-progress-help">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M12 16v.01" />
+                                                <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+                                                <path d="M10 20.777a8.942 8.942 0 0 1 -2.48 -.969" />
+                                                <path d="M14 3.223a9.003 9.003 0 0 1 0 17.554" />
+                                                <path d="M4.579 17.093a8.961 8.961 0 0 1 -1.227 -2.592" />
+                                                <path d="M3.124 10.5c.16 -.95 .468 -1.85 .9 -2.675l.169 -.305" />
+                                                <path d="M6.907 4.579a8.954 8.954 0 0 1 3.093 -1.356" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="flex flex-col gap-4">
+                                        <div class="grid items-center grid-cols-3 gap-4 border-bottom">
+                                            <span class="font-bold">Zutat (eingeben oder auswählen)</span>
+                                            <span class="font-bold text-right">Menge</span>
+                                            <span></span>
+                                        </div>
+                                    </div>
+                                    <div class="grid items-center grid-cols-3 gap-4 border-top">
+                                        
+                                        <!-- removed class "input-accent" für theme consistency -->
+                                        <input list="ingredients" type="flex" class="w-full bg-white input input-bordered" placeholder="Himbeeren">
+                                        
+                                        <div class="flex flex-row items-center gap-4 text-right">
+                                            <input type="number" class="w-full bg-white input input-bordered" placeholder="Menge">g
+                                        </div>
+
+                                        <!-- btn-primary anstatt btn-accent für theme consistency -->
+                                        <button class="btn btn-primary">Hinzufügen</button>
+                                    </div>
+                                </div>
+
+                                <!-- divider line -->
+                                <hr class="my-4 border-dashed border-neutral-400">
+
+                                <div class="grid grid-cols-2 gap-4 ">
+                                    <div class="flex flex-col gap-2">
+                                        <label class="flex items-center">Haltbarkeit
+                                            <button class="ml-2 btn btn-xs">
+                                                <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                    <path d="M12 9h.01"></path>
+                                                    <path d="M11 12h1v4h1"></path>
+                                                </svg>
+                                            </button>
+                                        </label>
+                                        <select class="w-full max-w-xs bg-white select select-bordered">
+                                            <option>Mindestens haltbar bis</option>
+                                            <option>Zu verbrauchen bis</option>
+                                        </select>
+                                        <input class="w-full bg-white input input-bordered" type="date">
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="flex items-center">Zusatzinformationen
+                                            <button class="ml-2 btn btn-xs">
+                                                <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                    <path d="M12 9h.01"></path>
+                                                    <path d="M11 12h1v4h1"></path>
+                                                </svg>
+                                            </button>
+                                        </label>
+                                        <textarea class="w-full bg-white textarea textarea-bordered" rows="4" placeholder="vegan 100g enthalten: ..."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 ">
+                                    <div class="flex flex-col gap-2">
+                                        <label class="flex items-center">Aufbewahrungshinweis
+                                            <button class="ml-2 btn btn-xs">
+                                                <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                    <path d="M12 9h.01"></path>
+                                                    <path d="M11 12h1v4h1"></path>
+                                                </svg>
+                                            </button>
+                                        </label>
+                                        <textarea class="w-full bg-white textarea textarea-bordered" rows="2" placeholder="z.B. dunkel und kühl bei max. 5°C lagern"></textarea>
+                                    </div>
+                                </div>
+
+                                
+                                <!-- custom swappable component -->
+                                <div class="grid grid-cols-2">
+                                    <!-- custom swappable component mit tailwind's peer funktionalität, daisyui swap eignet sich nur mit label etc, nicht mit "content blocks" show/hide -->
+                                    <div class="flex items-center gap-4 rounded-none collapse">
+                                        <!-- state checkbox -->
+                                        <input type="checkbox" id="collapse-toggle" class="hidden peer">
+                                    
+                                        <!-- collapsed content -->
+                                        <div class="hidden peer-checked:block">
+                                            <input type="text" placeholder="this is content..." class="w-full bg-white input input-bordered">
+                                        </div>
+
+                                        <!-- triggers -->
+                                        <label for="collapse-toggle" class="block font-semibold cursor-pointer peer-checked:hidden">
+                                            <!-- closed icon -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                            </svg>
+                                        </label>
+                                        <label for="collapse-toggle" class="hidden font-semibold cursor-pointer peer-checked:block">
+                                            <!-- open icon -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                            </svg>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+
+                                <!-- divider line -->
+                                <hr class="my-4 border-dashed border-neutral-400">
+
+                                <div class="flex flex-col gap-4">
+                                    <h4 class="mb-2 text-xl">Menge / Preis</h4>
+                                    <div class="grid grid-cols-2 gap-4 ">
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">label.mengenart
+                                                <!--placeholder-->
+                                            </label>
+                                            <select class="w-full max-w-xs bg-white select select-bordered">
+                                                <option value="gewicht">Gewicht</option>
+                                                <option value="volumen">Volumen</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">label.einheit</label>
+                                            <select class="w-full max-w-xs bg-white select select-bordered">
+                                                <option value="mg">mg</option>
+                                                <option value="g">g</option>
+                                                <option value="kg">kg</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">label.gewicht
+                                                <button class="ml-2 btn btn-xs">
+                                                    <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                        <path d="M12 9h.01"></path>
+                                                        <path d="M11 12h1v4h1"></path>
+                                                    </svg>
+                                                </button>
+                                            </label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="placeholder.gewicht">
+                                        </div>
+                                        <label class="btn btn-circle swap swap-rotate"><input type="checkbox">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" viewBox="0 0 512 512" height="32" class="fill-current swap-off">
+                                                <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z"></path>
+                                            </svg>
+                                            <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="fill-current swap-on">
+                                                <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49"></polygon>
+                                            </svg>
+                                        </label>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 ">
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">Grundpreis (optional)
+                                                <button class="ml-2 btn btn-xs">
+                                                    <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                        <path d="M12 9h.01"></path>
+                                                        <path d="M11 12h1v4h1"></path>
+                                                    </svg>
+                                                </button>
+                                            </label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="4.00 CHF">
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">Detailpreis (optional)
+                                                <button class="ml-2 btn btn-xs">
+                                                    <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                        <path d="M12 9h.01"></path>
+                                                        <path d="M11 12h1v4h1"></path>
+                                                    </svg>
+                                                </button>
+                                                <!--placeholder-->
+                                            </label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="12.00 CHF">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- divider line -->
+                                <hr class="my-4 border-dashed border-neutral-400">
+
+                                <div class="flex flex-col gap-4">
+                                    <h4 class="mb-2 text-xl">Adresse</h4>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="flex items-center">Firma / Name
+                                            <button class="ml-2 btn btn-xs">
+                                                <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                    <path d="M12 9h.01"></path>
+                                                    <path d="M11 12h1v4h1"></path>
+                                                </svg>
+                                            </button>
+                                        </label>
+                                        <input class="w-full bg-white input input-bordered" type="text" placeholder="Hubers Musterhof">
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">Adresse
+                                                <button class="ml-2 btn btn-xs">
+                                                    <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                        <path d="M12 9h.01"></path>
+                                                        <path d="M11 12h1v4h1"></path>
+                                                    </svg>
+                                                </button>
+                                            </label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="Teststrasse 1">
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">PLZ</label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="CH-4001">
+                                        </div>
+
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">Ort
+                                                <button class="ml-2 btn btn-xs">
+                                                    <svg class="w-6 h-6 icon icon-tabler icons-tabler-outline icon-tabler-info-circle" height="24" width="24" fill="none" stroke-linejoin="round" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke="none" fill="none" d="M0 0h24v24H0z"></path>
+                                                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                                                        <path d="M12 9h.01"></path>
+                                                        <path d="M11 12h1v4h1"></path>
+                                                    </svg>
+                                                </button>
+                                                <!--placeholder-->
+                                            </label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="Basel">
+                                        </div>
+
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">Telefon</label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="079 123 45 67">
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">E-Mail</label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="hof@qualitaet.ch">
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="flex items-center">Website</label>
+                                            <input class="w-full bg-white input input-bordered" type="text" placeholder="hof.qualitaet.ch">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- right side -->
+                <div class="flex flex-col p-8 bg-white">
+                    
+                    <!-- text-primary-content class für diesen titel entfernt, mb-6 anstatt padding verwenden -->
+                    <h2 class="mb-6 text-4xl">Etiketten Vorschau</h2>
+                    
+                    <!-- tags nur rendern wenn content vorhanden, check datum wrapping bei den spans, möglichst keine "<br>" verwenden -> sind unflexibel... -->
+                    <div class="grid p-4 bg-white border divide-y grid-col-1 divide-dotted">
+                        <div class="py-2">
+                            <h3 class="mb-1 text-2xl"></h3>
+                        </div>
+                        <div class="py-2">
+                            <h4 class="font-bold">Zutaten:</h4>
+                            <div class="text-sm"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 py-2">
+                            <h4 class="font-bold">Haltbarkeit</h4>
+                            <span>
+                                <span class="pr-2 font-bold">Nettogewicht</span>
+                            </span>
+                            <span>
+                                <span class="pr-1"></span>
+                                11.03.2026
+                            </span>
+                            <span>
+                                <span class="pr-2 font-bold">Abtropfgewicht</span>
+                            </span>
+                        </div>
+                        <div class="py-2">
+                            <span class="text-sm">
+                                <!--placeholder-->
+                            </span>
+                            <br>
+                            <span class="text-sm">
+                                <!--placeholder-->
+                            </span>
+                            <br>
+                            <!--placeholder-->
+                        </div>
+                        <div class="py-2">
+                            <span class="text-sm">
+                                <!--placeholder-->
+                            </span>
+                            <!--placeholder-->
+                            <!--placeholder-->
+                            <!--placeholder-->
+                        </div>
+                        <!--placeholder-->
+                    </div>
+                </div>
+                
+                <!-- no more used buttons fixed position -> see navbar -->
+                <!--
+                <div class="fixed flex gap-2 top-4 right-4">
+                    <button class="btn btn-primary">
+                        <svg fill="none" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" stroke-linecap="round" stroke="currentColor" width="24" stroke-width="2" stroke-linejoin="round" class="w-6 h-6">
+                            <path fill="none" stroke="none" d="M0 0h24v24H0z"></path>
+                            <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
+                            <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"></path>
+                            <path d="M9 12h6"></path>
+                            <path d="M9 16h6"></path>
+                        </svg>
+                        Link kopieren
+                    </button>
+                    <button class="btn btn-primary">
+                        <svg class="w-6 h-6" width="24" stroke-width="2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linejoin="round" stroke-linecap="round" height="24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="none" d="M0 0h24v24H0z" stroke="none"></path>
+                            <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"></path>
+                            <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+                        </svg>
+                        Konfiguration
+                    </button>
+                </div>
+                -->
+            </main>
+
+            <!-- versioning / release notes -->
+            <!--
+            <div class="fixed flex gap-2 bottom-2 right-2">
+                <span>Version 0.2.11 vom 03.03.2025</span>
+                <a class="link link-blue" href="https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes">Release Notes</a>
+            </div>
+            -->
+
+            <!-- SOLL-Zustand Release Notes + Impressum Link etc... als footer, war vorher innerhalb von "main".. -->
+            <footer class="p-4 border-t-2 footer sm:footer-horizontal bg-base-200 border-neutral-300">
+                <span>Creator | Open Farming Hackdays 2024</span>
+                <nav class="flex flex-wrap justify-start w-full gap-4 md:justify-end">
+                    <span>Version 0.2.11 vom 03.03.2025</span>
+                    <a class="link link-hover" onclick="impressumModal.showModal()">Impressum</a>
+                    <a href="https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes" class="link link-hover">Release Notes</a>
+                </nav>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>
