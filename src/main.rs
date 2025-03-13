@@ -44,10 +44,6 @@ struct Form {
     #[serde(default)]
     production_country: String,
     #[serde(default)]
-    net_weight: String,
-    #[serde(default)]
-    drained_weight: String,
-    #[serde(default)]
     producer_name: String,
     #[serde(default)]
     producer_address: String,
@@ -62,11 +58,17 @@ struct Form {
     #[serde(default)]
     producer_city: String,
     #[serde(default)]
-    price_per_100: String,
+    manual_total: Option<f64>,
     #[serde(default)]
-    total_price: String,
+    amount_type: AmountType,
     #[serde(default)]
-    manual_total: Option<f64>
+    weight_unit: String,
+    #[serde(default)]
+    volume_unit: String,
+    #[serde(default)]
+    amount: Amount,
+    #[serde(default)]
+    price: Price,
 }
 
 impl Into<Input> for Form {
@@ -97,11 +99,9 @@ impl Default for Form {
             product_subtitle: String::new(),
             additional_info: String::new(),
             storage_info: String::new(),
-            date_prefix: String::new(),
+            date_prefix: String::from("Mindestens haltbar bis "),
             date: String::new(),
             production_country: String::from("Schweiz"),  // Default to "Schweiz"
-            net_weight: String::new(),
-            drained_weight: String::new(),
             producer_name: String::new(),
             producer_address: String::new(),
             producer_email: String::new(),
@@ -109,9 +109,12 @@ impl Default for Form {
             producer_phone: String::new(),
             producer_zip: String::new(),
             producer_city: String::new(),
-            price_per_100: String::new(),
-            total_price: String::new(),
             manual_total: None,
+            amount_type: AmountType::Weight,
+            weight_unit: "g".to_string(),
+            volume_unit: "ml".to_string(),
+            amount: Amount::Single(Some(0)),
+            price: Price::Single(Some(0))
         }
     }
 }
@@ -141,8 +144,6 @@ fn app() -> Element {
     let date_prefix = use_signal(|| initial_form.read().date_prefix.clone());
     let date = use_signal(|| initial_form.read().date.clone());
     let production_country = use_signal(|| initial_form.read().production_country.clone());
-    let net_weight = use_signal(|| initial_form.read().net_weight.clone());
-    let drained_weight = use_signal(|| initial_form.read().drained_weight.clone());
     let producer_name = use_signal(|| initial_form.read().producer_name.clone());
     let producer_address = use_signal(|| initial_form.read().producer_address.clone());
     let producer_email = use_signal(|| initial_form.read().producer_email.clone());
@@ -150,12 +151,15 @@ fn app() -> Element {
     let producer_phone = use_signal(|| initial_form.read().producer_phone.clone());
     let producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
     let producer_city = use_signal(|| initial_form.read().producer_city.clone());
-    let price_per_100 = use_signal(|| initial_form.read().price_per_100.clone());
-    let total_price = use_signal(|| initial_form.read().total_price.clone());
-    let manual_total: Signal<Option<f64>> = use_signal(|| None);
+    let manual_total = use_signal(|| initial_form.read().manual_total.clone());
+    let amount_type: Signal<AmountType> = use_signal(|| initial_form.read().amount_type.clone());
+    let weight_unit: Signal<String> = use_signal(|| initial_form.read().weight_unit.clone());
+    let volume_unit: Signal<String> = use_signal(|| initial_form.read().volume_unit.clone());
+    let amount: Signal<Amount> = use_signal(|| initial_form.read().amount.clone());
+    let price: Signal<Price> = use_signal(|| initial_form.read().price.clone());
 
-    let amount_type = use_signal(|| AmountType::Weight);
-    let volume = use_signal(|| String::new());
+    // let amount_type = use_signal(|| AmountType::Weight);
+    // let volume = use_signal(|| String::new());
 
     let configuration= use_signal(|| Configuration::Conventional);
 
@@ -169,8 +173,6 @@ fn app() -> Element {
             date_prefix: date_prefix(),
             date: date(),
             production_country: production_country(),
-            net_weight: net_weight(),
-            drained_weight: drained_weight(),
             producer_name: producer_name(),
             producer_address: producer_address(),
             producer_phone: producer_phone(),
@@ -178,9 +180,12 @@ fn app() -> Element {
             producer_email: producer_email(),
             producer_zip: producer_zip(),
             producer_city: producer_city(),
-            price_per_100: price_per_100(),
-            total_price: total_price(),
             manual_total: manual_total(),
+            amount_type: amount_type(),
+            weight_unit: weight_unit(),
+            volume_unit: volume_unit(),
+            amount: amount(),
+            price: price()
         }
     });
 
@@ -222,13 +227,13 @@ fn app() -> Element {
 
     let mut config_modal_open = use_signal(|| false);
 
-    let amount_type: Signal<AmountType> = use_signal(|| AmountType::Weight);
-    let weight_unit: Signal<String> = use_signal(|| "g".to_string());
-    let volume_unit: Signal<String> = use_signal(|| "ml".to_string());
-    let amount: Signal<Amount> = use_signal(|| Amount::Single(0));
-    let price: Signal<Price> = use_signal(|| Price::Single(0));
-    let weight_type: Signal<Option<WeightType>> = use_signal(|| Some(WeightType::Gewicht));
-    let volume_type: Signal<Option<VolumeType>> = use_signal(|| Some(VolumeType::Volumen));
+    // let amount_type: Signal<AmountType> = use_signal(|| AmountType::Weight);
+    // let weight_unit: Signal<String> = use_signal(|| "g".to_string());
+    // let volume_unit: Signal<String> = use_signal(|| "ml".to_string());
+    // let amount: Signal<Amount> = use_signal(|| Amount::Single(None));
+    // let price: Signal<Price> = use_signal(|| Price::Single(None));
+    // let weight_type: Signal<Option<WeightType>> = use_signal(|| Some(WeightType::Gewicht));
+    // let volume_type: Signal<Option<VolumeType>> = use_signal(|| Some(VolumeType::Volumen));
 
     rsx! {
         document::Stylesheet {
@@ -333,8 +338,6 @@ fn app() -> Element {
                                     volume_unit: volume_unit,
                                     amount: amount,
                                     price: price,
-                                    weight_type: weight_type,
-                                    volume_type: volume_type
                                 }
                             }
                             SeparatorLine {}
@@ -386,8 +389,6 @@ fn app() -> Element {
                 production_country : production_country,
                 date_prefix : date_prefix,
                 date : date,
-                net_weight : net_weight,
-                drained_weight : drained_weight,
                 producer_name : producer_name,
                 producer_address : producer_address,
                 producer_zip : producer_zip,
@@ -395,8 +396,11 @@ fn app() -> Element {
                 producer_email: producer_email,
                 producer_phone: producer_phone,
                 producer_website: producer_website,
-                price_per_100: price_per_100,
-                total_price: total_price
+                amount_type: amount_type,
+                weight_unit: weight_unit,
+                volume_unit: volume_unit,
+                amount: amount,
+                price: price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
                 span {"Version 0.2.11 vom 03.03.2025"}

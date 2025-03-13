@@ -31,6 +31,11 @@ label:
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
   manuellesTotal: Gewogenes Endgewicht (optional)
+  mengenart: Volumen oder Gewicht
+  einheit: Einheit
+  gewicht: Gewicht
+  volumen: Volumen
+  preisProEinheit: Preis pro Einheit
 
 nav:
   linkKopieren: Link kopieren

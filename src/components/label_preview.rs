@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 use crate::nl2br::Nl2Br;
 use rust_i18n::t;
+use crate::components::{Amount, AmountType, Price};
 
 #[component]
 pub fn LabelPreview(
@@ -12,8 +13,6 @@ pub fn LabelPreview(
     production_country: Signal<String>,
     date_prefix: Signal<String>,
     date: Signal<String>,
-    net_weight: Signal<String>,
-    drained_weight: Signal<String>,
     producer_name: Signal<String>,
     producer_address: Signal<String>,
     producer_zip: Signal<String>,
@@ -21,9 +20,19 @@ pub fn LabelPreview(
     producer_email: Signal<String>,
     producer_website: Signal<String>,
     producer_phone: Signal<String>,
-    price_per_100: Signal<String>,
-    total_price: Signal<String>,
+    amount_type: Signal<AmountType>,
+    weight_unit: Signal<String>,
+    volume_unit: Signal<String>,
+    amount: Signal<Amount>,
+    price: Signal<Price>,
 ) -> Element {
+
+    fn display_money(cents: Option<usize>) -> String {
+        match cents {
+            None => String::new(),
+            Some(x) => format!("{:.2}", x as f64 / 100.0)
+        }
+    }
 
     let address_combined: Memo<String> = use_memo(move || {
         let parts = vec![
@@ -40,6 +49,32 @@ pub fn LabelPreview(
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>()
             .join(", ")
+    });
+
+    let get_unit = use_memo(move || {
+        match (&*amount_type.read(), &*weight_unit.read(), &*volume_unit.read()) {
+            (AmountType::Weight, unit, _) => unit.clone(),
+            (AmountType::Volume, _, unit) => unit.clone()
+        }
+    });
+
+    let get_base_factor = use_memo(move || {
+        match (&*amount_type.read(), &*weight_unit.read().as_str(), &*volume_unit.read().as_str()) {
+            (AmountType::Weight, "mg", _) => {100_usize}
+            (AmountType::Weight, "g", _) => {100_usize}
+            (AmountType::Weight, "kg", _) => {1_usize}
+            (AmountType::Volume, _, "ml") => {100_usize}
+            (AmountType::Volume, _, "cl") => {100_usize}
+            (AmountType::Volume, _, "l") => {1_usize}
+            (_, _, _) => 1_usize
+        }
+    });
+
+    let get_base_factor_and_unit = use_memo(move || {
+        match get_base_factor() {
+            1 => rsx!("{get_unit()}"),
+            _ => rsx!("{get_base_factor()} {get_unit()}")
+        }
     });
 
     rsx! {
@@ -70,12 +105,7 @@ pub fn LabelPreview(
                 }
 
                 div {
-                    class: "py-2 grid grid-cols-2 gap-4",
-                    h4 { class: "font-bold", "{t!(\"preview.haltbarkeit\")}" }
-                    span {
-                        span {class: "font-bold pr-2", "{t!(\"preview.nettogewicht\")}" }
-                        "{net_weight}"
-                    }
+                    class: "py-2 grid grid-cols-1 gap-4",
                     span {
                         span {
                             class: "pr-1",
@@ -83,11 +113,28 @@ pub fn LabelPreview(
                         }
                         "{date}"
                     }
-                    span {
-                        span {class: "font-bold pr-2", "{t!(\"preview.abtropfgewicht\")}" }
-                        "{drained_weight}"
-                    }
-
+                }
+                match amount() {
+                    Amount::Single(Some(amt)) => rsx! {
+                        div {
+                            span {
+                                "{amt} {get_unit()}"
+                            }
+                        }
+                    },
+                    Amount::Double(Some(netto), Some(brutto)) => rsx! {
+                        div {
+                            span {
+                                span {class: "font-bold pr-2", "{t!(\"preview.nettogewicht\")}" }
+                                "{netto} {get_unit()}"
+                            }
+                            span {
+                                span {class: "font-bold pl-2 pr-2", "{t!(\"preview.abtropfgewicht\")}" }
+                                "{brutto} {get_unit()}"
+                            }
+                        }
+                    },
+                    _ => rsx! {}
                 }
 
                 div { class: "py-2",
@@ -136,17 +183,53 @@ pub fn LabelPreview(
                         }
                     }
                 }
-
-                if !(price_per_100().is_empty() && total_price().is_empty()) {
-                    div { class: "py-2 grid grid-cols-2 gap-4",
-                        div {
-                            span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\")}"} "{price_per_100} CHF"
-                        }
-                        div {
-                            span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\")}"} "{total_price} CHF"
-                        }
+                    match (price(), amount()) {
+                        (Price::Single(None), _) => rsx! {},
+                        (Price::Single(x), Amount::Single(Some(1))) |
+                        (Price::Single(x), Amount::Single(Some(100))) |
+                        (Price::Single(x), Amount::Single(Some(250))) |
+                        (Price::Single(x), Amount::Single(Some(500))) |
+                        (Price::Single(x), Amount::Double(Some(1), _)) |
+                        (Price::Single(x), Amount::Double(Some(100), _)) |
+                        (Price::Single(x), Amount::Double(Some(250), _)) |
+                        (Price::Single(x), Amount::Double(Some(500), _)) => rsx! {
+                            "{display_money(x)} CHF"
+                        },
+                        (Price::Double(x, _), Amount::Single(Some(1))) |
+                        (Price::Double(x, _), Amount::Single(Some(100))) |
+                        (Price::Double(x, _), Amount::Single(Some(250))) |
+                        (Price::Double(x, _), Amount::Single(Some(500))) |
+                        (Price::Double(x, _), Amount::Double(Some(1), _)) |
+                        (Price::Double(x, _), Amount::Double(Some(100), _)) |
+                        (Price::Double(x, _), Amount::Double(Some(250), _)) |
+                        (Price::Double(x, _), Amount::Double(Some(500), _)) => rsx! {
+                            "{display_money(x)} CHF"
+                        },
+                        (Price::Double(x, y), _) => rsx! (
+                            div {
+                                span {
+                                    span {class: "font-bold pr-2", "Preis pro " {get_base_factor_and_unit()} }
+                                    "{display_money(x)} CHF"
+                                }
+                                span {
+                                    span {class: "font-bold pl-2 pr-2", "Preis" }
+                                    "{display_money(y)} CHF"
+                                }
+                            }
+                        ),
+                        _ => rsx! {},
                     }
-                }
+
+                // if !(price_per_100().is_empty() && total_price().is_empty()) {
+                //     div { class: "py-2 grid grid-cols-2 gap-4",
+                //         div {
+                //             span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\")}"} "{price_per_100} CHF"
+                //         }
+                //         div {
+                //             span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\")}"} "{total_price} CHF"
+                //         }
+                //     }
+                // }
             }
         }
     }

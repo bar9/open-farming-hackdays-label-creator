@@ -1,53 +1,63 @@
+use std::cell::Ref;
 use std::cmp::PartialEq;
+use std::str::FromStr;
+use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::prelude::*;
 use rust_i18n::t;
+use serde::{Deserialize, Serialize};
 use crate::components::{FieldGroup1, FieldGroup2, FormField, TextInput};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Serialize, Deserialize)]
 pub enum AmountType {
     Weight, Volume
 }
 
-#[derive(PartialEq)]
-pub enum WeightType {
-    EinheitsGewicht,
-    Gewicht,
-    Abtropfgewicht
+impl Default for AmountType {
+    fn default() -> Self {
+        AmountType::Weight
+    }
 }
 
-pub enum VolumeType {
-    Einheitsvolumen,
-    Volumen
-}
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Amount {
-    Single(usize),
-    Double(usize, usize)
+    Single(Option<usize>),
+    Double(Option<usize>, Option<usize>)
 }
 
 impl Amount {
-    fn get_value_tuple(self) -> (usize, usize) {
+    fn get_value_tuple(self) -> (Option<usize>, Option<usize>) {
         match self {
-            Amount::Single(v) => (v, 0),
+            Amount::Single(v) => (v, None),
             Amount::Double(v1, v2) => (v1, v2)
         }
     }
 }
 
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Price {
-    Single(usize),
-    Double(usize, usize)
+    Single(Option<usize>),
+    Double(Option<usize>, Option<usize>)
 }
 
 impl Price {
-    fn get_value_tuple(self) -> (usize, usize) {
+    fn get_value_tuple(self) -> (Option<usize>, Option<usize>) {
         match self {
-            Price::Single(v) => (v, 0),
+            Price::Single(v) => (v, None),
             Price::Double(v1, v2) => (v1, v2)
         }
+    }
+}
+
+impl Default for Price {
+    fn default() -> Self {
+        Price::Single(None)
+    }
+}
+
+impl Default for Amount {
+    fn default() -> Self {
+        Amount::Single(None)
     }
 }
 
@@ -58,8 +68,6 @@ pub struct AmountPriceProps {
     volume_unit: Signal<String>,
     amount: Signal<Amount>,
     price: Signal<Price>,
-    weight_type: Signal<Option<WeightType>>,
-    volume_type: Signal<Option<VolumeType>>,
 }
 
 /// Is responsible for reactively rendering amount & price fields
@@ -67,6 +75,94 @@ pub struct AmountPriceProps {
 pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
 
     let mut has_abtropfgewicht = use_signal(|| false );
+    let mut amount_type = props.amount_type.clone();
+    let mut weight_unit = props.weight_unit.clone();
+    let mut volume_unit = props.volume_unit.clone();
+    let mut amount = props.amount.clone();
+    let mut current_input = use_signal(|| String::new());
+    let mut price = props.price.clone();
+
+
+
+    let get_base_factor = use_memo(move || {
+        match (&*amount_type.read(), &*weight_unit.read().as_str(), &*volume_unit.read().as_str()) {
+            (AmountType::Weight, "mg", _) => {100_usize}
+            (AmountType::Weight, "g", _) => {100_usize}
+            (AmountType::Weight, "kg", _) => {1_usize}
+            (AmountType::Volume, _, "ml") => {100_usize}
+            (AmountType::Volume, _, "cl") => {100_usize}
+            (AmountType::Volume, _, "l") => {1_usize}
+            (_, _, _) => 1_usize
+        }
+    });
+
+    let calculated_amount = use_memo(move || {
+        match price() {
+            // Price::Double(Some(unit_price), Some(total_price)) => (
+            //     (true, ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize)
+            // ),
+            _ => (false, 0)
+        }
+    });
+
+    let calculated_total_price = use_memo(move || {
+        let net_amount = match amount() {
+            Amount::Single(Some(x)) => x,
+            Amount::Double(Some(x), _) => x,
+            _ => 0
+        };
+        if net_amount == 0 {
+            return (false, 0);
+        }
+        match price() {
+            // Price::Double(Some(unit_price), Some(_)) => (
+            //     (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize)
+            // ),
+            _ => (false, 0)
+        }
+    });
+
+    let calculated_unit_price = use_memo(move || {
+        let net_amount = match amount() {
+            Amount::Single(Some(x)) => x,
+            Amount::Double(Some(x), _) => x,
+            _ => 0
+        };
+        if net_amount == 0 {
+            return (false, 0);
+        }
+        match price() {
+            // Price::Double(Some(_), Some(total_price)) => (
+            //     (true, (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize)
+            // ),
+            _ => (false, 0)
+        }
+    });
+
+    let get_unit = use_memo(move || {
+        match (&*amount_type.read(), &*weight_unit.read(), &*volume_unit.read()) {
+            (AmountType::Weight, unit, _) => unit.clone(),
+            (AmountType::Volume, _, unit) => unit.clone()
+        }
+    });
+
+    let get_base_factor_and_unit = use_memo(move || {
+        match get_base_factor() {
+            1 => rsx!("{get_unit()}"),
+            _ => rsx!("{get_base_factor()} {get_unit()}")
+        }
+    });
+
+    let is_einheitsgroesse = use_memo(move || {
+        match amount() {
+            Amount::Single(x) => {
+                return [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0))
+            }
+            Amount::Double(x, _) => {
+                return [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0))
+            }
+        }
+    });
 
     fn set_amount_type(new_amount_type: String, mut amount_type: Signal<AmountType>) {
         match new_amount_type.as_str() {
@@ -78,6 +174,120 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             },
             _ => panic!("illegal amount_type")
         };
+    }
+
+    fn set_unit(new_unit: String, mut amount_type: Signal<AmountType>, mut weight_unit: Signal<String>, mut volume_unit: Signal<String>) {
+        if *amount_type.read() == AmountType::Weight {
+            weight_unit.set(new_unit);
+        } else {
+            volume_unit.set(new_unit);
+        }
+    }
+
+    fn set_amount_single(new_amount: String, mut amount: Signal<Amount>) {
+        let val = new_amount.parse().ok();
+        amount.set(Amount::Single(val));
+    }
+
+    fn set_amount_0(new_amount: String, mut amount: Signal<Amount>) {
+        let old_amount = amount();
+        let val = new_amount.parse().ok();
+        match old_amount {
+            Amount::Single(_) => {
+                amount.set(Amount::Single(val));
+            }
+            Amount::Double(_, x) => {
+                amount.set(Amount::Double(val, x));
+            }
+        }
+    }
+
+    fn set_amount_1(new_amount: String, mut amount: Signal<Amount>) {
+        let old_amount = amount();
+        let val = new_amount.parse().ok();
+        match old_amount {
+            Amount::Single(x) => {
+                amount.set(Amount::Double(x, val));
+            }
+            Amount::Double(x, _) => {
+                amount.set(Amount::Double(x, val));
+            }
+        }
+    }
+
+    fn display_money(cents: Option<usize>) -> String {
+        match cents {
+            None => String::new(),
+            Some(x) => format!("{:.2}", x as f64 / 100.0)
+        }
+    }
+
+    fn set_price_0(input: String, mut price: Signal<Price>) {
+        let old_price = price();
+        if input.is_empty() {
+            match(old_price) {
+                Price::Single(_) => {
+                    price.set(Price::Single(None));
+                }
+                Price::Double(_, old) => {
+                    price.set(Price::Double(None, old));
+                }
+            }
+        }
+        let cleaned = input.replace(',', "."); // Handle potential comma input
+        if let Some(parsed) = f64::from_str(&cleaned).ok() {
+            let cents = (parsed * 100.0).round() as usize; // Ensure rounding
+            match(old_price) {
+                Price::Single(_) => {
+                    price.set(Price::Single(Some(cents))); // Assuming Price::Single(i64)
+                }
+                Price::Double(_, old) => {
+                    price.set(Price::Double(Some(cents), old)); // Assuming Price::Single(i64)
+                }
+            }
+        } else {
+            price.set(old_price);
+        }
+    }
+
+    fn set_price_1(input: String, mut price: Signal<Price>) {
+        let old_price = price();
+        if input.is_empty() {
+            match(old_price) {
+                Price::Single(old) => {
+                    price.set(Price::Double(old, None));
+                }
+                Price::Double(old, _) => {
+                    price.set(Price::Double(old, None));
+                }
+            }
+        }
+        let cleaned = input.replace(',', "."); // Handle potential comma input
+        if let Some(parsed) = f64::from_str(&cleaned).ok() {
+            let cents = (parsed * 100.0).round() as usize; // Ensure rounding
+            match(old_price) {
+                Price::Single(old) => {
+                    price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
+                }
+                Price::Double(old, _) => {
+                    price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
+                }
+            }
+        } else {
+            price.set(old_price);
+        }
+    }
+
+    fn set_price_single(input: String, mut price: Signal<Price>) {
+        if input.is_empty() {
+            price.set(Price::Single(None));
+        } else {
+            let cleaned = input.replace(',', "."); // Handle potential comma input
+            if let Some(parsed) = f64::from_str(&cleaned).ok() {
+                let cents = (parsed * 100.0).round() as usize; // Ensure rounding
+                price.set(Price::Single(Some(cents)));
+            }
+        }
     }
 
     rsx! {
@@ -95,17 +305,17 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             FormField {
                 label: t!("label.einheit"),
                 select {
-                    oninput: move |evt| set_amount_type(evt.data.value(), props.amount_type),
+                    oninput: move |evt| set_unit(evt.data.value(), props.amount_type, props.weight_unit, props.volume_unit),
                     class: "select bg-white select-bordered w-full max-w-xs",
 
                     if *props.amount_type.read() == AmountType::Weight {
-                        option {value: "mg", "mg"}
-                        option {value: "g", "g"}
-                        option {value: "kg", "kg"}
+                        option {selected: {*props.weight_unit.read() == "mg"}, value: "mg", "mg"}
+                        option {selected: {*props.weight_unit.read() == "g"}, value: "g", "g"}
+                        option {selected: {*props.weight_unit.read() == "kg"}, value: "kg", "kg"}
                     } else {
-                        option {value: "ml", "ml"}
-                        option {value: "cl", "cl"}
-                        option {value: "l", "l"}
+                        option {selected: {*props.volume_unit.read() == "ml"}, value: "ml", "ml"}
+                        option {selected: {*props.volume_unit.read() == "cl"}, value: "cl", "cl"}
+                        option {selected: {*props.volume_unit.read() == "l"}, value: "l", "l"}
                     }
                 }
             }
@@ -114,12 +324,20 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                     FormField {
                         label: t!("label.nettogewicht"),
                         help: Some((t!("help.nettogewicht")).into()),
-                        input {
-                            class: "input bg-white input-bordered w-full",
-                            r#type: "text",
-                            placeholder: t!("placeholder.nettogewicht").as_ref(),
-                            value: "{props.amount.read().get_value_tuple().0}",
-                            // oninput: move |evt| *props.amount.write() = Amount::Single(evt.data.value().parse().unwrap())
+                        div {
+                            class: "flex flex-row items-center gap-2",
+                            input {
+                                class: "input bg-white input-bordered w-1/2",
+                                r#type: "number",
+                                placeholder: "300",
+                                disabled: calculated_amount().0,
+                                value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
+                                oninput: move |evt| set_amount_0(evt.data.value(), props.amount)
+                            }
+                            span {
+                                class: "badge",
+                                "{props.weight_unit}"
+                            }
                         }
                     }
                     div {
@@ -127,17 +345,22 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                         FormField {
                             label: t!("label.abtropfgewicht"),
                             help: Some((t!("help.abtropfgewicht")).into()),
-                            input {
-                                class: "input bg-white input-bordered w-full",
-                                r#type: "text",
-                                placeholder: t!("placeholder.abtropfgewicht").as_ref(),
-                                value: "{props.amount.read().get_value_tuple().1}",
-                                // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                                oninput: move |_| {}
+                            div {
+                                class: "flex flex-row items-center gap-2",
+                                input {
+                                    class: "input bg-white input-bordered w-1/2",
+                                    r#type: "number",
+                                    placeholder: "200",
+                                    value: props.amount.read().get_value_tuple().1.map(|v| v.to_string()).unwrap_or_default(),
+                                    oninput: move |evt| set_amount_1(evt.data.value(), props.amount)
+                                }
+                                span {
+                                    class: "badge",
+                                    "{props.weight_unit}"
+                                }
                             }
                         }
-                        label { class: "btn btn-circle swap bordered :w\
-                        swap-rotate absolute right-0 bottom-0",
+                        label { class: "btn btn-circle swap bordered swap-rotate absolute right-0 bottom-0",
                             input {
                                 r#type: "checkbox",
                                 checked: has_abtropfgewicht(),
@@ -165,13 +388,20 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                     FormField {
                         label: t!("label.gewicht"),
                         help: Some((t!("help.gewicht")).into()),
-                        input {
-                            class: "input bg-white input-bordered w-full",
-                            r#type: "text",
-                            placeholder: t!("placeholder.gewicht").as_ref(),
-                            value: "{props.amount.read().get_value_tuple().0}",
-                            // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                            oninput: move |_| {}
+                        div {
+                            class: "flex flex-row items-center gap-2",
+                            input {
+                                class: "input bg-white input-bordered w-1/2",
+                                r#type: "number",
+                                placeholder: "300",
+                                disabled: calculated_amount().0,
+                                value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
+                                oninput: move |evt| set_amount_single(evt.data.value(), props.amount)
+                            }
+                            span {
+                                class: "badge",
+                                "{props.weight_unit}"
+                            }
                         }
                     }
                     label { class: "btn btn-circle swap swap-rotate",
@@ -202,66 +432,85 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                 FormField {
                     label: t!("label.volumen"),
                     help: Some((t!("help.volumen")).into()),
-                    input {
-                        class: "input bg-white input-bordered w-full",
-                        r#type: "text",
-                        placeholder: t!("placeholder.volumen").as_ref(),
-                        value: "{props.amount.read().get_value_tuple().0}",
-                        // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                        oninput: move |_| {}
+                    div {
+                        class: "flex flex-row items-center gap-2",
+                        input {
+                            class: "input bg-white input-bordered w-1/2",
+                            r#type: "number",
+                            placeholder: "500",
+                            disabled: calculated_amount().0,
+                            value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
+                            oninput: move |evt| set_amount_single(evt.data.value(), props.amount)
+                        }
+                        span {
+                            class: "badge",
+                            "{props.volume_unit}"
+                        }
                     }
                 }
             }
         }
         FieldGroup2{
-            if *props.amount_type.read() == AmountType::Weight {
+            if is_einheitsgroesse() {
                 FormField {
-                    help: Some((t!("help.preisProX")).into()),
-                    label: t!("label.preisProX"),
-                    input {
-                        class: "input bg-white input-bordered w-full",
-                        r#type: "text",
-                        placeholder: "4.00 CHF",
-                        value: "{props.price.read().get_value_tuple().0}",
-                        // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                        oninput: move |_| {}
-                    }
-                }
-                FormField {
-                    help: Some((t!("help.preisTotal")).into()),
-                    label: t!("label.preisTotal"),
-                    input {
-                        class: "input bg-white input-bordered w-full",
-                        r#type: "text",
-                        placeholder: "12.00 CHF",
-                        value: "{props.price.read().get_value_tuple().1}",
-                        // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                        oninput: move |_| {}
+                    help: Some((t!("help.preisProEinheit")).into()),
+                    label: t!("label.preisProEinheit"),
+                    div {
+                        class: "flex flex-row items-center",
+                        input {
+                            class: "input bg-white input-bordered w-1/2",
+                            r#type: "text",
+                            placeholder: "4.00",
+                            value: display_money(props.price.read().get_value_tuple().0),
+                            oninput: move |evt| current_input.set(evt.data.value().clone()),
+                            onblur: move |evt| set_price_single(current_input().to_string(), props.price)
+                        }
+                        span {
+                            class: "badge",
+                            "CHF"
+                        }
                     }
                 }
             } else {
                 FormField {
                     help: Some((t!("help.preisProX")).into()),
                     label: t!("label.preisProX"),
-                    input {
-                        class: "input bg-white input-bordered w-full",
-                        r#type: "text",
-                        placeholder: "4.00 CHF",
-                        value: "{props.price.read().get_value_tuple().0}",
-                        // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                        oninput: move |_| {}
+                    div {
+                        class: "flex flex-row items-center",
+                        input {
+                            class: "input bg-white input-bordered w-1/2",
+                            r#type: "text",
+                            placeholder: "4.00",
+                            disabled: calculated_unit_price().0,
+                            value: if calculated_unit_price().0 {display_money(Some(calculated_unit_price().1))} else {display_money(props.price.read().get_value_tuple().0)},
+                            oninput: move |evt| current_input.set(evt.data.value().clone()),
+                            onblur: move |evt| set_price_0(current_input().to_string(), props.price)
+                        }
+                        span {
+                            class: "badge",
+                            "CHF pro "
+                            {get_base_factor_and_unit()}
+                        }
                     }
                 }
                 FormField {
                     help: Some((t!("help.preisTotal")).into()),
                     label: t!("label.preisTotal"),
-                    input {
-                        class: "input bg-white input-bordered w-full",
-                        r#type: "text",
-                        placeholder: "12.00 CHF",
-                        value: "{props.price.read().get_value_tuple().1}",
-                        // oninput: move |evt| *props.amount.write() = Amount::Double(evt.data.value().parse().unwrap(), (*props.amount.read()).0, )
-                        oninput: move |_| {}
+                    div{
+                        class: "flex flex-row items-center",
+                        input {
+                            class: "input bg-white input-bordered w-1/2",
+                            r#type: "text",
+                            placeholder: "12.00",
+                            disabled: calculated_total_price().0,
+                            value: if calculated_total_price().0 {display_money(Some(calculated_total_price().1))} else {display_money(props.price.read().get_value_tuple().1)},
+                            oninput: move |evt| current_input.set(evt.data.value().clone()),
+                            onblur: move |evt| set_price_1(current_input().to_string(), props.price)
+                        }
+                        span {
+                            class: "badge",
+                            "CHF"
+                        }
                     }
                 }
             }
