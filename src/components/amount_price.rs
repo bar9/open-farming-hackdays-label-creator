@@ -5,6 +5,7 @@ use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::JsValue;
 use crate::components::{FieldGroup1, FieldGroup2, FormField, TextInput};
 
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
@@ -34,7 +35,7 @@ impl Amount {
 }
 
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Price {
     Single(Option<usize>),
     Double(Option<usize>, Option<usize>)
@@ -98,9 +99,9 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
 
     let calculated_amount = use_memo(move || {
         match price() {
-            // Price::Double(Some(unit_price), Some(total_price)) => (
-            //     (true, ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize)
-            // ),
+            Price::Double(Some(unit_price), Some(total_price)) => (
+                (true, ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize)
+            ),
             _ => (false, 0)
         }
     });
@@ -115,9 +116,12 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             return (false, 0);
         }
         match price() {
-            // Price::Double(Some(unit_price), Some(_)) => (
-            //     (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize)
-            // ),
+            Price::Double(Some(unit_price), Some(_)) => (
+                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize)
+            ),
+            Price::Single(Some(unit_price)) => (
+                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize)
+            ),
             _ => (false, 0)
         }
     });
@@ -132,9 +136,9 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             return (false, 0);
         }
         match price() {
-            // Price::Double(Some(_), Some(total_price)) => (
-            //     (true, (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize)
-            // ),
+            Price::Double(_, Some(total_price)) => (
+                (true, (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize)
+            ),
             _ => (false, 0)
         }
     });
@@ -163,6 +167,10 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             }
         }
     });
+
+    let mut einheitsgroesse_input = use_signal(|| display_money(props.price.read().get_value_tuple().0));
+    let mut price_input_0 = use_signal(|| display_money(props.price.read().get_value_tuple().0));
+    let mut price_input_1 = use_signal(|| display_money(props.price.read().get_value_tuple().1));
 
     fn set_amount_type(new_amount_type: String, mut amount_type: Signal<AmountType>) {
         match new_amount_type.as_str() {
@@ -233,20 +241,21 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                     price.set(Price::Double(None, old));
                 }
             }
-        }
-        let cleaned = input.replace(',', "."); // Handle potential comma input
-        if let Some(parsed) = f64::from_str(&cleaned).ok() {
-            let cents = (parsed * 100.0).round() as usize; // Ensure rounding
-            match(old_price) {
-                Price::Single(_) => {
-                    price.set(Price::Single(Some(cents))); // Assuming Price::Single(i64)
-                }
-                Price::Double(_, old) => {
-                    price.set(Price::Double(Some(cents), old)); // Assuming Price::Single(i64)
-                }
-            }
         } else {
-            price.set(old_price);
+            let cleaned = input.replace(',', "."); // Handle potential comma input
+            if let Some(parsed) = f64::from_str(&cleaned).ok() {
+                let cents = (parsed * 100.0) as usize; // Ensure rounding
+                match(old_price) {
+                    Price::Single(_) => {
+                        price.set(Price::Single(Some(cents))); // Assuming Price::Single(i64)
+                    }
+                    Price::Double(_, old) => {
+                        price.set(Price::Double(Some(cents), old)); // Assuming Price::Single(i64)
+                    }
+                }
+            } else {
+                price.set(old_price);
+            }
         }
     }
 
@@ -261,33 +270,35 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                     price.set(Price::Double(old, None));
                 }
             }
-        }
-        let cleaned = input.replace(',', "."); // Handle potential comma input
-        if let Some(parsed) = f64::from_str(&cleaned).ok() {
-            let cents = (parsed * 100.0).round() as usize; // Ensure rounding
-            match(old_price) {
-                Price::Single(old) => {
-                    price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
-                }
-                Price::Double(old, _) => {
-                    price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
-                }
-            }
         } else {
-            price.set(old_price);
+            let cleaned = input.replace(',', "."); // Handle potential comma input
+            if let Some(parsed) = f64::from_str(&cleaned).ok() {
+                let cents = (parsed * 100.0) as usize; // Ensure rounding
+                match(old_price) {
+                    Price::Single(old) => {
+                        price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
+                    }
+                    Price::Double(old, _) => {
+                        price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
+                    }
+                }
+            } else {
+                price.set(old_price);
+            }
         }
     }
 
     fn set_price_single(input: String, mut price: Signal<Price>) {
-        if input.is_empty() {
+        if input.is_empty(){
             price.set(Price::Single(None));
         } else {
             let cleaned = input.replace(',', "."); // Handle potential comma input
             if let Some(parsed) = f64::from_str(&cleaned).ok() {
-                let cents = (parsed * 100.0).round() as usize; // Ensure rounding
+                let cents = (parsed * 100.0) as usize; // Ensure rounding
                 price.set(Price::Single(Some(cents)));
             }
         }
+        // }
     }
 
     rsx! {
@@ -459,11 +470,13 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                         class: "flex flex-row items-center",
                         input {
                             class: "input bg-white input-bordered w-1/2",
-                            r#type: "text",
+                            r#type: "number",
+                            step: "any",
                             placeholder: "4.00",
-                            value: display_money(props.price.read().get_value_tuple().0),
-                            oninput: move |evt| current_input.set(evt.data.value().clone()),
-                            onblur: move |evt| set_price_single(current_input().to_string(), props.price)
+                            //value: display_money(props.price.read().get_value_tuple().0),
+                            value: einheitsgroesse_input(),
+                            onblur: move |evt| {set_price_single(einheitsgroesse_input(), props.price); einheitsgroesse_input.set(display_money(props.price.read().get_value_tuple().0));},
+                            oninput: move |evt| einheitsgroesse_input.set(evt.data.value())
                         }
                         span {
                             class: "badge",
@@ -479,12 +492,13 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                         class: "flex flex-row items-center",
                         input {
                             class: "input bg-white input-bordered w-1/2",
-                            r#type: "text",
+                            r#type: "number",
+                            step: "any",
                             placeholder: "4.00",
                             disabled: calculated_unit_price().0,
-                            value: if calculated_unit_price().0 {display_money(Some(calculated_unit_price().1))} else {display_money(props.price.read().get_value_tuple().0)},
-                            oninput: move |evt| current_input.set(evt.data.value().clone()),
-                            onblur: move |evt| set_price_0(current_input().to_string(), props.price)
+                            value: if calculated_unit_price().0 {display_money(Some(calculated_unit_price().1))} else {price_input_0()},
+                            oninput: move |evt| price_input_0.set(evt.data.value()),
+                            onblur: move |evt| {set_price_0(price_input_0(), props.price); price_input_0.set(display_money(props.price.read().get_value_tuple().0));}
                         }
                         span {
                             class: "badge",
@@ -500,12 +514,13 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                         class: "flex flex-row items-center",
                         input {
                             class: "input bg-white input-bordered w-1/2",
-                            r#type: "text",
+                            r#type: "number",
+                            step: "any",
                             placeholder: "12.00",
                             disabled: calculated_total_price().0,
-                            value: if calculated_total_price().0 {display_money(Some(calculated_total_price().1))} else {display_money(props.price.read().get_value_tuple().1)},
-                            oninput: move |evt| current_input.set(evt.data.value().clone()),
-                            onblur: move |evt| set_price_1(current_input().to_string(), props.price)
+                            value: if calculated_total_price().0 {display_money(Some(calculated_total_price().1))} else {price_input_1()},
+                            oninput: move |evt| price_input_1.set(evt.data.value()),
+                            onblur: move |evt| {set_price_1(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().get_value_tuple().1));}
                         }
                         span {
                             class: "badge",
