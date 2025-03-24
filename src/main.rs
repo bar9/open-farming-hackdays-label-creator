@@ -25,7 +25,7 @@ mod form;
 
 i18n!();
 
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 struct Form {
     #[serde(default)]
     ingredients: Vec<Ingredient>,
@@ -61,9 +61,9 @@ struct Form {
     manual_total: Option<f64>,
     #[serde(default)]
     amount_type: AmountType,
-    #[serde(default)]
+    #[serde(default = "\"g\".to_string()")]
     weight_unit: String,
-    #[serde(default)]
+    #[serde(default = "\"ml\".to_string()")]
     volume_unit: String,
     #[serde(default)]
     amount: Amount,
@@ -83,16 +83,16 @@ impl Into<Input> for Form {
 
 impl Default for Form {
     fn default() -> Self {
-        if let Some(window) = web_sys::window() {
-            if let Ok(mut query_string) = window.location().search() {
-                query_string = query_string.trim_start_matches('?').to_string();
-                if let Ok(app_state_from_query_string) = from_query_string::<Form>(
-                    &query_string
-                ) {
-                    return app_state_from_query_string;
-                }
-            }
-        }
+        // if let Some(window) = web_sys::window() {
+        //     if let Ok(mut query_string) = window.location().search() {
+        //         query_string = query_string.trim_start_matches('?').to_string();
+        //         if let Ok(app_state_from_query_string) = from_query_string::<Form>(
+        //             &query_string
+        //         ) {
+        //             return app_state_from_query_string;
+        //         }
+        //     }
+        // }
         Form {
             ingredients: Vec::new(),
             product_title: String::new(),

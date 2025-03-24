@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 use crate::components::{FieldGroup1, FieldGroup2, FormField, TextInput};
 
-#[derive(PartialEq, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub enum AmountType {
     Weight, Volume
 }
@@ -19,7 +19,7 @@ impl Default for AmountType {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum Amount {
     Single(Option<usize>),
     Double(Option<usize>, Option<usize>)
@@ -302,6 +302,18 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
     }
 
     rsx! {
+        // pre {
+        //     "weight unit: {weight_unit()}"
+        // }
+        // pre {
+        //     "props : weight unit: {(props.weight_unit)()}"
+        // }
+        // pre {
+        //     "volume unit: {volume_unit()}"
+        // }
+        // pre {
+        //     "props : volume unit: {(props.volume_unit)()}"
+        // }
         FieldGroup2 {
             // label: t!("label.gewichtUndPreis"),
             FormField {
