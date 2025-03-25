@@ -37,7 +37,7 @@ struct Form {
     additional_info: String,
     #[serde(default)]
     storage_info: String,
-    #[serde(default)]
+    #[serde(default = "default_date_prefix")]
     date_prefix: String,
     #[serde(default)]
     date: String,
@@ -61,14 +61,26 @@ struct Form {
     manual_total: Option<f64>,
     #[serde(default)]
     amount_type: AmountType,
-    #[serde(default = "\"g\".to_string()")]
+    #[serde(default = "default_weight_unit")]
     weight_unit: String,
-    #[serde(default = "\"ml\".to_string()")]
+    #[serde(default = "default_volume_unit")]
     volume_unit: String,
     #[serde(default)]
     amount: Amount,
     #[serde(default)]
     price: Price,
+}
+
+fn default_weight_unit() -> String {
+    "g".to_string()
+}
+
+fn default_volume_unit() -> String {
+    "ml".to_string()
+}
+
+fn default_date_prefix() -> String {
+    "Mindestens haltbar bis".to_string()
 }
 
 impl Into<Input> for Form {
@@ -83,16 +95,16 @@ impl Into<Input> for Form {
 
 impl Default for Form {
     fn default() -> Self {
-        // if let Some(window) = web_sys::window() {
-        //     if let Ok(mut query_string) = window.location().search() {
-        //         query_string = query_string.trim_start_matches('?').to_string();
-        //         if let Ok(app_state_from_query_string) = from_query_string::<Form>(
-        //             &query_string
-        //         ) {
-        //             return app_state_from_query_string;
-        //         }
-        //     }
-        // }
+        if let Some(window) = web_sys::window() {
+            if let Ok(mut query_string) = window.location().search() {
+                query_string = query_string.trim_start_matches('?').to_string();
+                if let Ok(app_state_from_query_string) = from_query_string::<Form>(
+                    &query_string
+                ) {
+                    return app_state_from_query_string;
+                }
+            }
+        }
         Form {
             ingredients: Vec::new(),
             product_title: String::new(),

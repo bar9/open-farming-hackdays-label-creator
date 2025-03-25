@@ -146,18 +146,18 @@ pub fn LabelPreview(
                         {storage_info().nl2br()}
                     }
                     br {}
-                    if !production_country().is_empty() {
-                        span{ class: "text-sm pr-1",
-                            if (*production_country)() == "Schweiz" {
-                                { "{t!(\"preview.hergestelltInDer\")}" }
-                            } else {
-                                {"{t!(\"preview.hergestelltIn\")}"}
-                            }
-                        }
-                        span {class: "text-sm",
-                            "{production_country}"
-                        }
-                    }
+                    // if !production_country().is_empty() {
+                    //     span{ class: "text-sm pr-1",
+                    //         if (*production_country)() == "Schweiz" {
+                    //             "hergestellt in der "
+                    //         } else {
+                    //             "her"
+                    //         }
+                    //     }
+                    //     span {class: "text-sm",
+                    //         "{production_country}"
+                    //     }
+                    // }
                 }
 
                 div { class: "py-2",
