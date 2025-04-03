@@ -14,7 +14,7 @@ pub fn Modal(mut props: ModalProps) -> Element {
                 onkeydown: move |evt: KeyboardEvent| if evt.key() == Key::Escape { props.open.set(false); },
                 class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md",
                 dialog {
-                    open: "{props.open}", class: "modal",
+                    open: "{props.open}", class: "modal modal-open z-50",
                     div {
                         class: "modal-box bg-base-100 backdrop-blur-3xl",
                         h3 {
