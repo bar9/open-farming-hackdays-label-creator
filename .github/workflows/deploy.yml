@@ -20,10 +20,10 @@ jobs:
             target: wasm32-unknown-unknown
 
       - name: Download Dioxus CLI binary
-        run: wget https://github.com/DioxusLabs/dioxus/releases/download/v0.6.0/dx-x86_64-unknown-linux-gnu-v0.6.0.tar.gz
+        run: wget https://github.com/DioxusLabs/dioxus/releases/download/v0.6.3/dx-x86_64-unknown-linux-gnu-v0.6.3.tar.gz
 
       - name: Extract binary
-        run: tar -xzf dx-x86_64-unknown-linux-gnu-v0.6.0.tar.gz
+        run: tar -xzf dx-x86_64-unknown-linux-gnu-v0.6.3.tar.gz
 
       - name: Make binary executable
         run: chmod +x dx

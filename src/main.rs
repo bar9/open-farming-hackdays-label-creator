@@ -415,7 +415,7 @@ fn app() -> Element {
                 price: price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.3.1 vom 03.04.2025"}
+                span {"Version 0.3.2 vom 04.04.2025"}
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",
