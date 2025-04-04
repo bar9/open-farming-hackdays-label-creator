@@ -6,16 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="UTF-8" />
   <link rel="stylesheet" href="/open-farming-hackdays-label-creator/tailwind.css">
-<link rel="preload" href="/open-farming-hackdays-label-creator/wasm/open-farming-hackdays-label-creator_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-            <link rel="preload" href="/open-farming-hackdays-label-creator/wasm/open-farming-hackdays-label-creator.js" as="script">
-            </head>
+<link rel="preload" as="script" href="/open-farming-hackdays-label-creator/assets/open-farming-hackdays-label-creator-9c5f834fbb446750.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/open-farming-hackdays-label-creator/assets/open-farming-hackdays-label-creator_bg-2c7b5e6d1f922c24.wasm" crossorigin></head>
   <body>
     <div id="main"></div>
   <script>
             // We can't use a module script here because we need to start the script immediately when streaming
-            import("/open-farming-hackdays-label-creator/wasm/open-farming-hackdays-label-creator.js").then(
+            import("/open-farming-hackdays-label-creator/assets/open-farming-hackdays-label-creator-9c5f834fbb446750.js").then(
                 ({ default: init }) => {
-                init("/open-farming-hackdays-label-creator/wasm/open-farming-hackdays-label-creator_bg.wasm").then((wasm) => {
+                init("/open-farming-hackdays-label-creator/assets/open-farming-hackdays-label-creator_bg-2c7b5e6d1f922c24.wasm").then((wasm) => {
                     if (wasm.__wbindgen_start == undefined) {
                     wasm.main();
                     }
