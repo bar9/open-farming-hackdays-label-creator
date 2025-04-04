@@ -1,12 +1,10 @@
-use std::cell::Ref;
 use std::cmp::PartialEq;
 use std::str::FromStr;
-use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::prelude::*;
-use rust_i18n::t;
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
-use crate::components::{FieldGroup1, FieldGroup2, FormField, TextInput};
+use crate::FormField;
+use crate::FieldGroup2;
+use rust_i18n::t;
 
 #[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub enum AmountType {
@@ -73,15 +71,14 @@ pub struct AmountPriceProps {
 
 /// Is responsible for reactively rendering amount & price fields
 /// takes all state flat as signals from the app state
-pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
+pub fn AmountPrice (props: AmountPriceProps) -> Element {
 
     let mut has_abtropfgewicht = use_signal(|| false );
-    let mut amount_type = props.amount_type.clone();
-    let mut weight_unit = props.weight_unit.clone();
-    let mut volume_unit = props.volume_unit.clone();
-    let mut amount = props.amount.clone();
-    let mut current_input = use_signal(|| String::new());
-    let mut price = props.price.clone();
+    let amount_type = props.amount_type.clone();
+    let weight_unit = props.weight_unit.clone();
+    let volume_unit = props.volume_unit.clone();
+    let amount = props.amount.clone();
+    let price = props.price.clone();
 
 
 
@@ -99,9 +96,8 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
 
     let calculated_amount = use_memo(move || {
         match price() {
-            Price::Double(Some(unit_price), Some(total_price)) => (
-                (true, ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize)
-            ),
+            Price::Double(Some(unit_price), Some(total_price)) =>
+                (true, ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize),
             _ => (false, 0)
         }
     });
@@ -116,12 +112,10 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             return (false, 0);
         }
         match price() {
-            Price::Double(Some(unit_price), Some(_)) => (
-                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize)
-            ),
-            Price::Single(Some(unit_price)) => (
-                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize)
-            ),
+            Price::Double(Some(unit_price), Some(_)) =>
+                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize),
+            Price::Single(Some(unit_price)) =>
+                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize),
             _ => (false, 0)
         }
     });
@@ -136,9 +130,8 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             return (false, 0);
         }
         match price() {
-            Price::Double(_, Some(total_price)) => (
-                (true, (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize)
-            ),
+            Price::Double(_, Some(total_price)) =>
+                (true, (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize),
             _ => (false, 0)
         }
     });
@@ -184,7 +177,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
         };
     }
 
-    fn set_unit(new_unit: String, mut amount_type: Signal<AmountType>, mut weight_unit: Signal<String>, mut volume_unit: Signal<String>) {
+    fn set_unit(new_unit: String, amount_type: Signal<AmountType>, mut weight_unit: Signal<String>, mut volume_unit: Signal<String>) {
         if *amount_type.read() == AmountType::Weight {
             weight_unit.set(new_unit);
         } else {
@@ -233,7 +226,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
     fn set_price_0(input: String, mut price: Signal<Price>) {
         let old_price = price();
         if input.is_empty() {
-            match(old_price) {
+            match old_price {
                 Price::Single(_) => {
                     price.set(Price::Single(None));
                 }
@@ -245,7 +238,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             let cleaned = input.replace(',', "."); // Handle potential comma input
             if let Some(parsed) = f64::from_str(&cleaned).ok() {
                 let cents = (parsed * 100.0) as usize; // Ensure rounding
-                match(old_price) {
+                match old_price {
                     Price::Single(_) => {
                         price.set(Price::Single(Some(cents))); // Assuming Price::Single(i64)
                     }
@@ -262,7 +255,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
     fn set_price_1(input: String, mut price: Signal<Price>) {
         let old_price = price();
         if input.is_empty() {
-            match(old_price) {
+            match old_price {
                 Price::Single(old) => {
                     price.set(Price::Double(old, None));
                 }
@@ -274,7 +267,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
             let cleaned = input.replace(',', "."); // Handle potential comma input
             if let Some(parsed) = f64::from_str(&cleaned).ok() {
                 let cents = (parsed * 100.0) as usize; // Ensure rounding
-                match(old_price) {
+                match old_price {
                     Price::Single(old) => {
                         price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
                     }
@@ -321,8 +314,8 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                 select {
                     oninput: move |evt| set_amount_type(evt.data.value(), props.amount_type),
                     class: "select bg-white select-bordered w-full max-w-xs",
-                    option {selected: {*props.amount_type.read() == AmountType::Weight}, value: "gewicht", "Gewicht"}
-                    option {selected: {*props.amount_type.read() == AmountType::Volume}, value: "volumen", "Volumen"}
+                    option {selected: *props.amount_type.read() == AmountType::Weight, value: "gewicht", "Gewicht"}
+                    option {selected: *props.amount_type.read() == AmountType::Volume, value: "volumen", "Volumen"}
                 }
             }
             FormField {
@@ -332,13 +325,13 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                     class: "select bg-white select-bordered w-full max-w-xs",
 
                     if *props.amount_type.read() == AmountType::Weight {
-                        option {selected: {*props.weight_unit.read() == "mg"}, value: "mg", "mg"}
-                        option {selected: {*props.weight_unit.read() == "g"}, value: "g", "g"}
-                        option {selected: {*props.weight_unit.read() == "kg"}, value: "kg", "kg"}
+                        option {selected: *props.weight_unit.read() == "mg", value: "mg", "mg"}
+                        option {selected: *props.weight_unit.read() == "g", value: "g", "g"}
+                        option {selected: *props.weight_unit.read() == "kg", value: "kg", "kg"}
                     } else {
-                        option {selected: {*props.volume_unit.read() == "ml"}, value: "ml", "ml"}
-                        option {selected: {*props.volume_unit.read() == "cl"}, value: "cl", "cl"}
-                        option {selected: {*props.volume_unit.read() == "l"}, value: "l", "l"}
+                        option {selected: *props.volume_unit.read() == "ml", value: "ml", "ml"}
+                        option {selected: *props.volume_unit.read() == "cl", value: "cl", "cl"}
+                        option {selected: *props.volume_unit.read() == "l", value: "l", "l"}
                     }
                 }
             }
@@ -487,8 +480,8 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                             placeholder: "4.00",
                             //value: display_money(props.price.read().get_value_tuple().0),
                             value: einheitsgroesse_input(),
-                            onblur: move |evt| {set_price_single(einheitsgroesse_input(), props.price); einheitsgroesse_input.set(display_money(props.price.read().get_value_tuple().0));},
-                            oninput: move |evt| einheitsgroesse_input.set(evt.data.value())
+                            oninput: move |evt| einheitsgroesse_input.set(evt.data.value()),
+                            onblur: move |_evt| {set_price_single(einheitsgroesse_input(), props.price); einheitsgroesse_input.set(display_money(props.price.read().get_value_tuple().0));},
                         }
                         span {
                             class: "badge",
@@ -510,7 +503,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                             disabled: calculated_unit_price().0,
                             value: if calculated_unit_price().0 {display_money(Some(calculated_unit_price().1))} else {price_input_0()},
                             oninput: move |evt| price_input_0.set(evt.data.value()),
-                            onblur: move |evt| {set_price_0(price_input_0(), props.price); price_input_0.set(display_money(props.price.read().get_value_tuple().0));}
+                            onblur: move |_evt| {set_price_0(price_input_0(), props.price); price_input_0.set(display_money(props.price.read().get_value_tuple().0));}
                         }
                         span {
                             class: "badge",
@@ -532,7 +525,7 @@ pub fn AmountPrice (mut props: AmountPriceProps) -> Element {
                             disabled: calculated_total_price().0,
                             value: if calculated_total_price().0 {display_money(Some(calculated_total_price().1))} else {price_input_1()},
                             oninput: move |evt| price_input_1.set(evt.data.value()),
-                            onblur: move |evt| {set_price_1(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().get_value_tuple().1));}
+                            onblur: move |_evt| {set_price_1(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().get_value_tuple().1));}
                         }
                         span {
                             class: "badge",

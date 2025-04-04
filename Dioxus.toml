@@ -29,22 +29,3 @@ watch_path = ["src", "public"]
 
 # uncomment line below if using Router
 # index_on_404 = true
-
-# include `assets` in web platform
-[web.resource]
-
-# CSS style file
-style = ["/open-farming-hackdays-label-creator/tailwind.css"]
-
-# Javascript code file
-script = []
-
-[web.resource.dev]
-
-# serve: [dev-server] only
-
-# CSS style file
-style = ["/open-farming-hackdays-label-creator/assets/tailwind.css"]
-
-# Javascript code file
-script = []

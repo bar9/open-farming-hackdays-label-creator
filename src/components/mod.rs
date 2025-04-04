@@ -13,8 +13,6 @@ pub use sub_ingredients_table::SubIngredientsTable;
 pub use validation_display::ValidationDisplay;
 // pub use amount_type_select::AmountTypeSelect;
 pub use amount_price::*;
-pub use modal::Modal;
-
 pub mod icons;
 mod text_input;
 mod separator_line;
@@ -31,7 +29,6 @@ mod navbar;
 mod conditional_display;
 mod sub_ingredients_table;
 mod ingredient_detail;
-mod modal;
 // mod amount_type_select;
 mod amount_price;
 
