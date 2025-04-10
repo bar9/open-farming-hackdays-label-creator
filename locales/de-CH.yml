@@ -108,6 +108,12 @@ help:
   abtropfgewicht: |
     Bei eingelegten Lebensmitteln: Gewogenes Gewicht der eingelegten Zutaten ohne Abtropfflüssigkeit.
 
+  gewicht: Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit.
+
+  volumen: Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit.
+
+  preisProEinheit: Preis pro Einheitsmenge wie z.B. 500g, 1l, ...
+
   name: |
     Firmenname und / oder Vor- und Nachname des Herstellers
 
