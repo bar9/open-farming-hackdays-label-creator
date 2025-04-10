@@ -238,6 +238,7 @@ fn app() -> Element {
     use_context_provider(|| Conditionals(conditional_display));
 
     let mut config_modal_open = use_signal(|| false);
+    let mut impressum_modal_open = use_signal(|| false);
 
     // let amount_type: Signal<AmountType> = use_signal(|| AmountType::Weight);
     // let weight_unit: Signal<String> = use_signal(|| "g".to_string());
@@ -415,7 +416,12 @@ fn app() -> Element {
                 price: price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.3.3 vom 10.04.2025"}
+                span {"Version 0.3.4 vom 10.04.2025"}
+                button {
+                    class:"link link-blue",
+                    onclick: move |_| impressum_modal_open.toggle(),
+                    "Impressum"
+                }
                 a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
             }
             div {class: "fixed top-4 right-4 flex gap-2",
@@ -437,12 +443,31 @@ fn app() -> Element {
                     crate::icons::Settings {}
                     "{t!(\"nav.konfiguration\")}"
                 }
+                
+                if impressum_modal_open() {
+                    dialog {
+                        class: "modal",
+                        open: "{impressum_modal_open}",
+                        div { class: "modal-box w-[80%] max-w-none max-h-none h-[80%]",
+                            Impressum {}
+                            div { class: "modal-action",
+                                form { 
+                                    method: "dialog",
+                                    button {
+                                        class: "btn btn-sm",
+                                        onclick: move |_| impressum_modal_open.toggle(),
+                                        "{t!(\"nav.schliessen\")}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if config_modal_open() {
-                    div { class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md" }
                     dialog {
                         open: "{config_modal_open}", class: "modal",
-                        div { class: "modal-box bg-base-100 backdrop-blur-3xl",
+                        div { class: "modal-box",
                             h3 { class: "font-bold text-lg", "{t!(\"nav.konfiguration\")}" }
                             div {
                                 class: "prose",
