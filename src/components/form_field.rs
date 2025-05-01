@@ -14,7 +14,7 @@ pub fn FormField(props: FormFieldProps) -> Element {
         div {
             class: "flex gap-2 flex-col",
             label {
-                class: "flex items-center",
+                class: "flex items-center text-left",
                 "{props.label}"
                 {rsx!{
                     FieldHelp {
