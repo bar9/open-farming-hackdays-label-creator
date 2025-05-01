@@ -28,6 +28,7 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
             class: "select bg-white select-bordered w-full max-w-xs",
             option {selected: true, "{t!(\"label.mindestensHaltbar\")}"}
             option {"{t!(\"label.zuVerbrauchen\")}"}
+            option {value: "", "{t!(\"label.keinDatum\")}"}
         }
         input {
             oninput: move |evt| {

@@ -36,6 +36,7 @@ label:
   gewicht: Gewicht
   volumen: Volumen
   preisProEinheit: Preis pro Einheit
+  keinDatum: Kein Haltbarkeits-/Verbrauchdatum
 
 nav:
   linkKopieren: Link kopieren

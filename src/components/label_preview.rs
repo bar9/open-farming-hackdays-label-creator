@@ -104,14 +104,16 @@ pub fn LabelPreview(
                     }
                 }
 
-                div {
-                    class: "py-2 grid grid-cols-1 gap-4",
-                    span {
+                if date_prefix() != t!("label.keinDatum") {
+                    div {
+                        class: "py-2 grid grid-cols-1 gap-4",
                         span {
-                            class: "pr-1",
-                            b {"{date_prefix}"}
+                            span {
+                                class: "pr-1",
+                                b {"{date_prefix}"}
+                            }
+                            "{date}"
                         }
-                        "{date}"
                     }
                 }
                 match amount() {
