@@ -109,7 +109,7 @@ pub fn LabelPreview(
                     span {
                         span {
                             class: "pr-1",
-                            "{date_prefix}"
+                            b {"{date_prefix}"}
                         }
                         "{date}"
                     }
