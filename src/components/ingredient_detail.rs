@@ -4,6 +4,10 @@ use crate::core::Ingredient;
 use crate::model::food_db;
 use rust_i18n::t;
 
+
+// TODO: rework save/cancel (stateful modal):
+// seems we already have many parts, only the writes via props.inredients.write() are to be delegated to a save() handler
+
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientDetailProps {
     ingredients: Signal<Vec<Ingredient>>,

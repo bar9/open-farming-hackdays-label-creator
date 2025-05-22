@@ -7,6 +7,8 @@ pub struct FormFieldProps {
     label: String,
     #[props(into)]
     help: Option<String>,
+    #[props(into, default=false)]
+    required: bool,
     children: Element,
 }
 pub fn FormField(props: FormFieldProps) -> Element {
@@ -15,6 +17,9 @@ pub fn FormField(props: FormFieldProps) -> Element {
             class: "flex gap-2 flex-col",
             label {
                 class: "flex items-center text-left",
+                if props.required {
+                    span {class: "text-red-300", "* "}
+                }
                 "{props.label}"
                 {rsx!{
                     FieldHelp {

@@ -272,15 +272,18 @@ fn app() -> Element {
                             FormField {
                                 label: t!("label.sachbezeichnung"),
                                 help: Some((t!("help.sachbezeichnung")).into()),
+                                required: true,
                                 TextInput {
                                     placeholder: t!("placeholder.sachbezeichnung"),
-                                    bound_value: product_subtitle
+                                    bound_value: product_subtitle,
+                                    required: true
                                 }
                             }
                             SeparatorLine {}
                             FormField {
                                 label: t!("label.zutaten"),
                                 help: Some((t!("help.zutaten")).into()),
+                                required: true,
                                 IngredientsTable {
                                     ingredients: ingredients,
                                     validation_messages: validation_messages,
@@ -290,6 +293,7 @@ fn app() -> Element {
                             SeparatorLine {}
                             FieldGroup2 {
                                 FormField {
+                                    required: true,
                                     label: t!("label.datumseingabe"),
                                     help: Some((t!("help.datumseingabe")).into()),
                                     DateInput {
@@ -356,24 +360,28 @@ fn app() -> Element {
                             SeparatorLine {}
                             FieldGroup1 { label: t!("label.adresse"),
                                 FormField {
+                                    required: true,
                                     help: Some((t!("help.name")).into()),
                                     label: t!("label.name"),
-                                    TextInput { bound_value: producer_name, placeholder: t!("placeholder.name") }
+                                    TextInput { required: true, bound_value: producer_name, placeholder: t!("placeholder.name") }
                                 }
                                 div { class: "grid grid-cols-3 gap-4",
                                     FormField {
+                                        required: true,
                                         help: Some((t!("help.adresse")).into()),
                                         label: t!("label.adresse"),
-                                        TextInput { bound_value: producer_address, placeholder: t!("placeholder.adresse")}
+                                        TextInput { required: true, bound_value: producer_address, placeholder: t!("placeholder.adresse")}
                                     }
                                     FormField {
+                                        required: true,
                                         label: t!("label.plz"),
-                                        TextInput { bound_value: producer_zip, placeholder: t!("placeholder.plz")}
+                                        TextInput { required: true, bound_value: producer_zip, placeholder: t!("placeholder.plz")}
                                     }
                                     FormField {
+                                        required: true,
                                         help: Some((t!("help.ort")).into()),
                                         label: t!("label.ort"),
-                                        TextInput { bound_value: producer_city, placeholder: t!("placeholder.ort")}
+                                        TextInput { required: true, bound_value: producer_city, placeholder: t!("placeholder.ort")}
                                     }
                                     FormField {
                                         label: t!("label.telefon"),
@@ -416,7 +424,7 @@ fn app() -> Element {
                 price: price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.3.5 vom 01.05.2025"}
+                span {"Version 0.3.6 vom 22.05.2025"}
                 button {
                     class:"link link-blue",
                     onclick: move |_| impressum_modal_open.toggle(),

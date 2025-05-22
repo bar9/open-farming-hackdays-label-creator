@@ -85,22 +85,31 @@ pub fn LabelPreview(
             div { class: "bg-white border p-4 grid grid-col-1 divide-y divide-dotted",
                 div {
                     class: "py-2",
-                    if *product_title.read() != "" {
-                        {rsx! {
-                            h3 { class: "text-2xl", "{product_title}" }
-                            span { class: "mb-1", "{product_subtitle}" }
-                        }}
+                    if *product_subtitle.read() == "" {
+                        span {class: "badge badge-warning", "Produktname / Sachbezeichnung"}
                     } else {
-                        {rsx! {
-                            h3 { class: "text-2xl mb-1", "{product_subtitle}" }
-                        }}
+                        if *product_title.read() != "" {
+                            {rsx! {
+                                h3 { class: "text-2xl", "{product_title}" }
+                                span { class: "mb-1", "{product_subtitle}" }
+                            }}
+                        } else {
+                            {rsx! {
+                                h3 { class: "text-2xl mb-1", "{product_subtitle}" }
+                            }}
+                        }
                     }
+  
                 }
                 div {
                     class: "py-2",
                     h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
-                    div { class: "text-sm",
-                        dangerous_inner_html: "{label}"
+                    if *label.read() == "" {
+                        span { class: "badge badge-warning", "Zutatenliste" }
+                    } else {
+                        div { class: "text-sm",
+                            dangerous_inner_html: "{label}"
+                        }
                     }
                 }
 
@@ -139,34 +148,28 @@ pub fn LabelPreview(
                     _ => rsx! {}
                 }
 
-                div { class: "py-2",
-                    span { class: "text-sm",
-                        {additional_info().nl2br()}
+                if (additional_info() != "" && storage_info() != "") {
+                    div { class: "py-2",
+                        span { class: "text-sm",
+                            {additional_info().nl2br()}
+                        }
+                        br {}
+                        span { class: "text-sm",
+                            {storage_info().nl2br()}
+                        }
+                        br {}
                     }
-                    br {}
-                    span { class: "text-sm",
-                        {storage_info().nl2br()}
-                    }
-                    br {}
-                    // if !production_country().is_empty() {
-                    //     span{ class: "text-sm pr-1",
-                    //         if (*production_country)() == "Schweiz" {
-                    //             "hergestellt in der "
-                    //         } else {
-                    //             "her"
-                    //         }
-                    //     }
-                    //     span {class: "text-sm",
-                    //         "{production_country}"
-                    //     }
-                    // }
                 }
+                
 
                 div { class: "py-2",
-                    span {class: "text-sm",
-                        if address_combined.read().len() > 0 {
+                    if address_combined.read().len() > 0 {
+                        span {
+                            class: "text-sm",
                             "{address_combined}"
                         }
+                    } else {
+                        span {class: "badge badge-warning", "Herstelleradresse" }
                     }
                     if producer_phone.read().len() > 0 {
                         div {class: "text-sm",
