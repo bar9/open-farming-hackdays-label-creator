@@ -87,53 +87,44 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             }
         }
         div { class: "grid grid-cols-3 gap-4 items-center border-top",
-            input {
-                list: "ingredients",
-                r#type: "flex",
-                placeholder: t!("placeholder.zutatName").as_ref(),
-                class: "input input-bordered bg-white input-accent w-full",
-                oninput: move |evt| name_to_add.set(evt.data.value()),
-                value: "{name_to_add}",
-                datalist { id: "ingredients",
-                    for item in food_db().clone() {
-                        option { value: "{item.0}" }
-                    }
-                }
-            }
-            div {
-                class: "flex flex-row gap-4 items-center text-right",
-                input {
-                    r#type: "number",
-                    placeholder: t!("placeholder.menge").as_ref(),
-                    class: "input input-bordered bg-white input-accent w-full",
-                    oninput: move |evt| {
-                        if let Ok(amount) = evt.data.value().parse::<i32>() {
-                            amount_to_add.set(amount);
-                        }
-                    },
-                    value: "{amount_to_add}",
-                }
-                "g"
-            }
-            button {
-                class: "btn btn-accent",
-                onclick: move |_evt| {
-                    let mut binding = props.ingredients.write();
-                    let existing_ingredient = binding.iter_mut().find(|x| x.name == (&*name_to_add)());
-                    if let Some(ingredient) = existing_ingredient {
-                        ingredient.amount += (&*amount_to_add)() as f64;
-                    } else {
-                        binding
-                            .push(
-                                Ingredient::from_name_amount((&*name_to_add)(), (&*amount_to_add)() as f64),
-                            );
-                    }
-
-                    name_to_add.set(String::new());
-                    amount_to_add.set(0);
-                },
-                "{t!(\"nav.hinzufuegen\")}"
-            }
+            // input {
+            //     list: "ingredients",
+            //     r#type: "flex",
+            //     placeholder: t!("placeholder.zutatName").as_ref(),
+            //     class: "input input-bordered bg-white input-accent w-full",
+            //     oninput: move |evt| name_to_add.set(evt.data.value()),
+            //     value: "{name_to_add}",
+            //     datalist { id: "ingredients",
+            //         for item in food_db().clone() {
+            //             option { value: "{item.0}" }
+            //         }
+            //     }
+            // }
+            // div {
+            //     class: "flex flex-row gap-4 items-center text-right",
+            //     input {
+            //         r#type: "number",
+            //         placeholder: t!("placeholder.menge").as_ref(),
+            //         class: "input input-bordered bg-white input-accent w-full",
+            //         oninput: move |evt| {
+            //             if let Ok(amount) = evt.data.value().parse::<i32>() {
+            //                 amount_to_add.set(amount);
+            //             }
+            //         },
+            //         value: "{amount_to_add}",
+            //     }
+            //     "g"
+            // }
+            IngredientDetail {
+                ingredients: props.ingredients,
+                index: 0,
+                genesis: true
+            } //index is ignored
+            // button {
+            //     class: "btn btn-accent",
+            //     onclick: move |_evt| { },
+            //     "{t!(\"nav.hinzufuegen\")}"
+            // }
         }
     }
 }
