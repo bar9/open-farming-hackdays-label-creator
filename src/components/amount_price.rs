@@ -80,7 +80,8 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
     let volume_unit = props.volume_unit.clone();
     let amount = props.amount.clone();
     let price = props.price.clone();
-
+    let mut is_pristine = use_signal(|| true);
+    let invalid_class = use_memo(move || {if is_pristine() {""} else {"invalid:bg-red-50"}}); 
 
 
     let get_base_factor = use_memo(move || {
@@ -296,22 +297,11 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
     }
 
     rsx! {
-        // pre {
-        //     "weight unit: {weight_unit()}"
-        // }
-        // pre {
-        //     "props : weight unit: {(props.weight_unit)()}"
-        // }
-        // pre {
-        //     "volume unit: {volume_unit()}"
-        // }
-        // pre {
-        //     "props : volume unit: {(props.volume_unit)()}"
-        // }
         FieldGroup2 {
             // label: t!("label.gewichtUndPreis"),
             FormField {
                 label: t!("label.mengenart"),
+                required: true,
                 select {
                     oninput: move |evt| set_amount_type(evt.data.value(), props.amount_type),
                     class: "select bg-white select-bordered w-full max-w-xs",
@@ -321,6 +311,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
             }
             FormField {
                 label: t!("label.einheit"),
+                required: true,
                 select {
                     oninput: move |evt| set_unit(evt.data.value(), props.amount_type, props.weight_unit, props.volume_unit),
                     class: "select bg-white select-bordered w-full max-w-xs",
@@ -339,17 +330,21 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
             if *props.amount_type.read() == AmountType::Weight {
                 if has_abtropfgewicht() {
                     FormField {
+                        required: true,
                         label: t!("label.nettogewicht"),
                         help: Some((t!("help.nettogewicht")).into()),
                         div {
                             class: "flex flex-row items-center gap-2",
                             input {
-                                class: "input bg-white input-bordered w-1/2",
+                                class: "input bg-white input-bordered w-1/2 {invalid_class}",
                                 r#type: "number",
                                 placeholder: "300",
+                                min: "0",
+                                required: true,
                                 disabled: calculated_amount().0,
                                 value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
-                                oninput: move |evt| set_amount_0(evt.data.value(), props.amount)
+                                oninput: move |evt| set_amount_0(evt.data.value(), props.amount),
+                                onblur: move |evt| is_pristine.set(true)
                             }
                             span {
                                 class: "badge",
@@ -389,16 +384,20 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                 } else {
                     FormField {
                         label: t!("label.gewicht"),
+                        required: true,
                         help: Some((t!("help.gewicht")).into()),
                         div {
                             class: "flex flex-row items-center gap-2",
                             input {
-                                class: "input bg-white input-bordered w-1/2",
+                                class: "input bg-white input-bordered w-1/2 {invalid_class}",
                                 r#type: "number",
                                 placeholder: "300",
+                                min: "0",
+                                required: true,
                                 disabled: calculated_amount().0,
                                 value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
-                                oninput: move |evt| set_amount_single(evt.data.value(), props.amount)
+                                oninput: move |evt| set_amount_single(evt.data.value(), props.amount),
+                                onblur: move |evt| is_pristine.set(false)
                             }
                             span {
                                 class: "badge",
@@ -423,15 +422,19 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                 FormField {
                     label: t!("label.volumen"),
                     help: Some((t!("help.volumen")).into()),
+                    required: true,
                     div {
                         class: "flex flex-row items-center gap-2",
                         input {
-                            class: "input bg-white input-bordered w-1/2",
+                            class: "input bg-white input-bordered w-1/2 {invalid_class}",
                             r#type: "number",
                             placeholder: "500",
+                            min: "0",
+                            required: true,
                             disabled: calculated_amount().0,
                             value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
-                            oninput: move |evt| set_amount_single(evt.data.value(), props.amount)
+                            oninput: move |evt| set_amount_single(evt.data.value(), props.amount),
+                            onblur: move |evt| is_pristine.set(false)
                         }
                         span {
                             class: "badge",

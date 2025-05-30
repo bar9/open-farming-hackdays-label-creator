@@ -10,14 +10,18 @@ pub struct TextInputProps {
 }
 #[component]
 pub fn TextInput(mut props: TextInputProps) -> Element {
+    let mut is_pristine = use_signal(|| true);
+    let invalid_class = use_memo(move || {if is_pristine() {""} else {"invalid:bg-red-50"}});
     rsx! {
         input {
-            class: "input bg-white input-bordered w-full invalid:border-red-500",
+            class: "input bg-white input-bordered w-full {invalid_class}",
             r#type: "text",
             placeholder: "{props.placeholder}",
             required: "{props.required}",
             value: "{props.bound_value}",
-            oninput: move |evt| props.bound_value.set(evt.data.value())
+            oninput: move |evt| props.bound_value.set(evt.data.value()),
+            onblur: move |evt| is_pristine.set(false)
         }
+        
     }
 }

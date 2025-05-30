@@ -424,7 +424,7 @@ fn app() -> Element {
                 price: price
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.3.6 vom 22.05.2025"}
+                span {"Version 0.3.7 vom 30.05.2025"}
                 button {
                     class:"link link-blue",
                     onclick: move |_| impressum_modal_open.toggle(),
