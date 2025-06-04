@@ -37,6 +37,7 @@ label:
   volumen: Volumen
   preisProEinheit: Preis pro Einheit
   keinDatum: Kein Haltbarkeits-/Verbrauchdatum
+  ignore_ingredients: Keine Zutatenliste (Einzelzutat)
 
 nav:
   linkKopieren: Link kopieren
@@ -48,6 +49,8 @@ nav:
   hinzufuegen: Hinzufügen
 
 help:
+  ignore_ingredients: |
+    Wenn der Produktname oder die Sachbezeichnung ein reines Produkt ohne weitere Zutaten bezeichnet (z.B. reiner Essig), braucht keine Zutatenliste angegeben zu werden.
   produktname: |
     Der Produktname kann phantasiereich sein. 
     Den Phantasienamen mit einer Sachbezeichnung ergänzen (Art. 6 LIV.)

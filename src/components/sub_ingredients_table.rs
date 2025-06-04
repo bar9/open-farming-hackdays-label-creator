@@ -75,7 +75,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 list: "ingredients",
                 r#type: "flex",
                 placeholder: t!("placeholder.zutatName").as_ref(),
-                class: "input input-bordered bg-white input-accent w-full",
+                class: "input input-accent w-full",
                 oninput: move |evt| name_to_add.set(evt.data.value()),
                 value: "{name_to_add}",
                 datalist { id: "ingredients",

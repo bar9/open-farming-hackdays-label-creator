@@ -72,7 +72,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         list: "ingredients",
                         r#type: "flex",
                         placeholder: t!("placeholder.zutatName").as_ref(),
-                        class: "input input-bordered bg-white input-accent w-full",
+                        class: "input input-accent w-full",
                         oninput: move |evt| update_name(evt.data.value()),
                         value: "{ingredient.name}",
                         datalist { id: "ingredients",
@@ -91,7 +91,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         input {
                             r#type: "number",
                             placeholder: "Menge",
-                            class: "input input-bordered bg-white input-accent w-full",
+                            class: "input input-accent w-full",
                             onchange: move |evt| {
                                 if let Ok(amount) = evt.data.value().parse::<f64>() {
                                     amount_to_edit.set(amount);

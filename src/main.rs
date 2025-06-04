@@ -30,6 +30,8 @@ struct Form {
     #[serde(default)]
     ingredients: Vec<Ingredient>,
     #[serde(default)]
+    ignore_ingredients: bool,
+    #[serde(default)]
     product_title: String,
     #[serde(default)]
     product_subtitle: String,
@@ -107,6 +109,7 @@ impl Default for Form {
         }
         Form {
             ingredients: Vec::new(),
+            ignore_ingredients: false,
             product_title: String::new(),
             product_subtitle: String::new(),
             additional_info: String::new(),
@@ -148,6 +151,7 @@ fn main() {
 
 fn app() -> Element {
     let initial_form = use_memo( Form::default );
+    let ignore_ingredients = use_signal(|| false);
     let ingredients: Signal<Vec<Ingredient>> = use_signal(|| initial_form.read().ingredients.clone());
     let product_title = use_signal(|| initial_form.read().product_title.clone());
     let product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
@@ -178,6 +182,7 @@ fn app() -> Element {
     let current_state = use_memo(move || {
         Form {
             ingredients: ingredients(),
+            ignore_ingredients: ignore_ingredients(),
             product_title: product_title(),
             product_subtitle: product_subtitle(),
             additional_info: additional_info(),
@@ -281,13 +286,22 @@ fn app() -> Element {
                             }
                             SeparatorLine {}
                             FormField {
-                                label: t!("label.zutaten"),
-                                help: Some((t!("help.zutaten")).into()),
-                                required: true,
-                                IngredientsTable {
-                                    ingredients: ingredients,
-                                    validation_messages: validation_messages,
-                                    manual_total: manual_total
+                                label: t!("label.ignore_ingredients"),
+                                help: Some(t!("help.ignore_ingredients").into()),
+                                CheckboxInput {
+                                    bound_value: ignore_ingredients
+                                }
+                            }
+                            if !ignore_ingredients() {
+                                FormField {
+                                    label: t!("label.zutaten"),
+                                    help: Some((t!("help.zutaten")).into()),
+                                    required: true,
+                                    IngredientsTable {
+                                        ingredients: ingredients,
+                                        validation_messages: validation_messages,
+                                        manual_total: manual_total
+                                    }
                                 }
                             }
                             SeparatorLine {}
@@ -306,7 +320,7 @@ fn app() -> Element {
                                     help: Some((t!("help.zusatzinformationen")).into()),
                                     TextareaInput {
                                         placeholder: t!("placeholder.zusatzinformationen"),
-                                        rows: "4",
+                                        rows: "5",
                                         bound_value: additional_info
                                     }
                                 }
@@ -421,10 +435,11 @@ fn app() -> Element {
                 weight_unit: weight_unit,
                 volume_unit: volume_unit,
                 amount: amount,
-                price: price
+                price: price,
+                ignore_ingredients: ignore_ingredients
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.3.7 vom 30.05.2025"}
+                span {"Version 0.3.8 vom 04.06.2025"}
                 button {
                     class:"link link-blue",
                     onclick: move |_| impressum_modal_open.toggle(),

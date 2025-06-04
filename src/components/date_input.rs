@@ -25,7 +25,7 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
     rsx! {
         select {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
-            class: "select bg-white select-bordered w-full max-w-xs",
+            class: "select w-full max-w-xs",
             option {selected: true, "{t!(\"label.mindestensHaltbar\")}"}
             option {"{t!(\"label.zuVerbrauchen\")}"}
             option {value: "", "{t!(\"label.keinDatum\")}"}

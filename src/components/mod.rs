@@ -14,6 +14,7 @@ pub use validation_display::ValidationDisplay;
 // pub use amount_type_select::AmountTypeSelect;
 pub use amount_price::*;
 pub use impressum::Impressum;
+pub use checkbox_input::CheckboxInput;
 
 pub mod icons;
 mod text_input;
@@ -34,6 +35,7 @@ mod ingredient_detail;
 // mod amount_type_select;
 mod amount_price;
 mod impressum;
+mod checkbox_input;
 
 
 

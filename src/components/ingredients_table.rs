@@ -68,7 +68,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                             input {
                                 r#type: "number",
                                 placeholder: t!("label.manuellesTotal").as_ref(),
-                                class: "input input-bordered bg-white input-accent w-full",
+                                class: "input input-accent w-full",
                                 onchange: move |evt| {
                                     if let Ok(amount) = evt.data.value().parse::<f64>() {
                                         props.manual_total.set(Some(amount));

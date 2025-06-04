@@ -25,6 +25,7 @@ pub fn LabelPreview(
     volume_unit: Signal<String>,
     amount: Signal<Amount>,
     price: Signal<Price>,
+    ignore_ingredients: Signal<bool>
 ) -> Element {
 
     fn display_money(cents: Option<usize>) -> String {
@@ -78,7 +79,7 @@ pub fn LabelPreview(
     });
 
     rsx! {
-        div { class: "p-8 flex flex-col bg-gradient-to-r from-primary to-secondary",
+        div { class: "p-8 flex flex-col bg-base-200",
             h2 { class: "text-primary-content pb-4 text-4xl",
                 "{t!(\"preview.etikettenVorschau\")}"
             }
@@ -101,14 +102,16 @@ pub fn LabelPreview(
                     }
   
                 }
-                div {
-                    class: "py-2",
-                    h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
-                    if *label.read() == "" {
-                        span { class: "badge badge-warning", "Zutatenliste" }
-                    } else {
-                        div { class: "text-sm",
-                            dangerous_inner_html: "{label}"
+                if !ignore_ingredients() {
+                    div {
+                        class: "py-2",
+                        h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
+                        if *label.read() == "" {
+                            span { class: "badge badge-warning", "Zutatenliste" }
+                        } else {
+                            div { class: "text-sm",
+                                dangerous_inner_html: "{label}"
+                            }
                         }
                     }
                 }

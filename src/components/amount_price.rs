@@ -304,7 +304,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                 required: true,
                 select {
                     oninput: move |evt| set_amount_type(evt.data.value(), props.amount_type),
-                    class: "select bg-white select-bordered w-full max-w-xs",
+                    class: "select w-full max-w-xs",
                     option {selected: *props.amount_type.read() == AmountType::Weight, value: "gewicht", "Gewicht"}
                     option {selected: *props.amount_type.read() == AmountType::Volume, value: "volumen", "Volumen"}
                 }
@@ -314,7 +314,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                 required: true,
                 select {
                     oninput: move |evt| set_unit(evt.data.value(), props.amount_type, props.weight_unit, props.volume_unit),
-                    class: "select bg-white select-bordered w-full max-w-xs",
+                    class: "select w-full max-w-xs",
 
                     if *props.amount_type.read() == AmountType::Weight {
                         option {selected: *props.weight_unit.read() == "mg", value: "mg", "mg"}
@@ -336,7 +336,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                         div {
                             class: "flex flex-row items-center gap-2",
                             input {
-                                class: "input bg-white input-bordered w-1/2 {invalid_class}",
+                                class: "input w-1/2 input-ghost bg-base-200 {invalid_class}",
                                 r#type: "number",
                                 placeholder: "300",
                                 min: "0",
@@ -360,7 +360,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                             div {
                                 class: "flex flex-row items-center gap-2",
                                 input {
-                                    class: "input bg-white input-bordered w-1/2",
+                                    class: "input input-ghost bg-base-200 w-1/2",
                                     r#type: "number",
                                     placeholder: "200",
                                     value: props.amount.read().get_value_tuple().1.map(|v| v.to_string()).unwrap_or_default(),
@@ -389,7 +389,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                         div {
                             class: "flex flex-row items-center gap-2",
                             input {
-                                class: "input bg-white input-bordered w-1/2 {invalid_class}",
+                                class: "input w-1/2 input-ghost bg-base-200 {invalid_class}",
                                 r#type: "number",
                                 placeholder: "300",
                                 min: "0",
@@ -426,7 +426,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                     div {
                         class: "flex flex-row items-center gap-2",
                         input {
-                            class: "input bg-white input-bordered w-1/2 {invalid_class}",
+                            class: "input w-1/2 input-ghost bg-base-200 {invalid_class}",
                             r#type: "number",
                             placeholder: "500",
                             min: "0",
@@ -452,7 +452,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                     div {
                         class: "flex flex-row items-center",
                         input {
-                            class: "input bg-white input-bordered w-1/2",
+                            class: "input input-ghost bg-base-200 w-1/2",
                             r#type: "number",
                             step: "any",
                             placeholder: "4.00",
@@ -474,7 +474,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                     div {
                         class: "flex flex-row items-center",
                         input {
-                            class: "input bg-white input-bordered w-1/2",
+                            class: "input input-ghost bg-base-200 w-1/2",
                             r#type: "number",
                             step: "any",
                             placeholder: "4.00",
@@ -496,7 +496,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                     div{
                         class: "flex flex-row items-center",
                         input {
-                            class: "input bg-white input-bordered w-1/2",
+                            class: "input input-ghost bg-base-200 w-1/2",
                             r#type: "number",
                             step: "any",
                             placeholder: "12.00",

@@ -11,7 +11,7 @@ pub struct TextareaInputProps {
 pub fn TextareaInput(mut props: TextareaInputProps) -> Element {
     rsx! {
         textarea {
-            class: "textarea bg-white textarea-bordered w-full",
+            class: "textarea w-full",
             rows: "{props.rows}",
             placeholder: "{props.placeholder}",
             value: "{props.bound_value}",
