@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 use crate::core::{Ingredient, SubIngredient};
-use crate::model::{food_db};
+use crate::model::{food_db, lookup_allergen};
 use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
@@ -27,16 +27,17 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         let mut name_to_add = name_to_add.clone();
         move |_evt| {
             if let Some(mut ingredient) = ingredients.get_mut(props.index) {
+                let ingredient_name = name_to_add();
                 if let Some(sub_components) = &mut ingredient.sub_components {
                     sub_components.push(SubIngredient {
-                        name: name_to_add(),
-                        is_allergen: false,
+                        name: ingredient_name.clone(),
+                        is_allergen: lookup_allergen(&ingredient_name),
                     });
                 } else {
                     let mut sub_components = Vec::new();
                     sub_components.push(SubIngredient {
-                        name: name_to_add(),
-                        is_allergen: false,
+                        name: ingredient_name.clone(),
+                        is_allergen: lookup_allergen(&ingredient_name),
                     });
                     ingredient.sub_components = Some(sub_components);
                 }

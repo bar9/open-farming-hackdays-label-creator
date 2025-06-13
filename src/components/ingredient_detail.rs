@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use crate::components::*;
 use crate::core::Ingredient;
-use crate::model::food_db;
+use crate::model::{food_db, lookup_allergen};
 use rust_i18n::t;
 
 
@@ -34,13 +34,18 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient_2 = ingredients.get(index).unwrap().clone();
-    let mut update_name = move |new_name| {
-        ingredients.write()[index] = Ingredient { name: new_name, ..old_ingredient.clone() };
+    let mut update_name = move |new_name: String| {
+        ingredients.write()[index] = Ingredient { 
+            name: new_name.clone(), 
+            is_allergen: lookup_allergen(&new_name),
+            ..old_ingredient.clone() 
+        };
     };
     
     let mut handle_genesis = move || {
         let mut new_ingredient = ingredients.get(index).unwrap().clone();
         new_ingredient.amount = amount_to_edit();
+        new_ingredient.is_allergen = lookup_allergen(&new_ingredient.name);
         props.ingredients.write().push(new_ingredient);
         ingredients = use_signal(|| vec![Ingredient::default()]);
         is_open.set(false);
