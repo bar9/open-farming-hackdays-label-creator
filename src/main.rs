@@ -439,7 +439,7 @@ fn app() -> Element {
                 ignore_ingredients: ignore_ingredients
             }
             div {class: "fixed bottom-2 right-2 flex gap-2",
-                span {"Version 0.3.8 vom 04.06.2025"}
+                span {"Version 0.3.9 vom 13.06.2025"}
                 button {
                     class:"link link-blue",
                     onclick: move |_| impressum_modal_open.toggle(),
