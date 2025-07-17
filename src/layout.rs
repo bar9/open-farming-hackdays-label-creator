@@ -293,7 +293,7 @@ pub fn SplitLayout() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        "Version 0.4.0 vom 17.07.2025"
+                        "Version 0.4.1 vom 17.07.2025"
                     }
                     Link {
                         to: Route::Impressum {},
