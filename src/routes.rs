@@ -10,17 +10,17 @@ use crate::layout::FullLayout;
 #[rustfmt::skip]
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Route {
-    #[layout(SplitLayout)]
-        #[route("/lebensmittelrecht")]
-        Swiss {},
-
-        #[route("/bio")]
-        Bio {},
-
-        #[route("/knospe")]
-        Knospe {},
-    #[end_layout]
     #[layout(FullLayout)]
+        #[layout(SplitLayout)]
+            #[route("/lebensmittelrecht")]
+            Swiss {},
+
+            #[route("/bio")]
+            Bio {},
+
+            #[route("/knospe")]
+            Knospe {},
+        #[end_layout]
         #[route("/impressum")]
         Impressum {},
 

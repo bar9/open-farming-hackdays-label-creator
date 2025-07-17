@@ -5,7 +5,7 @@ use rust_i18n::t;
 pub fn Bio() -> Element {
     rsx! {
         div {
-            class: "flex items-center justify-center min-h-screen bg-base-200",
+            class: "flex items-center justify-center h-full bg-base-200",
             div {
                 class: "text-center",
                 h1 {

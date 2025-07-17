@@ -2,14 +2,12 @@ use dioxus::prelude::*;
 use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::rules::RuleDef;
-use crate::model::*;
 use serde::{Deserialize, Serialize};
 use serde_qs::from_str as from_query_string;
 use serde_qs::to_string as to_query_string;
 use std::collections::HashMap;
-use web_sys::window;
 use rust_i18n::t;
-use crate::components::icons;
+use crate::layout::CopyLinkContext;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
@@ -189,6 +187,12 @@ pub fn Swiss() -> Element {
         format!{"?{}",to_query_string(&current_state()).unwrap()}
     });
 
+    let mut copy_link_context = use_context::<Signal<CopyLinkContext>>();
+    
+    use_effect(move || {
+        copy_link_context.write().query_string = Some(query_string());
+    });
+
     let rules: Memo<Vec<RuleDef>> = use_memo(move || {
         match configuration() {
             Configuration::Conventional =>
@@ -221,11 +225,9 @@ pub fn Swiss() -> Element {
     use_context_provider(|| Validations(validation_messages));
     use_context_provider(|| Conditionals(conditional_display));
 
-    let mut config_modal_open = use_signal(|| false);
-
     rsx! {
         div {
-            class: "h-screen flex",
+            class: "flex h-full",
             div {
                 class: "flex-1 flex overflow-hidden",
                 div {
@@ -380,62 +382,6 @@ pub fn Swiss() -> Element {
             amount: amount,
             price: price,
             ignore_ingredients: ignore_ingredients
-        }
-        div {class: "fixed bottom-2 right-2 flex gap-2",
-            span {"Version 0.3.9 vom 13.06.2025"}
-            Link {
-                to: crate::routes::Route::Impressum {},
-                class:"link link-blue",
-                "Impressum"
-            }
-            a {class: "link link-blue", href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes", "Release Notes"}
-        }
-        div {class: "fixed top-4 right-4 flex gap-2",
-            button {class: "btn btn-primary",
-                onclick: move |_: MouseEvent| {
-                    let window = window().expect("no global `window` exists");
-                    let navigator = window.navigator();
-                    let clipboard = navigator.clipboard();
-                    let href = window.location().href().unwrap();
-                    let text = format!("{href}{query_string}");
-                    let  _ = clipboard.write_text(&text);
-                },
-                icons::Clipboard{}
-                "{t!(\"nav.linkKopieren\")}"
-            }
-
-            button {class: "btn btn-primary",
-                onclick: move |_| config_modal_open.toggle(),
-                icons::Settings {}
-                "{t!(\"nav.konfiguration\")}"
-            }
-            
-            if config_modal_open() {
-                dialog {
-                    open: "{config_modal_open}", class: "modal",
-                    div { class: "modal-box",
-                        h3 { class: "font-bold text-lg", "{t!(\"nav.konfiguration\")}" }
-                        div {
-                            class: "prose",
-                            label { "{t!(\"nav.aktiveRegeln\")}" }
-                            ul {
-                                {rules().into_iter().map(|rule| {
-                                    rsx! {li {"{rule:?}"}}
-                                })}
-                            }
-                        }
-                        div { class: "modal-action",
-                            form { method: "dialog",
-                                button {
-                                    class: "btn btn-sm",
-                                    onclick: move |_| config_modal_open.toggle(),
-                                    "{t!(\"nav.schliessen\")}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
