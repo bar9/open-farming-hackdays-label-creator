@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::Configuration;
+use crate::pages::swiss::Configuration;
 use crate::rules::RuleDef;
 
 #[derive(Props, Clone, PartialEq)]

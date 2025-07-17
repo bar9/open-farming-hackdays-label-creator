@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::Validations;
+use crate::pages::swiss::Validations;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct ValidationDisplayProps {

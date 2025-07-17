@@ -2,10 +2,10 @@ use std::cmp::PartialEq;
 use std::str::FromStr;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::FormField;
-use crate::FieldGroup2;
+use crate::components::FormField;
+use crate::components::FieldGroup2;
 use rust_i18n::t;
-use crate::icons;
+use crate::components::icons;
 
 #[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub enum AmountType {

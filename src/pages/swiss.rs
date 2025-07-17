@@ -9,6 +9,7 @@ use serde_qs::to_string as to_query_string;
 use std::collections::HashMap;
 use web_sys::window;
 use rust_i18n::t;
+use crate::components::icons;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
@@ -405,7 +406,7 @@ pub fn Swiss() -> Element {
 
             button {class: "btn btn-primary",
                 onclick: move |_| config_modal_open.toggle(),
-                crate::icons::Settings {}
+                icons::Settings {}
                 "{t!(\"nav.konfiguration\")}"
             }
             

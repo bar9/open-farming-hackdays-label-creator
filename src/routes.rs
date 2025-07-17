@@ -9,7 +9,7 @@ use crate::layout::ThemeLayout;
 #[rustfmt::skip]
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Route {
-    // #[layout(ThemeLayout)]
+    #[layout(ThemeLayout)]
         #[route("/lebensmittelrecht")]
         Swiss {},
 
@@ -25,7 +25,7 @@ pub enum Route {
         #[route("/")]
         SplashScreen {},
 
-    // #[end_layout]
+    #[end_layout]
 
     #[route("/:..route")]
     PageNotFound {
