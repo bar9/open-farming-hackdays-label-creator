@@ -80,10 +80,8 @@ pub fn LabelPreview(
 
     rsx! {
         div { class: "p-8 flex flex-col bg-base-200",
-            h2 { class: "text-primary-content pb-4 text-4xl",
-                "{t!(\"preview.etikettenVorschau\")}"
-            }
-            div { class: "bg-white border p-4 grid grid-col-1 divide-y divide-dotted",
+            div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4",
+                div { class: "grid grid-col-1 divide-y divide-dotted",
                 div {
                     class: "py-2",
                     if *product_subtitle.read() == "" {
@@ -238,6 +236,7 @@ pub fn LabelPreview(
                 //         }
                 //     }
                 // }
+                }
             }
         }
     }

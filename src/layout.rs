@@ -164,6 +164,59 @@ pub fn SplitLayout() -> Element {
                                 }
                             }
                         }
+                        
+                        div {
+                            class: "dropdown dropdown-end",
+                            div {
+                                tabindex: "0",
+                                role: "button",
+                                class: "btn btn-ghost btn-sm",
+                                "DE "
+                                svg {
+                                    class: "w-4 h-4 ml-1",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    view_box: "0 0 24 24",
+                                    path {
+                                        stroke_linecap: "round",
+                                        stroke_linejoin: "round",
+                                        stroke_width: "2",
+                                        d: "M19 9l-7 7-7-7"
+                                    }
+                                }
+                            }
+                            ul {
+                                tabindex: "0",
+                                class: "dropdown-content menu bg-base-100 rounded-box z-[1] w-20 p-2 shadow-lg",
+                                li {
+                                    button {
+                                        class: "btn btn-ghost btn-sm justify-start",
+                                        onclick: move |_| {
+                                            rust_i18n::set_locale("de-CH");
+                                        },
+                                        "DE"
+                                    }
+                                }
+                                li {
+                                    button {
+                                        class: "btn btn-ghost btn-sm justify-start",
+                                        onclick: move |_| {
+                                            rust_i18n::set_locale("fr-CH");
+                                        },
+                                        "FR"
+                                    }
+                                }
+                                li {
+                                    button {
+                                        class: "btn btn-ghost btn-sm justify-start",
+                                        onclick: move |_| {
+                                            rust_i18n::set_locale("it-CH");
+                                        },
+                                        "IT"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

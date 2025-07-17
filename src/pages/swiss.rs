@@ -233,7 +233,6 @@ pub fn Swiss() -> Element {
                 div {
                     class: "flex-1 overflow-y-scroll",
                     div { class: "flex flex-col gap-6 p-8 pb-12",
-                        h1 { class: "text-4xl mb-4", "{t!(\"title\")}" }
                         FormField {
                             label: t!("label.produktname"),
                             help: Some(t!("help.produktname").into()),
