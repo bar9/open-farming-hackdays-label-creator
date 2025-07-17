@@ -17,9 +17,23 @@ impl Default for CopyLinkContext {
     }
 }
 
+#[derive(Clone)]
+pub struct ThemeContext {
+    pub theme: String,
+}
+
+impl Default for ThemeContext {
+    fn default() -> Self {
+        Self {
+            theme: "corporate".to_string(),
+        }
+    }
+}
+
 #[component]
 pub fn SplitLayout() -> Element {
     let copy_link_context = use_context::<Signal<CopyLinkContext>>();
+    let theme_context = use_context::<Signal<ThemeContext>>();
     let current_route = use_route::<Route>();
     
     rsx! {
@@ -29,9 +43,9 @@ pub fn SplitLayout() -> Element {
         div {
             key: "split-layout",
             class: "min-h-screen flex flex-col",
-            "data-theme": "lemonade",
+            "data-theme": "{theme_context.read().theme}",
             header {
-                class: "bg-base-200 p-4 shadow-md",
+                class: "bg-base-200 p-4 shadow-md border-b border-base-300",
                 div {
                     class: "flex justify-between items-center",
                     Link {
@@ -226,7 +240,7 @@ pub fn SplitLayout() -> Element {
                 Outlet::<Route> {}
             }
             footer {
-                class: "bg-base-200 p-4 text-center text-sm mt-auto",
+                class: "bg-base-200 p-4 text-center text-sm mt-auto border-t border-base-300",
                 div {
                     class: "flex justify-between items-center",
                     span {
@@ -257,6 +271,7 @@ pub fn SplitLayout() -> Element {
 #[component]
 pub fn FullLayout() -> Element {
     use_context_provider(|| Signal::new(CopyLinkContext::default()));
+    use_context_provider(|| Signal::new(ThemeContext::default()));
     
     rsx! {
         document::Stylesheet {
@@ -265,7 +280,7 @@ pub fn FullLayout() -> Element {
         div {
             key: "full-layout",
             class: "min-h-screen",
-            "data-theme": "lemonade",
+            "data-theme": "corporate",
             main { 
                 key: "full-main",
                 class: "",

@@ -7,7 +7,7 @@ use serde_qs::from_str as from_query_string;
 use serde_qs::to_string as to_query_string;
 use std::collections::HashMap;
 use rust_i18n::t;
-use crate::layout::CopyLinkContext;
+use crate::layout::{CopyLinkContext, ThemeContext};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
@@ -188,9 +188,11 @@ pub fn Swiss() -> Element {
     });
 
     let mut copy_link_context = use_context::<Signal<CopyLinkContext>>();
+    let mut theme_context = use_context::<Signal<ThemeContext>>();
     
     use_effect(move || {
         copy_link_context.write().query_string = Some(query_string());
+        theme_context.write().theme = "swiss".to_string();
     });
 
     let rules: Memo<Vec<RuleDef>> = use_memo(move || {
