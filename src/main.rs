@@ -5,6 +5,7 @@ use rust_i18n::i18n;
 use crate::routes::Route;
 
 mod layout;
+mod shared;
 
 mod model;
 mod components;

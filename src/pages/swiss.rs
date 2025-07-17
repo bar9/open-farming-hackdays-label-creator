@@ -8,6 +8,7 @@ use serde_qs::to_string as to_query_string;
 use std::collections::HashMap;
 use rust_i18n::t;
 use crate::layout::{CopyLinkContext, ThemeContext};
+use crate::shared::{Validations, Conditionals, Configuration};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
@@ -118,16 +119,6 @@ impl Default for Form {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct Validations(pub Memo<HashMap<String, &'static str>>);
-
-#[derive(Clone, Copy)]
-pub struct Conditionals(pub Memo<HashMap<String, bool>>);
-
-#[derive(Clone, Copy)]
-pub enum Configuration {
-    Conventional
-}
 
 pub fn Swiss() -> Element {
     let initial_form = use_memo( Form::default );

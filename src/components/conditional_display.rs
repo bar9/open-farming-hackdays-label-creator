@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::pages::swiss::Conditionals;
+use crate::shared::Conditionals;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct ConditionalDisplayProps{

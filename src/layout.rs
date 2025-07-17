@@ -242,25 +242,19 @@ pub fn SplitLayout() -> Element {
             footer {
                 class: "bg-base-200 p-4 text-center text-sm mt-auto border-t border-base-300",
                 div {
-                    class: "flex justify-between items-center",
+                    class: "flex justify-center items-center gap-4",
                     span {
-                        "© 2025 Swiss Food Label Creator"
+                        "Version 0.3.9 vom 13.06.2025"
                     }
-                    div {
-                        class: "flex gap-4 items-center",
-                        span {
-                            "Version 0.3.9 vom 13.06.2025"
-                        }
-                        Link {
-                            to: Route::Impressum {},
-                            class: "link link-blue hover:link-primary",
-                            "Impressum"
-                        }
-                        a {
-                            class: "link link-blue hover:link-primary",
-                            href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                            "Release Notes"
-                        }
+                    Link {
+                        to: Route::Impressum {},
+                        class: "link link-blue hover:link-primary",
+                        "Impressum"
+                    }
+                    a {
+                        class: "link link-blue hover:link-primary",
+                        href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
+                        "Release Notes"
                     }
                 }
             }
