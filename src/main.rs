@@ -10,9 +10,11 @@ use serde::{Deserialize, Serialize};
 use serde_qs::from_str as from_query_string;
 use serde_qs::to_string as to_query_string;
 use std::collections::HashMap;
+use markdown::mdast::Node::ThematicBreak;
 use strum_macros::EnumIter;
 use web_sys::window;
 use rust_i18n::{i18n, t};
+use crate::routes::Route;
 
 mod layout;
 
@@ -22,6 +24,9 @@ pub mod core;
 mod rules;
 mod nl2br;
 mod form;
+mod routes;
+
+mod pages;
 
 i18n!();
 
@@ -146,7 +151,12 @@ pub enum Configuration {
 }
 fn main() {
     rust_i18n::set_locale("de-CH");
-    launch(app);
+    // launch(app);
+    launch(|| {
+        rsx! {
+            Router::<Route> {}
+        }
+    })
 }
 
 fn app() -> Element {
