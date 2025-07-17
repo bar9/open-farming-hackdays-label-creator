@@ -2,12 +2,10 @@ use dioxus::prelude::*;
 use rust_i18n::t;
 use markdown::{to_html};
 
-#[derive(Props, Clone, PartialEq)]
-pub struct ImpressumProps {
-}
 
-pub fn Impressum(props: ImpressumProps) -> Element {
-    
+#[component]
+pub fn Impressum() -> Element {
+
     let text = t!("impressum");
     
     rsx! {

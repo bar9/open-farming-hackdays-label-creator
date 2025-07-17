@@ -20,7 +20,7 @@ pub fn TextInput(mut props: TextInputProps) -> Element {
             required: "{props.required}",
             value: "{props.bound_value}",
             oninput: move |evt| props.bound_value.set(evt.data.value()),
-            onblur: move |evt| is_pristine.set(false)
+            onblur: move |_evt| is_pristine.set(false)
         }
         
     }

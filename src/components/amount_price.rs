@@ -344,7 +344,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                                 disabled: calculated_amount().0,
                                 value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
                                 oninput: move |evt| set_amount_0(evt.data.value(), props.amount),
-                                onblur: move |evt| is_pristine.set(true)
+                                onblur: move |_evt| is_pristine.set(true)
                             }
                             span {
                                 class: "badge",
@@ -397,7 +397,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                                 disabled: calculated_amount().0,
                                 value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
                                 oninput: move |evt| set_amount_single(evt.data.value(), props.amount),
-                                onblur: move |evt| is_pristine.set(false)
+                                onblur: move |_evt| is_pristine.set(false)
                             }
                             span {
                                 class: "badge",
@@ -434,7 +434,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
                             disabled: calculated_amount().0,
                             value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
                             oninput: move |evt| set_amount_single(evt.data.value(), props.amount),
-                            onblur: move |evt| is_pristine.set(false)
+                            onblur: move |_evt| is_pristine.set(false)
                         }
                         span {
                             class: "badge",

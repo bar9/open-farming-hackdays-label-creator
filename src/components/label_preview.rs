@@ -149,7 +149,7 @@ pub fn LabelPreview(
                     _ => rsx! {}
                 }
 
-                if (additional_info() != "" && storage_info() != "") {
+                if additional_info() != "" && storage_info() != "" {
                     div { class: "py-2",
                         span { class: "text-sm",
                             {additional_info().nl2br()}

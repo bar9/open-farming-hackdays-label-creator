@@ -5,7 +5,6 @@ use crate::rules::RuleDef;
 use serde::{Deserialize, Serialize};
 use serde_qs::from_str as from_query_string;
 use serde_qs::to_string as to_query_string;
-use std::collections::HashMap;
 use rust_i18n::t;
 use crate::layout::{CopyLinkContext, ThemeContext};
 use crate::shared::{Validations, Conditionals, Configuration};

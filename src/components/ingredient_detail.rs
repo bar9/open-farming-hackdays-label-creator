@@ -18,7 +18,7 @@ pub struct IngredientDetailProps {
 pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let index: usize;
     let mut ingredients: Signal<Vec<Ingredient>>;
-    if (props.genesis) {
+    if props.genesis {
         ingredients = use_signal(|| vec![Ingredient::default()]);
         index = 0;
     } else {

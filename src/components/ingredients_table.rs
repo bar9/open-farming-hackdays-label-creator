@@ -3,7 +3,6 @@ use dioxus::prelude::*;
 use crate::components::*;
 use crate::components::ingredient_detail::IngredientDetail;
 use crate::core::Ingredient;
-use crate::model::{food_db};
 use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
@@ -14,8 +13,8 @@ pub struct IngredientsTableProps {
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
-    let mut name_to_add = use_signal(|| String::new());
-    let mut amount_to_add = use_signal(|| 0);
+    // let name_to_add = use_signal(|| String::new());
+    // let amount_to_add = use_signal(|| 0);
     let total_amount = use_memo (move || {
         props.ingredients.read().iter().map(|x: &Ingredient|x.amount).sum::<f64>()
     });
