@@ -20,3 +20,4 @@ assets
 # Added by cargo
 
 /target
+/CLAUDE.md
