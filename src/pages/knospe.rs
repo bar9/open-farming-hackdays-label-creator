@@ -10,11 +10,11 @@ pub fn Knospe() -> Element {
                 class: "text-center",
                 h1 {
                     class: "text-5xl font-bold mb-4",
-                    {t!("splash.title")}
+                    {t!("Bio Knospe")}
                 }
                 p {
                     class: "text-xl text-base-content/70",
-                    {t!("splash.under_construction")}
+                    {t!("under construction")}
                 }
             }
         }

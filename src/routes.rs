@@ -4,12 +4,13 @@ use crate::pages::bio::Bio;
 use crate::pages::knospe::Knospe;
 use crate::pages::swiss::Swiss;
 use crate::pages::impressum::Impressum;
-use crate::layout::ThemeLayout;
+use crate::layout::SplitLayout;
+use crate::layout::FullLayout;
 
 #[rustfmt::skip]
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Route {
-    #[layout(ThemeLayout)]
+    #[layout(SplitLayout)]
         #[route("/lebensmittelrecht")]
         Swiss {},
 
@@ -18,14 +19,15 @@ pub enum Route {
 
         #[route("/knospe")]
         Knospe {},
-
+    #[end_layout]
+    #[layout(FullLayout)]
         #[route("/impressum")]
         Impressum {},
 
         #[route("/")]
         SplashScreen {},
-
     #[end_layout]
+
 
     #[route("/:..route")]
     PageNotFound {

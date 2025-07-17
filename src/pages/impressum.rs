@@ -6,7 +6,7 @@ pub fn Impressum() -> Element {
     rsx! {
         div { class: "container mx-auto p-8",
             div { class: "max-w-4xl mx-auto",
-                h1 { class: "text-4xl mb-8", "Impressum" }
+                // h1 { class: "text-4xl mb-8", "Impressum" }
                 ImpressumComponent {}
                 div { class: "mt-8",
                     Link {
