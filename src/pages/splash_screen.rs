@@ -1,36 +1,123 @@
 use crate::routes::Route;
 use dioxus::prelude::*;
+use rust_i18n::t;
 
 #[component]
 pub fn SplashScreen() -> Element {
     rsx! {
         div {
-            class: "flex flex-col items-center justify-center min-h-screen bg-base-200 p-8",
-            div {
-                class: "text-center max-w-4xl",
-                h1 {
-                    class: "text-4xl md:text-5xl font-bold mb-4 text-base-content",
-                    "Label Creator"
-                }
-                h2 {
-                    class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content",
-                    "Erstelle konforme Etiketten"
-                }
-                p {
-                    class: "text-lg md:text-xl text-base-content/70 mb-12 max-w-2xl mx-auto",
-                    "Um eine Etikette zu konfigurieren, wählen Sie die Basis-Konfiguration. Diese enthält die jeweiligen spezifischen Regeln für diesen Brand."
-                }
+            class: "min-h-screen bg-base-200",
+            header {
+                class: "bg-base-200 p-4 shadow-md border-b border-base-300",
                 div {
-                    class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
+                    class: "flex justify-between items-center",
+                    div {
+                        class: "text-2xl font-bold",
+                        {t!("app.title")}
+                    }
+                    div {
+                        class: "dropdown dropdown-end",
+                        div {
+                            tabindex: "0",
+                            role: "button",
+                            class: "btn btn-ghost btn-sm",
+                            {match rust_i18n::locale().as_ref() {
+                                "fr-CH" => "FR ",
+                                "it-CH" => "IT ",
+                                _ => "DE ",
+                            }}
+                            svg {
+                                class: "w-4 h-4 ml-1",
+                                fill: "none",
+                                stroke: "currentColor",
+                                view_box: "0 0 24 24",
+                                path {
+                                    stroke_linecap: "round",
+                                    stroke_linejoin: "round",
+                                    stroke_width: "2",
+                                    d: "M19 9l-7 7-7-7"
+                                }
+                            }
+                        }
+                        ul {
+                            tabindex: "0",
+                            class: "dropdown-content menu bg-base-100 rounded-box z-[1] w-20 p-2 shadow-lg",
+                            li {
+                                button {
+                                    class: "btn btn-ghost btn-sm justify-start",
+                                    onclick: move |_| {
+                                        rust_i18n::set_locale("de-CH");
+                                        if let Some(window) = web_sys::window() {
+                                            if let Ok(Some(storage)) = window.local_storage() {
+                                                let _ = storage.set_item("locale", "de-CH");
+                                            }
+                                            let _ = window.location().reload();
+                                        }
+                                    },
+                                    "DE"
+                                }
+                            }
+                            li {
+                                button {
+                                    class: "btn btn-ghost btn-sm justify-start",
+                                    onclick: move |_| {
+                                        rust_i18n::set_locale("fr-CH");
+                                        if let Some(window) = web_sys::window() {
+                                            if let Ok(Some(storage)) = window.local_storage() {
+                                                let _ = storage.set_item("locale", "fr-CH");
+                                            }
+                                            let _ = window.location().reload();
+                                        }
+                                    },
+                                    "FR"
+                                }
+                            }
+                            li {
+                                button {
+                                    class: "btn btn-ghost btn-sm justify-start",
+                                    onclick: move |_| {
+                                        rust_i18n::set_locale("it-CH");
+                                        if let Some(window) = web_sys::window() {
+                                            if let Ok(Some(storage)) = window.local_storage() {
+                                                let _ = storage.set_item("locale", "it-CH");
+                                            }
+                                            let _ = window.location().reload();
+                                        }
+                                    },
+                                    "IT"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            div {
+                class: "flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-8",
+                div {
+                    class: "text-center max-w-4xl",
+                    h1 {
+                        class: "text-4xl md:text-5xl font-bold mb-4 text-base-content",
+                        {t!("app.title")}
+                    }
+                    h2 {
+                        class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content",
+                        {t!("splash.subtitle")}
+                    }
+                    p {
+                        class: "text-lg md:text-xl text-base-content/70 mb-12 max-w-2xl mx-auto",
+                        {t!("splash.description")}
+                    }
+                    div {
+                        class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
 
-                    Link {
-                        to: Route::Swiss {},
+                        Link {
+                            to: Route::Swiss {},
                         class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer",
                         div {
                             class: "card-body items-center text-center",
                             h3 {
                                 class: "card-title text-xl mb-4",
-                                "CH-Lebensmittelrecht"
+                                {t!("routes.swiss")}
                             }
                             div {
                                 class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-4",
@@ -61,14 +148,14 @@ pub fn SplashScreen() -> Element {
                         }
                     }
 
-                    Link {
-                        to: Route::Bio {},
+                        Link {
+                            to: Route::Bio {},
                         class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer",
                         div {
                             class: "card-body items-center text-center",
                             h3 {
                                 class: "card-title text-xl mb-4",
-                                "Bio-Verordnung"
+                                {t!("routes.bio")}
                             }
                             div {
                                 class: "w-24 h-24 flex items-center justify-center bg-green-100 rounded-lg mb-4",
@@ -99,14 +186,14 @@ pub fn SplashScreen() -> Element {
                         }
                     }
 
-                    Link {
-                        to: Route::Knospe {},
+                        Link {
+                            to: Route::Knospe {},
                         class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer",
                         div {
                             class: "card-body items-center text-center",
                             h3 {
                                 class: "card-title text-xl mb-4",
-                                "Bio Knospe"
+                                {t!("routes.knospe")}
                             }
                             div {
                                 class: "w-24 h-24 flex items-center justify-center bg-green-50 rounded-lg mb-4",
@@ -148,6 +235,7 @@ pub fn SplashScreen() -> Element {
                                 }
                             }
                         }
+                    }
                     }
                 }
             }

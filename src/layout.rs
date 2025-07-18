@@ -3,6 +3,7 @@ use crate::routes::Route;
 use web_sys::window;
 use crate::components::icons;
 use rust_i18n::t;
+use crate::built_info;
 
 #[derive(Clone)]
 pub struct CopyLinkContext {
@@ -51,7 +52,7 @@ pub fn SplitLayout() -> Element {
                     Link {
                         to: Route::SplashScreen {},
                         class: "text-2xl font-bold hover:text-primary transition-colors",
-                        "Label Creator"
+                        {t!("app.title")}
                     }
                     nav {
                         class: "flex gap-4 items-center",
@@ -99,7 +100,7 @@ pub fn SplitLayout() -> Element {
                                                 rect { x: "6", y: "13", width: "20", height: "6", fill: "white" }
                                             }
                                         }
-                                        "CH-Lebensmittelrecht"
+                                        {t!("routes.swiss")}
                                     },
                                     Route::Bio { .. } => rsx! {
                                         div {
@@ -112,7 +113,7 @@ pub fn SplitLayout() -> Element {
                                                 rect { x: "6", y: "13", width: "20", height: "6", fill: "white" }
                                             }
                                         }
-                                        "Bio-Verordnung"
+                                        {t!("routes.bio")}
                                     },
                                     Route::Knospe { .. } => rsx! {
                                         div {
@@ -131,10 +132,10 @@ pub fn SplitLayout() -> Element {
                                                 }
                                             }
                                         }
-                                        "Bio Knospe"
+                                        {t!("routes.knospe")}
                                     },
                                     _ => rsx! {
-                                        "Konfiguration"
+                                        {t!("routes.configuration")}
                                     }
                                 }}
                                 svg {
@@ -170,8 +171,8 @@ pub fn SplitLayout() -> Element {
                                         }
                                         div {
                                             class: "flex flex-col",
-                                            span { class: "font-medium", "CH-Lebensmittelrecht" }
-                                            span { class: "text-sm text-base-content/70", "Schweizer Lebensmittelverordnung" }
+                                            span { class: "font-medium", {t!("routes.swiss")} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.swiss_desc")} }
                                         }
                                     }
                                 }
@@ -192,8 +193,8 @@ pub fn SplitLayout() -> Element {
                                         }
                                         div {
                                             class: "flex flex-col",
-                                            span { class: "font-medium", "Bio-Verordnung" }
-                                            span { class: "text-sm text-base-content/70", "Biologische Produkte" }
+                                            span { class: "font-medium", {t!("routes.bio")} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.bio_desc")} }
                                         }
                                     }
                                 }
@@ -220,8 +221,8 @@ pub fn SplitLayout() -> Element {
                                         }
                                         div {
                                             class: "flex flex-col",
-                                            span { class: "font-medium", "Bio Knospe" }
-                                            span { class: "text-sm text-base-content/70", "Bio Suisse Knospe" }
+                                            span { class: "font-medium", {t!("routes.knospe")} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.knospe_desc")} }
                                         }
                                     }
                                 }
@@ -234,7 +235,11 @@ pub fn SplitLayout() -> Element {
                                 tabindex: "0",
                                 role: "button",
                                 class: "btn btn-ghost btn-sm",
-                                "DE "
+                                {match rust_i18n::locale().as_ref() {
+                                    "fr-CH" => "FR ",
+                                    "it-CH" => "IT ",
+                                    _ => "DE ",
+                                }}
                                 svg {
                                     class: "w-4 h-4 ml-1",
                                     fill: "none",
@@ -256,6 +261,12 @@ pub fn SplitLayout() -> Element {
                                         class: "btn btn-ghost btn-sm justify-start",
                                         onclick: move |_| {
                                             rust_i18n::set_locale("de-CH");
+                                            if let Some(window) = web_sys::window() {
+                                                if let Ok(Some(storage)) = window.local_storage() {
+                                                    let _ = storage.set_item("locale", "de-CH");
+                                                }
+                                                let _ = window.location().reload();
+                                            }
                                         },
                                         "DE"
                                     }
@@ -265,6 +276,12 @@ pub fn SplitLayout() -> Element {
                                         class: "btn btn-ghost btn-sm justify-start",
                                         onclick: move |_| {
                                             rust_i18n::set_locale("fr-CH");
+                                            if let Some(window) = web_sys::window() {
+                                                if let Ok(Some(storage)) = window.local_storage() {
+                                                    let _ = storage.set_item("locale", "fr-CH");
+                                                }
+                                                let _ = window.location().reload();
+                                            }
                                         },
                                         "FR"
                                     }
@@ -274,6 +291,12 @@ pub fn SplitLayout() -> Element {
                                         class: "btn btn-ghost btn-sm justify-start",
                                         onclick: move |_| {
                                             rust_i18n::set_locale("it-CH");
+                                            if let Some(window) = web_sys::window() {
+                                                if let Ok(Some(storage)) = window.local_storage() {
+                                                    let _ = storage.set_item("locale", "it-CH");
+                                                }
+                                                let _ = window.location().reload();
+                                            }
                                         },
                                         "IT"
                                     }
@@ -293,17 +316,26 @@ pub fn SplitLayout() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        "Version 0.4.1 vom 17.07.2025"
+                        "Version " {env!("CARGO_PKG_VERSION")} " vom " {
+                            // Convert UTC time string to a more readable format
+                            let build_time = built_info::BUILT_TIME_UTC;
+                            // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
+                            if let Ok(datetime) = chrono::DateTime::parse_from_rfc2822(build_time) {
+                                format!("{}", datetime.format("%d.%m.%Y"))
+                            } else {
+                                build_time.to_string()
+                            }
+                        }
                     }
                     Link {
                         to: Route::Impressum {},
                         class: "link link-blue hover:link-primary",
-                        "Impressum"
+                        {t!("app.impressum")}
                     }
                     a {
                         class: "link link-blue hover:link-primary",
                         href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                        "Release Notes"
+                        {t!("app.release_notes")}
                     }
                 }
             }

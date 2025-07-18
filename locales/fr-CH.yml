@@ -1,0 +1,227 @@
+_version: 1
+title: Créateur | Étiquetage alimentaire
+
+app:
+  title: Créateur d'étiquettes
+  version: Version 0.4.1 du 17.07.2025
+  impressum: Mentions légales
+  release_notes: Notes de version
+
+routes:
+  swiss: Droit alimentaire CH
+  swiss_desc: Ordonnance suisse sur les denrées alimentaires
+  bio: Ordonnance bio
+  bio_desc: Produits biologiques
+  knospe: Bourgeon Bio
+  knospe_desc: Bourgeon Bio Suisse
+  configuration: Configuration
+
+splash:
+  subtitle: Créer des étiquettes conformes
+  description: Pour configurer une étiquette, choisissez la configuration de base. Celle-ci contient les règles spécifiques pour cette marque.
+
+label:
+  produktname: Nom du produit
+  sachbezeichnung: Dénomination spécifique
+  zutaten: Ingrédients
+  datumseingabe: Conservation
+  zusatzinformationen: Informations supplémentaires
+  aufbewahrungshinweis: Conseils de conservation
+  produktionsland: Pays de production
+  nettogewicht: Poids net
+  abtropfgewicht: Poids égoutté
+  adresse: Adresse
+  name: Entreprise / Nom
+  plz: NPA
+  ort: Localité
+  telefon: Téléphone
+  email: E-mail
+  website: Site web
+  preis: Prix
+  gewichtUndPreis: Quantité / Prix
+  preisProX: Prix de base (optionnel)
+  preisTotal: Prix de détail (optionnel)
+  mindestensHaltbar: À consommer de préférence avant
+  zuVerbrauchen: À consommer jusqu'au
+  zutatDetails: Détails de l'ingrédient
+  zutat: Ingrédient
+  menge: Quantité
+  namensgebendeZutat: Ingrédient caractéristique
+  zusammengesetzteZutat: Ingrédient composé
+  zutatEingeben: Ingrédient (saisir ou sélectionner)
+  namensgebend: Caractéristique
+  manuellesTotal: Poids final pesé (optionnel)
+  mengenart: Volume ou poids
+  einheit: Unité
+  gewicht: Poids
+  volumen: Volume
+  preisProEinheit: Prix par unité
+  keinDatum: Pas de date de conservation/consommation
+  ignore_ingredients: Pas de liste d'ingrédients (ingrédient unique)
+
+nav:
+  linkKopieren: Copier le lien
+  konfiguration: Configuration
+  aktiveRegeln: Règles actives
+  schliessen: Fermer
+  verhaeltnisseBeibehalten: Conserver les proportions
+  anpassen: Adapter
+  hinzufuegen: Ajouter
+
+preview:
+  etikettenVorschau: Aperçu de l'étiquette
+  zutaten: "Ingrédients:"
+  haltbarkeit: Conservation
+  nettogewicht: Poids net
+  abtropfgewicht: Poids égoutté
+  hergestelltInDer: Fabriqué dans le
+  hergestelltIn: Fabriqué en
+  tel: "Tél: %{phone}"
+  email: "Email: %{email}"
+  website: "Site web: %{website}"
+  preisPro: "Prix par %{amount}%{unit}"
+  preisTotal: Prix total
+
+placeholder:
+  produktname: Rêve d'été
+  sachbezeichnung: Confiture de framboises
+  zusatzinformationen: |
+    végétalien
+    
+    100g contiennent: ...
+    
+    après ouverture, consommer dans les x jours
+  aufbewahrungshinweis: p.ex. conserver au frais et à l'obscurité à max. 5°C
+  produktionsland: Suisse
+  nettogewicht: 300g ou 500ml
+  abtropfgewicht: 200g
+  name: Ferme modèle Huber
+  adresse: Rue test 1
+  plz: CH-4001
+  ort: Bâle
+  telefon: 079 123 45 67
+  email: ferme@qualite.ch
+  website: ferme.qualite.ch
+  preisProX: 4.00 CHF
+  preisTotal: 12.00 CHF
+  zutatName: Framboises
+  menge: Quantité
+
+help:
+  ignore_ingredients: |
+    Si le nom du produit ou la dénomination spécifique désigne un produit pur sans autres ingrédients (p.ex. vinaigre pur), aucune liste d'ingrédients n'est nécessaire.
+  produktname: |
+    Le nom du produit peut être fantaisiste. 
+    Compléter le nom fantaisiste avec une dénomination spécifique (Art. 6 ODAl.)
+    Si le nom du produit et la dénomination spécifique sont identiques, laisser ce champ vide.
+  sachbezeichnung: |
+    Utiliser la dénomination spécifique prescrite par la loi (ex. tartinade de fruits, confiture, sirop, tresse au beurre).
+    Si elle n'existe pas, utiliser une dénomination usuelle (ex. beignet, ketchup) ou descriptive (ex. pain plat au blé).
+  zutaten: |
+    Sélectionner l'ingrédient dans le menu déroulant. Si non disponible, saisir manuellement dans le champ de texte. Enregistrer les ingrédients composés (ex. gélifiant) en tant que tels. Pour cela, cliquer sur le symbole derrière l'ingrédient et saisir les ingrédients individuels dans le sous-menu. 
+    Les allergènes sont mis en évidence visuellement s'ils sont sélectionnés dans le menu déroulant. 
+    La liste des ingrédients est automatiquement affichée par ordre décroissant.
+  datumseingabe: |
+    Aliments devant être conservés au frais: à consommer jusqu'au ..
+    
+    * * * * *
+    
+    Autres aliments: à consommer de préférence avant ...
+    
+    * * * * *
+    
+    Aucune indication de date requise (ex. vinaigre pur)
+  zusatzinformationen: |
+    * La déclaration nutritionnelle est obligatoire (valeur énergétique, matières grasses, acides gras saturés, glucides, sucres, protéines et sel pour 100 g) sauf pour les denrées alimentaires selon l'annexe 9 ODAl (fabriquées artisanalement et vendues localement dans un rayon de moins de 50 km ou en vente directe).
+    * Teneur en alcool à partir de 1,2 % vol (ODAl Art. 18)
+    * Teneur en caféine
+    * Acidité du vinaigre
+    * Classe de poids des œufs
+    * Conseils d'utilisation / Préparation
+    * Marketing
+  
+  aufbewahrungshinweis: |
+    | Types de conservation | Conditions |
+    | --- | --- |
+    | Conserver au congélateur à -18°C. Ne pas recongeler après décongélation. |
+    | conserver à max. 4°C (ovoproduits) | conserver à max. 5°C (produits laitiers, œufs réfrigérés, pâtes précuites, pâtisserie) |
+    | conserver au frais et au sec | après ouverture, conserver au réfrigérateur |
+    | conserver à température ambiante | conserver à l'abri de la lumière |
+    | les œufs une fois réfrigérés doivent être conservés en permanence à 5°C | texte personnalisé |
+  nettogewicht: |
+    Contenu total pesé ou mesuré de l'unité d'emballage. 
+    Attention: tenir compte de la réduction lors de la cuisson des produits ex. sirop
+
+  zusammengesetzteZutaten: |
+    Les ingrédients composés sont des ingrédients de recette composés de différents ingrédients (ex. bouillon, gélifiant, chocolat). Saisir ici les ingrédients individuels selon la liste des ingrédients.
+    Indiquer les additifs avec leur fonction ex. acidifiant (acide citrique ou E330).
+
+  namensgebendeZutaten: |
+    Si des ingrédients sont mis en évidence dans la dénomination spécifique ou fantaisiste avec des mots ou représentés sur l'étiquette, le symbole derrière l'ingrédient doit être sélectionné. Ainsi, le pourcentage massique est automatiquement indiqué pour cette matière première dans la liste des ingrédients.
+
+  manuellesTotal: |
+    **Poids final pesé (optionnel)**
+    Poids total pesé après cuisson, séchage ou déshydratation. Il diffère du "Total" automatique en raison de la perte d'eau. Ce champ n'est pas nécessaire si aucune perte de poids ne survient lors de la transformation.
+
+  haltbarkeit: |
+    Principe: dans la mesure du possible "à consommer de préférence avant". Également sur les produits surgelés. Seuls les aliments délicats (ex. lait, éclairs, charcuterie) qui doivent être conservés au frais reçoivent "à consommer jusqu'au". (ODAl Art. 13)
+    Aucune date de conservation requise: denrées alimentaires selon l'annexe 8 ODAl (ex. vinaigre sans additifs, vin)
+
+  abtropfgewicht: |
+    Pour les aliments en conserve: poids pesé des ingrédients conservés sans le liquide d'égouttage.
+
+  gewicht: Contenu total pesé ou mesuré de l'unité d'emballage.
+
+  volumen: Contenu total pesé ou mesuré de l'unité d'emballage.
+
+  preisProEinheit: Prix par unité de mesure comme p.ex. 500g, 1l, ...
+
+  name: |
+    Nom de l'entreprise et/ou prénom et nom du fabricant
+
+  adresse: |
+    Adresse de l'exploitation de production
+
+  ort: |
+    Localité de production
+
+  preisProX: |
+    **Prix de base (optionnel)**
+    Prix pour 100 g / 100 ml
+    Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
+
+  preisTotal: |
+    **Prix de détail (optionnel)**
+    Prix de l'unité de vente
+    Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
+
+impressum: |
+  # Mentions légales, Protection des données
+  
+  14.03.2025
+  
+  Le créateur d'étiquetage est un outil en ligne qui vise à simplifier le calcul des recettes et la création d'étiquettes alimentaires en Suisse. Le créateur d'étiquetage est encore en développement et ne prétend pas être exhaustif. Un organisme responsable composé du FiBL, de Bio Suisse, du centre agricole Liebegg, du centre de formation et d'éducation Arenenberg et du Hightech Zentrum Aargau AG revendique tous les droits sur celui-ci.
+  
+  ## Mentions légales
+  
+  ### Adresse de contact de l'organisme responsable
+  
+  Centre agricole LIEBEGG\
+  Économie domestique / Vente directe\
+  CH-5722 Gränichen AG
+  
+  ### Personne habilitée à représenter
+  
+  Manuela Isenschmid
+  
+  ## Clause de non-responsabilité
+  
+  L'organisme responsable n'assume aucune garantie quant à l'exactitude, la précision, l'actualité, la fiabilité et l'exhaustivité des informations. Les réclamations en responsabilité contre l'organisme responsable pour des dommages matériels ou immatériels résultant de l'accès ou de l'utilisation ou de la non-utilisation des informations publiées, d'une mauvaise utilisation de la connexion ou de défaillances techniques sont exclues. Toutes les offres sont sans engagement. L'organisme responsable se réserve expressément le droit de modifier, compléter, supprimer des parties des pages ou l'ensemble de l'offre sans préavis ou de cesser temporairement ou définitivement la publication.
+  
+  ## Clause de non-responsabilité pour les liens
+  
+  Les références et liens vers des sites Web tiers sont en dehors de notre domaine de responsabilité. Toute responsabilité pour ces sites Web est déclinée. L'accès et l'utilisation de ces sites Web se font aux risques et périls de l'utilisateur respectif.
+  
+  ## Droits d'auteur
+  
+  Les droits d'auteur et tous les autres droits sur le contenu, les images, les photos ou autres fichiers de ce site Web appartiennent à l'organisme responsable. Pour la reproduction de tout élément, le consentement écrit des détenteurs des droits d'auteur doit être obtenu à l'avance. Bâle,

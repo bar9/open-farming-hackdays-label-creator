@@ -1,5 +1,24 @@
 _version: 1
 title: Creator | Lebensmittelkennzeichnung
+
+app:
+  title: Label Creator
+  version: Version 0.4.1 vom 17.07.2025
+  impressum: Impressum
+  release_notes: Release Notes
+
+routes:
+  swiss: CH-Lebensmittelrecht
+  swiss_desc: Schweizer Lebensmittelverordnung
+  bio: Bio-Verordnung
+  bio_desc: Biologische Produkte
+  knospe: Bio Knospe
+  knospe_desc: Bio Suisse Knospe
+  configuration: Konfiguration
+
+splash:
+  subtitle: Erstelle konforme Etiketten
+  description: Um eine Etikette zu konfigurieren, wählen Sie die Basis-Konfiguration. Diese enthält die jeweiligen spezifischen Regeln für diesen Brand.
 label:
   produktname: Produktname
   sachbezeichnung: Sachbezeichnung

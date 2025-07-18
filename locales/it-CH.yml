@@ -1,0 +1,227 @@
+_version: 1
+title: Creatore | Etichettatura alimentare
+
+app:
+  title: Creatore di etichette
+  version: Versione 0.4.1 del 17.07.2025
+  impressum: Impronta
+  release_notes: Note di rilascio
+
+routes:
+  swiss: Diritto alimentare CH
+  swiss_desc: Ordinanza svizzera sulle derrate alimentari
+  bio: Ordinanza bio
+  bio_desc: Prodotti biologici
+  knospe: Gemma Bio
+  knospe_desc: Gemma Bio Suisse
+  configuration: Configurazione
+
+splash:
+  subtitle: Crea etichette conformi
+  description: Per configurare un'etichetta, scegli la configurazione di base. Questa contiene le regole specifiche per questo marchio.
+
+label:
+  produktname: Nome del prodotto
+  sachbezeichnung: Denominazione specifica
+  zutaten: Ingredienti
+  datumseingabe: Conservazione
+  zusatzinformationen: Informazioni aggiuntive
+  aufbewahrungshinweis: Indicazioni per la conservazione
+  produktionsland: Paese di produzione
+  nettogewicht: Peso netto
+  abtropfgewicht: Peso sgocciolato
+  adresse: Indirizzo
+  name: Azienda / Nome
+  plz: CAP
+  ort: Località
+  telefon: Telefono
+  email: E-mail
+  website: Sito web
+  preis: Prezzo
+  gewichtUndPreis: Quantità / Prezzo
+  preisProX: Prezzo di base (opzionale)
+  preisTotal: Prezzo al dettaglio (opzionale)
+  mindestensHaltbar: Da consumarsi preferibilmente entro
+  zuVerbrauchen: Da consumare entro
+  zutatDetails: Dettagli dell'ingrediente
+  zutat: Ingrediente
+  menge: Quantità
+  namensgebendeZutat: Ingrediente caratterizzante
+  zusammengesetzteZutat: Ingrediente composto
+  zutatEingeben: Ingrediente (inserire o selezionare)
+  namensgebend: Caratterizzante
+  manuellesTotal: Peso finale pesato (opzionale)
+  mengenart: Volume o peso
+  einheit: Unità
+  gewicht: Peso
+  volumen: Volume
+  preisProEinheit: Prezzo per unità
+  keinDatum: Nessuna data di conservazione/consumo
+  ignore_ingredients: Nessun elenco ingredienti (ingrediente singolo)
+
+nav:
+  linkKopieren: Copia link
+  konfiguration: Configurazione
+  aktiveRegeln: Regole attive
+  schliessen: Chiudi
+  verhaeltnisseBeibehalten: Mantenere le proporzioni
+  anpassen: Adattare
+  hinzufuegen: Aggiungere
+
+preview:
+  etikettenVorschau: Anteprima etichetta
+  zutaten: "Ingredienti:"
+  haltbarkeit: Conservazione
+  nettogewicht: Peso netto
+  abtropfgewicht: Peso sgocciolato
+  hergestelltInDer: Prodotto nel
+  hergestelltIn: Prodotto in
+  tel: "Tel: %{phone}"
+  email: "Email: %{email}"
+  website: "Sito web: %{website}"
+  preisPro: "Prezzo per %{amount}%{unit}"
+  preisTotal: Prezzo totale
+
+placeholder:
+  produktname: Sogno estivo
+  sachbezeichnung: Confettura di lamponi
+  zusatzinformationen: |
+    vegano
+    
+    100g contengono: ...
+    
+    dopo l'apertura consumare entro x giorni
+  aufbewahrungshinweis: es. conservare al fresco e al buio a max. 5°C
+  produktionsland: Svizzera
+  nettogewicht: 300g o 500ml
+  abtropfgewicht: 200g
+  name: Fattoria modello Huber
+  adresse: Via test 1
+  plz: CH-4001
+  ort: Basilea
+  telefon: 079 123 45 67
+  email: fattoria@qualita.ch
+  website: fattoria.qualita.ch
+  preisProX: 4.00 CHF
+  preisTotal: 12.00 CHF
+  zutatName: Lamponi
+  menge: Quantità
+
+help:
+  ignore_ingredients: |
+    Se il nome del prodotto o la denominazione specifica designa un prodotto puro senza altri ingredienti (es. aceto puro), non è necessario un elenco degli ingredienti.
+  produktname: |
+    Il nome del prodotto può essere fantasioso. 
+    Completare il nome fantasioso con una denominazione specifica (Art. 6 ODerr.)
+    Se il nome del prodotto e la denominazione specifica sono identici, lasciare vuoto questo campo.
+  sachbezeichnung: |
+    Utilizzare la denominazione specifica prescritta dalla legge (es. spalmabile di frutta, confettura, sciroppo, treccia al burro).
+    Se non esiste, utilizzare una denominazione d'uso (es. bombolone, ketchup) o descrittiva (es. pane piatto al frumento).
+  zutaten: |
+    Selezionare l'ingrediente dal menu a tendina. Se non disponibile, inserire manualmente nel campo di testo. Registrare gli ingredienti composti (es. gelificante) come tali. Per fare ciò, cliccare sul simbolo dietro l'ingrediente e inserire i singoli ingredienti nel sottomenu. 
+    Gli allergeni sono evidenziati visivamente se selezionati dal menu a tendina. 
+    L'elenco degli ingredienti viene visualizzato automaticamente in ordine decrescente.
+  datumseingabe: |
+    Alimenti che devono essere conservati al fresco: da consumare entro ..
+    
+    * * * * *
+    
+    Altri alimenti: da consumarsi preferibilmente entro ...
+    
+    * * * * *
+    
+    Nessuna indicazione di data richiesta (es. aceto puro)
+  zusatzinformationen: |
+    * La dichiarazione nutrizionale è obbligatoria (valore energetico, grassi, acidi grassi saturi, carboidrati, zuccheri, proteine e sale per 100 g) ad eccezione delle derrate alimentari secondo l'allegato 9 ODerr (prodotte artigianalmente e vendute localmente in un raggio inferiore a 50 km o in vendita diretta).
+    * Tenore alcolico a partire da 1,2 % vol (ODerr Art. 18)
+    * Contenuto di caffeina
+    * Acidità dell'aceto
+    * Classe di peso delle uova
+    * Consigli d'uso / Preparazione
+    * Marketing
+  
+  aufbewahrungshinweis: |
+    | Tipi di conservazione | Condizioni |
+    | --- | --- |
+    | Conservare nel congelatore a -18°C. Non ricongelare dopo lo scongelamento. |
+    | conservare a max. 4°C (ovoprodotti) | conservare a max. 5°C (prodotti lattiero-caseari, uova refrigerate, pasta precotta, pasticceria) |
+    | conservare al fresco e all'asciutto | dopo l'apertura conservare in frigorifero |
+    | conservare a temperatura ambiente | conservare al riparo dalla luce |
+    | le uova una volta refrigerate devono essere conservate permanentemente a 5°C | testo personalizzato |
+  nettogewicht: |
+    Contenuto totale pesato o misurato dell'unità di imballaggio. 
+    Attenzione: considerare la riduzione durante la cottura dei prodotti es. sciroppo
+
+  zusammengesetzteZutaten: |
+    Gli ingredienti composti sono ingredienti di ricetta composti da diversi ingredienti (es. brodo, gelificante, cioccolato). Inserire qui i singoli ingredienti secondo l'elenco degli ingredienti.
+    Indicare gli additivi con la loro funzione es. acidificante (acido citrico o E330).
+
+  namensgebendeZutaten: |
+    Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, deve essere selezionato il simbolo dietro l'ingrediente. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
+
+  manuellesTotal: |
+    **Peso finale pesato (opzionale)**
+    Peso totale pesato dopo cottura, essiccazione o disidratazione. Differisce dal "Totale" automatico a causa della perdita d'acqua. Questo campo non è necessario se non si verifica alcuna perdita di peso durante la lavorazione.
+
+  haltbarkeit: |
+    Principio: quando possibile "da consumarsi preferibilmente entro". Anche sui prodotti surgelati. Solo gli alimenti delicati (es. latte, éclair, salumi) che devono essere conservati al fresco ricevono "da consumare entro". (ODerr Art. 13)
+    Nessuna data di conservazione richiesta: derrate alimentari secondo l'allegato 8 ODerr (es. aceto senza additivi, vino)
+
+  abtropfgewicht: |
+    Per alimenti in conserva: peso pesato degli ingredienti conservati senza il liquido di governo.
+
+  gewicht: Contenuto totale pesato o misurato dell'unità di imballaggio.
+
+  volumen: Contenuto totale pesato o misurato dell'unità di imballaggio.
+
+  preisProEinheit: Prezzo per unità di misura come es. 500g, 1l, ...
+
+  name: |
+    Nome dell'azienda e/o nome e cognome del produttore
+
+  adresse: |
+    Indirizzo dell'azienda di produzione
+
+  ort: |
+    Località di produzione
+
+  preisProX: |
+    **Prezzo di base (opzionale)**
+    Prezzo per 100 g / 100 ml
+    Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
+
+  preisTotal: |
+    **Prezzo al dettaglio (opzionale)**
+    Prezzo dell'unità di vendita
+    Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
+
+impressum: |
+  # Impronta, Protezione dei dati
+  
+  14.03.2025
+  
+  Il creatore di etichettatura è uno strumento online che mira a semplificare il calcolo delle ricette e la creazione di etichette alimentari in Svizzera. Il creatore di etichettatura è ancora in sviluppo e non pretende di essere completo. Un ente promotore composto da FiBL, Bio Suisse, il centro agricolo Liebegg, il centro di formazione e istruzione Arenenberg e Hightech Zentrum Aargau AG rivendica tutti i diritti su di esso.
+  
+  ## Impronta
+  
+  ### Indirizzo di contatto dell'ente promotore
+  
+  Centro agricolo LIEBEGG\
+  Economia domestica / Vendita diretta\
+  CH-5722 Gränichen AG
+  
+  ### Persona autorizzata a rappresentare
+  
+  Manuela Isenschmid
+  
+  ## Esclusione di responsabilità
+  
+  L'ente promotore non si assume alcuna garanzia per quanto riguarda la correttezza, accuratezza, attualità, affidabilità e completezza delle informazioni. Le richieste di responsabilità contro l'ente promotore per danni materiali o immateriali derivanti dall'accesso o dall'utilizzo o dal mancato utilizzo delle informazioni pubblicate, dall'abuso della connessione o da guasti tecnici sono escluse. Tutte le offerte sono senza impegno. L'ente promotore si riserva espressamente il diritto di modificare, integrare, cancellare parti delle pagine o l'intera offerta senza preavviso o di interrompere temporaneamente o definitivamente la pubblicazione.
+  
+  ## Esclusione di responsabilità per i collegamenti
+  
+  I riferimenti e i collegamenti a siti web di terzi sono al di fuori del nostro ambito di responsabilità. Si declina qualsiasi responsabilità per tali siti web. L'accesso e l'utilizzo di tali siti web avvengono a rischio e pericolo dell'utente rispettivo.
+  
+  ## Diritti d'autore
+  
+  I diritti d'autore e tutti gli altri diritti su contenuti, immagini, foto o altri file su questo sito web appartengono all'ente promotore. Per la riproduzione di qualsiasi elemento è necessario ottenere in anticipo il consenso scritto dei titolari dei diritti d'autore. Basilea,
