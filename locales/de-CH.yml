@@ -17,7 +17,7 @@ routes:
   configuration: Konfiguration
 
 splash:
-  subtitle: Erstelle konforme Etiketten
+  subtitle: Erstelle konforme Lebensmitteletiketten
   description: Um eine Etikette zu konfigurieren, wählen Sie die Basis-Konfiguration. Diese enthält die jeweiligen spezifischen Regeln für diesen Brand.
 label:
   produktname: Produktname
@@ -57,6 +57,7 @@ label:
   preisProEinheit: Preis pro Einheit
   keinDatum: Kein Haltbarkeits-/Verbrauchdatum
   ignore_ingredients: Keine Zutatenliste (Einzelzutat)
+  total: Total
 
 nav:
   linkKopieren: Link kopieren
@@ -66,6 +67,7 @@ nav:
   verhaeltnisseBeibehalten: Verhältnisse beibehalten
   anpassen: Anpassen
   hinzufuegen: Hinzufügen
+  speichern: Speichern
 
 help:
   ignore_ingredients: |
@@ -196,6 +198,17 @@ preview:
   website: "Website: %{website}"
   preisPro: "Preis pro %{amount}%{unit}"
   preisTotal: Preis total
+  produktnameSachbezeichnung: Produktname / Sachbezeichnung
+  zutatenliste: Zutatenliste
+  herstelleradresse: Herstelleradresse
+  preis: Preis
+
+units:
+  g: g
+  ml: ml
+  l: l
+  chf: CHF
+  chfPro: "CHF pro "
 
 impressum: |
   # Impressum, Datenschutz

@@ -93,7 +93,7 @@ pub fn LabelPreview(
                 div {
                     class: "py-2",
                     if (*product_subtitle.read()).is_empty() {
-                        span {class: "badge badge-warning", "Produktname / Sachbezeichnung"}
+                        span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung")}}
                     } else {
                         if !(*product_title.read()).is_empty() {
                             {rsx! {
@@ -113,7 +113,7 @@ pub fn LabelPreview(
                         class: "py-2",
                         h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
                         if (*label.read()).is_empty() {
-                            span { class: "badge badge-warning", "Zutatenliste" }
+                            span { class: "badge badge-warning", {t!("preview.zutatenliste")} }
                         } else {
                             div { class: "text-sm",
                                 dangerous_inner_html: "{label}"
@@ -178,7 +178,7 @@ pub fn LabelPreview(
                             "{address_combined}"
                         }
                     } else {
-                        span {class: "badge badge-warning", "Herstelleradresse" }
+                        span {class: "badge badge-warning", {t!("preview.herstelleradresse")} }
                     }
                     if !producer_phone.read().is_empty() {
                         div {class: "text-sm",
@@ -207,7 +207,7 @@ pub fn LabelPreview(
                         (Price::Single(x), Amount::Double(Some(100), _)) |
                         (Price::Single(x), Amount::Double(Some(250), _)) |
                         (Price::Single(x), Amount::Double(Some(500), _)) => rsx! {
-                            "{display_money(x)} CHF"
+                            "{display_money(x)} " {t!("units.chf")}
                         },
                         (Price::Double(x, _), Amount::Single(Some(1))) |
                         (Price::Double(x, _), Amount::Single(Some(100))) |
@@ -217,17 +217,17 @@ pub fn LabelPreview(
                         (Price::Double(x, _), Amount::Double(Some(100), _)) |
                         (Price::Double(x, _), Amount::Double(Some(250), _)) |
                         (Price::Double(x, _), Amount::Double(Some(500), _)) => rsx! {
-                            "{display_money(x)} CHF"
+                            "{display_money(x)} " {t!("units.chf")}
                         },
                         (Price::Double(x, y), _) => rsx! (
                             div {
                                 span {
-                                    span {class: "font-bold pr-2", "Preis pro " {get_base_factor_and_unit()} }
-                                    "{display_money(x)} CHF"
+                                    span {class: "font-bold pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
+                                    "{display_money(x)} " {t!("units.chf")}
                                 }
                                 span {
-                                    span {class: "font-bold pl-2 pr-2", "Preis" }
-                                    "{display_money(y)} CHF"
+                                    span {class: "font-bold pl-2 pr-2", {t!("preview.preis")} }
+                                    "{display_money(y)} " {t!("units.chf")}
                                 }
                             }
                         ),
@@ -237,10 +237,10 @@ pub fn LabelPreview(
                 // if !(price_per_100().is_empty() && total_price().is_empty()) {
                 //     div { class: "py-2 grid grid-cols-2 gap-4",
                 //         div {
-                //             span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\")}"} "{price_per_100} CHF"
+                //             span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\")}"} "{price_per_100} " {t!("units.chf")}
                 //         }
                 //         div {
-                //             span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\")}"} "{total_price} CHF"
+                //             span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\")}"} "{total_price} " {t!("units.chf")}
                 //         }
                 //     }
                 // }

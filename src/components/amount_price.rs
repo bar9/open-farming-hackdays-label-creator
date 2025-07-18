@@ -318,8 +318,8 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                 select {
                     oninput: move |evt| set_amount_type(evt.data.value(), props.amount_type),
                     class: "select w-full max-w-xs",
-                    option {selected: *props.amount_type.read() == AmountType::Weight, value: "gewicht", "Gewicht"}
-                    option {selected: *props.amount_type.read() == AmountType::Volume, value: "volumen", "Volumen"}
+                    option {selected: *props.amount_type.read() == AmountType::Weight, value: "gewicht", {t!("label.gewicht")}}
+                    option {selected: *props.amount_type.read() == AmountType::Volume, value: "volumen", {t!("label.volumen")}}
                 }
             }
             FormField {
@@ -476,7 +476,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                         }
                         span {
                             class: "badge",
-                            "CHF"
+                            {t!("units.chf")}
                         }
                     }
                 }
@@ -498,7 +498,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                         }
                         span {
                             class: "badge",
-                            "CHF pro "
+                            {t!("units.chfPro")}
                             {get_base_factor_and_unit()}
                         }
                     }
@@ -520,7 +520,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                         }
                         span {
                             class: "badge",
-                            "CHF"
+                            {t!("units.chf")}
                         }
                     }
                 }

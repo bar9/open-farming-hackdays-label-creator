@@ -37,7 +37,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     div { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")}"} }
                     div {
                         class: "text-right",
-                        "{ingr.amount} g"
+                        "{ingr.amount} " {t!("units.g")}
                     }
                     div {
                         class: "text-right",
@@ -60,10 +60,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     path: "manuelles_total",
                     div {
                         class: "grid grid-cols-3 gap-4",
-                        div {"Total"}
+                        div {{t!("label.total")}}
                         div {
                             class: "text-right",
-                            "{total_amount} g"
+                            "{total_amount} " {t!("units.g")}
                         }
 
                         FormField {

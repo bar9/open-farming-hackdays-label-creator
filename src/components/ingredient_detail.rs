@@ -216,13 +216,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     is_open.set(false);
                                 }
                             },
-                            "× Schliessen",
+                            "× " {t!("nav.schliessen")},
                         }
                         if props.genesis {
                             button {
                                 class: "btn",
                                 onclick: move |_| handle_genesis(),
-                                "Speichern",
+                                {t!("nav.speichern")},
                             }
                         }
                     }
