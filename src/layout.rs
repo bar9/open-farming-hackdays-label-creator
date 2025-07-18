@@ -42,61 +42,13 @@ pub fn SplitLayout() -> Element {
                 class: "bg-base-200 p-4 shadow-md border-b border-base-300",
                 div {
                     class: "flex justify-between items-center",
-                    Link {
-                        to: Route::SplashScreen {},
-                        class: "text-2xl font-bold hover:text-primary transition-colors",
-                        {t!("app.title")}
-                    }
-                    nav {
-                        class: "flex gap-4 items-center",
-                        {
-                            let context = copy_link_context.read();
-                            if let Some(query_string) = &context.query_string {
-                                let query_string_clone = query_string.clone();
-                                rsx! {
-                                    button {
-                                        class: "btn btn-info btn-sm",
-                                        onclick: move |_| {
-                                            let text_to_copy = query_string_clone.clone();
-                                            spawn(async move {
-                                                if let Some(window) = window() {
-                                                    if let Ok(href) = window.location().href() {
-                                                        let full_text = format!("{href}{text_to_copy}");
-                                                        
-                                                        // Use a JavaScript interop approach for clipboard
-                                                        if let Some(document) = window.document() {
-                                                            if let Ok(textarea) = document.create_element("textarea") {
-                                                                if let Ok(textarea) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
-                                                                    textarea.set_value(&full_text);
-                                                                    textarea.set_attribute("style", "position: fixed; left: -999999px; top: -999999px;").ok();
-                                                                    
-                                                                    if let Some(body) = document.body() {
-                                                                        if let Ok(node) = textarea.clone().dyn_into::<web_sys::Node>() {
-                                                                            body.append_child(&node).ok();
-                                                                            textarea.select();
-                                                                            
-                                                                            // Use JavaScript to copy
-                                                                            let _ = js_sys::eval("document.execCommand('copy')");
-                                                                            
-                                                                            body.remove_child(&node).ok();
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                        },
-                                        icons::Clipboard {}
-                                        "{t!(\"nav.linkKopieren\")}"
-                                    }
-                                }
-                            } else {
-                                rsx! { span {} }
-                            }
+                    div {
+                        class: "flex items-center gap-4",
+                        Link {
+                            to: Route::SplashScreen {},
+                            class: "text-2xl font-bold hover:text-primary transition-colors",
+                            {t!("app.title")}
                         }
-
                         div {
                             class: "dropdown dropdown-end",
                             div {
@@ -265,6 +217,56 @@ pub fn SplitLayout() -> Element {
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                    nav {
+                        class: "flex gap-4 items-center",
+                        {
+                            let context = copy_link_context.read();
+                            if let Some(query_string) = &context.query_string {
+                                let query_string_clone = query_string.clone();
+                                rsx! {
+                                    button {
+                                        class: "btn btn-info btn-sm",
+                                        onclick: move |_| {
+                                            let text_to_copy = query_string_clone.clone();
+                                            spawn(async move {
+                                                if let Some(window) = window() {
+                                                    if let Ok(href) = window.location().href() {
+                                                        let full_text = format!("{href}{text_to_copy}");
+                                                        
+                                                        // Use a JavaScript interop approach for clipboard
+                                                        if let Some(document) = window.document() {
+                                                            if let Ok(textarea) = document.create_element("textarea") {
+                                                                if let Ok(textarea) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                                                                    textarea.set_value(&full_text);
+                                                                    textarea.set_attribute("style", "position: fixed; left: -999999px; top: -999999px;").ok();
+                                                                    
+                                                                    if let Some(body) = document.body() {
+                                                                        if let Ok(node) = textarea.clone().dyn_into::<web_sys::Node>() {
+                                                                            body.append_child(&node).ok();
+                                                                            textarea.select();
+                                                                            
+                                                                            // Use JavaScript to copy
+                                                                            let _ = js_sys::eval("document.execCommand('copy')");
+                                                                            
+                                                                            body.remove_child(&node).ok();
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        },
+                                        icons::Clipboard {}
+                                        "{t!(\"nav.linkKopieren\")}"
+                                    }
+                                }
+                            } else {
+                                rsx! { span {} }
                             }
                         }
 
