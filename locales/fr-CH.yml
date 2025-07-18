@@ -58,6 +58,7 @@ label:
   preisProEinheit: Prix par unité
   keinDatum: Pas de date de conservation/consommation
   ignore_ingredients: Pas de liste d'ingrédients (ingrédient unique)
+  total: Total
 
 nav:
   linkKopieren: Copier le lien
@@ -67,6 +68,7 @@ nav:
   verhaeltnisseBeibehalten: Conserver les proportions
   anpassen: Adapter
   hinzufuegen: Ajouter
+  speichern: Sauvegarder
 
 preview:
   etikettenVorschau: Aperçu de l'étiquette
@@ -81,6 +83,17 @@ preview:
   website: "Site web: %{website}"
   preisPro: "Prix par %{amount}%{unit}"
   preisTotal: Prix total
+  produktnameSachbezeichnung: Nom du produit / Dénomination spécifique
+  zutatenliste: Liste des ingrédients
+  herstelleradresse: Adresse du fabricant
+  preis: Prix
+
+units:
+  g: g
+  ml: ml
+  l: l
+  chf: CHF
+  chfPro: "CHF par "
 
 placeholder:
   produktname: Rêve d'été

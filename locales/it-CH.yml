@@ -58,6 +58,7 @@ label:
   preisProEinheit: Prezzo per unità
   keinDatum: Nessuna data di conservazione/consumo
   ignore_ingredients: Nessun elenco ingredienti (ingrediente singolo)
+  total: Totale
 
 nav:
   linkKopieren: Copia link
