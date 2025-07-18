@@ -1,6 +1,6 @@
-use dioxus::prelude::*;
-use crate::shared::Configuration;
 use crate::rules::RuleDef;
+use crate::shared::Configuration;
+use dioxus::prelude::*;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct NavbarProps {

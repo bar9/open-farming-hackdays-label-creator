@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use crate::components::Impressum as ImpressumComponent;
+use dioxus::prelude::*;
 use rust_i18n::t;
 
 pub fn Impressum() -> Element {

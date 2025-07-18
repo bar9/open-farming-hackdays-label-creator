@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use crate::components::FieldHelp;
+use dioxus::prelude::*;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct FormFieldProps {
@@ -7,7 +7,7 @@ pub struct FormFieldProps {
     label: String,
     #[props(into)]
     help: Option<String>,
-    #[props(into, default=false)]
+    #[props(into, default = false)]
     required: bool,
     children: Element,
 }

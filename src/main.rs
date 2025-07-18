@@ -5,19 +5,19 @@ use dioxus::prelude::*;
 pub mod built_info {
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
 }
-use rust_i18n::i18n;
 use crate::routes::Route;
+use rust_i18n::i18n;
 
 mod layout;
 mod shared;
 
-mod model;
 mod components;
 pub mod core;
-mod rules;
-mod nl2br;
 mod form;
+mod model;
+mod nl2br;
 mod routes;
+mod rules;
 
 mod pages;
 
@@ -31,14 +31,12 @@ fn main() {
         .and_then(|storage| storage.get_item("locale").ok())
         .flatten()
         .unwrap_or_else(|| "de-CH".to_string());
-    
+
     rust_i18n::set_locale(&locale);
-    
+
     launch(|| {
         rsx! {
             Router::<Route> {}
         }
     })
 }
-
-

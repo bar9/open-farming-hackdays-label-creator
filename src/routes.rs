@@ -1,11 +1,11 @@
-use dioxus::prelude::*;
-use crate::pages::splash_screen::SplashScreen;
-use crate::pages::bio::Bio;
-use crate::pages::knospe::Knospe;
-use crate::pages::swiss::Swiss;
-use crate::pages::impressum::Impressum;
-use crate::layout::SplitLayout;
 use crate::layout::FullLayout;
+use crate::layout::SplitLayout;
+use crate::pages::bio::Bio;
+use crate::pages::impressum::Impressum;
+use crate::pages::knospe::Knospe;
+use crate::pages::splash_screen::SplashScreen;
+use crate::pages::swiss::Swiss;
+use dioxus::prelude::*;
 
 #[rustfmt::skip]
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]

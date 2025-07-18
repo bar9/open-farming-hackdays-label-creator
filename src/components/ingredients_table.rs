@@ -1,22 +1,27 @@
-use std::collections::HashMap;
-use dioxus::prelude::*;
-use crate::components::*;
 use crate::components::ingredient_detail::IngredientDetail;
+use crate::components::*;
 use crate::core::Ingredient;
+use dioxus::prelude::*;
 use rust_i18n::t;
+use std::collections::HashMap;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
     ingredients: Signal<Vec<Ingredient>>,
     manual_total: Signal<Option<f64>>,
-    validation_messages: Memo<HashMap<String, &'static str>>
+    validation_messages: Memo<HashMap<String, &'static str>>,
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
     // let name_to_add = use_signal(|| String::new());
     // let amount_to_add = use_signal(|| 0);
-    let total_amount = use_memo (move || {
-        props.ingredients.read().iter().map(|x: &Ingredient|x.amount).sum::<f64>()
+    let total_amount = use_memo(move || {
+        props
+            .ingredients
+            .read()
+            .iter()
+            .map(|x: &Ingredient| x.amount)
+            .sum::<f64>()
     });
     rsx! {
         div { class: "flex flex-col gap-4",
@@ -25,7 +30,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 span { class: "font-bold text-right", "{t!(\"Menge\")}" }
                 span {}
             }
-            for (key , & ref ingr) in props.ingredients.read().iter().enumerate() {
+            for (key , ingr) in props.ingredients.read().iter().enumerate() {
                 // ValidationDisplay {
                 //     paths: vec![format!("ingredients[{}][amount]", key)],
                 div { class: "grid gap-4 grid-cols-3 odd:bg-gray-100 even:bg-white items-center", key: "{key}",
@@ -43,7 +48,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 class: "btn btn-outline join-item",
                                 dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
                                 onclick: move |_| {
-                                    delete_callback(key, props.ingredients.clone());
+                                    delete_callback(key, props.ingredients);
                                 },
                             }
                         }

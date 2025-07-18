@@ -1,7 +1,7 @@
-use dioxus::prelude::*;
-use crate::nl2br::Nl2Br;
-use rust_i18n::t;
 use crate::components::{Amount, AmountType, Price};
+use crate::nl2br::Nl2Br;
+use dioxus::prelude::*;
+use rust_i18n::t;
 
 #[component]
 pub fn LabelPreview(
@@ -25,57 +25,65 @@ pub fn LabelPreview(
     volume_unit: Signal<String>,
     amount: Signal<Amount>,
     price: Signal<Price>,
-    ignore_ingredients: Signal<bool>
+    ignore_ingredients: Signal<bool>,
 ) -> Element {
-
     fn display_money(cents: Option<usize>) -> String {
         match cents {
             None => String::new(),
-            Some(x) => format!("{:.2}", x as f64 / 100.0)
+            Some(x) => format!("{:.2}", x as f64 / 100.0),
         }
     }
 
     let address_combined: Memo<String> = use_memo(move || {
-        let parts = vec![
-            producer_name(),
-            producer_address(),
-            {
-                let zip = producer_zip();
-                let city = producer_city();
-                if zip.is_empty() { city } else if city.is_empty() { zip } else { format!("{zip} {city}") }
+        let parts = vec![producer_name(), producer_address(), {
+            let zip = producer_zip();
+            let city = producer_city();
+            if zip.is_empty() {
+                city
+            } else if city.is_empty() {
+                zip
+            } else {
+                format!("{zip} {city}")
             }
-        ];
+        }];
 
-        parts.into_iter()
+        parts
+            .into_iter()
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>()
             .join(", ")
     });
 
     let get_unit = use_memo(move || {
-        match (&*amount_type.read(), &*weight_unit.read(), &*volume_unit.read()) {
+        match (
+            &*amount_type.read(),
+            &*weight_unit.read(),
+            &*volume_unit.read(),
+        ) {
             (AmountType::Weight, unit, _) => unit.clone(),
-            (AmountType::Volume, _, unit) => unit.clone()
+            (AmountType::Volume, _, unit) => unit.clone(),
         }
     });
 
     let get_base_factor = use_memo(move || {
-        match (&*amount_type.read(), &*weight_unit.read().as_str(), &*volume_unit.read().as_str()) {
-            (AmountType::Weight, "mg", _) => {100_usize}
-            (AmountType::Weight, "g", _) => {100_usize}
-            (AmountType::Weight, "kg", _) => {1_usize}
-            (AmountType::Volume, _, "ml") => {100_usize}
-            (AmountType::Volume, _, "cl") => {100_usize}
-            (AmountType::Volume, _, "l") => {1_usize}
-            (_, _, _) => 1_usize
+        match (
+            &*amount_type.read(),
+            weight_unit.read().as_str(),
+            volume_unit.read().as_str(),
+        ) {
+            (AmountType::Weight, "mg", _) => 100_usize,
+            (AmountType::Weight, "g", _) => 100_usize,
+            (AmountType::Weight, "kg", _) => 1_usize,
+            (AmountType::Volume, _, "ml") => 100_usize,
+            (AmountType::Volume, _, "cl") => 100_usize,
+            (AmountType::Volume, _, "l") => 1_usize,
+            (_, _, _) => 1_usize,
         }
     });
 
-    let get_base_factor_and_unit = use_memo(move || {
-        match get_base_factor() {
-            1 => rsx!("{get_unit()}"),
-            _ => rsx!("{get_base_factor()} {get_unit()}")
-        }
+    let get_base_factor_and_unit = use_memo(move || match get_base_factor() {
+        1 => rsx!("{get_unit()}"),
+        _ => rsx!("{get_base_factor()} {get_unit()}"),
     });
 
     rsx! {
@@ -84,10 +92,10 @@ pub fn LabelPreview(
                 div { class: "grid grid-col-1 divide-y divide-dotted",
                 div {
                     class: "py-2",
-                    if *product_subtitle.read() == "" {
+                    if (*product_subtitle.read()).is_empty() {
                         span {class: "badge badge-warning", "Produktname / Sachbezeichnung"}
                     } else {
-                        if *product_title.read() != "" {
+                        if !(*product_title.read()).is_empty() {
                             {rsx! {
                                 h3 { class: "text-2xl", "{product_title}" }
                                 span { class: "mb-1", "{product_subtitle}" }
@@ -98,13 +106,13 @@ pub fn LabelPreview(
                             }}
                         }
                     }
-  
+
                 }
                 if !ignore_ingredients() {
                     div {
                         class: "py-2",
                         h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
-                        if *label.read() == "" {
+                        if (*label.read()).is_empty() {
                             span { class: "badge badge-warning", "Zutatenliste" }
                         } else {
                             div { class: "text-sm",
@@ -149,7 +157,7 @@ pub fn LabelPreview(
                     _ => rsx! {}
                 }
 
-                if additional_info() != "" && storage_info() != "" {
+                if !additional_info().is_empty() && !storage_info().is_empty() {
                     div { class: "py-2",
                         span { class: "text-sm",
                             {additional_info().nl2br()}
@@ -161,10 +169,10 @@ pub fn LabelPreview(
                         br {}
                     }
                 }
-                
+
 
                 div { class: "py-2",
-                    if address_combined.read().len() > 0 {
+                    if !address_combined.read().is_empty() {
                         span {
                             class: "text-sm",
                             "{address_combined}"
@@ -172,18 +180,18 @@ pub fn LabelPreview(
                     } else {
                         span {class: "badge badge-warning", "Herstelleradresse" }
                     }
-                    if producer_phone.read().len() > 0 {
+                    if !producer_phone.read().is_empty() {
                         div {class: "text-sm",
                             "{t!(\"preview.tel\", phone=producer_phone)}"
                         }
                     }
-                    if producer_email.read().len() > 0 {
+                    if !producer_email.read().is_empty() {
                         div {class: "text-sm",
                             "{t!(\"preview.email\", email=producer_email)}"
                         }
                     }
 
-                    if producer_website.read().len() > 0 {
+                    if !producer_website.read().is_empty() {
                         div {class: "text-sm",
                             "{t!(\"preview.website\", website=producer_website)}"
                         }

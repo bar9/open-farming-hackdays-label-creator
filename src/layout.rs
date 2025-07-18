@@ -1,21 +1,13 @@
-use dioxus::prelude::*;
-use crate::routes::Route;
-use web_sys::window;
-use crate::components::icons;
-use rust_i18n::t;
 use crate::built_info;
+use crate::components::icons;
+use crate::routes::Route;
+use dioxus::prelude::*;
+use rust_i18n::t;
+use web_sys::window;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CopyLinkContext {
     pub query_string: Option<String>,
-}
-
-impl Default for CopyLinkContext {
-    fn default() -> Self {
-        Self {
-            query_string: None,
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -36,7 +28,7 @@ pub fn SplitLayout() -> Element {
     let copy_link_context = use_context::<Signal<CopyLinkContext>>();
     let theme_context = use_context::<Signal<ThemeContext>>();
     let current_route = use_route::<Route>();
-    
+
     rsx! {
         document::Stylesheet {
             href: asset!("assets/tailwind.css")
@@ -81,7 +73,7 @@ pub fn SplitLayout() -> Element {
                                 rsx! { span {} }
                             }
                         }
-                        
+
                         div {
                             class: "dropdown dropdown-end",
                             div {
@@ -228,7 +220,7 @@ pub fn SplitLayout() -> Element {
                                 }
                             }
                         }
-                        
+
                         div {
                             class: "dropdown dropdown-end",
                             div {
@@ -306,7 +298,7 @@ pub fn SplitLayout() -> Element {
                     }
                 }
             }
-            main { 
+            main {
                 key: "split-main",
                 class: "grid grid-cols-1 md:grid-cols-2 flex-1 min-h-0",
                 Outlet::<Route> {}
@@ -347,7 +339,7 @@ pub fn SplitLayout() -> Element {
 pub fn FullLayout() -> Element {
     use_context_provider(|| Signal::new(CopyLinkContext::default()));
     use_context_provider(|| Signal::new(ThemeContext::default()));
-    
+
     rsx! {
         document::Stylesheet {
             href: asset!("assets/tailwind.css")
@@ -356,7 +348,7 @@ pub fn FullLayout() -> Element {
             key: "full-layout",
             class: "min-h-screen",
             "data-theme": "corporate",
-            main { 
+            main {
                 key: "full-main",
                 class: "",
                 Outlet::<Route> {}

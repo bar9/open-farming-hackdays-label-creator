@@ -1,50 +1,45 @@
+use crate::components::icons;
+use crate::components::FieldGroup2;
+use crate::components::FormField;
+use dioxus::prelude::*;
+use rust_i18n::t;
+use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::str::FromStr;
-use dioxus::prelude::*;
-use serde::{Deserialize, Serialize};
-use crate::components::FormField;
-use crate::components::FieldGroup2;
-use rust_i18n::t;
-use crate::components::icons;
 
-#[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
+#[derive(PartialEq, Clone, Serialize, Deserialize, Debug, Default)]
 pub enum AmountType {
-    Weight, Volume
-}
-
-impl Default for AmountType {
-    fn default() -> Self {
-        AmountType::Weight
-    }
+    #[default]
+    Weight,
+    Volume,
 }
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum Amount {
     Single(Option<usize>),
-    Double(Option<usize>, Option<usize>)
+    Double(Option<usize>, Option<usize>),
 }
 
 impl Amount {
     fn get_value_tuple(self) -> (Option<usize>, Option<usize>) {
         match self {
             Amount::Single(v) => (v, None),
-            Amount::Double(v1, v2) => (v1, v2)
+            Amount::Double(v1, v2) => (v1, v2),
         }
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Price {
     Single(Option<usize>),
-    Double(Option<usize>, Option<usize>)
+    Double(Option<usize>, Option<usize>),
 }
 
 impl Price {
     fn get_value_tuple(self) -> (Option<usize>, Option<usize>) {
         match self {
             Price::Single(v) => (v, None),
-            Price::Double(v1, v2) => (v1, v2)
+            Price::Double(v1, v2) => (v1, v2),
         }
     }
 }
@@ -72,53 +67,65 @@ pub struct AmountPriceProps {
 
 /// Is responsible for reactively rendering amount & price fields
 /// takes all state flat as signals from the app state
-pub fn AmountPrice (props: AmountPriceProps) -> Element {
-
-    let mut has_abtropfgewicht = use_signal(|| false );
-    let amount_type = props.amount_type.clone();
-    let weight_unit = props.weight_unit.clone();
-    let volume_unit = props.volume_unit.clone();
-    let amount = props.amount.clone();
-    let price = props.price.clone();
+pub fn AmountPrice(props: AmountPriceProps) -> Element {
+    let mut has_abtropfgewicht = use_signal(|| false);
+    let amount_type = props.amount_type;
+    let weight_unit = props.weight_unit;
+    let volume_unit = props.volume_unit;
+    let amount = props.amount;
+    let price = props.price;
     let mut is_pristine = use_signal(|| true);
-    let invalid_class = use_memo(move || {if is_pristine() {""} else {"invalid:bg-red-50"}}); 
-
-
-    let get_base_factor = use_memo(move || {
-        match (&*amount_type.read(), &*weight_unit.read().as_str(), &*volume_unit.read().as_str()) {
-            (AmountType::Weight, "mg", _) => {100_usize}
-            (AmountType::Weight, "g", _) => {100_usize}
-            (AmountType::Weight, "kg", _) => {1_usize}
-            (AmountType::Volume, _, "ml") => {100_usize}
-            (AmountType::Volume, _, "cl") => {100_usize}
-            (AmountType::Volume, _, "l") => {1_usize}
-            (_, _, _) => 1_usize
+    let invalid_class = use_memo(move || {
+        if is_pristine() {
+            ""
+        } else {
+            "invalid:bg-red-50"
         }
     });
 
-    let calculated_amount = use_memo(move || {
-        match price() {
-            Price::Double(Some(unit_price), Some(total_price)) =>
-                (true, ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize),
-            _ => (false, 0)
+    let get_base_factor = use_memo(move || {
+        match (
+            &*amount_type.read(),
+            weight_unit.read().as_str(),
+            volume_unit.read().as_str(),
+        ) {
+            (AmountType::Weight, "mg", _) => 100_usize,
+            (AmountType::Weight, "g", _) => 100_usize,
+            (AmountType::Weight, "kg", _) => 1_usize,
+            (AmountType::Volume, _, "ml") => 100_usize,
+            (AmountType::Volume, _, "cl") => 100_usize,
+            (AmountType::Volume, _, "l") => 1_usize,
+            (_, _, _) => 1_usize,
         }
+    });
+
+    let calculated_amount = use_memo(move || match price() {
+        Price::Double(Some(unit_price), Some(total_price)) => (
+            true,
+            ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize,
+        ),
+        _ => (false, 0),
     });
 
     let calculated_total_price = use_memo(move || {
         let net_amount = match amount() {
             Amount::Single(Some(x)) => x,
             Amount::Double(Some(x), _) => x,
-            _ => 0
+            _ => 0,
         };
         if net_amount == 0 {
             return (false, 0);
         }
         match price() {
-            Price::Double(Some(unit_price), Some(_)) =>
-                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize),
-            Price::Single(Some(unit_price)) =>
-                (true, (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize),
-            _ => (false, 0)
+            Price::Double(Some(unit_price), Some(_)) => (
+                true,
+                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
+            ),
+            Price::Single(Some(unit_price)) => (
+                true,
+                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
+            ),
+            _ => (false, 0),
         }
     });
 
@@ -126,44 +133,45 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
         let net_amount = match amount() {
             Amount::Single(Some(x)) => x,
             Amount::Double(Some(x), _) => x,
-            _ => 0
+            _ => 0,
         };
         if net_amount == 0 {
             return (false, 0);
         }
         match price() {
-            Price::Double(_, Some(total_price)) =>
-                (true, (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize),
-            _ => (false, 0)
+            Price::Double(_, Some(total_price)) => (
+                true,
+                (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize,
+            ),
+            _ => (false, 0),
         }
     });
 
     let get_unit = use_memo(move || {
-        match (&*amount_type.read(), &*weight_unit.read(), &*volume_unit.read()) {
+        match (
+            &*amount_type.read(),
+            &*weight_unit.read(),
+            &*volume_unit.read(),
+        ) {
             (AmountType::Weight, unit, _) => unit.clone(),
-            (AmountType::Volume, _, unit) => unit.clone()
+            (AmountType::Volume, _, unit) => unit.clone(),
         }
     });
 
-    let get_base_factor_and_unit = use_memo(move || {
-        match get_base_factor() {
-            1 => rsx!("{get_unit()}"),
-            _ => rsx!("{get_base_factor()} {get_unit()}")
+    let get_base_factor_and_unit = use_memo(move || match get_base_factor() {
+        1 => rsx!("{get_unit()}"),
+        _ => rsx!("{get_base_factor()} {get_unit()}"),
+    });
+
+    let is_einheitsgroesse = use_memo(move || match amount() {
+        Amount::Single(x) => [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0)),
+        Amount::Double(x, _) => {
+            [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0))
         }
     });
 
-    let is_einheitsgroesse = use_memo(move || {
-        match amount() {
-            Amount::Single(x) => {
-                return [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0))
-            }
-            Amount::Double(x, _) => {
-                return [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0))
-            }
-        }
-    });
-
-    let mut einheitsgroesse_input = use_signal(|| display_money(props.price.read().get_value_tuple().0));
+    let mut einheitsgroesse_input =
+        use_signal(|| display_money(props.price.read().get_value_tuple().0));
     let mut price_input_0 = use_signal(|| display_money(props.price.read().get_value_tuple().0));
     let mut price_input_1 = use_signal(|| display_money(props.price.read().get_value_tuple().1));
 
@@ -171,15 +179,20 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
         match new_amount_type.as_str() {
             "volumen" => {
                 amount_type.set(AmountType::Volume);
-            },
+            }
             "gewicht" => {
                 amount_type.set(AmountType::Weight);
-            },
-            _ => panic!("illegal amount_type")
+            }
+            _ => panic!("illegal amount_type"),
         };
     }
 
-    fn set_unit(new_unit: String, amount_type: Signal<AmountType>, mut weight_unit: Signal<String>, mut volume_unit: Signal<String>) {
+    fn set_unit(
+        new_unit: String,
+        amount_type: Signal<AmountType>,
+        mut weight_unit: Signal<String>,
+        mut volume_unit: Signal<String>,
+    ) {
         if *amount_type.read() == AmountType::Weight {
             weight_unit.set(new_unit);
         } else {
@@ -221,7 +234,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
     fn display_money(cents: Option<usize>) -> String {
         match cents {
             None => String::new(),
-            Some(x) => format!("{:.2}", x as f64 / 100.0)
+            Some(x) => format!("{:.2}", x as f64 / 100.0),
         }
     }
 
@@ -238,7 +251,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
             }
         } else {
             let cleaned = input.replace(',', "."); // Handle potential comma input
-            if let Some(parsed) = f64::from_str(&cleaned).ok() {
+            if let Ok(parsed) = f64::from_str(&cleaned) {
                 let cents = (parsed * 100.0) as usize; // Ensure rounding
                 match old_price {
                     Price::Single(_) => {
@@ -267,7 +280,7 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
             }
         } else {
             let cleaned = input.replace(',', "."); // Handle potential comma input
-            if let Some(parsed) = f64::from_str(&cleaned).ok() {
+            if let Ok(parsed) = f64::from_str(&cleaned) {
                 let cents = (parsed * 100.0) as usize; // Ensure rounding
                 match old_price {
                     Price::Single(old) => {
@@ -284,11 +297,11 @@ pub fn AmountPrice (props: AmountPriceProps) -> Element {
     }
 
     fn set_price_single(input: String, mut price: Signal<Price>) {
-        if input.is_empty(){
+        if input.is_empty() {
             price.set(Price::Single(None));
         } else {
             let cleaned = input.replace(',', "."); // Handle potential comma input
-            if let Some(parsed) = f64::from_str(&cleaned).ok() {
+            if let Ok(parsed) = f64::from_str(&cleaned) {
                 let cents = (parsed * 100.0) as usize; // Ensure rounding
                 price.set(Price::Single(Some(cents)));
             }

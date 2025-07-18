@@ -1,9 +1,8 @@
-use dioxus::prelude::*;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::model::{food_db, lookup_allergen};
+use dioxus::prelude::*;
 use rust_i18n::t;
-
 
 // TODO: rework save/cancel (stateful modal):
 // seems we already have many parts, only the writes via props.inredients.write() are to be delegated to a save() handler
@@ -13,7 +12,7 @@ pub struct IngredientDetailProps {
     ingredients: Signal<Vec<Ingredient>>,
     index: usize,
     #[props(default = false)]
-    genesis: bool
+    genesis: bool,
 }
 pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let index: usize;
@@ -23,25 +22,39 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         index = 0;
     } else {
         index = props.index;
-        ingredients = props.ingredients.clone();
+        ingredients = props.ingredients;
     }
     let mut is_open = use_signal(|| false);
     let mut scale_together = use_signal(|| false);
     let mut amount_to_edit = use_signal(|| 0.);
-    let mut is_composite = use_signal(|| ingredients.get(index).unwrap().clone().sub_components.unwrap_or_default().len() > 0);
-    let mut is_namensgebend = use_signal(|| ingredients.get(index).unwrap().is_namensgebend.unwrap_or(false));
-    
+    let mut is_composite = use_signal(|| {
+        !ingredients
+            .get(index)
+            .unwrap()
+            .clone()
+            .sub_components
+            .unwrap_or_default()
+            .is_empty()
+    });
+    let mut is_namensgebend = use_signal(|| {
+        ingredients
+            .get(index)
+            .unwrap()
+            .is_namensgebend
+            .unwrap_or(false)
+    });
+
     let ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient_2 = ingredients.get(index).unwrap().clone();
     let mut update_name = move |new_name: String| {
-        ingredients.write()[index] = Ingredient { 
-            name: new_name.clone(), 
+        ingredients.write()[index] = Ingredient {
+            name: new_name.clone(),
             is_allergen: lookup_allergen(&new_name),
-            ..old_ingredient.clone() 
+            ..old_ingredient.clone()
         };
     };
-    
+
     let mut handle_genesis = move || {
         let mut new_ingredient = ingredients.get(index).unwrap().clone();
         new_ingredient.amount = amount_to_edit();
@@ -50,7 +63,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         ingredients = use_signal(|| vec![Ingredient::default()]);
         is_open.set(false);
     };
-    
+
     rsx! {
         if props.genesis {
             button {
@@ -122,9 +135,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             onclick: move |_evt| {
                                 let old_ingredient = ingredients.get(index).unwrap().clone();
                                 if *scale_together.read() {
-                                    let factor: f64 = (&*amount_to_edit)()
+                                    let factor: f64 = (*amount_to_edit)()
                                         / old_ingredient.amount;
-                                    let clonedIngredients = ingredients.clone();
+                                    let clonedIngredients = ingredients;
                                     for (key, elem) in clonedIngredients.iter().enumerate() {
                                         let old_ingredient = elem.clone();
                                         ingredients.write()[key] = Ingredient {
@@ -134,7 +147,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     }
                                 } else {
                                     ingredients.write()[index] = Ingredient {
-                                        amount: (&*amount_to_edit)(),
+                                        amount: (*amount_to_edit)(),
                                         ..old_ingredient.clone()
                                     }
                                 }
@@ -199,11 +212,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             class: "btn",
                             onclick: move |_| is_open.toggle(),
                             onkeydown: move |evt| {
-                                match evt.key() {
-                                    Key::Escape => {
-                                        is_open.set(false);
-                                    }
-                                    _ => {}
+                                if evt.key() == Key::Escape {
+                                    is_open.set(false);
                                 }
                             },
                             "× Schliessen",

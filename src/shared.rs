@@ -9,5 +9,5 @@ pub struct Conditionals(pub Memo<HashMap<String, bool>>);
 
 #[derive(Clone, Copy)]
 pub enum Configuration {
-    Conventional
+    Conventional,
 }

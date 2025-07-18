@@ -2,13 +2,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub enum Country {
-    CH, EU
+    CH,
+    EU,
 }
 
 pub fn lookup_allergen(name: &str) -> bool {
     let mut is_allergen = false;
     for entry in food_db() {
-        if entry.0.as_str() == name && entry.1 == true {
+        if entry.0.as_str() == name && entry.1 {
             is_allergen = true;
         }
     }
@@ -24,15 +25,10 @@ pub fn food_db() -> Vec<(String, bool)> {
 
     for record in rdr.records() {
         let record = record.unwrap();
-        db.push((
-            record.get(0).unwrap().to_string(), {
-                record.get(1).unwrap()
-                    .eq("1")
-            })
-        );
+        db.push((record.get(0).unwrap().to_string(), {
+            record.get(1).unwrap().eq("1")
+        }));
     }
-
 
     db
 }
-

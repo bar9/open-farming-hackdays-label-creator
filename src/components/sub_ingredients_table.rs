@@ -1,6 +1,6 @@
-use dioxus::prelude::*;
 use crate::core::{Ingredient, SubIngredient};
 use crate::model::{food_db, lookup_allergen};
+use dioxus::prelude::*;
 use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
@@ -9,10 +9,10 @@ pub struct SubIngredientsTableProps {
     index: usize,
 }
 pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
-    let mut name_to_add = use_signal(|| String::new());
+    let mut name_to_add = use_signal(String::new);
 
     let mut delete_callback = {
-        let mut ingredients = props.ingredients.clone();
+        let mut ingredients = props.ingredients;
         move |index: usize, sub_index: usize| {
             if let Some(mut ingredient) = ingredients.get_mut(index) {
                 if let Some(sub_components) = &mut ingredient.sub_components {
@@ -23,8 +23,8 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
     };
 
     let add_callback = {
-        let mut ingredients = props.ingredients.clone();
-        let mut name_to_add = name_to_add.clone();
+        let mut ingredients = props.ingredients;
+        let mut name_to_add = name_to_add;
         move |_evt| {
             if let Some(mut ingredient) = ingredients.get_mut(props.index) {
                 let ingredient_name = name_to_add();
@@ -34,18 +34,18 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         is_allergen: lookup_allergen(&ingredient_name),
                     });
                 } else {
-                    let mut sub_components = Vec::new();
-                    sub_components.push(SubIngredient {
-                        name: ingredient_name.clone(),
-                        is_allergen: lookup_allergen(&ingredient_name),
-                    });
+                    let sub_components = vec![
+                        SubIngredient {
+                            name: ingredient_name.clone(),
+                            is_allergen: lookup_allergen(&ingredient_name),
+                        }
+                    ];
                     ingredient.sub_components = Some(sub_components);
                 }
             }
             name_to_add.set(String::new());
         }
     };
-
 
     rsx! {
         div { class: "flex flex-col gap-4",

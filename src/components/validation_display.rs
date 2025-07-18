@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use crate::shared::Validations;
+use dioxus::prelude::*;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct ValidationDisplayProps {
@@ -8,10 +8,11 @@ pub struct ValidationDisplayProps {
 }
 
 pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
-
-    let validations_context= use_context::<Validations>();
-    let validation_entries = (&*validations_context.0.read()).clone();
-    let relevant_validation_entries = validation_entries.iter().filter(|(k, _v)| props.paths.contains(&**k))
+    let validations_context = use_context::<Validations>();
+    let validation_entries = (*validations_context.0.read()).clone();
+    let relevant_validation_entries = validation_entries
+        .iter()
+        .filter(|(k, _v)| props.paths.contains(&**k))
         .collect::<Vec<_>>();
 
     rsx! {

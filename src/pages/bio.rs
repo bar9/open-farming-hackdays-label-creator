@@ -1,13 +1,13 @@
-use dioxus::prelude::*;
 use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
+use crate::layout::{CopyLinkContext, ThemeContext};
 use crate::rules::RuleDef;
+use crate::shared::{Conditionals, Configuration, Validations};
+use dioxus::prelude::*;
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 use serde_qs::from_str as from_query_string;
 use serde_qs::to_string as to_query_string;
-use rust_i18n::t;
-use crate::layout::{CopyLinkContext, ThemeContext};
-use crate::shared::{Validations, Conditionals, Configuration};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
@@ -69,11 +69,11 @@ fn default_date_prefix() -> String {
     "Mindestens haltbar bis".to_string()
 }
 
-impl Into<Input> for Form {
-    fn into(self) -> Input {
+impl From<Form> for Input {
+    fn from(val: Form) -> Self {
         Input {
-            ingredients: self.ingredients,
-            total: self.manual_total,
+            ingredients: val.ingredients,
+            total: val.manual_total,
             ..Default::default()
         }
     }
@@ -84,9 +84,7 @@ impl Default for Form {
         if let Some(window) = web_sys::window() {
             if let Ok(mut query_string) = window.location().search() {
                 query_string = query_string.trim_start_matches('?').to_string();
-                if let Ok(app_state_from_query_string) = from_query_string::<Form>(
-                    &query_string
-                ) {
+                if let Ok(app_state_from_query_string) = from_query_string::<Form>(&query_string) {
                     return app_state_from_query_string;
                 }
             }
@@ -113,16 +111,16 @@ impl Default for Form {
             weight_unit: "g".to_string(),
             volume_unit: "ml".to_string(),
             amount: Amount::Single(Some(0)),
-            price: Price::Single(Some(0))
+            price: Price::Single(Some(0)),
         }
     }
 }
 
-
 pub fn Bio() -> Element {
-    let initial_form = use_memo( Form::default );
+    let initial_form = use_memo(Form::default);
     let ignore_ingredients = use_signal(|| false);
-    let ingredients: Signal<Vec<Ingredient>> = use_signal(|| initial_form.read().ingredients.clone());
+    let ingredients: Signal<Vec<Ingredient>> =
+        use_signal(|| initial_form.read().ingredients.clone());
     let product_title = use_signal(|| initial_form.read().product_title.clone());
     let product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
     let additional_info = use_signal(|| initial_form.read().additional_info.clone());
@@ -137,65 +135,60 @@ pub fn Bio() -> Element {
     let producer_phone = use_signal(|| initial_form.read().producer_phone.clone());
     let producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
     let producer_city = use_signal(|| initial_form.read().producer_city.clone());
-    let manual_total = use_signal(|| initial_form.read().manual_total.clone());
+    let manual_total = use_signal(|| initial_form.read().manual_total);
     let amount_type: Signal<AmountType> = use_signal(|| initial_form.read().amount_type.clone());
     let weight_unit: Signal<String> = use_signal(|| initial_form.read().weight_unit.clone());
     let volume_unit: Signal<String> = use_signal(|| initial_form.read().volume_unit.clone());
-    let amount: Signal<Amount> = use_signal(|| initial_form.read().amount.clone());
-    let price: Signal<Price> = use_signal(|| initial_form.read().price.clone());
+    let amount: Signal<Amount> = use_signal(|| initial_form.read().amount);
+    let price: Signal<Price> = use_signal(|| initial_form.read().price);
 
     let configuration = use_signal(|| Configuration::Conventional);
 
-    let current_state = use_memo(move || {
-        Form {
-            ingredients: ingredients(),
-            ignore_ingredients: ignore_ingredients(),
-            product_title: product_title(),
-            product_subtitle: product_subtitle(),
-            additional_info: additional_info(),
-            storage_info: storage_info(),
-            date_prefix: date_prefix(),
-            date: date(),
-            production_country: production_country(),
-            producer_name: producer_name(),
-            producer_address: producer_address(),
-            producer_phone: producer_phone(),
-            producer_website: producer_website(),
-            producer_email: producer_email(),
-            producer_zip: producer_zip(),
-            producer_city: producer_city(),
-            manual_total: manual_total(),
-            amount_type: amount_type(),
-            weight_unit: weight_unit(),
-            volume_unit: volume_unit(),
-            amount: amount(),
-            price: price()
-        }
+    let current_state = use_memo(move || Form {
+        ingredients: ingredients(),
+        ignore_ingredients: ignore_ingredients(),
+        product_title: product_title(),
+        product_subtitle: product_subtitle(),
+        additional_info: additional_info(),
+        storage_info: storage_info(),
+        date_prefix: date_prefix(),
+        date: date(),
+        production_country: production_country(),
+        producer_name: producer_name(),
+        producer_address: producer_address(),
+        producer_phone: producer_phone(),
+        producer_website: producer_website(),
+        producer_email: producer_email(),
+        producer_zip: producer_zip(),
+        producer_city: producer_city(),
+        manual_total: manual_total(),
+        amount_type: amount_type(),
+        weight_unit: weight_unit(),
+        volume_unit: volume_unit(),
+        amount: amount(),
+        price: price(),
     });
 
     let query_string = use_memo(move || {
-        format!{"?{}",to_query_string(&current_state()).unwrap()}
+        format! {"?{}",to_query_string(&current_state()).unwrap()}
     });
 
     let mut copy_link_context = use_context::<Signal<CopyLinkContext>>();
     let mut theme_context = use_context::<Signal<ThemeContext>>();
-    
+
     use_effect(move || {
         copy_link_context.write().query_string = Some(query_string());
         theme_context.write().theme = "bio".to_string();
     });
 
-    let rules: Memo<Vec<RuleDef>> = use_memo(move || {
-        match configuration() {
-            Configuration::Conventional =>
-                vec![
-                    RuleDef::AP1_1_ZutatMengeValidierung,
-                    RuleDef::AP1_2_ProzentOutputNamensgebend,
-                    RuleDef::AP1_3_EingabeNamensgebendeZutat,
-                    RuleDef::AP1_4_ManuelleEingabeTotal,
-                    RuleDef::AP2_1_ZusammegesetztOutput
-                ]
-        }
+    let rules: Memo<Vec<RuleDef>> = use_memo(move || match configuration() {
+        Configuration::Conventional => vec![
+            RuleDef::AP1_1_ZutatMengeValidierung,
+            RuleDef::AP1_2_ProzentOutputNamensgebend,
+            RuleDef::AP1_3_EingabeNamensgebendeZutat,
+            RuleDef::AP1_4_ManuelleEingabeTotal,
+            RuleDef::AP2_1_ZusammegesetztOutput,
+        ],
     });
 
     let calc_output: Memo<Output> = use_memo(move || {
@@ -204,15 +197,9 @@ pub fn Bio() -> Element {
         let form: Form = current_state.read().clone();
         calc.execute(form.into())
     });
-    let label: Memo<String> = use_memo(move || {
-        calc_output.read().label.clone()
-    });
-    let validation_messages = use_memo(move || {
-        calc_output.read().validation_messages.clone()
-    });
-    let conditional_display = use_memo(move || {
-        calc_output.read().conditional_elements.clone()
-    });
+    let label: Memo<String> = use_memo(move || calc_output.read().label.clone());
+    let validation_messages = use_memo(move || calc_output.read().validation_messages.clone());
+    let conditional_display = use_memo(move || calc_output.read().conditional_elements.clone());
 
     use_context_provider(|| Validations(validation_messages));
     use_context_provider(|| Conditionals(conditional_display));

@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use crate::components::icons;
+use dioxus::prelude::*;
 use markdown::{to_html_with_options, Options};
 use rust_i18n::t;
 
@@ -13,7 +13,7 @@ pub struct FieldHelpProps {
 pub fn FieldHelp(props: FieldHelpProps) -> Element {
     let mut is_open = use_signal(|| false);
     if props.help.is_empty() {
-        rsx!{}
+        rsx! {}
     } else {
         rsx! {
             button {
