@@ -3,7 +3,8 @@ use crate::components::icons;
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
-use web_sys::window;
+use wasm_bindgen::JsCast;
+use web_sys::{js_sys, window};
 
 #[derive(Clone, Default)]
 pub struct CopyLinkContext {
@@ -56,14 +57,36 @@ pub fn SplitLayout() -> Element {
                                     button {
                                         class: "btn btn-info btn-sm",
                                         onclick: move |_| {
-                                            if let Some(window) = window() {
-                                                let navigator = window.navigator();
-                                                let clipboard = navigator.clipboard();
-                                                if let Ok(href) = window.location().href() {
-                                                    let text = format!("{href}{query_string_clone}");
-                                                    let _ = clipboard.write_text(&text);
+                                            let text_to_copy = query_string_clone.clone();
+                                            spawn(async move {
+                                                if let Some(window) = window() {
+                                                    if let Ok(href) = window.location().href() {
+                                                        let full_text = format!("{href}{text_to_copy}");
+                                                        
+                                                        // Use a JavaScript interop approach for clipboard
+                                                        if let Some(document) = window.document() {
+                                                            if let Ok(textarea) = document.create_element("textarea") {
+                                                                if let Ok(textarea) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                                                                    textarea.set_value(&full_text);
+                                                                    textarea.set_attribute("style", "position: fixed; left: -999999px; top: -999999px;").ok();
+                                                                    
+                                                                    if let Some(body) = document.body() {
+                                                                        if let Ok(node) = textarea.clone().dyn_into::<web_sys::Node>() {
+                                                                            body.append_child(&node).ok();
+                                                                            textarea.select();
+                                                                            
+                                                                            // Use JavaScript to copy
+                                                                            let _ = js_sys::eval("document.execCommand('copy')");
+                                                                            
+                                                                            body.remove_child(&node).ok();
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
                                                 }
-                                            }
+                                            });
                                         },
                                         icons::Clipboard {}
                                         "{t!(\"nav.linkKopieren\")}"
