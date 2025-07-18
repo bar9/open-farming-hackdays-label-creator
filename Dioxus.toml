@@ -28,4 +28,4 @@ reload_html = true
 watch_path = ["src", "public"]
 
 # uncomment line below if using Router
-# index_on_404 = true
+index_on_404 = true
