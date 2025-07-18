@@ -10,7 +10,7 @@ app:
 routes:
   swiss: CH-Lebensmittelrecht
   swiss_desc: Schweizer Lebensmittelverordnung
-  bio: Bio-Verordnung
+  bio: BioV
   bio_desc: Biologische Produkte
   knospe: Bio Knospe
   knospe_desc: Bio Suisse Knospe

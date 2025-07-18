@@ -158,7 +158,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.bio")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-green-100 rounded-lg mb-4",
+                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-4",
                                 svg {
                                     class: "w-16 h-16",
                                     view_box: "0 0 32 32",
