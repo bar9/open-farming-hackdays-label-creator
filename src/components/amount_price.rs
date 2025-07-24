@@ -72,7 +72,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
     let amount_type = props.amount_type;
     let weight_unit = props.weight_unit;
     let volume_unit = props.volume_unit;
-    let amount = props.amount;
+    let mut amount = props.amount;
     let price = props.price;
     let mut is_pristine = use_signal(|| true);
     let invalid_class = use_memo(move || {
@@ -394,7 +394,16 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             input {
                                 r#type: "checkbox",
                                 checked: has_abtropfgewicht(),
-                                oninput: move |evt| has_abtropfgewicht.set(evt.checked())
+                                oninput: move |evt| {
+                                    has_abtropfgewicht.set(evt.checked());
+                                    if !evt.checked() {
+                                        // Clear abtropfgewicht when hiding the field
+                                        match amount() {
+                                            Amount::Single(x) => amount.set(Amount::Single(x)),
+                                            Amount::Double(x, _) => amount.set(Amount::Double(x, None)),
+                                        }
+                                    }
+                                }
                             }
                             icons::DashedX {}
                         }
@@ -430,7 +439,16 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             input {
                                 r#type: "checkbox",
                                 checked: has_abtropfgewicht(),
-                                oninput: move |evt| has_abtropfgewicht.set(evt.checked())
+                                oninput: move |evt| {
+                                    has_abtropfgewicht.set(evt.checked());
+                                    if !evt.checked() {
+                                        // Clear abtropfgewicht when hiding the field
+                                        match amount() {
+                                            Amount::Single(x) => amount.set(Amount::Single(x)),
+                                            Amount::Double(x, _) => amount.set(Amount::Double(x, None)),
+                                        }
+                                    }
+                                }
                             }
                             icons::DashedPlus {}
                         }
