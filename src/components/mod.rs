@@ -15,6 +15,7 @@ pub use validation_display::ValidationDisplay;
 pub use amount_price::*;
 pub use checkbox_input::CheckboxInput;
 pub use impressum::Impressum;
+pub use link_share_modal::LinkShareModal;
 
 mod conditional_display;
 mod date_input;
@@ -36,3 +37,4 @@ mod validation_display;
 mod amount_price;
 mod checkbox_input;
 mod impressum;
+mod link_share_modal;

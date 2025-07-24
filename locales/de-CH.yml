@@ -210,6 +210,15 @@ units:
   chf: CHF
   chfPro: "CHF pro "
 
+link_share_title: Link teilen
+link_type_full: Vollständiger Link
+link_type_short: Kurz-Link  
+link_short_disclaimer: "Hinweis: Der Inhalt des Rezepts wird bei einem Kurz-Link im Link eines Drittanbieter-Dienstes (tinyurl) gespeichert."
+link_copied_success: Link wurde in die Zwischenablage kopiert!
+shorten_url_button: Link kürzen
+shortening: Wird gekürzt...
+close: Schliessen
+
 impressum: |
   # Impressum, Datenschutz
   

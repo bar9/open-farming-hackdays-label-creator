@@ -196,6 +196,15 @@ help:
     Prezzo dell'unità di vendita
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
+link_share_title: Condividi link
+link_type_full: Link completo
+link_type_short: Link breve
+link_short_disclaimer: "Nota: Il contenuto della ricetta verrà memorizzato nel link di un servizio di terze parti per un link breve."
+link_copied_success: Il link è stato copiato negli appunti!
+shorten_url_button: Accorcia link
+shortening: Accorciamento...
+close: Chiudi
+
 impressum: |
   # Impronta, Protezione dei dati
   

@@ -10,13 +10,17 @@ csv = "1.3.1"
 dioxus = { version = "0.6.3", features = ["router", "web"] }
 serde = { version = "1.0.219", features = ["derive"] }
 chrono = "0.4.40"
-web-sys = { version = "0.3.77", features = ["Navigator", "Clipboard", "Storage", "Window", "Location"] }
+web-sys = { version = "0.3.77", features = ["Navigator", "Clipboard", "Storage", "Window", "Location", "Document", "HtmlTextAreaElement", "Node", "Element", "HtmlElement"] }
 serde_qs = "0.14.0"
 wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4"
 strum = "0.27.1"
 strum_macros = "0.27.1"
 rust-i18n = "3.1.3"
 markdown = "1.0.0-alpha.22"
+gloo = { version = "0.11", features = ["net", "timers", "futures"] }
+urlencoding = "2.1"
+tracing = "0.1"
 
 [build-dependencies]
 built = { version = "0.7", features = ["chrono"] }

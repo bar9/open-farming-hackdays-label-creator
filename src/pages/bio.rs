@@ -177,7 +177,8 @@ pub fn Bio() -> Element {
     let mut theme_context = use_context::<Signal<ThemeContext>>();
 
     use_effect(move || {
-        copy_link_context.write().query_string = Some(query_string());
+        let qs = query_string();
+        copy_link_context.write().query_string = Some(qs);
         theme_context.write().theme = "bio".to_string();
     });
 

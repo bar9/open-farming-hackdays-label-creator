@@ -1,10 +1,10 @@
 use crate::built_info;
 use crate::components::icons;
+use crate::components::LinkShareModal;
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
-use wasm_bindgen::JsCast;
-use web_sys::{js_sys, window};
+use web_sys::window;
 
 #[derive(Clone, Default)]
 pub struct CopyLinkContext {
@@ -29,6 +29,7 @@ pub fn SplitLayout() -> Element {
     let copy_link_context = use_context::<Signal<CopyLinkContext>>();
     let theme_context = use_context::<Signal<ThemeContext>>();
     let current_route = use_route::<Route>();
+    let mut show_link_modal = use_signal(|| false);
 
     rsx! {
         document::Stylesheet {
@@ -224,42 +225,12 @@ pub fn SplitLayout() -> Element {
                         class: "flex gap-4 items-center",
                         {
                             let context = copy_link_context.read();
-                            if let Some(query_string) = &context.query_string {
-                                let query_string_clone = query_string.clone();
+                            if let Some(_query_string) = &context.query_string {
                                 rsx! {
                                     button {
                                         class: "btn btn-info btn-sm",
                                         onclick: move |_| {
-                                            let text_to_copy = query_string_clone.clone();
-                                            spawn(async move {
-                                                if let Some(window) = window() {
-                                                    if let Ok(href) = window.location().href() {
-                                                        let full_text = format!("{href}{text_to_copy}");
-                                                        
-                                                        // Use a JavaScript interop approach for clipboard
-                                                        if let Some(document) = window.document() {
-                                                            if let Ok(textarea) = document.create_element("textarea") {
-                                                                if let Ok(textarea) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
-                                                                    textarea.set_value(&full_text);
-                                                                    textarea.set_attribute("style", "position: fixed; left: -999999px; top: -999999px;").ok();
-                                                                    
-                                                                    if let Some(body) = document.body() {
-                                                                        if let Ok(node) = textarea.clone().dyn_into::<web_sys::Node>() {
-                                                                            body.append_child(&node).ok();
-                                                                            textarea.select();
-                                                                            
-                                                                            // Use JavaScript to copy
-                                                                            let _ = js_sys::eval("document.execCommand('copy')");
-                                                                            
-                                                                            body.remove_child(&node).ok();
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
+                                            show_link_modal.set(true);
                                         },
                                         icons::Clipboard {}
                                         "{t!(\"nav.linkKopieren\")}"
@@ -379,6 +350,31 @@ pub fn SplitLayout() -> Element {
                         {t!("app.release_notes")}
                     }
                 }
+            }
+        }
+        
+        // Link share modal
+        {
+            let context = copy_link_context.read();
+            if let Some(query_string) = &context.query_string {
+                let full_url = if let Some(window) = window() {
+                    if let Ok(href) = window.location().href() {
+                        format!("{}{}", href, query_string)
+                    } else {
+                        query_string.clone()
+                    }
+                } else {
+                    query_string.clone()
+                };
+                
+                rsx! {
+                    LinkShareModal {
+                        show: show_link_modal,
+                        url: full_url
+                    }
+                }
+            } else {
+                rsx! {}
             }
         }
     }

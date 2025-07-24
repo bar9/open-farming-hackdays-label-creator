@@ -208,6 +208,15 @@ help:
     Prix de l'unité de vente
     Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
 
+link_share_title: Partager le lien
+link_type_full: Lien complet
+link_type_short: Lien court
+link_short_disclaimer: "Remarque : Le contenu de la recette sera stocké dans le lien d'un service tiers pour un lien court."
+link_copied_success: Le lien a été copié dans le presse-papiers !
+shorten_url_button: Raccourcir le lien
+shortening: Raccourcissement...
+close: Fermer
+
 impressum: |
   # Mentions légales, Protection des données
   
