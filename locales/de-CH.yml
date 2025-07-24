@@ -150,7 +150,7 @@ help:
 
   preisProX: |
     **Grundpreis (optional)**
-    Preis pro 100 g / 100 ml
+    Preis pro %{unit}.
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
 
   preisTotal: |

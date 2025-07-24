@@ -163,6 +163,11 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
         _ => rsx!("{get_base_factor()} {get_unit()}"),
     });
 
+    let get_base_factor_and_unit_string = use_memo(move || match get_base_factor() {
+        1 => get_unit(),
+        _ => format!("{} {}", get_base_factor(), get_unit()),
+    });
+
     let is_einheitsgroesse = use_memo(move || match amount() {
         Amount::Single(x) => [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0)),
         Amount::Double(x, _) => {
@@ -482,7 +487,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                 }
             } else {
                 FormField {
-                    help: Some((t!("help.preisProX")).into()),
+                    help: Some((t!("help.preisProX", unit = get_base_factor_and_unit_string())).into()),
                     label: t!("label.preisProX"),
                     div {
                         class: "flex flex-row items-center",
