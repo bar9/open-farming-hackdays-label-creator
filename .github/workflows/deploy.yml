@@ -51,6 +51,26 @@ jobs:
         run: |
           # Build your application with dx
           dx build --release
+
+      - name: Create fallback pages for client-side routing
+        run: |
+          # Create the public directory structure
+          PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
+          BASE_PATH="open-farming-hackdays-label-creator"
+          
+          # Create directories for each route
+          mkdir -p "$PUBLIC_DIR/$BASE_PATH/lebensmittelrecht"
+          mkdir -p "$PUBLIC_DIR/$BASE_PATH/bio"
+          mkdir -p "$PUBLIC_DIR/$BASE_PATH/knospe"
+          mkdir -p "$PUBLIC_DIR/$BASE_PATH/impressum"
+          
+          # Copy index.html to each route directory for fallback
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/$BASE_PATH/lebensmittelrecht/index.html"
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/$BASE_PATH/bio/index.html"
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/$BASE_PATH/knospe/index.html"
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/$BASE_PATH/impressum/index.html"
+          
+          echo "Created fallback pages for all routes"
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
