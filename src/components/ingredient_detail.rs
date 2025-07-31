@@ -59,7 +59,25 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         let mut new_ingredient = ingredients.get(index).unwrap().clone();
         new_ingredient.amount = amount_to_edit();
         new_ingredient.is_allergen = lookup_allergen(&new_ingredient.name);
-        props.ingredients.write().push(new_ingredient);
+        
+        // Check if ingredient with same name and properties already exists (only for non-composite)
+        if new_ingredient.sub_components.is_none() || new_ingredient.sub_components.as_ref().unwrap().is_empty() {
+            let mut existing_ingredients = props.ingredients.write();
+            if let Some(existing_index) = existing_ingredients.iter().position(|ing| {
+                ing.name == new_ingredient.name 
+                && ing.is_allergen == new_ingredient.is_allergen
+                && ing.is_namensgebend == new_ingredient.is_namensgebend
+                && (ing.sub_components.is_none() || ing.sub_components.as_ref().unwrap().is_empty())
+            }) {
+                // Merge amounts instead of adding duplicate
+                existing_ingredients[existing_index].amount += new_ingredient.amount;
+            } else {
+                existing_ingredients.push(new_ingredient);
+            }
+        } else {
+            props.ingredients.write().push(new_ingredient);
+        }
+        
         ingredients = use_signal(|| vec![Ingredient::default()]);
         is_open.set(false);
     };

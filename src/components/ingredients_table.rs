@@ -34,7 +34,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 // ValidationDisplay {
                 //     paths: vec![format!("ingredients[{}][amount]", key)],
                 div { class: "grid gap-4 grid-cols-3 odd:bg-gray-100 even:bg-white items-center", key: "{key}",
-                    div { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")}"} }
+                    div { "{ingr.composite_name()}" if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")})"} }
                     div {
                         class: "text-right",
                         "{ingr.amount} " {t!("units.g")}
