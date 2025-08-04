@@ -369,6 +369,9 @@ pub fn Knospe() -> Element {
             volume_unit: volume_unit,
             amount: amount,
             price: price,
+            calculated_amount: None,
+            calculated_unit_price: None,
+            calculated_total_price: None,
             ignore_ingredients: ignore_ingredients
         }
     }

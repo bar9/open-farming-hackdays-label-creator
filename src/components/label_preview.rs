@@ -26,6 +26,10 @@ pub fn LabelPreview(
     amount: Signal<Amount>,
     price: Signal<Price>,
     ignore_ingredients: Signal<bool>,
+    // Optional calculated values from AmountPrice component
+    calculated_amount: Option<Memo<(bool, usize)>>,
+    calculated_unit_price: Option<Memo<(bool, usize)>>,
+    calculated_total_price: Option<Memo<(bool, usize)>>,
 ) -> Element {
     fn display_money(cents: Option<usize>) -> String {
         match cents {
@@ -134,27 +138,43 @@ pub fn LabelPreview(
                         }
                     }
                 }
-                match amount() {
-                    Amount::Single(Some(amt)) => rsx! {
-                        div {
-                            span {
-                                "{amt} {get_unit()}"
+                {
+                    // Use calculated amount if available, otherwise use raw amount
+                    let amount_display = if let Some(calc_amount) = &calculated_amount {
+                        if calc_amount().0 { Some(calc_amount().1) } else { None }
+                    } else { None };
+                    
+                    match (amount(), amount_display) {
+                        // Show calculated amount when available
+                        (_, Some(calculated_amt)) => rsx! {
+                            div {
+                                span {
+                                    "{calculated_amt} {get_unit()}"
+                                }
                             }
-                        }
-                    },
-                    Amount::Double(Some(netto), Some(brutto)) => rsx! {
-                        div {
-                            span {
-                                span {class: "font-bold pr-2", "{t!(\"preview.nettogewicht\")}" }
-                                "{netto} {get_unit()}"
+                        },
+                        // Show raw amounts when no calculation is available
+                        (Amount::Single(Some(amt)), None) => rsx! {
+                            div {
+                                span {
+                                    "{amt} {get_unit()}"
+                                }
                             }
-                            span {
-                                span {class: "font-bold pl-2 pr-2", "{t!(\"preview.abtropfgewicht\")}" }
-                                "{brutto} {get_unit()}"
+                        },
+                        (Amount::Double(Some(netto), Some(brutto)), None) => rsx! {
+                            div {
+                                span {
+                                    span {class: "font-bold pr-2", "{t!(\"preview.nettogewicht\")}" }
+                                    "{netto} {get_unit()}"
+                                }
+                                span {
+                                    span {class: "font-bold pl-2 pr-2", "{t!(\"preview.abtropfgewicht\")}" }
+                                    "{brutto} {get_unit()}"
+                                }
                             }
-                        }
-                    },
-                    _ => rsx! {}
+                        },
+                        _ => rsx! {}
+                    }
                 }
 
                 if !additional_info().is_empty() && !storage_info().is_empty() {
@@ -209,6 +229,31 @@ pub fn LabelPreview(
                         (Price::Single(x), Amount::Double(Some(500), _)) => rsx! {
                             "{display_money(x)} " {t!("units.chf")}
                         },
+                        // Handle non-unitary amounts with Price::Single - show both unit price and calculated total
+                        (Price::Single(x), _) => {
+                            if let Some(unit_price) = x {
+                                let total_price_display = if let Some(calc_total) = &calculated_total_price {
+                                    if calc_total().0 { Some(calc_total().1) } else { None }
+                                } else { None };
+                                
+                                rsx! (
+                                    div {
+                                        span {
+                                            span {class: "font-bold pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
+                                            "{display_money(Some(unit_price))} " {t!("units.chf")}
+                                        }
+                                        if let Some(total_price) = total_price_display {
+                                            span {
+                                                span {class: "font-bold pl-2 pr-2", {t!("preview.preis")} }
+                                                "{display_money(Some(total_price))} " {t!("units.chf")}
+                                            }
+                                        }
+                                    }
+                                )
+                            } else {
+                                rsx! {}
+                            }
+                        },
                         (Price::Double(x, _), Amount::Single(Some(1))) |
                         (Price::Double(x, _), Amount::Single(Some(100))) |
                         (Price::Double(x, _), Amount::Single(Some(250))) |
@@ -219,18 +264,38 @@ pub fn LabelPreview(
                         (Price::Double(x, _), Amount::Double(Some(500), _)) => rsx! {
                             "{display_money(x)} " {t!("units.chf")}
                         },
-                        (Price::Double(x, y), _) => rsx! (
-                            div {
-                                span {
-                                    span {class: "font-bold pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
-                                    "{display_money(x)} " {t!("units.chf")}
-                                }
-                                span {
-                                    span {class: "font-bold pl-2 pr-2", {t!("preview.preis")} }
-                                    "{display_money(y)} " {t!("units.chf")}
-                                }
+                        (Price::Double(x, y), _) => {
+                            // Use calculated values if available, otherwise use raw price values
+                            let unit_price_display = if let Some(calc_unit) = &calculated_unit_price {
+                                if calc_unit().0 { Some(calc_unit().1) } else { x }
+                            } else { x };
+                            
+                            let total_price_display = if let Some(calc_total) = &calculated_total_price {
+                                if calc_total().0 { Some(calc_total().1) } else { y }
+                            } else { y };
+                            
+                            // Show prices if we have either raw values or calculated values
+                            if unit_price_display.is_some() || total_price_display.is_some() {
+                                rsx! (
+                                    div {
+                                        if let Some(unit_price) = unit_price_display {
+                                            span {
+                                                span {class: "font-bold pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
+                                                "{display_money(Some(unit_price))} " {t!("units.chf")}
+                                            }
+                                        }
+                                        if let Some(total_price) = total_price_display {
+                                            span {
+                                                span {class: "font-bold pl-2 pr-2", {t!("preview.preis")} }
+                                                "{display_money(Some(total_price))} " {t!("units.chf")}
+                                            }
+                                        }
+                                    }
+                                )
+                            } else {
+                                rsx! {}
                             }
-                        ),
+                        },
                         _ => rsx! {},
                     }
 

@@ -205,6 +205,73 @@ pub fn Swiss() -> Element {
     use_context_provider(|| Validations(validation_messages));
     use_context_provider(|| Conditionals(conditional_display));
 
+    // Calculate derived values for amount and price
+    let get_base_factor = use_memo(move || {
+        match (
+            &*amount_type.read(),
+            weight_unit.read().as_str(),
+            volume_unit.read().as_str(),
+        ) {
+            (AmountType::Weight, "mg", _) => 100_usize,
+            (AmountType::Weight, "g", _) => 100_usize,
+            (AmountType::Weight, "kg", _) => 1_usize,
+            (AmountType::Volume, _, "ml") => 100_usize,
+            (AmountType::Volume, _, "cl") => 100_usize,
+            (AmountType::Volume, _, "l") => 1_usize,
+            (_, _, _) => 1_usize,
+        }
+    });
+
+    let calculated_amount = use_memo(move || match price() {
+        Price::Double(Some(unit_price), Some(total_price)) => (
+            true,
+            ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize,
+        ),
+        _ => (false, 0),
+    });
+
+    let calculated_total_price = use_memo(move || {
+        let net_amount = match amount() {
+            Amount::Single(Some(x)) => x,
+            Amount::Double(Some(x), _) => x,
+            _ => 0,
+        };
+        if net_amount == 0 {
+            return (false, 0);
+        }
+        match price() {
+            // Calculate total price when only unit price is provided
+            Price::Double(Some(unit_price), None) => (
+                true,
+                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
+            ),
+            // For single price fields, calculate total
+            Price::Single(Some(unit_price)) => (
+                true,
+                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
+            ),
+            _ => (false, 0),
+        }
+    });
+
+    let calculated_unit_price = use_memo(move || {
+        let net_amount = match amount() {
+            Amount::Single(Some(x)) => x,
+            Amount::Double(Some(x), _) => x,
+            _ => 0,
+        };
+        if net_amount == 0 {
+            return (false, 0);
+        }
+        match price() {
+            Price::Double(_, Some(total_price)) => (
+                true,
+                (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize,
+            ),
+            _ => (false, 0),
+        }
+    });
+
     rsx! {
         div {
             class: "flex h-full",
@@ -360,6 +427,9 @@ pub fn Swiss() -> Element {
             volume_unit: volume_unit,
             amount: amount,
             price: price,
+            calculated_amount: Some(calculated_amount),
+            calculated_unit_price: Some(calculated_unit_price),
+            calculated_total_price: Some(calculated_total_price),
             ignore_ingredients: ignore_ingredients
         }
     }
