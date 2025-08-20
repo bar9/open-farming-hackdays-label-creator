@@ -30,6 +30,9 @@ pub fn SplitLayout() -> Element {
     let theme_context = use_context::<Signal<ThemeContext>>();
     let current_route = use_route::<Route>();
     let mut show_link_modal = use_signal(|| false);
+    let mut show_warning = use_signal(|| false);
+    let mut target_route = use_signal(|| Option::<Route>::None);
+    let nav = use_navigator();
 
     rsx! {
         document::Stylesheet {
@@ -72,14 +75,9 @@ pub fn SplitLayout() -> Element {
                                     },
                                     Route::Bio { .. } => rsx! {
                                         div {
-                                            class: "w-4 h-4 mr-2",
-                                            svg {
-                                                class: "w-4 h-4",
-                                                view_box: "0 0 32 32",
-                                                rect { width: "32", height: "32", fill: "#FF0000" }
-                                                rect { x: "13", y: "6", width: "6", height: "20", fill: "white" }
-                                                rect { x: "6", y: "13", width: "20", height: "6", fill: "white" }
-                                            }
+                                            class: "w-4 h-4 mr-2 flex flex-col items-center justify-center bg-green-100 rounded",
+                                            span { class: "text-green-700 font-bold text-[6px] leading-none", "CH" }
+                                            span { class: "text-green-700 font-bold text-[6px] leading-none", "BIO" }
                                         }
                                         {t!("routes.bio")}
                                     },
@@ -135,10 +133,18 @@ pub fn SplitLayout() -> Element {
                                 tabindex: "0",
                                 class: "dropdown-content menu bg-base-100 rounded-box z-[1] w-72 p-2 shadow-lg",
                                 li {
-                                    Link {
-                                        to: Route::Swiss {},
-                                        class: format!("flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 {}",
-                                            if matches!(current_route, Route::Swiss { .. }) { "bg-primary/20 text-primary" } else { "" }),
+                                    button {
+                                        class: format!("flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left {}",
+                                            if matches!(current_route.clone(), Route::Swiss { .. }) { "bg-primary/20 text-primary" } else { "" }),
+                                        onclick: {
+                                            let route = current_route.clone();
+                                            move |_| {
+                                                if !matches!(route, Route::Swiss { .. }) {
+                                                    target_route.set(Some(Route::Swiss {}));
+                                                    show_warning.set(true);
+                                                }
+                                            }
+                                        },
                                         div {
                                             class: "w-8 h-8 flex items-center justify-center bg-red-50 rounded",
                                             svg {
@@ -157,19 +163,22 @@ pub fn SplitLayout() -> Element {
                                     }
                                 }
                                 li {
-                                    Link {
-                                        to: Route::Bio {},
-                                        class: format!("flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 {}",
-                                            if matches!(current_route, Route::Bio { .. }) { "bg-primary/20 text-primary" } else { "" }),
-                                        div {
-                                            class: "w-8 h-8 flex items-center justify-center bg-red-50 rounded",
-                                            svg {
-                                                class: "w-6 h-6",
-                                                view_box: "0 0 32 32",
-                                                rect { width: "32", height: "32", fill: "#FF0000" }
-                                                rect { x: "13", y: "6", width: "6", height: "20", fill: "white" }
-                                                rect { x: "6", y: "13", width: "20", height: "6", fill: "white" }
+                                    button {
+                                        class: format!("flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left {}",
+                                            if matches!(current_route.clone(), Route::Bio { .. }) { "bg-primary/20 text-primary" } else { "" }),
+                                        onclick: {
+                                            let route = current_route.clone();
+                                            move |_| {
+                                                if !matches!(route, Route::Bio { .. }) {
+                                                    target_route.set(Some(Route::Bio {}));
+                                                    show_warning.set(true);
+                                                }
                                             }
+                                        },
+                                        div {
+                                            class: "w-8 h-8 flex flex-col items-center justify-center bg-green-100 rounded",
+                                            span { class: "text-green-700 font-bold text-xs leading-none", "CH" }
+                                            span { class: "text-green-700 font-bold text-xs leading-none", "BIO" }
                                         }
                                         div {
                                             class: "flex flex-col",
@@ -179,10 +188,18 @@ pub fn SplitLayout() -> Element {
                                     }
                                 }
                                 li {
-                                    Link {
-                                        to: Route::Knospe {},
-                                        class: format!("flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 {}",
-                                            if matches!(current_route, Route::Knospe { .. }) { "bg-primary/20 text-primary" } else { "" }),
+                                    button {
+                                        class: format!("flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left {}",
+                                            if matches!(current_route.clone(), Route::Knospe { .. }) { "bg-primary/20 text-primary" } else { "" }),
+                                        onclick: {
+                                            let route = current_route.clone();
+                                            move |_| {
+                                                if !matches!(route, Route::Knospe { .. }) {
+                                                    target_route.set(Some(Route::Knospe {}));
+                                                    show_warning.set(true);
+                                                }
+                                            }
+                                        },
                                         div {
                                             class: "w-8 h-8 flex items-center justify-center bg-green-50 rounded",
                                             svg {
@@ -375,6 +392,45 @@ pub fn SplitLayout() -> Element {
                 }
             } else {
                 rsx! {}
+            }
+        }
+        
+        // Warning Dialog
+        if show_warning() {
+            div {
+                class: "modal modal-open",
+                div {
+                    class: "modal-box",
+                    h3 {
+                        class: "font-bold text-lg",
+                        "Warnung"
+                    }
+                    p {
+                        class: "py-4",
+                        "Ihre Daten gehen verloren, wenn Sie in einen anderen Standard wechseln"
+                    }
+                    div {
+                        class: "modal-action",
+                        button {
+                            class: "btn btn-ghost",
+                            onclick: move |_| {
+                                show_warning.set(false);
+                                target_route.set(None);
+                            },
+                            "Abbrechen"
+                        }
+                        button {
+                            class: "btn btn-primary",
+                            onclick: move |_| {
+                                show_warning.set(false);
+                                if let Some(route) = target_route() {
+                                    nav.push(route);
+                                }
+                            },
+                            "OK"
+                        }
+                    }
+                }
             }
         }
     }

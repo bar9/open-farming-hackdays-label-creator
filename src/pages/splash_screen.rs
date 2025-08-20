@@ -5,6 +5,8 @@ use rust_i18n::t;
 
 #[component]
 pub fn SplashScreen() -> Element {
+    let nav = use_navigator();
+
     rsx! {
         div {
             class: "min-h-screen bg-base-200",
@@ -111,9 +113,11 @@ pub fn SplashScreen() -> Element {
                     div {
                         class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
 
-                        Link {
-                            to: Route::Swiss {},
-                        class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer",
+                        button {
+                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            onclick: move |_| {
+                                nav.push(Route::Swiss {});
+                            },
                         div {
                             class: "card-body items-center text-center",
                             h3 {
@@ -153,9 +157,11 @@ pub fn SplashScreen() -> Element {
                         }
                     }
 
-                        Link {
-                            to: Route::Bio {},
-                        class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer",
+                        button {
+                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            onclick: move |_| {
+                                nav.push(Route::Bio {});
+                            },
                         div {
                             class: "card-body items-center text-center",
                             h3 {
@@ -163,30 +169,9 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.bio")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-2",
-                                svg {
-                                    class: "w-16 h-16",
-                                    view_box: "0 0 32 32",
-                                    rect {
-                                        width: "32",
-                                        height: "32",
-                                        fill: "#FF0000"
-                                    }
-                                    rect {
-                                        x: "13",
-                                        y: "6",
-                                        width: "6",
-                                        height: "20",
-                                        fill: "white"
-                                    }
-                                    rect {
-                                        x: "6",
-                                        y: "13",
-                                        width: "20",
-                                        height: "6",
-                                        fill: "white"
-                                    }
-                                }
+                                class: "w-24 h-24 flex flex-col items-center justify-center bg-green-100 rounded-lg mb-2",
+                                span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
+                                span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
@@ -195,9 +180,11 @@ pub fn SplashScreen() -> Element {
                         }
                     }
 
-                        Link {
-                            to: Route::Knospe {},
-                        class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer",
+                        button {
+                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            onclick: move |_| {
+                                nav.push(Route::Knospe {});
+                            },
                         div {
                             class: "card-body items-center text-center",
                             h3 {
@@ -252,6 +239,8 @@ pub fn SplashScreen() -> Element {
                     }
                 }
             }
+
+
             footer {
                 class: "bg-base-200 p-4 text-center text-sm mt-auto border-t border-base-300",
                 div {
