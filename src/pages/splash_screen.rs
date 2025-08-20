@@ -1,3 +1,4 @@
+use crate::built_info;
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -92,7 +93,7 @@ pub fn SplashScreen() -> Element {
                 }
             }
             div {
-                class: "flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-8",
+                class: "flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-8",
                 div {
                     class: "text-center max-w-4xl",
                     h1 {
@@ -120,7 +121,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.swiss")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-4",
+                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-2",
                                 svg {
                                     class: "w-16 h-16",
                                     view_box: "0 0 32 32",
@@ -144,6 +145,10 @@ pub fn SplashScreen() -> Element {
                                         fill: "white"
                                     }
                                 }
+                            }
+                            div {
+                                class: "badge badge-info text-xs px-2 py-1",
+                                "nicht für Fleisch- / Milchprodukte"
                             }
                         }
                     }
@@ -158,7 +163,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.bio")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-4",
+                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-2",
                                 svg {
                                     class: "w-16 h-16",
                                     view_box: "0 0 32 32",
@@ -183,6 +188,10 @@ pub fn SplashScreen() -> Element {
                                     }
                                 }
                             }
+                            div {
+                                class: "badge badge-warning text-xs px-2 py-1",
+                                "In Entwicklung"
+                            }
                         }
                     }
 
@@ -196,7 +205,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.knospe")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-green-50 rounded-lg mb-4",
+                                class: "w-24 h-24 flex items-center justify-center bg-green-50 rounded-lg mb-2",
 
                                 svg {
                                     height: "768",
@@ -234,8 +243,40 @@ pub fn SplashScreen() -> Element {
                                     }
                                 }
                             }
+                            div {
+                                class: "badge badge-warning text-xs px-2 py-1",
+                                "In Entwicklung"
+                            }
                         }
                     }
+                    }
+                }
+            }
+            footer {
+                class: "bg-base-200 p-4 text-center text-sm mt-auto border-t border-base-300",
+                div {
+                    class: "flex justify-center items-center gap-4",
+                    span {
+                        "Version " {env!("CARGO_PKG_VERSION")} " vom " {
+                            // Convert UTC time string to a more readable format
+                            let build_time = built_info::BUILT_TIME_UTC;
+                            // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
+                            if let Ok(datetime) = chrono::DateTime::parse_from_rfc2822(build_time) {
+                                format!("{}", datetime.format("%d.%m.%Y"))
+                            } else {
+                                build_time.to_string()
+                            }
+                        }
+                    }
+                    Link {
+                        to: Route::Impressum {},
+                        class: "link link-blue hover:link-primary",
+                        {t!("app.impressum")}
+                    }
+                    a {
+                        class: "link link-blue hover:link-primary",
+                        href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
+                        {t!("app.release_notes")}
                     }
                 }
             }

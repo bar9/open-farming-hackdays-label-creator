@@ -18,7 +18,7 @@ routes:
 
 splash:
   subtitle: Erstelle konforme Lebensmitteletiketten
-  description: Um eine Etikette zu konfigurieren, wählen Sie die Basis-Konfiguration. Diese enthält die jeweiligen spezifischen Regeln für diesen Brand.
+  description: Um eine Etikette zu erstellen, wähle den passenden Standard. Dieser enthält die spezifischen Regeln.
 label:
   produktname: Produktname
   sachbezeichnung: Sachbezeichnung
