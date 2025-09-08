@@ -205,6 +205,55 @@ shorten_url_button: Accorcia link
 shortening: Accorciamento...
 close: Chiudi
 
+errors:
+  page_not_found: Pagina non trovata
+  page_not_found_message: Siamo spiacenti, ma la pagina richiesta non esiste.
+  attempted_to_navigate: 'log:\nTentativo di navigare verso: {route}'
+
+themes:
+  swiss: swiss
+  bio: bio
+  knospe: knospe
+  corporate: corporate
+
+countries:
+  switzerland: Svizzera
+
+date_prefixes:
+  best_before: Da consumarsi preferibilmente entro
+  use_by: Da consumare entro
+
+transition:
+  umstellungsbetrieb: Azienda in conversione
+
+buttons:
+  close: chiudi
+  back: Indietro
+
+languages:
+  de: DE
+  fr: FR
+  it: IT
+
+badges:
+  not_for_meat_dairy: non per carne / latticini
+  in_development: In sviluppo
+
+version:
+  version: Versione
+  from: del
+
+weight_units:
+  mg: mg
+  g: g
+  kg: kg
+
+volume_units:
+  ml: ml
+  cl: cl
+  dl: dl
+  l: l
+
 impressum: |
   # Impronta, Protezione dei dati
   

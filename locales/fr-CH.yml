@@ -217,6 +217,55 @@ shorten_url_button: Raccourcir le lien
 shortening: Raccourcissement...
 close: Fermer
 
+errors:
+  page_not_found: Page non trouvée
+  page_not_found_message: Nous sommes désolés, mais la page demandée n'existe pas.
+  attempted_to_navigate: 'log:\nTentative de navigation vers: {route}'
+
+themes:
+  swiss: swiss
+  bio: bio
+  knospe: knospe
+  corporate: corporate
+
+countries:
+  switzerland: Suisse
+
+date_prefixes:
+  best_before: À consommer de préférence avant
+  use_by: À consommer jusqu'au
+
+transition:
+  umstellungsbetrieb: Exploitation en reconversion
+
+buttons:
+  close: fermer
+  back: Retour
+
+languages:
+  de: DE
+  fr: FR
+  it: IT
+
+badges:
+  not_for_meat_dairy: pas pour viande / produits laitiers
+  in_development: En développement
+
+version:
+  version: Version
+  from: du
+
+weight_units:
+  mg: mg
+  g: g
+  kg: kg
+
+volume_units:
+  ml: ml
+  cl: cl
+  dl: dl
+  l: l
+
 impressum: |
   # Mentions légales, Protection des données
   

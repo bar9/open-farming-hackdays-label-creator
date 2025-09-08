@@ -25,9 +25,9 @@ pub fn SplashScreen() -> Element {
                             role: "button",
                             class: "btn btn-ghost btn-sm",
                             {match rust_i18n::locale().as_ref() {
-                                "fr-CH" => "FR ",
-                                "it-CH" => "IT ",
-                                _ => "DE ",
+                                "fr-CH" => t!("languages.fr"),
+                                "it-CH" => t!("languages.it"),
+                                _ => t!("languages.de"),
                             }}
                             svg {
                                 class: "w-4 h-4 ml-1",
@@ -57,7 +57,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    "DE"
+                                    {t!("languages.de")}
                                 }
                             }
                             li {
@@ -72,7 +72,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    "FR"
+                                    {t!("languages.fr")}
                                 }
                             }
                             li {
@@ -87,7 +87,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    "IT"
+                                    {t!("languages.it")}
                                 }
                             }
                         }
@@ -152,7 +152,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-info text-xs px-2 py-1",
-                                "nicht für Fleisch- / Milchprodukte"
+                                {t!("badges.not_for_meat_dairy")}
                             }
                         }
                     }
@@ -175,7 +175,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
-                                "In Entwicklung"
+                                {t!("badges.in_development")}
                             }
                         }
                     }
@@ -232,7 +232,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
-                                "In Entwicklung"
+                                {t!("badges.in_development")}
                             }
                         }
                     }
@@ -246,7 +246,7 @@ pub fn SplashScreen() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        "Version " {env!("CARGO_PKG_VERSION")} " vom " {
+                        {t!("version.version")} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from")} " " {
                             // Convert UTC time string to a more readable format
                             let build_time = built_info::BUILT_TIME_UTC;
                             // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
