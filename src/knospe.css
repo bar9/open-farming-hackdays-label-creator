@@ -1,0 +1,158 @@
+/* BioSuisse/Knospe specific styles */
+
+/* Override font for Knospe theme */
+[data-theme="knospe"] {
+    font-family: 'Arial', sans-serif; /* Fallback since Futura needs to be licensed */
+}
+
+/* Typography for Knospe following BioSuisse guidelines */
+[data-theme="knospe"] h1,
+[data-theme="knospe"] .knospe-h1 {
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    font-weight: normal;
+    color: #000000;
+    line-height: 1.4;
+}
+
+[data-theme="knospe"] h2,
+[data-theme="knospe"] .knospe-h2 {
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    color: #000000;
+    line-height: 1.4;
+}
+
+[data-theme="knospe"] .knospe-body,
+[data-theme="knospe"] p,
+[data-theme="knospe"] .text-base {
+    font-family: 'Arial', sans-serif;
+    font-size: 10pt;
+    font-weight: normal;
+    color: #000000;
+    line-height: 1.4;
+}
+
+/* Labels and form fields */
+[data-theme="knospe"] label {
+    font-family: 'Arial', sans-serif;
+    font-size: 10pt;
+    font-weight: normal;
+    color: #000000;
+}
+
+[data-theme="knospe"] input,
+[data-theme="knospe"] textarea,
+[data-theme="knospe"] select {
+    font-family: 'Arial', sans-serif;
+    font-size: 10pt;
+    color: #000000;
+    background-color: #ffffff;
+    border-color: #39A22B;
+}
+
+/* Primary button styling with Knospe green */
+[data-theme="knospe"] .btn-primary {
+    background-color: #39A22B;
+    color: #ffffff;
+    border-color: #39A22B;
+}
+
+[data-theme="knospe"] .btn-primary:hover {
+    background-color: #267B39;
+    border-color: #267B39;
+}
+
+/* Badges and alerts */
+[data-theme="knospe"] .badge-warning {
+    background-color: #DEE555;
+    color: #000000;
+    border-color: #DEE555;
+}
+
+[data-theme="knospe"] .badge-error {
+    background-color: #D21E1F;
+    color: #ffffff;
+    border-color: #D21E1F;
+}
+
+[data-theme="knospe"] .badge-success {
+    background-color: #39A22B;
+    color: #ffffff;
+    border-color: #39A22B;
+}
+
+/* Separator lines */
+[data-theme="knospe"] .divider {
+    border-color: #ACBB00;
+}
+
+/* Background colors */
+[data-theme="knospe"] .bg-base-100 {
+    background-color: #ffffff;
+}
+
+[data-theme="knospe"] .bg-base-200 {
+    background-color: #f5f5f5;
+}
+
+[data-theme="knospe"] .bg-base-300 {
+    background-color: #e8e8e8;
+}
+
+/* Text colors */
+[data-theme="knospe"] .text-primary {
+    color: #39A22B;
+}
+
+[data-theme="knospe"] .text-secondary {
+    color: #ACBB00;
+}
+
+[data-theme="knospe"] .text-accent {
+    color: #00393F;
+}
+
+/* Required field asterisk - make it green instead of red */
+[data-theme="knospe"] .text-red-300 {
+    color: #39A22B;
+}
+
+/* List bullets as squares in light green */
+[data-theme="knospe"] ul li::marker {
+    content: "■ ";
+    color: #ACBB00;
+    font-size: 0.75em;
+}
+
+/* Specific overrides for preview section */
+[data-theme="knospe"] .bg-white {
+    background-color: #ffffff;
+}
+
+/* Remove text decorations */
+[data-theme="knospe"] a {
+    text-decoration: none;
+}
+
+[data-theme="knospe"] u {
+    text-decoration: none;
+}
+
+/* Bold for emphasis instead of italic */
+[data-theme="knospe"] em,
+[data-theme="knospe"] i {
+    font-style: normal;
+    font-weight: bold;
+}
+
+/* Currency formatting */
+[data-theme="knospe"] .currency::before {
+    content: "CHF ";
+}
+
+/* Thousand separator for numbers */
+[data-theme="knospe"] .number-format {
+    font-variant-numeric: normal;
+}

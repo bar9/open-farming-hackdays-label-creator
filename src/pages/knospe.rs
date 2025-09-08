@@ -209,12 +209,12 @@ pub fn Knospe() -> Element {
 
     rsx! {
         div {
-            class: "flex h-full",
+            class: "flex h-full bg-white",
             div {
                 class: "flex-1 flex overflow-hidden",
                 div {
                     class: "flex-1 overflow-y-scroll",
-                    div { class: "flex flex-col gap-6 p-8 pb-12",
+                    div { class: "flex flex-col gap-6 p-8 pb-12 font-opensans",
                         FormField {
                             label: t!("label.produktname"),
                             help: Some(t!("help.produktname").into()),
