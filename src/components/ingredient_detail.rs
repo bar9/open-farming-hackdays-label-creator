@@ -4,8 +4,7 @@ use crate::model::{food_db, lookup_allergen};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
-// TODO: rework save/cancel (stateful modal):
-// seems we already have many parts, only the writes via props.inredients.write() are to be delegated to a save() handler
+// Component for editing or creating ingredients with allergen management and recipe scaling
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientDetailProps {
@@ -25,23 +24,22 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         ingredients = props.ingredients;
     }
     let mut is_open = use_signal(|| false);
-    // let mut scale_together = use_signal(|| false); // Recipe calculator - commented out for now
     
     // Local state for editing - won't be saved until user clicks save
     let original_ingredient = ingredients.get(index).unwrap().clone();
     let mut edit_name = use_signal(|| original_ingredient.name.clone());
-    let mut edit_amount = use_signal(|| original_ingredient.amount);
+    let mut edit_amount = use_signal(|| {
+        if props.genesis {
+            None  // Start with blank for new ingredients
+        } else {
+            Some(original_ingredient.amount)  // Show existing amount for edits
+        }
+    });
     let mut edit_is_composite = use_signal(|| {
-        !original_ingredient
-            .sub_components
-            .clone()
-            .unwrap_or_default()
-            .is_empty()
+        original_ingredient.sub_components.as_ref().map_or(false, |s| !s.is_empty())
     });
     let mut edit_is_namensgebend = use_signal(|| {
-        original_ingredient
-            .is_namensgebend
-            .unwrap_or(false)
+        original_ingredient.is_namensgebend.unwrap_or(false)
     });
     let mut edit_sub_components = use_signal(|| original_ingredient.sub_components.clone());
     
@@ -52,6 +50,29 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     
     // Track allergen status separately for custom ingredients
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
+    
+    // Track if amount has changed and calculate the scaling factor
+    let amount_has_changed = use_memo(move || {
+        if props.genesis {
+            false
+        } else if let Some(current_amount) = edit_amount() {
+            let original_amount = original_ingredient.amount;
+            // Check if amount changed significantly (not just rounding errors)
+            (original_amount - current_amount).abs() > 0.01
+        } else {
+            false
+        }
+    });
+    
+    let scaling_factor = use_memo(move || {
+        if props.genesis || original_ingredient.amount == 0.0 {
+            1.0
+        } else if let Some(current_amount) = edit_amount() {
+            current_amount / original_ingredient.amount
+        } else {
+            1.0
+        }
+    });
     
     // Create a wrapper ingredients signal for SubIngredientsTable
     // Initialize it once and keep it stable
@@ -72,7 +93,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             // Initialize wrapper with current edit state
             wrapper_ingredients.write()[0] = Ingredient {
                 name: edit_name(),
-                amount: edit_amount(),
+                amount: edit_amount().unwrap_or(0.0),  // Use 0 as fallback for sub-ingredients
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
                 sub_components: edit_sub_components(),
@@ -92,6 +113,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
     });
     
+    
     let mut update_name = move |new_name: String| {
         // Update local edit state only
         edit_name.set(new_name.clone());
@@ -106,7 +128,17 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
     };
 
-    let mut handle_save = move || {
+    
+    let mut handle_save = move |scale_all: bool| {
+        // Validate that amount is provided
+        let amount = match edit_amount() {
+            Some(amt) if amt > 0.0 => amt,
+            _ => {
+                // Don't save if amount is invalid or not provided
+                return;
+            }
+        };
+        
         // Determine allergen status based on database presence
         let in_database = food_db().iter().any(|(name, _)| name == &edit_name());
         let allergen_status = if in_database {
@@ -117,7 +149,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         
         let new_ingredient = Ingredient {
             name: edit_name(),
-            amount: edit_amount(),
+            amount,
             is_allergen: allergen_status,
             is_namensgebend: Some(edit_is_namensgebend()),
             sub_components: edit_sub_components(),
@@ -144,14 +176,30 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             
             // Reset local state for next creation
             edit_name.set(String::new());
-            edit_amount.set(0.0);
+            edit_amount.set(None);
             edit_is_composite.set(false);
             edit_is_namensgebend.set(false);
             edit_sub_components.set(None);
             is_allergen_custom.set(false);
         } else {
             // Update existing ingredient
-            props.ingredients.write()[index] = new_ingredient;
+            if scale_all && amount_has_changed() {
+                // Apply scaling factor to all ingredients
+                let factor = scaling_factor();
+                let mut all_ingredients = props.ingredients.write();
+                for (i, ingredient) in all_ingredients.iter_mut().enumerate() {
+                    if i == index {
+                        // Update the current ingredient with all changes
+                        *ingredient = new_ingredient.clone();
+                    } else {
+                        // Scale other ingredients by the same factor
+                        ingredient.amount *= factor;
+                    }
+                }
+            } else {
+                // Just update the single ingredient
+                props.ingredients.write()[index] = new_ingredient;
+            }
         }
         
         is_open.set(false);
@@ -161,15 +209,44 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         if props.genesis {
             button {
                 class: "btn btn-accent",
-                onclick: move |_| is_open.toggle(),
-                onkeydown: move |evt: KeyboardEvent| if evt.key() == Key::Escape { is_open.set(false); },
+                onclick: move |_| {
+                    // Reset edit state when opening in create mode
+                    if !is_open() {
+                        edit_name.set(String::new());
+                        edit_amount.set(None);  // Blank amount field
+                        edit_is_composite.set(false);
+                        edit_is_namensgebend.set(false);
+                        edit_sub_components.set(None);
+                        is_allergen_custom.set(false);
+                        is_custom_ingredient.set(true);
+                    }
+                    is_open.toggle();
+                },
                 "{t!(\"nav.hinzufuegen\")}"
             }
         } else {
             button {
                 class: "btn join-item btn-outline",
-                onclick: move |_| is_open.toggle(),
-                onkeydown: move |evt: KeyboardEvent| if evt.key() == Key::Escape { is_open.set(false); },
+                onclick: move |_| {
+                    // Reset edit state when opening in edit mode
+                    if !is_open() {
+                        let orig = ingredients.get(index).unwrap().clone();
+                        edit_name.set(orig.name.clone());
+                        edit_amount.set(Some(orig.amount));
+                        edit_is_composite.set(
+                            orig.sub_components.as_ref().map_or(false, |s| !s.is_empty())
+                        );
+                        edit_is_namensgebend.set(
+                            orig.is_namensgebend.unwrap_or(false)
+                        );
+                        edit_sub_components.set(orig.sub_components.clone());
+                        is_allergen_custom.set(orig.is_allergen);
+                        is_custom_ingredient.set(
+                            !food_db().iter().any(|(name, _)| name == &orig.name)
+                        );
+                    }
+                    is_open.toggle();
+                },
                 icons::ListDetail {}
             }
         }
@@ -206,35 +283,27 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             r#type: "number",
                             placeholder: "Menge in Gramm",
                             class: "input input-accent w-full",
-                            onchange: move |evt| {
-                                if let Ok(amount) = evt.data.value().parse::<f64>() {
-                                    edit_amount.set(amount);
+                            oninput: move |evt| {
+                                let value = evt.data.value();
+                                if value.is_empty() {
+                                    edit_amount.set(None);
+                                } else if let Ok(amount) = value.parse::<f64>() {
+                                    edit_amount.set(Some(amount));
                                 }
                             },
-                            value: "{edit_amount}",
+                            value: edit_amount().map_or(String::new(), |v| v.to_string()),
                         }
                     }
-                    // Recipe calculator functionality - commented out for now
-                    // if !props.genesis {
-                    //     label { class: "label cursor-pointer",
-                    //         input {
-                    //             class: "checkbox",
-                    //             r#type: "checkbox",
-                    //             checked: "{scale_together}",
-                    //             oninput: move |e| scale_together.set(e.value() == "true"),
-                    //         }
-                    //         span { class: "label-text",
-                    //             "{t!(\"nav.verhaeltnisseBeibehalten\")}"
-                    //         }
-                    //     }
-                    //     button {
-                    //         class: "btn btn-accent",
-                    //         onclick: move |_evt| {
-                    //             // Recipe calculator logic
-                    //         },
-                    //         "{t!(\"nav.anpassen\")}"
-                    //     }
-                    // }
+                    // Show scaling factor when amount changes
+                    if !props.genesis && amount_has_changed() {
+                        div { class: "text-sm text-info mt-2",
+                            if let Some(amt) = edit_amount() {
+                                "Faktor: ×{scaling_factor():.2} (vorher: {original_ingredient.amount}g → neu: {amt}g)"
+                            } else {
+                                "Bitte Menge eingeben"
+                            }
+                        }
+                    }
                 }
 
                 br {}
@@ -322,25 +391,64 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 div { class: "modal-action",
                     button {
                         class: "btn",
-                        onclick: move |_| is_open.toggle(),
-                        onkeydown: move |evt| {
-                            if evt.key() == Key::Escape {
-                                is_open.set(false);
-                            }
+                        onclick: move |_| {
+                            // Reset edit state on cancel
+                            let orig = ingredients.get(index).unwrap().clone();
+                            edit_name.set(orig.name.clone());
+                            edit_amount.set(Some(orig.amount));
+                            edit_is_composite.set(
+                                !orig.sub_components
+                                    .clone()
+                                    .unwrap_or_default()
+                                    .is_empty()
+                            );
+                            edit_is_namensgebend.set(
+                                orig.is_namensgebend
+                                    .unwrap_or(false)
+                            );
+                            edit_sub_components.set(orig.sub_components.clone());
+                            is_allergen_custom.set(orig.is_allergen);
+                            is_custom_ingredient.set(
+                                !food_db().iter().any(|(name, _)| name == &orig.name)
+                            );
+                            is_open.set(false);
                         },
                         "× " {t!("nav.schliessen")},
                     }
                     button {
                         class: "btn btn-primary",
-                        onclick: move |_| handle_save(),
+                        onclick: move |_| handle_save(false),
                         {t!("nav.speichern")},
+                    }
+                    if !props.genesis && amount_has_changed() {
+                        button {
+                            class: "btn btn-secondary",
+                            onclick: move |_| handle_save(true),
+                            title: format!("Die Mengenanpassung (×{:.2}) auf das gesamte Rezept übertragen", scaling_factor()),
+                            "Speichern und übertragen"
+                        }
                     }
                 }
             }
             form {
                 method: "dialog",
                 class: "modal-backdrop",
-                onclick: move |_| is_open.set(false),
+                onclick: move |_| {
+                    // Reset edit state on backdrop click
+                    let orig = ingredients.get(index).unwrap().clone();
+                    edit_name.set(orig.name.clone());
+                    edit_amount.set(Some(orig.amount));
+                    edit_is_composite.set(
+                        orig.sub_components.as_ref().map_or(false, |s| !s.is_empty())
+                    );
+                    edit_is_namensgebend.set(orig.is_namensgebend.unwrap_or(false));
+                    edit_sub_components.set(orig.sub_components.clone());
+                    is_allergen_custom.set(orig.is_allergen);
+                    is_custom_ingredient.set(
+                        !food_db().iter().any(|(name, _)| name == &orig.name)
+                    );
+                    is_open.set(false);
+                },
                 button { "" }
             }
         }
