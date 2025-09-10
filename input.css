@@ -31,6 +31,11 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Heading fonts inherit from body by default */
+h1, h2, h3, h4, h5, h6 {
+    font-family: inherit;
+}
+
 @plugin "daisyui/theme" {
     name: "swiss";
     color-scheme: light;
@@ -38,11 +43,11 @@ body {
     --color-base-200: oklch(97% 0 0);
     --color-base-300: oklch(94% 0 0);
     --color-base-content: oklch(0% 0 0);
-    --color-primary: oklch(0.441 0.181 29.234);
+    --color-primary: oklch(0.508 0.199 18.444);
     --color-primary-content: oklch(100% 0 0);
     --color-secondary: oklch(55% 0.046 257.417);
     --color-secondary-content: oklch(100% 0 0);
-    --color-accent: oklch(0.441 0.181 29.234);
+    --color-accent: oklch(0.508 0.199 18.444);
     --color-accent-content: oklch(100% 0 0);
     --color-neutral: oklch(0% 0 0);
     --color-neutral-content: oklch(100% 0 0);

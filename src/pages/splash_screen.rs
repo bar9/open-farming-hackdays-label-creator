@@ -114,7 +114,7 @@ pub fn SplashScreen() -> Element {
                         class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
 
                         button {
-                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: "card bg-red-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
                                 nav.push(Route::Swiss {});
                             },
@@ -125,7 +125,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.swiss")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-2",
+                                class: "w-24 h-24 flex items-center justify-center mb-2",
                                 svg {
                                     class: "w-16 h-16",
                                     view_box: "0 0 32 32",
@@ -158,7 +158,7 @@ pub fn SplashScreen() -> Element {
                     }
 
                         button {
-                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
                                 nav.push(Route::Bio {});
                             },
@@ -169,7 +169,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.bio")}
                             }
                             div {
-                                class: "w-24 h-24 flex flex-col items-center justify-center bg-green-100 rounded-lg mb-2",
+                                class: "w-24 h-24 flex flex-col items-center justify-center mb-2",
                                 span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
                                 span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                             }
@@ -181,7 +181,7 @@ pub fn SplashScreen() -> Element {
                     }
 
                         button {
-                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
                                 nav.push(Route::Knospe {});
                             },
@@ -192,7 +192,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.knospe")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-green-50 rounded-lg mb-2",
+                                class: "w-24 h-24 flex items-center justify-center mb-2",
 
                                 svg {
                                     height: "768",
