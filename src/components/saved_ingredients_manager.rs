@@ -1,5 +1,6 @@
 use crate::persistence::{get_saved_ingredients, delete_saved_ingredient};
 use dioxus::prelude::*;
+use rust_i18n::t;
 
 #[component]
 pub fn SavedIngredientsManager() -> Element {
@@ -19,7 +20,7 @@ pub fn SavedIngredientsManager() -> Element {
             Ok(_) => {
                 // Refresh the list
                 saved_ingredients.set(get_saved_ingredients());
-                delete_status.set(Some(format!("'{}' wurde gelöscht", name)));
+                delete_status.set(Some(t!("messages.ingredient_deleted", name = name).to_string()));
                 
                 // Clear status after 2 seconds
                 let mut delete_status_clone = delete_status.clone();
@@ -29,7 +30,7 @@ pub fn SavedIngredientsManager() -> Element {
                 });
             }
             Err(e) => {
-                delete_status.set(Some(format!("Fehler beim Löschen: {}", e)));
+                delete_status.set(Some(t!("messages.error_deleting", error = e).to_string()));
                 
                 // Clear status after 3 seconds
                 let mut delete_status_clone = delete_status.clone();
@@ -45,14 +46,14 @@ pub fn SavedIngredientsManager() -> Element {
         button {
             class: "btn btn-secondary btn-sm",
             onclick: move |_| is_open.toggle(),
-            title: "Gespeicherte zusammengesetzte Zutaten verwalten",
-            "Gespeicherte Zutaten"
+            title: t!("tooltips.manage_saved_ingredients").to_string(),
+            {t!("nav.saved_ingredients")}
         }
         
         dialog { open: is_open(), class: "modal",
             div { class: "modal-box bg-base-100 max-w-3xl",
                 h3 { class: "font-bold text-lg mb-4", 
-                    "Gespeicherte zusammengesetzte Zutaten" 
+                    {t!("headers.saved_composite_ingredients")} 
                 }
                 
                 // Show delete status if any
@@ -64,17 +65,17 @@ pub fn SavedIngredientsManager() -> Element {
                 
                 if saved_ingredients().is_empty() {
                     div { class: "text-center py-8 text-gray-500",
-                        "Keine gespeicherten Zutaten vorhanden"
+                        {t!("messages.no_saved_ingredients")}
                     }
                 } else {
                     div { class: "overflow-x-auto",
                         table { class: "table table-zebra",
                             thead {
                                 tr {
-                                    th { "Name" }
-                                    th { "Bestandteile" }
-                                    th { "Kategorie" }
-                                    th { "Aktionen" }
+                                    th { {t!("label.name")} }
+                                    th { {t!("label.components")} }
+                                    th { {t!("label.zutat")} }
+                                    th { {t!("label.actions")} }
                                 }
                             }
                             tbody {
@@ -113,7 +114,7 @@ pub fn SavedIngredientsManager() -> Element {
                                                     let name = saved.ingredient.name.clone();
                                                     move |_| handle_delete(name.clone())
                                                 },
-                                                "Löschen"
+                                                {t!("buttons.delete")}
                                             }
                                         }
                                     }
@@ -127,7 +128,7 @@ pub fn SavedIngredientsManager() -> Element {
                     button {
                         class: "btn",
                         onclick: move |_| is_open.set(false),
-                        "Schließen"
+                        {t!("buttons.close")}
                     }
                 }
             }

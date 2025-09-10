@@ -2,6 +2,7 @@ use crate::core::Ingredient;
 use serde::{Deserialize, Serialize};
 use web_sys::Storage;
 use serde_json;
+use rust_i18n::t;
 
 const SAVED_INGREDIENTS_KEY: &str = "saved_composite_ingredients";
 
@@ -20,7 +21,7 @@ fn get_storage() -> Option<Storage> {
 
 /// Save a composite ingredient to localStorage
 pub fn save_composite_ingredient(ingredient: &Ingredient) -> Result<(), String> {
-    let storage = get_storage().ok_or("LocalStorage not available")?;
+    let storage = get_storage().ok_or_else(|| t!("errors.localstorage_unavailable").to_string())?;
     
     // Get existing saved ingredients
     let mut saved = get_saved_ingredients();
@@ -44,7 +45,7 @@ pub fn save_composite_ingredient(ingredient: &Ingredient) -> Result<(), String> 
     let json = serde_json::to_string(&saved).map_err(|e| e.to_string())?;
     storage
         .set_item(SAVED_INGREDIENTS_KEY, &json)
-        .map_err(|_| "Failed to save to localStorage".to_string())?;
+        .map_err(|_| t!("errors.localstorage_save_failed").to_string())?;
     
     Ok(())
 }
@@ -64,7 +65,7 @@ pub fn get_saved_ingredients() -> Vec<SavedIngredient> {
     match serde_json::from_str(&json) {
         Ok(ingredients) => ingredients,
         Err(e) => {
-            tracing::warn!("Failed to parse saved ingredients: {}", e);
+            tracing::warn!("{}", t!("errors.parse_saved_ingredients_failed", error = e));
             vec![]
         }
     }
@@ -80,7 +81,7 @@ pub fn get_saved_ingredients_list() -> Vec<Ingredient> {
 
 /// Delete a saved ingredient by name
 pub fn delete_saved_ingredient(name: &str) -> Result<(), String> {
-    let storage = get_storage().ok_or("LocalStorage not available")?;
+    let storage = get_storage().ok_or_else(|| t!("errors.localstorage_unavailable").to_string())?;
     
     // Get existing saved ingredients
     let mut saved = get_saved_ingredients();
@@ -92,16 +93,16 @@ pub fn delete_saved_ingredient(name: &str) -> Result<(), String> {
     let json = serde_json::to_string(&saved).map_err(|e| e.to_string())?;
     storage
         .set_item(SAVED_INGREDIENTS_KEY, &json)
-        .map_err(|_| "Failed to save to localStorage".to_string())?;
+        .map_err(|_| t!("errors.localstorage_save_failed").to_string())?;
     
     Ok(())
 }
 
 /// Clear all saved ingredients
 pub fn clear_saved_ingredients() -> Result<(), String> {
-    let storage = get_storage().ok_or("LocalStorage not available")?;
+    let storage = get_storage().ok_or_else(|| t!("errors.localstorage_unavailable").to_string())?;
     storage
         .remove_item(SAVED_INGREDIENTS_KEY)
-        .map_err(|_| "Failed to clear localStorage".to_string())?;
+        .map_err(|_| t!("errors.localstorage_clear_failed").to_string())?;
     Ok(())
 }

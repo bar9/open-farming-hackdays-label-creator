@@ -60,6 +60,10 @@ label:
   keinDatum: Nessuna data di conservazione/consumo
   ignore_ingredients: Nessun elenco ingredienti (ingrediente singolo)
   total: Totale
+  components: Componenti
+  actions: Azioni
+  saved_indicator: (Salvato)
+  allergen_indicator: (Allergene)
 
 nav:
   linkKopieren: Copia link
@@ -69,6 +73,8 @@ nav:
   verhaeltnisseBeibehalten: Mantenere le proporzioni
   anpassen: Adattare
   hinzufuegen: Aggiungere
+  speichern: Salvare
+  saved_ingredients: Ingredienti salvati
 
 preview:
   etikettenVorschau: Anteprima etichetta
@@ -83,6 +89,16 @@ preview:
   website: "Sito web: %{website}"
   preisPro: "Prezzo per %{amount}%{unit}"
   preisTotal: Prezzo totale
+
+tooltips:
+  manage_saved_ingredients: Gestisci ingredienti composti salvati
+  save_composite_ingredient: Salva questo ingrediente composto per uso futuro
+
+headers:
+  saved_composite_ingredients: Ingredienti composti salvati
+
+placeholders:
+  amount_in_grams: Quantità in grammi
 
 placeholder:
   produktname: Sogno estivo
@@ -208,10 +224,27 @@ shorten_url_button: Accorcia link
 shortening: Accorciamento...
 close: Chiudi
 
+messages:
+  ingredient_deleted: "'{name}' è stato eliminato"
+  error_deleting: "Errore durante l'eliminazione: {error}"
+  no_saved_ingredients: Nessun ingrediente salvato
+  ingredient_saved_successfully: "'{name}' è stato salvato con successo"
+  error_generic: "Errore: {error}"
+  category_loading: Caricamento categoria...
+  category_display: "Categoria: {category}"
+  please_enter_amount: Inserisci una quantità
+  scaling_factor: "Fattore: ×{factor} (prima: {before}g → dopo: {after}g)"
+
 errors:
   page_not_found: Pagina non trovata
   page_not_found_message: Siamo spiacenti, ma la pagina richiesta non esiste.
   attempted_to_navigate: 'log:\nTentativo di navigare verso: {route}'
+  localstorage_unavailable: LocalStorage non disponibile
+  localstorage_save_failed: Errore durante il salvataggio in LocalStorage
+  localstorage_clear_failed: Errore durante l'eliminazione da LocalStorage
+  parse_saved_ingredients_failed: "Errore nell'analisi degli ingredienti salvati: {error}"
+  api_request_failed: "Errore nell'invio della richiesta: {error}"
+  api_parse_failed: "Errore nell'analisi della risposta: {error}"
 
 themes:
   swiss: swiss
@@ -232,6 +265,9 @@ transition:
 buttons:
   close: chiudi
   back: Indietro
+  delete: Elimina
+  save_to_storage: Memorizza
+  save_and_transfer: Salva e trasferisci
 
 languages:
   de: DE

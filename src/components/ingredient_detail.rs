@@ -202,7 +202,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             
             match save_composite_ingredient(&ingredient_to_save) {
                 Ok(_) => {
-                    save_status.set(Some(format!("'{}' wurde erfolgreich gespeichert", edit_name())));
+                    save_status.set(Some(t!("messages.ingredient_saved_successfully", name = edit_name()).to_string()));
                     // Clear status after 2 seconds
                     let mut save_status_clone = save_status.clone();
                     spawn(async move {
@@ -211,7 +211,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     });
                 }
                 Err(e) => {
-                    save_status.set(Some(format!("Error: {}", e)));
+                    save_status.set(Some(t!("messages.error_generic", error = e).to_string()));
                     // Clear status after 3 seconds
                     let mut save_status_clone = save_status.clone();
                     spawn(async move {
@@ -372,7 +372,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             for saved_ing in get_saved_ingredients_list() {
                                 option { 
                                     value: "{saved_ing.name}",
-                                    label: "(Gespeichert)"
+                                    label: t!("label.saved_indicator").to_string()
                                 }
                             }
                             // Then add database ingredients
@@ -380,7 +380,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 option { 
                                     value: "{item.0}",
                                     // Show allergen marker in label without duplicating the name
-                                    label: if item.1 { "(Allergen)" } else { "" }
+                                    label: if item.1 { t!("label.allergen_indicator").to_string() } else { "".to_string() }
                                 }
                             }
                         }
@@ -388,11 +388,11 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     // Show category status - either loading, fetched, or empty
                     if is_fetching_category() {
                         div { class: "text-sm text-info mt-1",
-                            "Kategorie wird geladen..."
+                            {t!("messages.category_loading")}
                         }
                     } else if let Some(category) = &edit_category() {
                         div { class: "text-sm text-success mt-1",
-                            "Kategorie: {category}"
+                            {t!("messages.category_display", category = category)}
                         }
                     }
                 }
@@ -404,7 +404,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         ],
                         input {
                             r#type: "number",
-                            placeholder: "Menge in Gramm",
+                            placeholder: t!("placeholders.amount_in_grams").to_string(),
                             class: "input input-accent w-full",
                             oninput: move |evt| {
                                 let value = evt.data.value();
@@ -421,9 +421,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if !props.genesis && amount_has_changed() {
                         div { class: "text-sm text-info mt-2",
                             if let Some(amt) = edit_amount() {
-                                "Faktor: ×{scaling_factor():.2} (vorher: {original_ingredient.amount}g → neu: {amt}g)"
+                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_ingredient.amount.to_string(), after = amt.to_string())}
                             } else {
-                                "Bitte Menge eingeben"
+                                {t!("messages.please_enter_amount")}
                             }
                         }
                     }
@@ -553,8 +553,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         button {
                             class: "btn btn-info",
                             onclick: handle_save_to_storage,
-                            title: "Diese zusammengesetzte Zutat für spätere Verwendung speichern",
-                            "Merken"
+                            title: t!("tooltips.save_composite_ingredient").to_string(),
+                            {t!("buttons.save_to_storage")}
                         }
                     }
                     
@@ -568,7 +568,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             class: "btn btn-secondary",
                             onclick: move |_| handle_save(true),
                             title: format!("Die Mengenanpassung (×{:.2}) auf das gesamte Rezept übertragen", scaling_factor()),
-                            "Speichern und übertragen"
+                            {t!("buttons.save_and_transfer")}
                         }
                     }
                 }

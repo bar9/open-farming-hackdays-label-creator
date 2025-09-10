@@ -60,6 +60,10 @@ label:
   keinDatum: Pas de date de conservation/consommation
   ignore_ingredients: Pas de liste d'ingrédients (ingrédient unique)
   total: Total
+  components: Composants
+  actions: Actions
+  saved_indicator: (Enregistré)
+  allergen_indicator: (Allergène)
 
 nav:
   linkKopieren: Copier le lien
@@ -70,6 +74,7 @@ nav:
   anpassen: Adapter
   hinzufuegen: Ajouter
   speichern: Sauvegarder
+  saved_ingredients: Ingrédients enregistrés
 
 preview:
   etikettenVorschau: Aperçu de l'étiquette
@@ -95,6 +100,16 @@ units:
   l: l
   chf: CHF
   chfPro: "CHF par "
+
+tooltips:
+  manage_saved_ingredients: Gérer les ingrédients composés enregistrés
+  save_composite_ingredient: Enregistrer cet ingrédient composé pour une utilisation ultérieure
+
+headers:
+  saved_composite_ingredients: Ingrédients composés enregistrés
+
+placeholders:
+  amount_in_grams: Quantité en grammes
 
 placeholder:
   produktname: Rêve d'été
@@ -220,10 +235,27 @@ shorten_url_button: Raccourcir le lien
 shortening: Raccourcissement...
 close: Fermer
 
+messages:
+  ingredient_deleted: "'{name}' a été supprimé"
+  error_deleting: "Erreur lors de la suppression: {error}"
+  no_saved_ingredients: Aucun ingrédient enregistré
+  ingredient_saved_successfully: "'{name}' a été enregistré avec succès"
+  error_generic: "Erreur: {error}"
+  category_loading: Chargement de la catégorie...
+  category_display: "Catégorie: {category}"
+  please_enter_amount: Veuillez entrer une quantité
+  scaling_factor: "Facteur: ×{factor} (avant: {before}g → après: {after}g)"
+
 errors:
   page_not_found: Page non trouvée
   page_not_found_message: Nous sommes désolés, mais la page demandée n'existe pas.
   attempted_to_navigate: 'log:\nTentative de navigation vers: {route}'
+  localstorage_unavailable: LocalStorage n'est pas disponible
+  localstorage_save_failed: Erreur lors de l'enregistrement dans LocalStorage
+  localstorage_clear_failed: Erreur lors de la suppression de LocalStorage
+  parse_saved_ingredients_failed: "Erreur lors de l'analyse des ingrédients enregistrés: {error}"
+  api_request_failed: "Erreur lors de l'envoi de la requête: {error}"
+  api_parse_failed: "Erreur lors de l'analyse de la réponse: {error}"
 
 themes:
   swiss: swiss
@@ -244,6 +276,9 @@ transition:
 buttons:
   close: fermer
   back: Retour
+  delete: Supprimer
+  save_to_storage: Mémoriser
+  save_and_transfer: Enregistrer et transférer
 
 languages:
   de: DE
