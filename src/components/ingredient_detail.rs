@@ -2,6 +2,7 @@ use crate::api::search_food;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::model::{food_db, lookup_allergen};
+use crate::persistence::{save_composite_ingredient, get_saved_ingredients_list};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
@@ -16,7 +17,7 @@ pub struct IngredientDetailProps {
 }
 pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let index: usize;
-    let mut ingredients: Signal<Vec<Ingredient>>;
+    let ingredients: Signal<Vec<Ingredient>>;
     if props.genesis {
         ingredients = use_signal(|| vec![Ingredient::default()]);
         index = 0;
@@ -45,6 +46,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut edit_sub_components = use_signal(|| original_ingredient.sub_components.clone());
     let mut edit_category = use_signal(|| original_ingredient.category.clone());
     let mut is_fetching_category = use_signal(|| false);
+    let mut save_status = use_signal(|| None::<String>);
     
     // Check if the current name is in the food database
     let mut is_custom_ingredient = use_signal(|| {
@@ -123,6 +125,22 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         // Update local edit state only
         edit_name.set(new_name.clone());
         
+        // Check if this is a saved composite ingredient
+        let saved_ingredients = get_saved_ingredients_list();
+        if let Some(saved) = saved_ingredients.iter().find(|i| i.name == new_name) {
+            // Load saved ingredient data
+            edit_is_composite.set(true);
+            edit_sub_components.set(saved.sub_components.clone());
+            is_allergen_custom.set(saved.is_allergen);
+            edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
+            if saved.category.is_some() {
+                edit_category.set(saved.category.clone());
+                is_fetching_category.set(false);
+            }
+            is_custom_ingredient.set(true);  // Saved ingredients are treated as custom
+            return;  // Don't fetch category again
+        }
+        
         // Check if the new name is in the food database
         let in_database = food_db().iter().any(|(name, _)| name == &new_name);
         is_custom_ingredient.set(!in_database);
@@ -169,6 +187,41 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
     };
 
+    
+    let handle_save_to_storage = move |_| {
+        // Only save composite ingredients with sub-components
+        if edit_is_composite() && edit_sub_components().is_some() {
+            let ingredient_to_save = Ingredient {
+                name: edit_name(),
+                amount: 100.0,  // Save with standard amount
+                is_allergen: is_allergen_custom(),
+                is_namensgebend: Some(edit_is_namensgebend()),
+                sub_components: edit_sub_components(),
+                category: edit_category(),
+            };
+            
+            match save_composite_ingredient(&ingredient_to_save) {
+                Ok(_) => {
+                    save_status.set(Some(format!("'{}' wurde erfolgreich gespeichert", edit_name())));
+                    // Clear status after 2 seconds
+                    let mut save_status_clone = save_status.clone();
+                    spawn(async move {
+                        gloo::timers::future::TimeoutFuture::new(2000).await;
+                        save_status_clone.set(None);
+                    });
+                }
+                Err(e) => {
+                    save_status.set(Some(format!("Error: {}", e)));
+                    // Clear status after 3 seconds
+                    let mut save_status_clone = save_status.clone();
+                    spawn(async move {
+                        gloo::timers::future::TimeoutFuture::new(3000).await;
+                        save_status_clone.set(None);
+                    });
+                }
+            }
+        }
+    };
     
     let mut handle_save = move |scale_all: bool| {
         // Validate that amount is provided
@@ -315,6 +368,14 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         oninput: move |evt| update_name(evt.data.value()),
                         value: "{edit_name}",
                         datalist { id: "ingredients",
+                            // First, add saved composite ingredients
+                            for saved_ing in get_saved_ingredients_list() {
+                                option { 
+                                    value: "{saved_ing.name}",
+                                    label: "(Gespeichert)"
+                                }
+                            }
+                            // Then add database ingredients
                             for item in food_db().clone() {
                                 option { 
                                     value: "{item.0}",
@@ -450,6 +511,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         }
                     }
                 }
+                // Show save status if any
+                if let Some(status) = save_status() {
+                    div { class: "alert alert-info mb-4",
+                        span { "{status}" }
+                    }
+                }
+                
                 div { class: "modal-action",
                     button {
                         class: "btn",
@@ -479,6 +547,17 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         },
                         "× " {t!("nav.schliessen")},
                     }
+                    
+                    // Show "Merken" button only for composite ingredients
+                    if edit_is_composite() && edit_sub_components().is_some() {
+                        button {
+                            class: "btn btn-info",
+                            onclick: handle_save_to_storage,
+                            title: "Diese zusammengesetzte Zutat für spätere Verwendung speichern",
+                            "Merken"
+                        }
+                    }
+                    
                     button {
                         class: "btn btn-primary",
                         onclick: move |_| handle_save(false),

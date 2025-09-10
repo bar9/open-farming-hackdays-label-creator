@@ -17,6 +17,7 @@ pub mod core;
 mod form;
 mod model;
 mod nl2br;
+mod persistence;
 mod routes;
 mod rules;
 

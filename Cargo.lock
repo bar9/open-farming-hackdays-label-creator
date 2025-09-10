@@ -1429,6 +1429,7 @@ dependencies = [
  "markdown",
  "rust-i18n",
  "serde",
+ "serde_json",
  "serde_qs 0.14.0",
  "strum",
  "strum_macros",
