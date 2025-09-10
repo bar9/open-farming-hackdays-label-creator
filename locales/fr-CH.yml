@@ -50,6 +50,7 @@ label:
   zusammengesetzteZutat: Ingrédient composé
   zutatEingeben: Ingrédient (saisir ou sélectionner)
   namensgebend: Caractéristique
+  allergen: Allergène
   manuellesTotal: Poids final pesé (optionnel)
   mengenart: Volume ou poids
   einheit: Unité
@@ -168,6 +169,8 @@ help:
   zusammengesetzteZutaten: |
     Les ingrédients composés sont des ingrédients de recette composés de différents ingrédients (ex. bouillon, gélifiant, chocolat). Saisir ici les ingrédients individuels selon la liste des ingrédients.
     Indiquer les additifs avec leur fonction ex. acidifiant (acide citrique ou E330).
+  allergenManual: |
+    L'ingrédient n'est pas dans la base de données, une indication manuelle est donc nécessaire.
 
   namensgebendeZutaten: |
     Si des ingrédients sont mis en évidence dans la dénomination spécifique ou fantaisiste avec des mots ou représentés sur l'étiquette, le symbole derrière l'ingrédient doit être sélectionné. Ainsi, le pourcentage massique est automatiquement indiqué pour cette matière première dans la liste des ingrédients.

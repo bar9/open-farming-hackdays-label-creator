@@ -49,6 +49,7 @@ label:
   zusammengesetzteZutat: Zusammengesetzte Zutat
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
+  allergen: Allergen
   manuellesTotal: Gewogenes Endgewicht (optional)
   mengenart: Volumen oder Gewicht
   einheit: Einheit
@@ -120,6 +121,8 @@ help:
   zusammengesetzteZutaten: |
     Zusammengesetzte Zutaten sind Rezeptzutaten, die aus verschiedenen Zutaten bestehen (Bsp. Bouillon, Geliermittel, Schokolade). Die einzelnen Zutaten gemäss Zutatenliste hier erfassen.
     Zusatzstoffe mit Funktion angeben Bsp. Säuerungsmittel (Zitronensäure oder E330).
+  allergenManual: |
+    Zutat ist nicht in der Datenbank, deshalb ist eine manuelle Angabe nötig.
 
   namensgebendeZutaten: |
     Werden Zutaten in der Sach- oder Phantasiebezeichnung mit Worten hervorgehoben oder auf der Etikette abgebildet muss das Symbol hinter der Zutat angewählt werden. Dadurch erfolgt in der Zutatenliste bei diesem Rohstoff automatisch die Massenprozentangabe.

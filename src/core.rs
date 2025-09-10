@@ -84,7 +84,13 @@ impl Ingredient {
                 name.push_str(
                     &subs
                         .iter()
-                        .map(|sub| sub.name.clone())
+                        .map(|sub| {
+                            if sub.is_allergen {
+                                format!("<b>{}</b>", sub.name)
+                            } else {
+                                sub.name.clone()
+                            }
+                        })
                         .collect::<Vec<String>>()
                         .join(", "),
                 );

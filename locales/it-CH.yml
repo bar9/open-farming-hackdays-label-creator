@@ -50,6 +50,7 @@ label:
   zusammengesetzteZutat: Ingrediente composto
   zutatEingeben: Ingrediente (inserire o selezionare)
   namensgebend: Caratterizzante
+  allergen: Allergene
   manuellesTotal: Peso finale pesato (opzionale)
   mengenart: Volume o peso
   einheit: Unità
@@ -156,6 +157,8 @@ help:
   zusammengesetzteZutaten: |
     Gli ingredienti composti sono ingredienti di ricetta composti da diversi ingredienti (es. brodo, gelificante, cioccolato). Inserire qui i singoli ingredienti secondo l'elenco degli ingredienti.
     Indicare gli additivi con la loro funzione es. acidificante (acido citrico o E330).
+  allergenManual: |
+    L'ingrediente non è nel database, pertanto è necessaria un'indicazione manuale.
 
   namensgebendeZutaten: |
     Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, deve essere selezionato il simbolo dietro l'ingrediente. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
