@@ -1,5 +1,6 @@
+use crate::api::search_food;
 use crate::components::*;
-use crate::core::{Ingredient, SubIngredient};
+use crate::core::Ingredient;
 use crate::model::{food_db, lookup_allergen};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -42,6 +43,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         original_ingredient.is_namensgebend.unwrap_or(false)
     });
     let mut edit_sub_components = use_signal(|| original_ingredient.sub_components.clone());
+    let mut edit_category = use_signal(|| original_ingredient.category.clone());
+    let mut is_fetching_category = use_signal(|| false);
     
     // Check if the current name is in the food database
     let mut is_custom_ingredient = use_signal(|| {
@@ -83,6 +86,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             is_allergen: original_ingredient.is_allergen,
             is_namensgebend: original_ingredient.is_namensgebend,
             sub_components: original_ingredient.sub_components.clone(),
+            category: original_ingredient.category.clone(),
         }]
     });
     
@@ -97,6 +101,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
                 sub_components: edit_sub_components(),
+                category: edit_category(),
             };
         }
     });
@@ -126,6 +131,42 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         if in_database {
             is_allergen_custom.set(lookup_allergen(&new_name));
         }
+        
+        // Fetch category from API
+        if !new_name.is_empty() {
+            let name_for_api = new_name.clone();
+            let mut edit_category_clone = edit_category.clone();
+            let mut is_fetching_clone = is_fetching_category.clone();
+            
+            // Clear previous category and set loading state
+            edit_category.set(None);
+            is_fetching_category.set(true);
+            
+            spawn(async move {
+                // Get current locale for API call
+                let locale = rust_i18n::locale().to_string();
+                let lang = if locale.starts_with("fr") {
+                    "fr"
+                } else if locale.starts_with("it") {
+                    "it"
+                } else {
+                    "de"
+                };
+                
+                match search_food(&name_for_api, lang).await {
+                    Ok(category) => {
+                        edit_category_clone.set(category);
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to fetch category: {}", e);
+                    }
+                }
+                is_fetching_clone.set(false);
+            });
+        } else {
+            edit_category.set(None);
+            is_fetching_category.set(false);
+        }
     };
 
     
@@ -153,6 +194,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             is_allergen: allergen_status,
             is_namensgebend: Some(edit_is_namensgebend()),
             sub_components: edit_sub_components(),
+            category: edit_category(),
         };
         
         if props.genesis {
@@ -167,6 +209,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }) {
                     // Merge amounts instead of adding duplicate
                     existing_ingredients[existing_index].amount += new_ingredient.amount;
+                    // Update category if the new ingredient has one
+                    if new_ingredient.category.is_some() {
+                        existing_ingredients[existing_index].category = new_ingredient.category;
+                    }
                 } else {
                     existing_ingredients.push(new_ingredient);
                 }
@@ -181,6 +227,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_is_namensgebend.set(false);
             edit_sub_components.set(None);
             is_allergen_custom.set(false);
+            edit_category.set(None);
+            is_fetching_category.set(false);
         } else {
             // Update existing ingredient
             if scale_all && amount_has_changed() {
@@ -219,6 +267,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_sub_components.set(None);
                         is_allergen_custom.set(false);
                         is_custom_ingredient.set(true);
+                        edit_category.set(None);
+                        is_fetching_category.set(false);
                     }
                     is_open.toggle();
                 },
@@ -244,6 +294,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         is_custom_ingredient.set(
                             !food_db().iter().any(|(name, _)| name == &orig.name)
                         );
+                        edit_category.set(orig.category.clone());
+                        is_fetching_category.set(false);
                     }
                     is_open.toggle();
                 },
@@ -270,6 +322,16 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     label: if item.1 { "(Allergen)" } else { "" }
                                 }
                             }
+                        }
+                    }
+                    // Show category status - either loading, fetched, or empty
+                    if is_fetching_category() {
+                        div { class: "text-sm text-info mt-1",
+                            "Kategorie wird geladen..."
+                        }
+                    } else if let Some(category) = &edit_category() {
+                        div { class: "text-sm text-success mt-1",
+                            "Kategorie: {category}"
                         }
                     }
                 }
@@ -411,6 +473,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             is_custom_ingredient.set(
                                 !food_db().iter().any(|(name, _)| name == &orig.name)
                             );
+                            edit_category.set(orig.category.clone());
+                        is_fetching_category.set(false);
                             is_open.set(false);
                         },
                         "× " {t!("nav.schliessen")},
@@ -447,6 +511,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     is_custom_ingredient.set(
                         !food_db().iter().any(|(name, _)| name == &orig.name)
                     );
+                    edit_category.set(orig.category.clone());
                     is_open.set(false);
                 },
                 button { "" }

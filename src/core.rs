@@ -45,6 +45,7 @@ pub struct Ingredient {
     pub amount: f64,
     pub sub_components: Option<Vec<SubIngredient>>,
     pub is_namensgebend: Option<bool>,
+    pub category: Option<String>,
 }
 
 impl Ingredient {
@@ -53,7 +54,9 @@ impl Ingredient {
             name: name.clone(),
             is_allergen: lookup_allergen(&name),
             amount,
-            ..Default::default()
+            sub_components: None,
+            is_namensgebend: None,
+            category: None,
         }
     }
 
@@ -109,6 +112,7 @@ impl Default for Ingredient {
             amount: 0.,
             sub_components: Some(vec![]),
             is_namensgebend: None,
+            category: None,
         }
     }
 }

@@ -25,15 +25,16 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     });
     rsx! {
         div { class: "flex flex-col gap-4",
-            div { class: "grid gap-4 grid-cols-3 border-bottom items-center",
+            div { class: "grid gap-4 grid-cols-4 border-bottom items-center",
                 span { class: "font-bold", "{t!(\"label.zutatEingeben\")}" }
+                span { class: "font-bold", "Kategorie" }
                 span { class: "font-bold text-right", "{t!(\"Menge\")}" }
                 span {}
             }
             for (key , ingr) in props.ingredients.read().iter().enumerate() {
                 // ValidationDisplay {
                 //     paths: vec![format!("ingredients[{}][amount]", key)],
-                div { class: "grid gap-4 grid-cols-3 odd:bg-gray-100 even:bg-white items-center", key: "{key}",
+                div { class: "grid gap-4 grid-cols-4 odd:bg-gray-100 even:bg-white items-center", key: "{key}",
                     div { 
                         if ingr.is_allergen {
                             span { class: "font-bold", "{ingr.composite_name()}" }
@@ -41,6 +42,14 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                             "{ingr.composite_name()}"
                         }
                         if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")})"}
+                    }
+                    div {
+                        class: "text-sm text-gray-600",
+                        if let Some(category) = &ingr.category {
+                            "{category}"
+                        } else {
+                            "-"
+                        }
                     }
                     div {
                         class: "text-right",
@@ -66,8 +75,9 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 ConditionalDisplay {
                     path: "manuelles_total",
                     div {
-                        class: "grid grid-cols-3 gap-4",
+                        class: "grid grid-cols-4 gap-4",
                         div {{t!("label.total")}}
+                        div {} // Empty cell for category column
                         div {
                             class: "text-right",
                             "{total_amount} " {t!("units.g")}
@@ -97,7 +107,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 }
             }
         }
-        div { class: "grid grid-cols-3 gap-4 items-center border-top",
+        div { class: "grid grid-cols-4 gap-4 items-center border-top",
             // input {
             //     list: "ingredients",
             //     r#type: "flex",
@@ -131,6 +141,8 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 index: 0,
                 genesis: true
             } //index is ignored
+            div {} // Empty cell for category column
+            div {} // Empty cell for amount column
             // button {
             //     class: "btn btn-accent",
             //     onclick: move |_evt| { },

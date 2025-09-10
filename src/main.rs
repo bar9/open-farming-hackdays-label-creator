@@ -11,6 +11,7 @@ use rust_i18n::i18n;
 mod layout;
 mod shared;
 
+mod api;
 mod components;
 pub mod core;
 mod form;
