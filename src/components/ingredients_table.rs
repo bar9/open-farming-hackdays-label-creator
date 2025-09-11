@@ -26,7 +26,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     rsx! {
         div { class: "flex flex-col gap-4",
             div { class: "grid gap-4 grid-cols-4 border-bottom items-center",
-                span { class: "font-bold", "{t!(\"label.zutatEingeben\")}" }
+                span { class: "font-bold", "{t!(\"label.zutat\")}" }
                 span { class: "font-bold", "Kategorie" }
                 span { class: "font-bold text-right", "{t!(\"Menge\")}" }
                 span {}

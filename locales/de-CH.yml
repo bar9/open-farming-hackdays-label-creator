@@ -42,7 +42,7 @@ label:
   preisTotal: Detailpreis (optional)
   mindestensHaltbar: Mindestens haltbar bis
   zuVerbrauchen: Zu verbrauchen bis
-  zutatDetails: Zutat Details
+  zutatDetails: Details
   zutat: Zutat
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
@@ -240,26 +240,26 @@ shortening: Wird gekürzt...
 close: Schliessen
 
 messages:
-  ingredient_deleted: "'{name}' wurde gelöscht"
-  error_deleting: "Fehler beim Löschen: {error}"
+  ingredient_deleted: "'%{name}' wurde gelöscht"
+  error_deleting: "Fehler beim Löschen: %{error}"
   no_saved_ingredients: Keine gespeicherten Zutaten vorhanden
-  ingredient_saved_successfully: "'{name}' wurde erfolgreich gespeichert"
-  error_generic: "Fehler: {error}"
+  ingredient_saved_successfully: "'%{name}' wurde erfolgreich gespeichert"
+  error_generic: "Fehler: %{error}"
   category_loading: Kategorie wird geladen...
-  category_display: "Kategorie: {category}"
+  category_display: "Kategorie: %{category}"
   please_enter_amount: Bitte Menge eingeben
-  scaling_factor: "Faktor: ×{factor} (vorher: {before}g → neu: {after}g)"
+  scaling_factor: "Faktor: ×%{factor} (vorher: %{before}g → neu: %{after}g)"
 
 errors:
   page_not_found: Seite nicht gefunden
   page_not_found_message: Es tut uns sehr leid, aber die angeforderte Seite existiert nicht.
-  attempted_to_navigate: 'log:\nversucht zu navigieren zu: {route}'
+  attempted_to_navigate: 'log:\nversucht zu navigieren zu: %{route}'
   localstorage_unavailable: LocalStorage ist nicht verfügbar
   localstorage_save_failed: Fehler beim Speichern in LocalStorage
   localstorage_clear_failed: Fehler beim Löschen aus LocalStorage
-  parse_saved_ingredients_failed: "Fehler beim Parsen der gespeicherten Zutaten: {error}"
-  api_request_failed: "Fehler beim Senden der Anfrage: {error}"
-  api_parse_failed: "Fehler beim Parsen der Antwort: {error}"
+  parse_saved_ingredients_failed: "Fehler beim Parsen der gespeicherten Zutaten: %{error}"
+  api_request_failed: "Fehler beim Senden der Anfrage: %{error}"
+  api_parse_failed: "Fehler beim Parsen der Antwort: %{error}"
 
 themes:
   swiss: swiss

@@ -72,9 +72,8 @@ pub fn SavedIngredientsManager() -> Element {
                         table { class: "table table-zebra",
                             thead {
                                 tr {
-                                    th { {t!("label.name")} }
-                                    th { {t!("label.components")} }
                                     th { {t!("label.zutat")} }
+                                    th { {t!("label.components")} }
                                     th { {t!("label.actions")} }
                                 }
                             }
@@ -98,13 +97,6 @@ pub fn SavedIngredientsManager() -> Element {
                                                         }
                                                     }
                                                 }
-                                            }
-                                        }
-                                        td {
-                                            if let Some(category) = &saved.ingredient.category {
-                                                "{category}"
-                                            } else {
-                                                "-"
                                             }
                                         }
                                         td {

@@ -359,7 +359,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             div { class: "modal-box bg-base-100",
                 h3 { class: "font-bold text-lg", "{t!(\"label.zutatDetails\")}" }
                 FormField {
-                    label: t!("label.zutat"),
+                    label: t!("label.zutatEingeben"),
                     input {
                         list: "ingredients",
                         r#type: "flex",
@@ -396,6 +396,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         }
                     }
                 }
+                br {}
                 FormField {
                     label: format!("{} (g)", t!("label.menge")),
                     ValidationDisplay {

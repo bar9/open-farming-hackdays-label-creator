@@ -236,26 +236,26 @@ shortening: Raccourcissement...
 close: Fermer
 
 messages:
-  ingredient_deleted: "'{name}' a été supprimé"
-  error_deleting: "Erreur lors de la suppression: {error}"
+  ingredient_deleted: "'%{name}' a été supprimé"
+  error_deleting: "Erreur lors de la suppression: %{error}"
   no_saved_ingredients: Aucun ingrédient enregistré
-  ingredient_saved_successfully: "'{name}' a été enregistré avec succès"
-  error_generic: "Erreur: {error}"
+  ingredient_saved_successfully: "'%{name}' a été enregistré avec succès"
+  error_generic: "Erreur: %{error}"
   category_loading: Chargement de la catégorie...
-  category_display: "Catégorie: {category}"
+  category_display: "Catégorie: %{category}"
   please_enter_amount: Veuillez entrer une quantité
-  scaling_factor: "Facteur: ×{factor} (avant: {before}g → après: {after}g)"
+  scaling_factor: "Facteur: ×%{factor} (avant: %{before}g → après: %{after}g)"
 
 errors:
   page_not_found: Page non trouvée
   page_not_found_message: Nous sommes désolés, mais la page demandée n'existe pas.
-  attempted_to_navigate: 'log:\nTentative de navigation vers: {route}'
+  attempted_to_navigate: 'log:\nTentative de navigation vers: %{route}'
   localstorage_unavailable: LocalStorage n'est pas disponible
   localstorage_save_failed: Erreur lors de l'enregistrement dans LocalStorage
   localstorage_clear_failed: Erreur lors de la suppression de LocalStorage
-  parse_saved_ingredients_failed: "Erreur lors de l'analyse des ingrédients enregistrés: {error}"
-  api_request_failed: "Erreur lors de l'envoi de la requête: {error}"
-  api_parse_failed: "Erreur lors de l'analyse de la réponse: {error}"
+  parse_saved_ingredients_failed: "Erreur lors de l'analyse des ingrédients enregistrés: %{error}"
+  api_request_failed: "Erreur lors de l'envoi de la requête: %{error}"
+  api_parse_failed: "Erreur lors de l'analyse de la réponse: %{error}"
 
 themes:
   swiss: swiss

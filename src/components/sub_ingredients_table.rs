@@ -89,7 +89,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         div { class: "flex flex-col gap-4",
             table { class: "table border-solid",
                 tr {
-                    th { "{t!(\"label.zutatEingeben\")}" }
+                    th { "{t!(\"label.zutat\")}" }
                     th { "" }
                     th { "" }
                 }
