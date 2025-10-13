@@ -1,4 +1,4 @@
-use crate::model::lookup_allergen;
+use crate::model::{lookup_allergen, Country};
 use crate::rules::RuleDef;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -45,6 +45,7 @@ pub struct Ingredient {
     pub amount: f64,
     pub sub_components: Option<Vec<SubIngredient>>,
     pub is_namensgebend: Option<bool>,
+    pub origin: Option<Country>,
 }
 
 impl Ingredient {
@@ -103,6 +104,7 @@ impl Default for Ingredient {
             amount: 0.,
             sub_components: Some(vec![]),
             is_namensgebend: None,
+            origin: None,
         }
     }
 }
@@ -185,6 +187,20 @@ impl OutputFormatter {
         {
             output = format! {"{} {}", output, self.ingredient.composites()};
         }
+        // Add country of origin display for AP7_1_HerkunftBenoetigtUeber50Prozent rule
+        if self
+            .RuleDefs
+            .iter()
+            .any(|x| *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent)
+        {
+            if let Some(origin) = &self.ingredient.origin {
+                let country_name = match origin {
+                    Country::CH => "Schweiz",
+                    Country::EU => "EU",
+                };
+                output = format!("{} ({})", output, country_name);
+            }
+        }
         output
     }
 }
@@ -197,10 +213,25 @@ impl Calculator {
         let mut validation_messages = HashMap::new();
         let mut conditionals = HashMap::new();
 
+        // Calculate total amount first (needed for validations)
+        let mut total_amount = input.ingredients.iter().map(|x| x.amount).sum();
+        if self
+            .rule_defs
+            .iter()
+            .any(|x| *x == RuleDef::AP1_4_ManuelleEingabeTotal)
+        {
+            if let Some(tot) = input.total {
+                total_amount = tot;
+            }
+        }
+
         // validations
         for ruleDef in &self.rule_defs {
             if let RuleDef::AP1_1_ZutatMengeValidierung = ruleDef {
                 validate_amount(&input.ingredients, &mut validation_messages)
+            }
+            if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
+                validate_origin(&input.ingredients, total_amount, &mut validation_messages)
             }
         }
 
@@ -214,15 +245,28 @@ impl Calculator {
         let mut sorted_ingredients = input.ingredients.clone();
         sorted_ingredients.sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
 
-        let mut total_amount = input.ingredients.iter().map(|x| x.amount).sum();
         if self
             .rule_defs
             .iter()
             .any(|x| *x == RuleDef::AP1_4_ManuelleEingabeTotal)
         {
             conditionals.insert(String::from("manuelles_total"), true);
-            if let Some(tot) = input.total {
-                total_amount = tot;
+        }
+
+        // Check for ingredients >50% for country of origin display
+        for ruleDef in &self.rule_defs {
+            if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
+                let mut has_over_50_percent = false;
+                for (index, ingredient) in input.ingredients.iter().enumerate() {
+                    let percentage = (ingredient.amount / total_amount) * 100.0;
+                    if percentage > 50.0 {
+                        conditionals.insert(format!("herkunft_benoetigt_{}", index), true);
+                        has_over_50_percent = true;
+                    }
+                }
+                if has_over_50_percent {
+                    conditionals.insert(String::from("herkunft_benoetigt_ueber_50_prozent"), true);
+                }
             }
         }
 
@@ -247,6 +291,18 @@ fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut Hash
             validation_messages.insert(
                 format!("ingredients[{}][amount]", i),
                 "Die Menge muss grösser als 0 sein.",
+            );
+        }
+    }
+}
+
+fn validate_origin(ingredients: &Vec<Ingredient>, total_amount: f64, validation_messages: &mut HashMap<String, &str>) {
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        let percentage = (ingredient.amount / total_amount) * 100.0;
+        if percentage > 50.0 && ingredient.origin.is_none() {
+            validation_messages.insert(
+                format!("ingredients[{}][origin]", i),
+                "Herkunftsland ist erforderlich für Zutaten über 50%.",
             );
         }
     }
@@ -553,5 +609,89 @@ mod tests {
         let conditionals = output.conditional_elements;
         assert!(conditionals.get("manuelles_total").is_some());
         assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
+    }
+
+    #[test]
+    fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+        let input = Input {
+            ingredients: vec![Ingredient {
+                name: "Milch".to_string(),
+                amount: 700.,
+                ..Default::default()
+            }],
+            total: Some(350.),
+        };
+        let output = calculator.execute(input);
+        let conditionals = output.conditional_elements;
+        assert!(conditionals.get("herkunft_benoetigt_ueber_50_prozent").is_some());
+        assert_eq!(true, *conditionals.get("herkunft_benoetigt_ueber_50_prozent").unwrap());
+    }
+
+    #[test]
+    fn validation_missing_origin_for_ingredient_over_50_percent() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+        let input = Input {
+            ingredients: vec![Ingredient {
+                name: "Milch".to_string(),
+                amount: 700.,
+                origin: None, // Missing origin
+                ..Default::default()
+            }],
+            total: Some(350.), // This makes Milch 200% of total
+        };
+        let output = calculator.execute(input);
+        let validation_messages = output.validation_messages;
+        assert!(validation_messages.get("ingredients[0][origin]").is_some());
+        assert_eq!("Herkunftsland ist erforderlich für Zutaten über 50%.", *validation_messages.get("ingredients[0][origin]").unwrap());
+    }
+
+    #[test]
+    fn country_display_on_label_for_ingredients_with_origin() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+        let input = Input {
+            ingredients: vec![
+                Ingredient {
+                    name: "Milch".to_string(),
+                    amount: 600.,
+                    origin: Some(Country::CH),
+                    ..Default::default()
+                },
+                Ingredient {
+                    name: "Zucker".to_string(),
+                    amount: 200.,
+                    origin: Some(Country::EU),
+                    ..Default::default()
+                }
+            ],
+            total: Some(800.),
+        };
+        let output = calculator.execute(input);
+        let label = output.label;
+        assert!(label.contains("Milch (Schweiz)"));
+        assert!(label.contains("Zucker (EU)"));
+    }
+
+    #[test]
+    fn no_country_display_when_origin_not_set() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+        let input = Input {
+            ingredients: vec![Ingredient {
+                name: "Milch".to_string(),
+                amount: 700.,
+                origin: None, // No origin set
+                ..Default::default()
+            }],
+            total: Some(350.),
+        };
+        let output = calculator.execute(input);
+        let label = output.label;
+        assert!(label.contains("Milch"));
+        assert!(!label.contains("(Schweiz)"));
+        assert!(!label.contains("(EU)"));
     }
 }

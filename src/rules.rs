@@ -24,6 +24,7 @@ pub enum RuleDef {
     AP1_3_EingabeNamensgebendeZutat,
     AP1_4_ManuelleEingabeTotal,
     AP2_1_ZusammegesetztOutput,
+    AP7_1_HerkunftBenoetigtUeber50Prozent
 }
 
 // impl Rule for RuleDef {

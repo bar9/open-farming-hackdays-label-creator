@@ -57,7 +57,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             },
             if props.ingredients.len() > 0 {
                 ConditionalDisplay {
-                    path: "manuelles_total",
+                    path: "manuelles_total".to_string(),
                     div {
                         class: "grid grid-cols-3 gap-4",
                         div {{t!("label.total")}}
@@ -129,6 +129,12 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             //     onclick: move |_evt| { },
             //     "{t!(\"nav.hinzufuegen\")}"
             // }
+        }
+
+        // Show validation messages for all ingredients
+        ValidationDisplay {
+            paths: (0..props.ingredients.read().len()).map(|i| format!("ingredients[{}][origin]", i)).collect::<Vec<_>>(),
+            div {}
         }
     }
 }

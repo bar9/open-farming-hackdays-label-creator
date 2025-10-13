@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::core::Ingredient;
-use crate::model::{food_db, lookup_allergen};
+use crate::model::{food_db, lookup_allergen, Country};
+use crate::shared::Validations;
 use dioxus::prelude::*;
 use rust_i18n::t;
 
@@ -43,10 +44,18 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             .is_namensgebend
             .unwrap_or(false)
     });
+    let mut selected_origin = use_signal(|| {
+        ingredients
+            .get(index)
+            .unwrap()
+            .origin
+            .clone()
+    });
 
     let ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient_2 = ingredients.get(index).unwrap().clone();
+    let old_ingredient_3 = ingredients.get(index).unwrap().clone();
     let mut update_name = move |new_name: String| {
         ingredients.write()[index] = Ingredient {
             name: new_name.clone(),
@@ -82,6 +91,16 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         is_open.set(false);
     };
 
+    let herkunft_path = format!("herkunft_benoetigt_{}", index);
+
+    // Check for validation errors for this ingredient
+    let validations_context = use_context::<Validations>();
+    let has_validation_error = use_memo(move || {
+        let validation_entries = (*validations_context.0.read()).clone();
+        validation_entries.contains_key(&format!("ingredients[{}][origin]", index)) ||
+        validation_entries.contains_key(&format!("ingredients[{}][amount]", index))
+    });
+
     rsx! {
         if props.genesis {
             button {
@@ -92,10 +111,20 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             }
         } else {
             button {
-                class: "btn join-item btn-outline",
+                class: if *has_validation_error.read() {
+                    "btn join-item btn-outline btn-error relative"
+                } else {
+                    "btn join-item btn-outline"
+                },
                 onclick: move |_| is_open.toggle(),
                 onkeydown: move |evt: KeyboardEvent| if evt.key() == Key::Escape { is_open.set(false); },
                 icons::ListDetail {}
+                if *has_validation_error.read() {
+                    span {
+                        class: "absolute -top-2 -right-2 bg-error text-error-content rounded-full w-4 h-4 text-xs flex items-center justify-center",
+                        "!"
+                    }
+                }
             }
         }
         if is_open() { div { class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md" } }
@@ -201,7 +230,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }
                 br {}
                 ConditionalDisplay {
-                    path: "namensgebende_zutat",
+                    path: "namensgebende_zutat".to_string(),
                     FormField {
                         help: Some((t!("help.namensgebendeZutaten")).into()),
                         label: t!("label.namensgebendeZutat"),
@@ -220,6 +249,40 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             }
                             span { class: "label-text",
                                 "{t!(\"label.namensgebendeZutat\")}"
+                            }
+                        }
+                    }
+                }
+                ConditionalDisplay {
+                    path: herkunft_path,
+                    FormField {
+                        label: "Herkunft",
+                        ValidationDisplay {
+                            paths: vec![
+                                format!("ingredients[{}][origin]", index)
+                            ],
+                            select {
+                                class: "select select-bordered w-full",
+                                value: match selected_origin.read().as_ref() {
+                                    Some(Country::CH) => "CH",
+                                    Some(Country::EU) => "EU",
+                                    None => "",
+                                },
+                                onchange: move |e| {
+                                    let country = match e.value().as_str() {
+                                        "EU" => Country::EU,
+                                        "CH" => Country::CH,
+                                        _ => return, // Don't update for empty selection
+                                    };
+                                    selected_origin.set(Some(country.clone()));
+                                    ingredients.write()[index] = Ingredient {
+                                        origin: Some(country),
+                                        ..old_ingredient_3.clone()
+                                    }
+                                },
+                                option { value: "", selected: selected_origin.read().is_none(), "Bitte wählen..." }
+                                option { value: "CH", selected: matches!(selected_origin.read().as_ref(), Some(Country::CH)), "Schweiz" }
+                                option { value: "EU", selected: matches!(selected_origin.read().as_ref(), Some(Country::EU)), "EU" }
                             }
                         }
                     }

@@ -189,6 +189,7 @@ pub fn Swiss() -> Element {
             RuleDef::AP1_3_EingabeNamensgebendeZutat,
             RuleDef::AP1_4_ManuelleEingabeTotal,
             RuleDef::AP2_1_ZusammegesetztOutput,
+            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         ],
     });
 
