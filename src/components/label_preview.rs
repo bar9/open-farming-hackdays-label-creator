@@ -143,7 +143,7 @@ pub fn LabelPreview(
                     let amount_display = if let Some(calc_amount) = &calculated_amount {
                         if calc_amount().0 { Some(calc_amount().1) } else { None }
                     } else { None };
-                    
+
                     match (amount(), amount_display) {
                         // Show calculated amount when available
                         (_, Some(calculated_amt)) => rsx! {
@@ -235,7 +235,7 @@ pub fn LabelPreview(
                                 let total_price_display = if let Some(calc_total) = &calculated_total_price {
                                     if calc_total().0 { Some(calc_total().1) } else { None }
                                 } else { None };
-                                
+
                                 rsx! (
                                     div {
                                         span {
@@ -269,11 +269,11 @@ pub fn LabelPreview(
                             let unit_price_display = if let Some(calc_unit) = &calculated_unit_price {
                                 if calc_unit().0 { Some(calc_unit().1) } else { x }
                             } else { x };
-                            
+
                             let total_price_display = if let Some(calc_total) = &calculated_total_price {
                                 if calc_total().0 { Some(calc_total().1) } else { y }
                             } else { y };
-                            
+
                             // Show prices if we have either raw values or calculated values
                             if unit_price_display.is_some() || total_price_display.is_some() {
                                 rsx! (

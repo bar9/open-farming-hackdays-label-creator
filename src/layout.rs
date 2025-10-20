@@ -369,7 +369,7 @@ pub fn SplitLayout() -> Element {
                 }
             }
         }
-        
+
         // Link share modal
         {
             let context = copy_link_context.read();
@@ -383,7 +383,7 @@ pub fn SplitLayout() -> Element {
                 } else {
                     query_string.clone()
                 };
-                
+
                 rsx! {
                     LinkShareModal {
                         show: show_link_modal,
@@ -394,7 +394,7 @@ pub fn SplitLayout() -> Element {
                 rsx! {}
             }
         }
-        
+
         // Warning Dialog
         if show_warning() {
             div {

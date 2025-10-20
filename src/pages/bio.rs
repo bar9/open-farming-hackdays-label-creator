@@ -189,6 +189,7 @@ pub fn Bio() -> Element {
             RuleDef::AP1_3_EingabeNamensgebendeZutat,
             RuleDef::AP1_4_ManuelleEingabeTotal,
             RuleDef::AP2_1_ZusammegesetztOutput,
+            RuleDef::Bio_Knospe_AlleZutatenHerkunft,
         ],
     });
 
@@ -256,7 +257,8 @@ pub fn Bio() -> Element {
                                 IngredientsTable {
                                     ingredients: ingredients,
                                     validation_messages: validation_messages,
-                                    manual_total: manual_total
+                                    manual_total: manual_total,
+                                    rules: rules
                                 }
                             }
                         }

@@ -189,6 +189,8 @@ pub fn Knospe() -> Element {
             RuleDef::AP1_3_EingabeNamensgebendeZutat,
             RuleDef::AP1_4_ManuelleEingabeTotal,
             RuleDef::AP2_1_ZusammegesetztOutput,
+            RuleDef::Knospe_100_Percent_CH_NoOrigin,
+            RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
         ],
     });
 
@@ -256,7 +258,8 @@ pub fn Knospe() -> Element {
                                 IngredientsTable {
                                     ingredients: ingredients,
                                     validation_messages: validation_messages,
-                                    manual_total: manual_total
+                                    manual_total: manual_total,
+                                    rules: rules
                                 }
                             }
                         }

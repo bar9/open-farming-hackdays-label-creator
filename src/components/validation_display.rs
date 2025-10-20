@@ -9,11 +9,16 @@ pub struct ValidationDisplayProps {
 
 pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
     let validations_context = use_context::<Validations>();
-    let validation_entries = (*validations_context.0.read()).clone();
-    let relevant_validation_entries = validation_entries
-        .iter()
-        .filter(|(k, _v)| props.paths.contains(&**k))
-        .collect::<Vec<_>>();
+
+    // Create a derived memo to ensure reactivity
+    let relevant_validation_entries = use_memo(move || {
+        let validation_entries = validations_context.0.read();
+        validation_entries
+            .iter()
+            .filter(|(k, _v)| props.paths.contains(&**k))
+            .map(|(k, v)| (k.clone(), *v))
+            .collect::<Vec<_>>()
+    });
 
     rsx! {
         div {
@@ -25,7 +30,7 @@ pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
             div {
                 class: "border-red bg-red-100",
                 ul {
-                    for (_path, msg) in relevant_validation_entries {
+                    for (_path, msg) in relevant_validation_entries() {
                         li {class: "p-1", "{msg}"}
                     }
                 }

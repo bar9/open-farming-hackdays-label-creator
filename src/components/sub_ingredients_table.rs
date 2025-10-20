@@ -34,12 +34,10 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         is_allergen: lookup_allergen(&ingredient_name),
                     });
                 } else {
-                    let sub_components = vec![
-                        SubIngredient {
-                            name: ingredient_name.clone(),
-                            is_allergen: lookup_allergen(&ingredient_name),
-                        }
-                    ];
+                    let sub_components = vec![SubIngredient {
+                        name: ingredient_name.clone(),
+                        is_allergen: lookup_allergen(&ingredient_name),
+                    }];
                     ingredient.sub_components = Some(sub_components);
                 }
             }

@@ -9,10 +9,14 @@ pub struct ConditionalDisplayProps {
 
 pub fn ConditionalDisplay(props: ConditionalDisplayProps) -> Element {
     let conditional_context = use_context::<Conditionals>();
-    let conditional_entries = (*conditional_context.0.read()).clone();
-    let do_display = *conditional_entries.get(&props.path).unwrap_or(&false);
 
-    if do_display {
+    // Create a derived memo to ensure reactivity
+    let do_display = use_memo(move || {
+        let conditionals = conditional_context.0.read();
+        *conditionals.get(&props.path).unwrap_or(&false)
+    });
+
+    if do_display() {
         rsx! {
             {props.children}
         }

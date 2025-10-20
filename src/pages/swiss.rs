@@ -190,6 +190,7 @@ pub fn Swiss() -> Element {
             RuleDef::AP1_4_ManuelleEingabeTotal,
             RuleDef::AP2_1_ZusammegesetztOutput,
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
+            RuleDef::AP7_2_HerkunftNamensgebendeZutat,
         ],
     });
 
@@ -315,7 +316,8 @@ pub fn Swiss() -> Element {
                                 IngredientsTable {
                                     ingredients: ingredients,
                                     validation_messages: validation_messages,
-                                    manual_total: manual_total
+                                    manual_total: manual_total,
+                                    rules: rules
                                 }
                             }
                         }
