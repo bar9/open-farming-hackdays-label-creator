@@ -539,3 +539,30 @@ pub fn food_db() -> Vec<(String, bool)> {
 
     db
 }
+
+pub fn food_db_full() -> Vec<(String, bool, bool)> {
+    let mut db: Vec<(String, bool, bool)> = Vec::new();
+    let db_csv = include_str!("food_db.csv");
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(db_csv.as_bytes());
+
+    for record in rdr.records() {
+        let record = record.unwrap();
+        let name = record.get(0).unwrap().to_string();
+        let is_allergen = record.get(1).unwrap().eq("1");
+        let is_agricultural = record.get(2).unwrap().eq("1");
+        db.push((name, is_allergen, is_agricultural));
+    }
+
+    db
+}
+
+pub fn lookup_agricultural(name: &str) -> bool {
+    for entry in food_db_full() {
+        if entry.0.as_str() == name {
+            return entry.2; // Return agricultural status
+        }
+    }
+    true // Default to agricultural if not found
+}

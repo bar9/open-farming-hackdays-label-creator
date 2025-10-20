@@ -1,4 +1,4 @@
-use crate::model::{lookup_allergen, Country};
+use crate::model::{lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -80,13 +80,14 @@ impl Ingredient {
         Self {
             name: name.clone(),
             is_allergen: lookup_allergen(&name),
+            is_agricultural: lookup_agricultural(&name),
             amount,
             ..Default::default()
         }
     }
 
     pub fn is_agricultural(&self) -> bool {
-        true
+        self.is_agricultural
     }
 
     pub fn composite_name(&self) -> String {
@@ -1160,14 +1161,14 @@ mod tests {
                     name: "Hafer".to_string(),
                     amount: 600.,
                     origin: Some(Country::CH),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Weizenmehl".to_string(),
                     amount: 400.,
                     origin: Some(Country::CH),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Weizenmehl"),
                     ..Default::default()
                 },
             ],
@@ -1195,21 +1196,21 @@ mod tests {
                     name: "Hafer".to_string(),
                     amount: 500.,
                     origin: Some(Country::CH),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Weizenmehl".to_string(),
                     amount: 400.,
                     origin: Some(Country::CH),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Weizenmehl"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Olivenöl".to_string(),
                     amount: 100.,
                     origin: Some(Country::EU),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Olivenöl"),
                     ..Default::default()
                 },
             ],
@@ -1238,14 +1239,14 @@ mod tests {
                     name: "Hafer".to_string(),
                     amount: 400.,
                     origin: Some(Country::CH),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Olivenöl".to_string(),
                     amount: 600.,
                     origin: Some(Country::EU),
-                    is_agricultural: true,
+                    is_agricultural: lookup_agricultural("Olivenöl"),
                     ..Default::default()
                 },
             ],
@@ -1267,14 +1268,14 @@ mod tests {
                 name: "Hafer".to_string(),
                 amount: 600.,
                 origin: Some(Country::CH),
-                is_agricultural: true,
+                is_agricultural: lookup_agricultural("Hafer"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Weizenmehl".to_string(),
                 amount: 400.,
                 origin: Some(Country::CH),
-                is_agricultural: true,
+                is_agricultural: lookup_agricultural("Weizenmehl"),
                 ..Default::default()
             },
         ];
@@ -1290,21 +1291,21 @@ mod tests {
                 name: "Hafer".to_string(),
                 amount: 500.,
                 origin: Some(Country::CH),
-                is_agricultural: true,
+                is_agricultural: lookup_agricultural("Hafer"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Weizenmehl".to_string(),
                 amount: 400.,
                 origin: Some(Country::CH),
-                is_agricultural: true,
+                is_agricultural: lookup_agricultural("Weizenmehl"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Olivenöl".to_string(),
                 amount: 100.,
                 origin: Some(Country::EU),
-                is_agricultural: true,
+                is_agricultural: lookup_agricultural("Olivenöl"),
                 ..Default::default()
             },
         ];
@@ -1320,21 +1321,37 @@ mod tests {
                 name: "Hafer".to_string(),
                 amount: 500.,
                 origin: Some(Country::CH),
-                is_agricultural: true,
+                is_agricultural: lookup_agricultural("Hafer"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Salz".to_string(),
                 amount: 500.,
                 origin: Some(Country::EU),
-                is_agricultural: false,  // This field is ignored since getter always returns true
+                is_agricultural: lookup_agricultural("Salz"),  // Should be false from database
                 ..Default::default()
             },
         ];
 
         let percentage = calculate_swiss_agricultural_percentage(&ingredients);
-        // Since getter always returns true, all ingredients are considered agricultural
-        // Swiss: 500g, Total: 1000g -> 50%
-        assert_eq!(percentage, 50.0);
+        // Only Hafer is agricultural (500g Swiss), Salz is non-agricultural (ignored in calculation)
+        // Swiss agricultural: 500g, Total agricultural: 500g -> 100%
+        assert_eq!(percentage, 100.0);
+    }
+
+    #[test]
+    fn test_agricultural_lookup() {
+        // Test agricultural ingredients
+        assert_eq!(lookup_agricultural("Hafer"), true);
+        assert_eq!(lookup_agricultural("Weizenmehl"), true);
+        assert_eq!(lookup_agricultural("Olivenöl"), true);
+        assert_eq!(lookup_agricultural("Milch"), true);
+
+        // Test non-agricultural ingredients
+        assert_eq!(lookup_agricultural("Salz"), false);
+        assert_eq!(lookup_agricultural("Wasser"), false);
+
+        // Test unknown ingredient (should default to true)
+        assert_eq!(lookup_agricultural("UnknownIngredient"), true);
     }
 }

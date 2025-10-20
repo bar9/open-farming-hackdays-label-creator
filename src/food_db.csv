@@ -1,312 +1,313 @@
-zutat,allergen
-Agar Agar,0
-Agavensirup,0
-Ahornsirup,0
-Amaranth,0
-Amaranthsamen,0
-Ananas,0
-Ananassaft,0
-Apfel,0
-Apfelmus ungezuckert,0
-Apfelsaft,0
-Appenzeller viertelfett,1
-Appenzeller vollfett,1
-Aprikose,0
-Aubergine,0
-Avocado,0
-Balsamicoessig,0
-Banane,0
-Basilikum,0
-Baumnuss,1
-Baumnussöl,1
-Birne,0
-Birnensaft,0
-Blanc battu nature,1
-Blumenkohl,0
-Bohne getrocknet,0
-Bohne grün,0
-Bratbutter,1
-Broccoli,0
-Brombeere,0
-Brunnenkresse,0
-Buchweizen,0
-Buchweizenmehl,0
-Buttermilch,1
-Cashewnuss,1
-Champignon,0
-Chia-Samen,0
-Chicorée,0
-Chinakohl,0
-Cicorino rot,0
-Cornflakes,1
-Dattel getrocknet,0
-Dinkelmehl Vollkorn,1
-Dinkelmehl,1
-Distelöl,0
-Doppelrahm pasteurisiert,1
-Dorsch,1
-Edelkastanie,0
-Egli,1
-Eierschwamm,0
-Eisbergsalat,0
-Emmentaler,1
-Endivie,0
-Erbse grün,0
-Erbse,0
-Erdbeere,0
-Erdnuss geröstet gesalzen,1
-Erdnuss,1
-Erdnussöl,1
-Espresso ungezuckert,0
-Essig,0
-Federkohl,0
-Feige getrocknet,0
-Feige,0
-Felche,1
-Fenchel,0
-Flunder,1
-Forelle,1
-Freiburger Vacherin,1
-Frischkäse Doppelrahm,1
-Garnele,1
-Gerstenflocken,1
-Glarner Schabziger,1
-Gorgonzola,1
-Granatapfel,0
-Grapefruit,0
-Greyerzer vollfett,1
-Gurke,0
-Haferflocken,1
-Haferkleie,1
-Halbentrahmte Milch 1.5% Fett UHT,1
-Halbfettbutter,1
-Halbfettquark,1
-Halbhartkäse vollfett,1
-Halbrahm UHT,1
-Halbrahm pasteurisiert,1
-Halbrahm,1
-Hanföl,0
-Hartkäse vollfett,1
-Hartweizengriess,1
-Haselnuss,1
-Haselnussöl,1
-Hecht,1
-Hefe,0
-Heidelbeere,0
-Heilbutt,1
-Himbeere,0
-Hinterschinken,0
-Hirschfleisch,0
-Hirse,0
-Hirseflocken Vollkorn,0
-Holunderbeere schwarz,0
-Honigmelone,0
-Hühnerei ganz,1
-Hühnereigelb,1
-Hühnereiweiss,1
-Joghurt nature,1
-Johannisbeere rot,0
-Johannisbeere schwarz,0
-Kaffee löslich Pulver,0
-Kaffeerahm,1
-Kakaobutter,0
-Kaki,0
-Kalbfleisch,0
-Kalmar,1
-Kaninchen Filet roh,0
-Kaninchenfleisch,0
-Karotte,0
-Kartoffel,0
-Kartoffelstärke,0
-Kefe,0
-Kichererbse,0
-Kirsche,0
-Kiwi,0
-Knoblauch,0
-Knollensellerie,1
-Kochbutter,1
-Kohlrabi,0
-Kokosfett,0
-Kokosnuss,0
-Kokosnussmilch,0
-Kondensmilch gezuckert,1
-Kondensmilch ungezuckert,1
-Kopfsalat,0
-Käsereibutter,1
-Kürbis,0
-Kürbiskerne,0
-Kürbiskernöl,0
-Lachs Wildfang,1
-Lachs Zucht,1
-Lachs geräuchert,1
-Lammfleisch,0
-Lattich,0
-Lauch,0
-Leinsamen,0
-Leinöl,0
-Linse,0
-Lupinen,1
-Magermilch UHT,1
-Magermilchpulver,1
-Magerquark,1
-Mais,0
-Maisgriess,0
-Maiskeimöl,0
-Maisstärke,0
-Maltodextrin auf Weizenbasis,1
-Maltodextrin,0
-Mandarine,0
-Mandel geröstet gesalzen,1
-Mandel ohne Fett geröstet gesalzen,1
-Mandel,1
-Mango getrocknet,0
-Mango,0
-Mangold,0
-Maniok,0
-Mascarpone,1
-Miesmuschel,1
-Milch,1
-Mirabelle,0
-Molke,1
-Morchel,0
-Mozzarella,1
-Mutschli,1
-Nektarine,0
-Nüsslisalat,0
-Olive,0
-Olivenöl,0
-Orange,0
-Orangeat,0
-Orangensaft,0
-Palmöl - Palmfett,0
-Paniermehl,1
-Papaya,0
-Paranuss,1
-Passionsfrucht,0
-Pastinake,0
-Peperoni grün,0
-Peperoni rot,0
-Petersilie,0
-Pfefferminze,0
-Pferdfleisch,0
-Pfirsich,0
-Pflaume getrocknet,0
-Pflaume,0
-Pinienkerne,1
-Pistazie,1
-Pouletfleisch,0
-Preiselbeere,0
-Quinoa,0
-Quitte,0
-Raclettekäse,1
-Radieschen,0
-Rahmquark,1
-Rande,0
-Rapsöl,0
-Rehfleisch,0
-Reis,0
-Rettich,0
-Rhabarber,0
-Rindfleisch,0
-Roggenmehl,1
-Rohesspeck,0
-Rohschinken,0
-Rohzucker,0
-Rollgerste,1
-Rollmops,1
-Rosenkohl,0
-Rosine getrocknet,0
-Rosmarin,0
-Rotkohl,0
-Rotwein,0
-Rucola,0
-Salami,0
-Salbei,0
-Salz,0
-Sardelle im Öl abgetropft,1
-Sardine im Öl abgetropft,1
-Sardine,1
-Sauerrahm,1
-Saurer Halbrahm,1
-Scampi (Kaisergranat),1
-Schafmilch,1
-Schaumwein,0
-Schnittlauch,0
-Schokoladenpulver,0
-Scholle,1
-Schwarzwurzel,0
-Schweinefleisch,0
-Schweineschmalz,0
-Seehecht,1
-Seelachs,1
-Seezunge,1
-Seitan,1
-Senf,1
-Sesamsamen,1
-Sesamöl,1
-Sherry,0
-Silberzwiebeln,0
-Sojamehl,1
-Sojasprossen,1
-Sojaöl,1
-Sonnenblumenkerne,0
-Sonnenblumenöl,0
-Spargel,0
-Spinat,0
-Sprinz,1
-Stachelbeere,0
-Stangensellerie,1
-Steinpilz,0
-Surimi,1
-Süsskartoffel,0
-Teilentrahmte Milch UHT,1
-Teilentrahmte Milch pasteurisiert,1
-Thon im Wasser abgetropft,1
-Thon im Öl abgetropft,1
-Thunfisch,1
-Thymian,0
-Tofu,1
-Tomate,0
-Tomatenpüree,0
-Topinambur,0
-Traube,0
-Traubenkernöl,0
-Traubensaft,0
-Traubenzucker,0
-Trockenfleisch,0
-Truthahnfleisch,0
-Tête de Moine,1
-Vollkornreiswaffel,0
-Vollmilch UHT,1
-Vollmilch pasteurisiert,1
-Vollmilchpulver,1
-Vollrahm UHT,1
-Vollrahm pasteurisiert,1
-Vollrahm,1
-Vorderschinken,0
-Vorzugsbutter,1
-Wassermelone,0
-Weichkäse Rahm,1
-Weichkäse doppelrahm,1
-Weichkäse vollfett,1
-Weisskohl,0
-Weizenflocken Vollkorn,1
-Weizenkeime,1
-Weizenkeimöl,1
-Weizenkleie,1
-Weizenmehl Vollkorn,1
-Weizenmehl,1
-Weizenstärke,1
-Wirz,0
-Ziegenmilch,1
-Zimt,0
-Zitronat,0
-Zitrone,0
-Zitronensaft,0
-Zucchetti,0
-Zucker braun,0
-Zucker weiss,0
-Zucker,0
-Zuckerhutsalat,0
-Zwetschge,0
-Zwiebel,0
+zutat,allergen,agricultural
+Agar Agar,0,1
+Agavensirup,0,1
+Ahornsirup,0,1
+Amaranth,0,1
+Amaranthsamen,0,1
+Ananas,0,1
+Ananassaft,0,1
+Apfel,0,1
+Apfelmus ungezuckert,0,1
+Apfelsaft,0,1
+Appenzeller viertelfett,1,1
+Appenzeller vollfett,1,1
+Aprikose,0,1
+Aubergine,0,1
+Avocado,0,1
+Balsamicoessig,0,1
+Banane,0,1
+Basilikum,0,1
+Baumnuss,1,1
+Baumnussöl,1,1
+Birne,0,1
+Birnensaft,0,1
+Blanc battu nature,1,1
+Blumenkohl,0,1
+Bohne getrocknet,0,1
+Bohne grün,0,1
+Bratbutter,1,1
+Broccoli,0,1
+Brombeere,0,1
+Brunnenkresse,0,1
+Buchweizen,0,1
+Buchweizenmehl,0,1
+Buttermilch,1,1
+Cashewnuss,1,1
+Champignon,0,1
+Chia-Samen,0,1
+Chicorée,0,1
+Chinakohl,0,1
+Cicorino rot,0,1
+Cornflakes,1,1
+Dattel getrocknet,0,1
+Dinkelmehl,1,1
+Dinkelmehl Vollkorn,1,1
+Distelöl,0,1
+Doppelrahm pasteurisiert,1,1
+Dorsch,1,1
+Edelkastanie,0,1
+Egli,1,1
+Eierschwamm,0,1
+Eisbergsalat,0,1
+Emmentaler,1,1
+Endivie,0,1
+Erbse,0,1
+Erbse grün,0,1
+Erdbeere,0,1
+Erdnuss,1,1
+Erdnuss geröstet gesalzen,1,1
+Erdnussöl,1,1
+Espresso ungezuckert,0,1
+Essig,0,1
+Federkohl,0,1
+Feige,0,1
+Feige getrocknet,0,1
+Felche,1,1
+Fenchel,0,1
+Flunder,1,1
+Forelle,1,1
+Freiburger Vacherin,1,1
+Frischkäse Doppelrahm,1,1
+Garnele,1,1
+Gerstenflocken,1,1
+Glarner Schabziger,1,1
+Gorgonzola,1,1
+Granatapfel,0,1
+Grapefruit,0,1
+Greyerzer vollfett,1,1
+Gurke,0,1
+Haferflocken,1,1
+Haferkleie,1,1
+Halbentrahmte Milch 1.5% Fett UHT,1,1
+Halbfettbutter,1,1
+Halbfettquark,1,1
+Halbhartkäse vollfett,1,1
+Halbrahm,1,1
+Halbrahm pasteurisiert,1,1
+Halbrahm UHT,1,1
+Hanföl,0,1
+Hartkäse vollfett,1,1
+Hartweizengriess,1,1
+Haselnuss,1,1
+Haselnussöl,1,1
+Hecht,1,1
+Hefe,0,1
+Heidelbeere,0,1
+Heilbutt,1,1
+Himbeere,0,1
+Hinterschinken,0,1
+Hirschfleisch,0,1
+Hirse,0,1
+Hirseflocken Vollkorn,0,1
+Holunderbeere schwarz,0,1
+Honigmelone,0,1
+Hühnerei ganz,1,1
+Hühnereigelb,1,1
+Hühnereiweiss,1,1
+Joghurt nature,1,1
+Johannisbeere rot,0,1
+Johannisbeere schwarz,0,1
+Kaffee löslich Pulver,0,1
+Kaffeerahm,1,1
+Kakaobutter,0,1
+Kaki,0,1
+Kalbfleisch,0,1
+Kalmar,1,1
+Kaninchen Filet roh,0,1
+Kaninchenfleisch,0,1
+Karotte,0,1
+Kartoffel,0,1
+Kartoffelstärke,0,1
+Kefe,0,1
+Kichererbse,0,1
+Kirsche,0,1
+Kiwi,0,1
+Knoblauch,0,1
+Knollensellerie,1,1
+Kochbutter,1,1
+Kohlrabi,0,1
+Kokosfett,0,1
+Kokosnuss,0,1
+Kokosnussmilch,0,1
+Kondensmilch gezuckert,1,1
+Kondensmilch ungezuckert,1,1
+Kopfsalat,0,1
+Käsereibutter,1,1
+Kürbis,0,1
+Kürbiskerne,0,1
+Kürbiskernöl,0,1
+Lachs geräuchert,1,1
+Lachs Wildfang,1,1
+Lachs Zucht,1,1
+Lammfleisch,0,1
+Lattich,0,1
+Lauch,0,1
+Leinsamen,0,1
+Leinöl,0,1
+Linse,0,1
+Lupinen,1,1
+Magermilch UHT,1,1
+Magermilchpulver,1,1
+Magerquark,1,1
+Mais,0,1
+Maisgriess,0,1
+Maiskeimöl,0,1
+Maisstärke,0,1
+Maltodextrin,0,1
+Maltodextrin auf Weizenbasis,1,1
+Mandarine,0,1
+Mandel,1,1
+Mandel geröstet gesalzen,1,1
+Mandel ohne Fett geröstet gesalzen,1,1
+Mango,0,1
+Mango getrocknet,0,1
+Mangold,0,1
+Maniok,0,1
+Mascarpone,1,1
+Miesmuschel,1,1
+Milch,1,1
+Mirabelle,0,1
+Molke,1,1
+Morchel,0,1
+Mozzarella,1,1
+Mutschli,1,1
+Nektarine,0,1
+Nüsslisalat,0,1
+Olive,0,1
+Olivenöl,0,1
+Orange,0,1
+Orangeat,0,1
+Orangensaft,0,1
+Palmöl - Palmfett,0,1
+Paniermehl,1,1
+Papaya,0,1
+Paranuss,1,1
+Passionsfrucht,0,1
+Pastinake,0,1
+Peperoni grün,0,1
+Peperoni rot,0,1
+Petersilie,0,1
+Pfefferminze,0,1
+Pferdfleisch,0,1
+Pfirsich,0,1
+Pflaume,0,1
+Pflaume getrocknet,0,1
+Pinienkerne,1,1
+Pistazie,1,1
+Pouletfleisch,0,1
+Preiselbeere,0,1
+Quinoa,0,1
+Quitte,0,1
+Raclettekäse,1,1
+Radieschen,0,1
+Rahmquark,1,1
+Rande,0,1
+Rapsöl,0,1
+Rehfleisch,0,1
+Reis,0,1
+Rettich,0,1
+Rhabarber,0,1
+Rindfleisch,0,1
+Roggenmehl,1,1
+Rohesspeck,0,1
+Rohschinken,0,1
+Rohzucker,0,1
+Rollgerste,1,1
+Rollmops,1,1
+Rosenkohl,0,1
+Rosine getrocknet,0,1
+Rosmarin,0,1
+Rotkohl,0,1
+Rotwein,0,1
+Rucola,0,1
+Salami,0,1
+Salbei,0,1
+Salz,0,0
+Sardelle im Öl abgetropft,1,1
+Sardine,1,1
+Sardine im Öl abgetropft,1,1
+Sauerrahm,1,1
+Saurer Halbrahm,1,1
+Scampi (Kaisergranat),1,1
+Schafmilch,1,1
+Schaumwein,0,1
+Schnittlauch,0,1
+Schokoladenpulver,0,1
+Scholle,1,1
+Schwarzwurzel,0,1
+Schweinefleisch,0,1
+Schweineschmalz,0,1
+Seehecht,1,1
+Seelachs,1,1
+Seezunge,1,1
+Seitan,1,1
+Senf,1,1
+Sesamsamen,1,1
+Sesamöl,1,1
+Sherry,0,1
+Silberzwiebeln,0,1
+Sojamehl,1,1
+Sojasprossen,1,1
+Sojaöl,1,1
+Sonnenblumenkerne,0,1
+Sonnenblumenöl,0,1
+Spargel,0,1
+Spinat,0,1
+Sprinz,1,1
+Stachelbeere,0,1
+Stangensellerie,1,1
+Steinpilz,0,1
+Surimi,1,1
+Süsskartoffel,0,1
+Teilentrahmte Milch pasteurisiert,1,1
+Teilentrahmte Milch UHT,1,1
+Thon im Wasser abgetropft,1,1
+Thon im Öl abgetropft,1,1
+Thunfisch,1,1
+Thymian,0,1
+Tofu,1,1
+Tomate,0,1
+Tomatenpüree,0,1
+Topinambur,0,1
+Traube,0,1
+Traubenkernöl,0,1
+Traubensaft,0,1
+Traubenzucker,0,1
+Trockenfleisch,0,1
+Truthahnfleisch,0,1
+Tête de Moine,1,1
+Vollkornreiswaffel,0,1
+Vollmilch pasteurisiert,1,1
+Vollmilch UHT,1,1
+Vollmilchpulver,1,1
+Vollrahm,1,1
+Vollrahm pasteurisiert,1,1
+Vollrahm UHT,1,1
+Vorderschinken,0,1
+Vorzugsbutter,1,1
+Wasser,0,0
+Wassermelone,0,1
+Weichkäse doppelrahm,1,1
+Weichkäse Rahm,1,1
+Weichkäse vollfett,1,1
+Weisskohl,0,1
+Weizenflocken Vollkorn,1,1
+Weizenkeime,1,1
+Weizenkeimöl,1,1
+Weizenkleie,1,1
+Weizenmehl,1,1
+Weizenmehl Vollkorn,1,1
+Weizenstärke,1,1
+Wirz,0,1
+Ziegenmilch,1,1
+Zimt,0,1
+Zitronat,0,1
+Zitrone,0,1
+Zitronensaft,0,1
+Zucchetti,0,1
+Zucker,0,1
+Zucker braun,0,1
+Zucker weiss,0,1
+Zuckerhutsalat,0,1
+Zwetschge,0,1
+Zwiebel,0,1
