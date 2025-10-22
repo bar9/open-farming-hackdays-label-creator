@@ -10,4 +10,6 @@ pub struct Conditionals(pub Memo<HashMap<String, bool>>);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Configuration {
     Conventional,
+    Bio,
+    Knospe,
 }

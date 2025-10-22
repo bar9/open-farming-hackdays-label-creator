@@ -1,4 +1,6 @@
 use crate::components::{Amount, AmountType, Price};
+use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross};
+use crate::shared::Conditionals;
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -90,9 +92,21 @@ pub fn LabelPreview(
         _ => rsx!("{get_base_factor()} {get_unit()}"),
     });
 
+    let conditionals = use_context::<Conditionals>();
+
     rsx! {
         div { class: "p-8 flex flex-col bg-base-200",
-            div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4",
+            div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative",
+                // Bio Suisse logo display
+                if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
+                    div { class: "absolute top-2 right-2 w-16",
+                        BioSuisseRegular {}
+                    }
+                } else if conditionals.0().get("bio_suisse_no_cross").unwrap_or(&false) == &true {
+                    div { class: "absolute top-2 right-2 w-16",
+                        BioSuisseNoCross {}
+                    }
+                }
                 div { class: "grid grid-col-1 divide-y divide-dotted",
                 div {
                     class: "py-2",

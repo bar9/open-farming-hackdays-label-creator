@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::layout::{CopyLinkContext, ThemeContext};
-use crate::rules::RuleDef;
+use crate::rules::{RuleDef, RuleRegistry};
 use crate::shared::{Conditionals, Configuration, Validations};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -182,16 +182,11 @@ pub fn Swiss() -> Element {
         theme_context.write().theme = "swiss".to_string();
     });
 
-    let rules: Memo<Vec<RuleDef>> = use_memo(move || match configuration() {
-        Configuration::Conventional => vec![
-            RuleDef::AP1_1_ZutatMengeValidierung,
-            RuleDef::AP1_2_ProzentOutputNamensgebend,
-            RuleDef::AP1_3_EingabeNamensgebendeZutat,
-            RuleDef::AP1_4_ManuelleEingabeTotal,
-            RuleDef::AP2_1_ZusammegesetztOutput,
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat,
-        ],
+    let rules: Memo<Vec<RuleDef>> = use_memo(move || {
+        let registry = RuleRegistry::new();
+        registry.get_rules_for_config(&configuration())
+            .unwrap_or(&vec![])
+            .clone()
     });
 
     let calc_output: Memo<Output> = use_memo(move || {

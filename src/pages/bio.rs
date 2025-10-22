@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::layout::{CopyLinkContext, ThemeContext};
-use crate::rules::RuleDef;
+use crate::rules::{RuleDef, RuleRegistry};
 use crate::shared::{Conditionals, Configuration, Validations};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -142,7 +142,7 @@ pub fn Bio() -> Element {
     let amount: Signal<Amount> = use_signal(|| initial_form.read().amount);
     let price: Signal<Price> = use_signal(|| initial_form.read().price);
 
-    let configuration = use_signal(|| Configuration::Conventional);
+    let configuration = use_signal(|| Configuration::Bio);
 
     let current_state = use_memo(move || Form {
         ingredients: ingredients(),
@@ -182,15 +182,11 @@ pub fn Bio() -> Element {
         theme_context.write().theme = "bio".to_string();
     });
 
-    let rules: Memo<Vec<RuleDef>> = use_memo(move || match configuration() {
-        Configuration::Conventional => vec![
-            RuleDef::AP1_1_ZutatMengeValidierung,
-            RuleDef::AP1_2_ProzentOutputNamensgebend,
-            RuleDef::AP1_3_EingabeNamensgebendeZutat,
-            RuleDef::AP1_4_ManuelleEingabeTotal,
-            RuleDef::AP2_1_ZusammegesetztOutput,
-            RuleDef::Bio_Knospe_AlleZutatenHerkunft,
-        ],
+    let rules: Memo<Vec<RuleDef>> = use_memo(move || {
+        let registry = RuleRegistry::new();
+        registry.get_rules_for_config(&configuration())
+            .unwrap_or(&vec![])
+            .clone()
     });
 
     let calc_output: Memo<Output> = use_memo(move || {

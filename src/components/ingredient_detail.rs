@@ -47,11 +47,19 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             .unwrap_or(false)
     });
     let mut selected_origin = use_signal(|| ingredients.get(index).unwrap().origin.clone());
+    let mut is_bio = use_signal(|| {
+        ingredients
+            .get(index)
+            .unwrap()
+            .is_bio
+            .unwrap_or(true)
+    });
 
     let ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient = ingredients.get(index).unwrap().clone();
     let old_ingredient_2 = ingredients.get(index).unwrap().clone();
     let old_ingredient_3 = ingredients.get(index).unwrap().clone();
+    let old_ingredient_4 = ingredients.get(index).unwrap().clone();
     let mut update_name = move |new_name: String| {
         ingredients.write()[index] = Ingredient {
             name: new_name.clone(),
@@ -64,6 +72,15 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         let mut new_ingredient = ingredients.get(index).unwrap().clone();
         new_ingredient.amount = amount_to_edit();
         new_ingredient.is_allergen = lookup_allergen(&new_ingredient.name);
+
+        // Set is_bio to Some(true) for Bio/Knospe configurations if not already set
+        if new_ingredient.is_bio.is_none() {
+            let rules = props.rules.read();
+            let has_bio_rule = rules.iter().any(|rule| *rule == RuleDef::Bio_Knospe_EingabeIstBio);
+            if has_bio_rule {
+                new_ingredient.is_bio = Some(true);
+            }
+        }
 
         // Check if ingredient with same name and properties already exists (only for non-composite)
         if new_ingredient.sub_components.is_none()
@@ -250,6 +267,42 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 "{t!(\"label.namensgebendeZutat\")}"
                             }
                         }
+                    }
+                }
+                {
+                    // Check if Bio rule is active to show the bio checkbox
+                    let should_show_bio = use_memo(move || {
+                        let rules = props.rules.read();
+                        rules.iter().any(|rule| *rule == RuleDef::Bio_Knospe_EingabeIstBio)
+                    });
+
+                    if should_show_bio() {
+                        rsx! {
+                            FormField {
+                                help: Some("Gibt an, ob diese Zutat bio-zertifiziert ist".into()),
+                                label: "Bio",
+                                label { class: "label cursor-pointer",
+                                    input {
+                                        class: "checkbox",
+                                        r#type: "checkbox",
+                                        checked: "{is_bio}",
+                                        oninput: move |e| {
+                                            let is_checked = e.value() == "true";
+                                            is_bio.set(is_checked);
+                                            ingredients.write()[index] = Ingredient {
+                                                is_bio: Some(is_checked),
+                                                ..old_ingredient_4.clone()
+                                            }
+                                        },
+                                    }
+                                    span { class: "label-text",
+                                        "Bio"
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        rsx! {}
                     }
                 }
                 {

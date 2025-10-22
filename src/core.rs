@@ -53,6 +53,29 @@ fn calculate_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) -> f64
     (swiss_agricultural_amount / total_agricultural_amount) * 100.0
 }
 
+fn calculate_bio_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) -> f64 {
+    let total_bio_agricultural_amount: f64 = ingredients
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    if total_bio_agricultural_amount == 0.0 {
+        return 0.0;
+    }
+
+    let swiss_bio_agricultural_amount: f64 = ingredients
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
+        .filter(|ingredient| matches!(ingredient.origin, Some(Country::CH)))
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    (swiss_bio_agricultural_amount / total_bio_agricultural_amount) * 100.0
+}
+
 impl Calculator {
     pub(crate) fn new() -> Self {
         Calculator { rule_defs: vec![] }
@@ -69,6 +92,7 @@ pub struct Ingredient {
     pub origin: Option<Country>,
     #[serde(default = "default_is_agricultural")]
     pub is_agricultural: bool,
+    pub is_bio: Option<bool>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -138,6 +162,7 @@ impl Default for Ingredient {
             is_namensgebend: None,
             origin: None,
             is_agricultural: true,
+            is_bio: None,
         }
     }
 }
@@ -174,7 +199,7 @@ impl OutputFormatter {
             true => format! {"<b>{}</b>", self.ingredient.name},
             false => self.ingredient.name.clone(),
         };
-        if self.RuleDefs.iter().any(|x| *x == RuleDef::AllPercentages) {
+        if self.RuleDefs.contains(&RuleDef::AllPercentages) {
             output = format!(
                 "{} {}%",
                 output,
@@ -182,9 +207,7 @@ impl OutputFormatter {
             )
         }
         if self
-            .RuleDefs
-            .iter()
-            .any(|x| *x == RuleDef::PercentagesStartsWithM)
+            .RuleDefs.contains(&RuleDef::PercentagesStartsWithM)
             && self.ingredient.name.starts_with("M")
         {
             output = format!(
@@ -196,13 +219,11 @@ impl OutputFormatter {
         // if self.RuleDefs.iter().find(|x| **x == RuleDef::MaxDetails).is_some() {
         //     output = format!{"{:?}", self.ingredient}
         // }
-        if self.RuleDefs.iter().any(|x| *x == RuleDef::AllGram) {
+        if self.RuleDefs.contains(&RuleDef::AllGram) {
             output = format! {"{} {}g", self.ingredient.name, self.ingredient.amount};
         }
         if self
-            .RuleDefs
-            .iter()
-            .any(|x| *x == RuleDef::AP1_2_ProzentOutputNamensgebend)
+            .RuleDefs.contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
         {
             if let Some(true) = self.ingredient.is_namensgebend {
                 output = format!(
@@ -213,22 +234,16 @@ impl OutputFormatter {
             }
         }
         if self
-            .RuleDefs
-            .iter()
-            .any(|x| *x == RuleDef::AP2_1_ZusammegesetztOutput)
+            .RuleDefs.contains(&RuleDef::AP2_1_ZusammegesetztOutput)
             && self.ingredient.sub_components.is_some()
         {
             output = format! {"{} {}", output, self.ingredient.composites()};
         }
         // Handle Knospe-specific rules first (they take precedence)
         let has_knospe_100_rule = self
-            .RuleDefs
-            .iter()
-            .any(|x| *x == RuleDef::Knospe_100_Percent_CH_NoOrigin);
+            .RuleDefs.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
         let has_knospe_90_99_rule = self
-            .RuleDefs
-            .iter()
-            .any(|x| *x == RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+            .RuleDefs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
 
         if has_knospe_100_rule {
             // Rule A: 100% Swiss agricultural ingredients - no origin display
@@ -294,9 +309,7 @@ impl Calculator {
         // Calculate total amount first (needed for validations)
         let mut total_amount = input.ingredients.iter().map(|x| x.amount).sum();
         if self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::AP1_4_ManuelleEingabeTotal)
+            .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
         {
             if let Some(tot) = input.total {
                 total_amount = tot;
@@ -324,51 +337,65 @@ impl Calculator {
             if let RuleDef::AP1_3_EingabeNamensgebendeZutat = ruleDef {
                 conditionals.insert(String::from("namensgebende_zutat"), true);
             }
+            if let RuleDef::Bio_Knospe_EingabeIstBio = ruleDef {
+                conditionals.insert(String::from("is_bio_eingabe"), true);
+            }
         }
 
         let mut sorted_ingredients = input.ingredients.clone();
         sorted_ingredients.sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
 
         if self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::AP1_4_ManuelleEingabeTotal)
+            .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
         {
             conditionals.insert(String::from("manuelles_total"), true);
         }
 
         // Determine which ingredients require country of origin display
         let has_50_percent_rule = self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
+            .rule_defs.contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
         let has_namensgebende_rule = self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::AP7_2_HerkunftNamensgebendeZutat);
+            .rule_defs.contains(&RuleDef::AP7_2_HerkunftNamensgebendeZutat);
         let has_bio_knospe_rule = self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::Bio_Knospe_AlleZutatenHerkunft);
+            .rule_defs.contains(&RuleDef::Bio_Knospe_AlleZutatenHerkunft);
 
         // Handle Knospe-specific percentage-based rules
         let has_knospe_100_rule = self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::Knospe_100_Percent_CH_NoOrigin);
+            .rule_defs.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
         let has_knospe_90_99_rule = self
-            .rule_defs
-            .iter()
-            .any(|x| *x == RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+            .rule_defs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
 
         // Calculate percentage of Swiss agricultural ingredients for Knospe rules
         let mut actual_knospe_rule: Option<RuleDef> = None;
         if has_knospe_100_rule || has_knospe_90_99_rule {
-            let swiss_percentage = calculate_swiss_agricultural_percentage(&input.ingredients);
+            // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
+            let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
+            let swiss_percentage = if has_bio_rule {
+                calculate_bio_swiss_agricultural_percentage(&input.ingredients)
+            } else {
+                calculate_swiss_agricultural_percentage(&input.ingredients)
+            };
             if swiss_percentage >= 100.0 {
                 actual_knospe_rule = Some(RuleDef::Knospe_100_Percent_CH_NoOrigin);
             } else if swiss_percentage >= 90.0 {
                 actual_knospe_rule = Some(RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+            }
+        }
+
+        // Handle Bio Suisse logo display for Knospe configuration
+        if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+            // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
+            let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
+            let swiss_percentage = if has_bio_rule {
+                calculate_bio_swiss_agricultural_percentage(&input.ingredients)
+            } else {
+                calculate_swiss_agricultural_percentage(&input.ingredients)
+            };
+
+            if swiss_percentage >= 90.0 {
+                conditionals.insert(String::from("bio_suisse_regular"), true);
+            } else if swiss_percentage > 0.0 {
+                conditionals.insert(String::from("bio_suisse_no_cross"), true);
             }
         }
 
