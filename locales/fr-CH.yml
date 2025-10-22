@@ -50,6 +50,7 @@ label:
   zusammengesetzteZutat: Ingrédient composé
   zutatEingeben: Ingrédient (saisir ou sélectionner)
   namensgebend: Caractéristique
+  allergen: Allergène
   manuellesTotal: Poids final pesé (optionnel)
   mengenart: Volume ou poids
   einheit: Unité
@@ -59,6 +60,10 @@ label:
   keinDatum: Pas de date de conservation/consommation
   ignore_ingredients: Pas de liste d'ingrédients (ingrédient unique)
   total: Total
+  components: Composants
+  actions: Actions
+  saved_indicator: (Enregistré)
+  allergen_indicator: (Allergène)
 
 nav:
   linkKopieren: Copier le lien
@@ -69,6 +74,7 @@ nav:
   anpassen: Adapter
   hinzufuegen: Ajouter
   speichern: Sauvegarder
+  saved_ingredients: Ingrédients enregistrés
 
 preview:
   etikettenVorschau: Aperçu de l'étiquette
@@ -94,6 +100,16 @@ units:
   l: l
   chf: CHF
   chfPro: "CHF par "
+
+tooltips:
+  manage_saved_ingredients: Gérer les ingrédients composés enregistrés
+  save_composite_ingredient: Enregistrer cet ingrédient composé pour une utilisation ultérieure
+
+headers:
+  saved_composite_ingredients: Ingrédients composés enregistrés
+
+placeholders:
+  amount_in_grams: Quantité en grammes
 
 placeholder:
   produktname: Rêve d'été
@@ -168,6 +184,8 @@ help:
   zusammengesetzteZutaten: |
     Les ingrédients composés sont des ingrédients de recette composés de différents ingrédients (ex. bouillon, gélifiant, chocolat). Saisir ici les ingrédients individuels selon la liste des ingrédients.
     Indiquer les additifs avec leur fonction ex. acidifiant (acide citrique ou E330).
+  allergenManual: |
+    L'ingrédient n'est pas dans la base de données, une indication manuelle est donc nécessaire.
 
   namensgebendeZutaten: |
     Si des ingrédients sont mis en évidence dans la dénomination spécifique ou fantaisiste avec des mots ou représentés sur l'étiquette, le symbole derrière l'ingrédient doit être sélectionné. Ainsi, le pourcentage massique est automatiquement indiqué pour cette matière première dans la liste des ingrédients.
@@ -216,6 +234,75 @@ link_copied_success: Le lien a été copié dans le presse-papiers !
 shorten_url_button: Raccourcir le lien
 shortening: Raccourcissement...
 close: Fermer
+
+messages:
+  ingredient_deleted: "'%{name}' a été supprimé"
+  error_deleting: "Erreur lors de la suppression: %{error}"
+  no_saved_ingredients: Aucun ingrédient enregistré
+  ingredient_saved_successfully: "'%{name}' a été enregistré avec succès"
+  error_generic: "Erreur: %{error}"
+  category_loading: Chargement de la catégorie...
+  category_display: "Catégorie: %{category}"
+  please_enter_amount: Veuillez entrer une quantité
+  scaling_factor: "Facteur: ×%{factor} (avant: %{before}g → après: %{after}g)"
+
+errors:
+  page_not_found: Page non trouvée
+  page_not_found_message: Nous sommes désolés, mais la page demandée n'existe pas.
+  attempted_to_navigate: 'log:\nTentative de navigation vers: %{route}'
+  localstorage_unavailable: LocalStorage n'est pas disponible
+  localstorage_save_failed: Erreur lors de l'enregistrement dans LocalStorage
+  localstorage_clear_failed: Erreur lors de la suppression de LocalStorage
+  parse_saved_ingredients_failed: "Erreur lors de l'analyse des ingrédients enregistrés: %{error}"
+  api_request_failed: "Erreur lors de l'envoi de la requête: %{error}"
+  api_parse_failed: "Erreur lors de l'analyse de la réponse: %{error}"
+
+themes:
+  swiss: swiss
+  bio: bio
+  knospe: knospe
+  corporate: corporate
+
+countries:
+  switzerland: Suisse
+
+date_prefixes:
+  best_before: À consommer de préférence avant
+  use_by: À consommer jusqu'au
+
+transition:
+  umstellungsbetrieb: Exploitation en reconversion
+
+buttons:
+  close: fermer
+  back: Retour
+  delete: Supprimer
+  save_to_storage: Mémoriser
+  save_and_transfer: Enregistrer et transférer
+
+languages:
+  de: DE
+  fr: FR
+  it: IT
+
+badges:
+  not_for_meat_dairy: pas pour viande / produits laitiers
+  in_development: En développement
+
+version:
+  version: Version
+  from: du
+
+weight_units:
+  mg: mg
+  g: g
+  kg: kg
+
+volume_units:
+  ml: ml
+  cl: cl
+  dl: dl
+  l: l
 
 impressum: |
   # Mentions légales, Protection des données

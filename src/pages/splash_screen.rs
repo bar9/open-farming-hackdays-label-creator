@@ -25,9 +25,9 @@ pub fn SplashScreen() -> Element {
                             role: "button",
                             class: "btn btn-ghost btn-sm",
                             {match rust_i18n::locale().as_ref() {
-                                "fr-CH" => "FR ",
-                                "it-CH" => "IT ",
-                                _ => "DE ",
+                                "fr-CH" => t!("languages.fr"),
+                                "it-CH" => t!("languages.it"),
+                                _ => t!("languages.de"),
                             }}
                             svg {
                                 class: "w-4 h-4 ml-1",
@@ -57,7 +57,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    "DE"
+                                    {t!("languages.de")}
                                 }
                             }
                             li {
@@ -72,7 +72,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    "FR"
+                                    {t!("languages.fr")}
                                 }
                             }
                             li {
@@ -87,7 +87,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    "IT"
+                                    {t!("languages.it")}
                                 }
                             }
                         }
@@ -114,7 +114,7 @@ pub fn SplashScreen() -> Element {
                         class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
 
                         button {
-                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: "card bg-red-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
                                 nav.push(Route::Swiss {});
                             },
@@ -125,7 +125,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.swiss")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-red-50 rounded-lg mb-2",
+                                class: "w-24 h-24 flex items-center justify-center mb-2",
                                 svg {
                                     class: "w-16 h-16",
                                     view_box: "0 0 32 32",
@@ -152,13 +152,13 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-info text-xs px-2 py-1",
-                                "nicht für Fleisch- / Milchprodukte"
+                                {t!("badges.not_for_meat_dairy")}
                             }
                         }
                     }
 
                         button {
-                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
                                 nav.push(Route::Bio {});
                             },
@@ -169,19 +169,19 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.bio")}
                             }
                             div {
-                                class: "w-24 h-24 flex flex-col items-center justify-center bg-green-100 rounded-lg mb-2",
+                                class: "w-24 h-24 flex flex-col items-center justify-center mb-2",
                                 span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
                                 span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
-                                "In Entwicklung"
+                                {t!("badges.in_development")}
                             }
                         }
                     }
 
                         button {
-                            class: "card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
                                 nav.push(Route::Knospe {});
                             },
@@ -192,7 +192,7 @@ pub fn SplashScreen() -> Element {
                                 {t!("routes.knospe")}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center bg-green-50 rounded-lg mb-2",
+                                class: "w-24 h-24 flex items-center justify-center mb-2",
 
                                 svg {
                                     height: "768",
@@ -232,7 +232,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
-                                "In Entwicklung"
+                                {t!("badges.in_development")}
                             }
                         }
                     }
@@ -246,7 +246,7 @@ pub fn SplashScreen() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        "Version " {env!("CARGO_PKG_VERSION")} " vom " {
+                        {t!("version.version")} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from")} " " {
                             // Convert UTC time string to a more readable format
                             let build_time = built_info::BUILT_TIME_UTC;
                             // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy

@@ -11,11 +11,13 @@ use rust_i18n::i18n;
 mod layout;
 mod shared;
 
+mod api;
 mod components;
 pub mod core;
 mod form;
 mod model;
 mod nl2br;
+mod persistence;
 mod routes;
 mod rules;
 

@@ -93,6 +93,7 @@ pub struct Ingredient {
     #[serde(default = "default_is_agricultural")]
     pub is_agricultural: bool,
     pub is_bio: Option<bool>,
+    pub category: Option<String>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -106,7 +107,11 @@ impl Ingredient {
             is_allergen: lookup_allergen(&name),
             is_agricultural: lookup_agricultural(&name),
             amount,
-            ..Default::default()
+            sub_components: None,
+            is_namensgebend: None,
+            origin: None,
+            is_bio: None,
+            category: None,
         }
     }
 
@@ -141,7 +146,13 @@ impl Ingredient {
                 name.push_str(
                     &subs
                         .iter()
-                        .map(|sub| sub.name.clone())
+                        .map(|sub| {
+                            if sub.is_allergen {
+                                format!("<b>{}</b>", sub.name)
+                            } else {
+                                sub.name.clone()
+                            }
+                        })
                         .collect::<Vec<String>>()
                         .join(", "),
                 );
@@ -163,6 +174,7 @@ impl Default for Ingredient {
             origin: None,
             is_agricultural: true,
             is_bio: None,
+            category: None,
         }
     }
 }

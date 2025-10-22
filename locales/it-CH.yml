@@ -50,6 +50,7 @@ label:
   zusammengesetzteZutat: Ingrediente composto
   zutatEingeben: Ingrediente (inserire o selezionare)
   namensgebend: Caratterizzante
+  allergen: Allergene
   manuellesTotal: Peso finale pesato (opzionale)
   mengenart: Volume o peso
   einheit: Unità
@@ -59,6 +60,10 @@ label:
   keinDatum: Nessuna data di conservazione/consumo
   ignore_ingredients: Nessun elenco ingredienti (ingrediente singolo)
   total: Totale
+  components: Componenti
+  actions: Azioni
+  saved_indicator: (Salvato)
+  allergen_indicator: (Allergene)
 
 nav:
   linkKopieren: Copia link
@@ -68,6 +73,8 @@ nav:
   verhaeltnisseBeibehalten: Mantenere le proporzioni
   anpassen: Adattare
   hinzufuegen: Aggiungere
+  speichern: Salvare
+  saved_ingredients: Ingredienti salvati
 
 preview:
   etikettenVorschau: Anteprima etichetta
@@ -82,6 +89,16 @@ preview:
   website: "Sito web: %{website}"
   preisPro: "Prezzo per %{amount}%{unit}"
   preisTotal: Prezzo totale
+
+tooltips:
+  manage_saved_ingredients: Gestisci ingredienti composti salvati
+  save_composite_ingredient: Salva questo ingrediente composto per uso futuro
+
+headers:
+  saved_composite_ingredients: Ingredienti composti salvati
+
+placeholders:
+  amount_in_grams: Quantità in grammi
 
 placeholder:
   produktname: Sogno estivo
@@ -156,6 +173,8 @@ help:
   zusammengesetzteZutaten: |
     Gli ingredienti composti sono ingredienti di ricetta composti da diversi ingredienti (es. brodo, gelificante, cioccolato). Inserire qui i singoli ingredienti secondo l'elenco degli ingredienti.
     Indicare gli additivi con la loro funzione es. acidificante (acido citrico o E330).
+  allergenManual: |
+    L'ingrediente non è nel database, pertanto è necessaria un'indicazione manuale.
 
   namensgebendeZutaten: |
     Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, deve essere selezionato il simbolo dietro l'ingrediente. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
@@ -204,6 +223,75 @@ link_copied_success: Il link è stato copiato negli appunti!
 shorten_url_button: Accorcia link
 shortening: Accorciamento...
 close: Chiudi
+
+messages:
+  ingredient_deleted: "'%{name}' è stato eliminato"
+  error_deleting: "Errore durante l'eliminazione: %{error}"
+  no_saved_ingredients: Nessun ingrediente salvato
+  ingredient_saved_successfully: "'%{name}' è stato salvato con successo"
+  error_generic: "Errore: %{error}"
+  category_loading: Caricamento categoria...
+  category_display: "Categoria: %{category}"
+  please_enter_amount: Inserisci una quantità
+  scaling_factor: "Fattore: ×%{factor} (prima: %{before}g → dopo: %{after}g)"
+
+errors:
+  page_not_found: Pagina non trovata
+  page_not_found_message: Siamo spiacenti, ma la pagina richiesta non esiste.
+  attempted_to_navigate: 'log:\nTentativo di navigare verso: %{route}'
+  localstorage_unavailable: LocalStorage non disponibile
+  localstorage_save_failed: Errore durante il salvataggio in LocalStorage
+  localstorage_clear_failed: Errore durante l'eliminazione da LocalStorage
+  parse_saved_ingredients_failed: "Errore nell'analisi degli ingredienti salvati: %{error}"
+  api_request_failed: "Errore nell'invio della richiesta: %{error}"
+  api_parse_failed: "Errore nell'analisi della risposta: %{error}"
+
+themes:
+  swiss: swiss
+  bio: bio
+  knospe: knospe
+  corporate: corporate
+
+countries:
+  switzerland: Svizzera
+
+date_prefixes:
+  best_before: Da consumarsi preferibilmente entro
+  use_by: Da consumare entro
+
+transition:
+  umstellungsbetrieb: Azienda in conversione
+
+buttons:
+  close: chiudi
+  back: Indietro
+  delete: Elimina
+  save_to_storage: Memorizza
+  save_and_transfer: Salva e trasferisci
+
+languages:
+  de: DE
+  fr: FR
+  it: IT
+
+badges:
+  not_for_meat_dairy: non per carne / latticini
+  in_development: In sviluppo
+
+version:
+  version: Versione
+  from: del
+
+weight_units:
+  mg: mg
+  g: g
+  kg: kg
+
+volume_units:
+  ml: ml
+  cl: cl
+  dl: dl
+  l: l
 
 impressum: |
   # Impronta, Protezione dei dati

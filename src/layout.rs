@@ -1,6 +1,6 @@
 use crate::built_info;
 use crate::components::icons;
-use crate::components::LinkShareModal;
+use crate::components::{LinkShareModal, SavedIngredientsManager};
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -257,6 +257,9 @@ pub fn SplitLayout() -> Element {
                                 rsx! { span {} }
                             }
                         }
+                        
+                        // Saved ingredients manager button
+                        SavedIngredientsManager {}
 
                         div {
                             class: "dropdown dropdown-end",

@@ -247,7 +247,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 method: "dialog",
                 class: "modal-backdrop",
                 onclick: move |_| show.set(false),
-                button { "close" }
+                button { {t!("buttons.close")} }
             }
         }
     }

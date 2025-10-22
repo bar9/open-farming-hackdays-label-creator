@@ -42,13 +42,14 @@ label:
   preisTotal: Detailpreis (optional)
   mindestensHaltbar: Mindestens haltbar bis
   zuVerbrauchen: Zu verbrauchen bis
-  zutatDetails: Zutat Details
+  zutatDetails: Details
   zutat: Zutat
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
+  allergen: Allergen
   manuellesTotal: Gewogenes Endgewicht (optional)
   mengenart: Volumen oder Gewicht
   einheit: Einheit
@@ -58,6 +59,10 @@ label:
   keinDatum: Kein Haltbarkeits-/Verbrauchdatum
   ignore_ingredients: Keine Zutatenliste (Einzelzutat)
   total: Total
+  components: Bestandteile
+  actions: Aktionen
+  saved_indicator: (Gespeichert)
+  allergen_indicator: (Allergen)
 
 nav:
   linkKopieren: Link kopieren
@@ -68,6 +73,7 @@ nav:
   anpassen: Anpassen
   hinzufuegen: Hinzufügen
   speichern: Speichern
+  saved_ingredients: Gespeicherte Zutaten
 
 help:
   ignore_ingredients: |
@@ -120,6 +126,8 @@ help:
   zusammengesetzteZutaten: |
     Zusammengesetzte Zutaten sind Rezeptzutaten, die aus verschiedenen Zutaten bestehen (Bsp. Bouillon, Geliermittel, Schokolade). Die einzelnen Zutaten gemäss Zutatenliste hier erfassen.
     Zusatzstoffe mit Funktion angeben Bsp. Säuerungsmittel (Zitronensäure oder E330).
+  allergenManual: |
+    Zutat ist nicht in der Datenbank, deshalb ist eine manuelle Angabe nötig.
 
   namensgebendeZutaten: |
     Werden Zutaten in der Sach- oder Phantasiebezeichnung mit Worten hervorgehoben oder auf der Etikette abgebildet muss das Symbol hinter der Zutat angewählt werden. Dadurch erfolgt in der Zutatenliste bei diesem Rohstoff automatisch die Massenprozentangabe.
@@ -160,6 +168,16 @@ help:
     Preis der Verkaufseinheit
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
     
+
+tooltips:
+  manage_saved_ingredients: Gespeicherte zusammengesetzte Zutaten verwalten
+  save_composite_ingredient: Diese zusammengesetzte Zutat für spätere Verwendung speichern
+
+headers:
+  saved_composite_ingredients: Gespeicherte zusammengesetzte Zutaten
+
+placeholders:
+  amount_in_grams: Menge in Gramm
 
 placeholder:
   produktname: Sommertraum
@@ -220,6 +238,75 @@ link_copied_success: Link wurde in die Zwischenablage kopiert!
 shorten_url_button: Link kürzen
 shortening: Wird gekürzt...
 close: Schliessen
+
+messages:
+  ingredient_deleted: "'%{name}' wurde gelöscht"
+  error_deleting: "Fehler beim Löschen: %{error}"
+  no_saved_ingredients: Keine gespeicherten Zutaten vorhanden
+  ingredient_saved_successfully: "'%{name}' wurde erfolgreich gespeichert"
+  error_generic: "Fehler: %{error}"
+  category_loading: Kategorie wird geladen...
+  category_display: "Kategorie: %{category}"
+  please_enter_amount: Bitte Menge eingeben
+  scaling_factor: "Faktor: ×%{factor} (vorher: %{before}g → neu: %{after}g)"
+
+errors:
+  page_not_found: Seite nicht gefunden
+  page_not_found_message: Es tut uns sehr leid, aber die angeforderte Seite existiert nicht.
+  attempted_to_navigate: 'log:\nversucht zu navigieren zu: %{route}'
+  localstorage_unavailable: LocalStorage ist nicht verfügbar
+  localstorage_save_failed: Fehler beim Speichern in LocalStorage
+  localstorage_clear_failed: Fehler beim Löschen aus LocalStorage
+  parse_saved_ingredients_failed: "Fehler beim Parsen der gespeicherten Zutaten: %{error}"
+  api_request_failed: "Fehler beim Senden der Anfrage: %{error}"
+  api_parse_failed: "Fehler beim Parsen der Antwort: %{error}"
+
+themes:
+  swiss: swiss
+  bio: bio
+  knospe: knospe
+  corporate: corporate
+
+countries:
+  switzerland: Schweiz
+
+date_prefixes:
+  best_before: Mindestens haltbar bis
+  use_by: Zu verbrauchen bis
+
+transition:
+  umstellungsbetrieb: Umstellungsbetrieb
+
+buttons:
+  close: schliessen
+  back: Zurück
+  delete: Löschen
+  save_to_storage: Merken
+  save_and_transfer: Speichern und übertragen
+
+languages:
+  de: DE
+  fr: FR
+  it: IT
+
+badges:
+  not_for_meat_dairy: nicht für Fleisch- / Milchprodukte
+  in_development: In Entwicklung
+
+version:
+  version: Version
+  from: vom
+
+weight_units:
+  mg: mg
+  g: g
+  kg: kg
+
+volume_units:
+  ml: ml
+  cl: cl
+  dl: dl
+  l: l
 
 impressum: |
   # Impressum, Datenschutz

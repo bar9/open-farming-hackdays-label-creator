@@ -58,15 +58,15 @@ pub struct Form {
 }
 
 fn default_weight_unit() -> String {
-    "g".to_string()
+    t!("weight_units.g").to_string()
 }
 
 fn default_volume_unit() -> String {
-    "ml".to_string()
+    t!("volume_units.ml").to_string()
 }
 
 fn default_date_prefix() -> String {
-    "Mindestens haltbar bis".to_string()
+    t!("date_prefixes.best_before").to_string()
 }
 
 impl From<Form> for Input {
@@ -96,9 +96,9 @@ impl Default for Form {
             product_subtitle: String::new(),
             additional_info: String::new(),
             storage_info: String::new(),
-            date_prefix: String::from("Mindestens haltbar bis "),
+            date_prefix: format!("{} ", t!("date_prefixes.best_before")),
             date: String::new(),
-            production_country: String::from("Schweiz"),
+            production_country: t!("countries.switzerland").to_string(),
             producer_name: String::new(),
             producer_address: String::new(),
             producer_email: String::new(),
@@ -108,8 +108,8 @@ impl Default for Form {
             producer_city: String::new(),
             manual_total: None,
             amount_type: AmountType::Weight,
-            weight_unit: "g".to_string(),
-            volume_unit: "ml".to_string(),
+            weight_unit: t!("weight_units.g").to_string(),
+            volume_unit: t!("volume_units.ml").to_string(),
             amount: Amount::Single(Some(0)),
             price: Price::Single(Some(0)),
         }
@@ -179,7 +179,7 @@ pub fn Knospe() -> Element {
     use_effect(move || {
         let qs = query_string();
         copy_link_context.write().query_string = Some(qs);
-        theme_context.write().theme = "knospe".to_string();
+        theme_context.write().theme = t!("themes.knospe").to_string();
     });
 
     let rules: Memo<Vec<RuleDef>> = use_memo(move || {
