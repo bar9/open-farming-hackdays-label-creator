@@ -66,6 +66,8 @@ pub enum RuleDef {
     Knospe_100_Percent_CH_NoOrigin,
     /// Knospe: When 90-99.99% of agricultural ingredients are from Switzerland, show origin for Swiss ingredients
     Knospe_90_99_Percent_CH_ShowOrigin,
+    /// Knospe: When <90% of agricultural ingredients are from Switzerland, show origin based on specific ingredient criteria
+    Knospe_Under90_Percent_CH_IngredientRules,
     /// Bio/Knospe: Enables input of whether each ingredient is bio-certified
     Bio_Knospe_EingabeIstBio,
     /// Knospe: Shows Bio Suisse logo based on Swiss ingredient percentage
@@ -100,6 +102,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_Knospe_AlleZutatenHerkunft => RuleType::Validation,
             RuleDef::Knospe_100_Percent_CH_NoOrigin => RuleType::Output,
             RuleDef::Knospe_90_99_Percent_CH_ShowOrigin => RuleType::Output,
+            RuleDef::Knospe_Under90_Percent_CH_IngredientRules => RuleType::Output,
             RuleDef::Bio_Knospe_EingabeIstBio => RuleType::Conditional,
             RuleDef::Knospe_ShowBioSuisseLogo => RuleType::Conditional,
         }
@@ -134,6 +137,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_Knospe_AlleZutatenHerkunft => "Erfordert Herkunftsangabe für alle Zutaten (Bio/Knospe Anforderung)",
             RuleDef::Knospe_100_Percent_CH_NoOrigin => "Knospe: Bei 100% landwirtschaftlichen Zutaten aus CH keine Herkunftsangabe nötig",
             RuleDef::Knospe_90_99_Percent_CH_ShowOrigin => "Knospe: Bei 90-99.99% landwirtschaftlichen Zutaten aus CH Herkunftsangabe für CH-Zutaten",
+            RuleDef::Knospe_Under90_Percent_CH_IngredientRules => "Knospe: Bei <90% landwirtschaftlichen Zutaten aus CH Herkunftsangabe nach spezifischen Zutatkriterien",
             RuleDef::Bio_Knospe_EingabeIstBio => "Ermöglicht die Eingabe ob eine Zutat bio-zertifiziert ist",
             RuleDef::Knospe_ShowBioSuisseLogo => "Zeigt Bio Suisse Logo basierend auf Schweizer Zutaten-Prozentsatz",
         }
@@ -202,6 +206,7 @@ impl RuleRegistry {
                 RuleDef::AP2_1_ZusammegesetztOutput,
                 RuleDef::Knospe_100_Percent_CH_NoOrigin,
                 RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
+                RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Knospe_ShowBioSuisseLogo,
             ],

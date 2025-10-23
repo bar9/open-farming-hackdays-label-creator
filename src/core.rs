@@ -271,6 +271,8 @@ impl OutputFormatter {
             .RuleDefs.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
         let has_knospe_90_99_rule = self
             .RuleDefs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+        let has_knospe_under90_rule = self
+            .RuleDefs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
         if has_knospe_100_rule {
             // Rule A: 100% Swiss agricultural ingredients - no origin display
@@ -279,6 +281,19 @@ impl OutputFormatter {
             // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
             if let Some(Country::CH) = &self.ingredient.origin {
                 output = format!("{} (Schweiz)", output);
+            }
+        } else if has_knospe_under90_rule {
+            // Rule C: <90% Swiss agricultural ingredients - show origin based on specific ingredient criteria
+            let percentage = (self.ingredient.amount / self.total_amount) * 100.0;
+            let is_mono_product = self.total_amount == self.ingredient.amount; // Simple check for single ingredient
+
+            if should_show_origin_knospe_under90(&self.ingredient, percentage, self.total_amount, is_mono_product) {
+                if let Some(origin) = &self.ingredient.origin {
+                    if !matches!(origin, Country::NoOriginRequired) {
+                        let country_name = origin.display_name();
+                        output = format!("{} ({})", output, country_name);
+                    }
+                }
             }
         } else {
             // Check for beef-specific origin display first
@@ -430,10 +445,12 @@ impl Calculator {
             .rule_defs.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
         let has_knospe_90_99_rule = self
             .rule_defs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+        let has_knospe_under90_rule = self
+            .rule_defs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
         // Calculate percentage of Swiss agricultural ingredients for Knospe rules
         let mut actual_knospe_rule: Option<RuleDef> = None;
-        if has_knospe_100_rule || has_knospe_90_99_rule {
+        if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
             // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
             let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
             let swiss_percentage = if has_bio_rule {
@@ -441,10 +458,12 @@ impl Calculator {
             } else {
                 calculate_swiss_agricultural_percentage(&input.ingredients)
             };
-            if swiss_percentage >= 100.0 {
+            if swiss_percentage >= 100.0 && has_knospe_100_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_100_Percent_CH_NoOrigin);
-            } else if swiss_percentage >= 90.0 {
+            } else if swiss_percentage >= 90.0 && has_knospe_90_99_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+            } else if swiss_percentage < 90.0 && has_knospe_under90_rule {
+                actual_knospe_rule = Some(RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
             }
         }
 
@@ -685,6 +704,151 @@ fn is_meat_category(category: &str) -> bool {
     category_lower.contains("bacon") ||
     category_lower.contains("sausage") ||
     category_lower.contains("salami")
+}
+
+/// Check if a category represents eggs
+pub fn is_egg_category(category: &str) -> bool {
+    let category_lower = category.to_lowercase();
+
+    // Official BLV API categories and common terms for eggs
+    category_lower == "eier" ||
+    category_lower == "ei" ||
+    category_lower.contains("eier") ||
+    category_lower.contains("hühnerei") ||
+
+    // English terms
+    category_lower == "eggs" ||
+    category_lower == "egg" ||
+    category_lower.contains("egg")
+}
+
+/// Check if a category represents honey
+pub fn is_honey_category(category: &str) -> bool {
+    let category_lower = category.to_lowercase();
+
+    // Official BLV API categories and common terms for honey
+    category_lower == "honig" ||
+    category_lower.contains("honig") ||
+
+    // English terms
+    category_lower == "honey" ||
+    category_lower.contains("honey")
+}
+
+/// Check if a category represents milk or dairy products
+pub fn is_dairy_category(category: &str) -> bool {
+    let category_lower = category.to_lowercase();
+
+    // Official BLV API categories for dairy products
+    category_lower == "milch und milchprodukte" ||
+    category_lower == "milch" ||
+    category_lower == "milchprodukte" ||
+    category_lower == "käse" ||
+    category_lower == "joghurt" ||
+    category_lower == "quark" ||
+    category_lower == "butter" ||
+    category_lower == "rahm" ||
+    category_lower == "sahne" ||
+    category_lower == "frischkäse" ||
+
+    // English terms
+    category_lower == "milk" ||
+    category_lower == "dairy" ||
+    category_lower.contains("milk") ||
+    category_lower.contains("dairy") ||
+    category_lower.contains("cheese") ||
+    category_lower.contains("yogurt") ||
+    category_lower.contains("yoghurt") ||
+    category_lower.contains("butter") ||
+    category_lower.contains("cream")
+}
+
+/// Check if a category represents insects or insect products
+pub fn is_insect_category(category: &str) -> bool {
+    let category_lower = category.to_lowercase();
+
+    // Categories for insect products
+    category_lower == "insekten" ||
+    category_lower == "insektenprodukte" ||
+    category_lower.contains("insekt") ||
+    category_lower.contains("grille") ||
+    category_lower.contains("heuschrecke") ||
+    category_lower.contains("mehlwurm") ||
+
+    // English terms
+    category_lower == "insects" ||
+    category_lower.contains("insect") ||
+    category_lower.contains("cricket") ||
+    category_lower.contains("grasshopper") ||
+    category_lower.contains("mealworm")
+}
+
+/// Check if a category represents plant-based ingredients
+pub fn is_plant_category(category: &str) -> bool {
+    let category_lower = category.to_lowercase();
+
+    // This is a broad category - we check if it's NOT an animal product
+    !is_meat_category(category) &&
+    !is_fish_category(category) &&
+    !is_egg_category(category) &&
+    !is_honey_category(category) &&
+    !is_dairy_category(category) &&
+    !is_insect_category(category) &&
+
+    // Or explicitly plant-based categories
+    category_lower.contains("gemüse") ||
+    category_lower.contains("obst") ||
+    category_lower.contains("getreide") ||
+    category_lower.contains("nüsse") ||
+    category_lower.contains("samen") ||
+    category_lower.contains("vegetable") ||
+    category_lower.contains("fruit") ||
+    category_lower.contains("grain") ||
+    category_lower.contains("nut") ||
+    category_lower.contains("seed")
+}
+
+/// Determines if an ingredient should show origin for Knospe <90% CH rules
+/// Based on specific Knospe criteria for ingredient types and percentages
+fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _total_amount: f64, is_mono_product: bool) -> bool {
+    // For monoproducts (single ingredient products), always show origin
+    if is_mono_product {
+        return true;
+    }
+
+    // Swiss ingredients with at least 10% share
+    if matches!(ingredient.origin, Some(Country::CH)) && percentage >= 10.0 {
+        return true;
+    }
+
+    // Plant ingredients with more than 50% share
+    if let Some(category) = &ingredient.category {
+        if is_plant_category(category) && percentage > 50.0 {
+            return true;
+        }
+    }
+
+    // Eggs/Honey/Fish/Other aquacultures with more than 10% share
+    if let Some(category) = &ingredient.category {
+        if (is_egg_category(category) ||
+            is_honey_category(category) ||
+            is_fish_category(category)) && percentage > 10.0 {
+            return true;
+        }
+    }
+
+    // Milk/Dairy/Meat/Insects always show origin (question in requirements:
+    // "gilt das auch bei solchen Zutaten, oder nur wenn das ganze Produkt zB ein Milchprodukt ist?"
+    // I'm interpreting this as: these ingredient types always need origin)
+    if let Some(category) = &ingredient.category {
+        if is_dairy_category(category) ||
+           is_meat_category(category) ||
+           is_insect_category(category) {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn validate_meat_origin(
