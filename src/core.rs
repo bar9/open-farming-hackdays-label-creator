@@ -1,5 +1,6 @@
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
-use crate::rules::RuleDef;
+use crate::rules::{RuleDef, Rule};
+use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
@@ -76,9 +77,67 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) ->
     (swiss_bio_agricultural_amount / total_bio_agricultural_amount) * 100.0
 }
 
+/// Calculate the percentage of an ingredient relative to the total amount
+fn calculate_ingredient_percentage(ingredient_amount: f64, total_amount: f64) -> f64 {
+    (ingredient_amount / total_amount) * 100.0
+}
+
 impl Calculator {
     pub(crate) fn new() -> Self {
         Calculator { rule_defs: vec![] }
+    }
+
+    /// Debug logging method to log all active rules to browser console
+    #[cfg(target_arch = "wasm32")]
+    fn log_active_rules(&self) {
+        // Log to browser console for debugging
+        web_sys::console::log_1(&"🔧 Rules Debug".into());
+
+        if self.rule_defs.is_empty() {
+            web_sys::console::warn_1(&"⚠️ No rules are active".into());
+        } else {
+            web_sys::console::log_1(&format!("✅ {} rules are active:", self.rule_defs.len()).into());
+
+            for (index, rule) in self.rule_defs.iter().enumerate() {
+                let rule_info = format!(
+                    "  {}. {:?} - {} (Type: {:?})",
+                    index + 1,
+                    rule,
+                    rule.get_description(),
+                    rule.get_type()
+                );
+                web_sys::console::log_1(&rule_info.into());
+            }
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn log_active_rules(&self) {
+        // No-op for non-wasm targets
+    }
+
+    /// Debug logging method to log individual rule processing
+    #[cfg(target_arch = "wasm32")]
+    fn log_rule_processing(&self, rule: &RuleDef, processing_type: &str, additional_info: Option<&str>) {
+        let info = if let Some(info) = additional_info {
+            format!(" - {}", info)
+        } else {
+            String::new()
+        };
+
+        let message = format!(
+            "🔄 Processing [{}] {:?}: {}{}",
+            processing_type,
+            rule,
+            rule.get_description(),
+            info
+        );
+        web_sys::console::log_1(&message.into());
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn log_rule_processing(&self, _rule: &RuleDef, _processing_type: &str, _additional_info: Option<&str>) {
+        // No-op for non-wasm targets
     }
 }
 
@@ -284,7 +343,7 @@ impl OutputFormatter {
             }
         } else if has_knospe_under90_rule {
             // Rule C: <90% Swiss agricultural ingredients - show origin based on specific ingredient criteria
-            let percentage = (self.ingredient.amount / self.total_amount) * 100.0;
+            let percentage = calculate_ingredient_percentage(self.ingredient.amount, self.total_amount);
             let is_mono_product = self.total_amount == self.ingredient.amount; // Simple check for single ingredient
 
             if should_show_origin_knospe_under90(&self.ingredient, percentage, self.total_amount, is_mono_product) {
@@ -375,6 +434,9 @@ impl Calculator {
         registry.validate_dependencies(&self.rule_defs)
     }
     pub fn execute(&self, input: Input) -> Output {
+        // Debug logging: Show active rules
+        self.log_active_rules();
+
         let mut validation_messages = HashMap::new();
         let mut conditionals = HashMap::new();
 
@@ -389,39 +451,56 @@ impl Calculator {
         }
 
         // validations
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&"📋 Validation Rules".into());
         for ruleDef in &self.rule_defs {
             if let RuleDef::AP1_1_ZutatMengeValidierung = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking ingredient amounts > 0"));
                 validate_amount(&input.ingredients, &mut validation_messages)
             }
             if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking origin for ingredients >50% of {}g total", total_amount)));
                 validate_origin(&input.ingredients, total_amount, &mut validation_messages);
             }
             if let RuleDef::AP7_2_HerkunftNamensgebendeZutat = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for name-giving ingredients"));
                 validate_namensgebende_origin(&input.ingredients, &mut validation_messages)
             }
             if let RuleDef::AP7_3_HerkunftFleischUeber20Prozent = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking meat origin for ingredients >20% of {}g total", total_amount)));
                 validate_meat_origin(&input.ingredients, total_amount, &mut validation_messages);
             }
             if let RuleDef::AP7_4_RindfleischHerkunftDetails = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking beef origin details (birthplace/slaughter)"));
                 validate_beef_origin_details(&input.ingredients, &mut validation_messages);
             }
             if let RuleDef::AP7_5_FischFangort = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking fish catch location"));
                 validate_fish_catch_location(&input.ingredients, &mut validation_messages);
             }
             if let RuleDef::Bio_Knospe_AlleZutatenHerkunft = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for ALL ingredients (Bio/Knospe)"));
                 validate_all_ingredients_origin(&input.ingredients, &mut validation_messages)
             }
         }
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&format!("📊 Validation results: {} messages", validation_messages.len()).into());
 
         // conditionals
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&"🎛️ Conditional Display Rules".into());
         for ruleDef in &self.rule_defs {
             if let RuleDef::AP1_3_EingabeNamensgebendeZutat = ruleDef {
+                self.log_rule_processing(ruleDef, "CONDITIONAL", Some("Enabling name-giving ingredient input"));
                 conditionals.insert(String::from("namensgebende_zutat"), true);
             }
             if let RuleDef::Bio_Knospe_EingabeIstBio = ruleDef {
+                self.log_rule_processing(ruleDef, "CONDITIONAL", Some("Enabling bio certification input"));
                 conditionals.insert(String::from("is_bio_eingabe"), true);
             }
         }
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&format!("🎛️ Conditional elements: {} enabled", conditionals.len()).into());
 
         let mut sorted_ingredients = input.ingredients.clone();
         sorted_ingredients.sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
@@ -429,10 +508,13 @@ impl Calculator {
         if self
             .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
         {
+            self.log_rule_processing(&RuleDef::AP1_4_ManuelleEingabeTotal, "CONDITIONAL", Some("Enabling manual total input"));
             conditionals.insert(String::from("manuelles_total"), true);
         }
 
         // Determine which ingredients require country of origin display
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&"🌍 Origin Requirement Rules".into());
         let has_50_percent_rule = self
             .rule_defs.contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
         let has_namensgebende_rule = self
@@ -458,17 +540,25 @@ impl Calculator {
             } else {
                 calculate_swiss_agricultural_percentage(&input.ingredients)
             };
+
+            #[cfg(target_arch = "wasm32")]
+            web_sys::console::log_1(&format!("🇨🇭 Swiss agricultural percentage: {:.1}% (bio-specific: {})", swiss_percentage, has_bio_rule).into());
+
             if swiss_percentage >= 100.0 && has_knospe_100_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_100_Percent_CH_NoOrigin);
+                self.log_rule_processing(&RuleDef::Knospe_100_Percent_CH_NoOrigin, "OUTPUT", Some(&format!("100% Swiss ingredients - no origin display needed")));
             } else if swiss_percentage >= 90.0 && has_knospe_90_99_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+                self.log_rule_processing(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin, "OUTPUT", Some(&format!("{:.1}% Swiss ingredients - show origin for Swiss", swiss_percentage)));
             } else if swiss_percentage < 90.0 && has_knospe_under90_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
+                self.log_rule_processing(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules, "OUTPUT", Some(&format!("{:.1}% Swiss ingredients - use ingredient-specific rules", swiss_percentage)));
             }
         }
 
         // Handle Bio Suisse logo display for Knospe configuration
         if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+            self.log_rule_processing(&RuleDef::Knospe_ShowBioSuisseLogo, "OUTPUT", Some("Determining Bio Suisse logo display based on Swiss percentage"));
             // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
             let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
             let swiss_percentage = if has_bio_rule {
@@ -517,7 +607,7 @@ impl Calculator {
 
                 // Check if >50% rule applies
                 if has_50_percent_rule {
-                    let percentage = (ingredient.amount / total_amount) * 100.0;
+                    let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
                     if percentage > 50.0 {
                         requires_herkunft = true;
                     }
@@ -525,7 +615,7 @@ impl Calculator {
 
                 // Check if meat rule applies (meat ingredients >20%)
                 if has_meat_rule {
-                    let percentage = (ingredient.amount / total_amount) * 100.0;
+                    let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
                     if percentage > 20.0 {
                         if let Some(category) = &ingredient.category {
                             if is_meat_category(category) {
@@ -556,12 +646,24 @@ impl Calculator {
             }
         }
 
+        // End origin requirement logging
+
         // Prepare rule_defs for OutputFormatter, including the specific Knospe rule
         let mut output_rules = self.rule_defs.clone();
         if let Some(knospe_rule) = actual_knospe_rule {
             // Remove the generic Knospe rules and add the specific one
             output_rules.retain(|rule| !matches!(rule, RuleDef::Knospe_100_Percent_CH_NoOrigin | RuleDef::Knospe_90_99_Percent_CH_ShowOrigin));
             output_rules.push(knospe_rule);
+        }
+
+        // Final summary logging
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::console::log_1(&"📈 Final Results".into());
+            web_sys::console::log_1(&format!("✅ Label generation complete - {} ingredients processed", sorted_ingredients.len()).into());
+            web_sys::console::log_1(&format!("📋 {} validation messages", validation_messages.len()).into());
+            web_sys::console::log_1(&format!("🎛️ {} conditional elements enabled", conditionals.len()).into());
+            web_sys::console::log_1(&format!("⚖️ Total amount: {}g", total_amount).into());
         }
 
         Output {
@@ -596,7 +698,7 @@ fn validate_origin(
     validation_messages: &mut HashMap<String, &str>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = (ingredient.amount / total_amount) * 100.0;
+        let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
         if percentage > 50.0 && ingredient.origin.is_none() {
             validation_messages.insert(
                 format!("ingredients[{}][origin]", i),
@@ -620,199 +722,20 @@ fn validate_namensgebende_origin(
     }
 }
 
-pub fn is_fish_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
+// Functions are already imported above, no need to re-export
 
-    // Check for fish-specific categories from BLV API
-    category_lower == "fisch" ||
-    category_lower == "meeresfische" ||
-    category_lower == "süsswasserfische" ||
-    category_lower == "meeresfrüchte, krusten- und schalentiere" ||
-
-    // Generic fish terms (fallback)
-    category_lower.contains("fisch") ||
-    category_lower.contains("lachs") ||
-    category_lower.contains("thun") ||
-    category_lower.contains("forelle") ||
-
-    // English terms (for international compatibility)
-    category_lower.contains("fish") ||
-    category_lower.contains("salmon") ||
-    category_lower.contains("tuna") ||
-    category_lower.contains("trout") ||
-    category_lower.contains("seafood")
-}
-
-pub fn is_beef_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // Check for beef/cattle specific categories
-    category_lower == "rind" ||
-    category_lower == "rindfleisch" ||
-    category_lower.contains("rind") ||
-    category_lower.contains("beef") ||
-    category_lower.contains("cattle")
-}
-
-fn is_meat_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // Official BLV API categories for meat products
-    // Direct meat category matches
-    category_lower == "fleisch und innereien" ||
-
-    // Individual animal categories from API
-    category_lower == "rind" ||
-    category_lower == "schwein" ||
-    category_lower == "kalb" ||
-    category_lower == "geflügel" ||
-    category_lower == "lamm, schaf" ||
-    category_lower == "wild" ||
-
-    // Processed meat categories from API
-    category_lower == "brühwurstware" ||
-    category_lower == "kochwurstware" ||
-
-    // Combined categories (semicolon-separated)
-    category_lower.contains("rind") ||
-    category_lower.contains("schwein") ||
-    category_lower.contains("kalb") ||
-    category_lower.contains("geflügel") ||
-    category_lower.contains("lamm") ||
-    category_lower.contains("schaf") ||
-    category_lower.contains("wild") ||
-
-    // Generic meat terms (fallback)
-    category_lower.contains("fleisch") ||
-    category_lower.contains("wurst") ||
-
-    // English terms (for international compatibility)
-    category_lower.contains("meat") ||
-    category_lower.contains("beef") ||
-    category_lower.contains("pork") ||
-    category_lower.contains("veal") ||
-    category_lower.contains("lamb") ||
-    category_lower.contains("mutton") ||
-    category_lower.contains("chicken") ||
-    category_lower.contains("poultry") ||
-    category_lower.contains("turkey") ||
-    category_lower.contains("duck") ||
-    category_lower.contains("goose") ||
-    category_lower.contains("venison") ||
-    category_lower.contains("rabbit") ||
-    category_lower.contains("ham") ||
-    category_lower.contains("bacon") ||
-    category_lower.contains("sausage") ||
-    category_lower.contains("salami")
-}
-
-/// Check if a category represents eggs
-pub fn is_egg_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // Official BLV API categories and common terms for eggs
-    category_lower == "eier" ||
-    category_lower == "ei" ||
-    category_lower.contains("eier") ||
-    category_lower.contains("hühnerei") ||
-
-    // English terms
-    category_lower == "eggs" ||
-    category_lower == "egg" ||
-    category_lower.contains("egg")
-}
-
-/// Check if a category represents honey
-pub fn is_honey_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // Official BLV API categories and common terms for honey
-    category_lower == "honig" ||
-    category_lower.contains("honig") ||
-
-    // English terms
-    category_lower == "honey" ||
-    category_lower.contains("honey")
-}
-
-/// Check if a category represents milk or dairy products
-pub fn is_dairy_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // Official BLV API categories for dairy products
-    category_lower == "milch und milchprodukte" ||
-    category_lower == "milch" ||
-    category_lower == "milchprodukte" ||
-    category_lower == "käse" ||
-    category_lower == "joghurt" ||
-    category_lower == "quark" ||
-    category_lower == "butter" ||
-    category_lower == "rahm" ||
-    category_lower == "sahne" ||
-    category_lower == "frischkäse" ||
-
-    // English terms
-    category_lower == "milk" ||
-    category_lower == "dairy" ||
-    category_lower.contains("milk") ||
-    category_lower.contains("dairy") ||
-    category_lower.contains("cheese") ||
-    category_lower.contains("yogurt") ||
-    category_lower.contains("yoghurt") ||
-    category_lower.contains("butter") ||
-    category_lower.contains("cream")
-}
-
-/// Check if a category represents insects or insect products
-pub fn is_insect_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // Categories for insect products
-    category_lower == "insekten" ||
-    category_lower == "insektenprodukte" ||
-    category_lower.contains("insekt") ||
-    category_lower.contains("grille") ||
-    category_lower.contains("heuschrecke") ||
-    category_lower.contains("mehlwurm") ||
-
-    // English terms
-    category_lower == "insects" ||
-    category_lower.contains("insect") ||
-    category_lower.contains("cricket") ||
-    category_lower.contains("grasshopper") ||
-    category_lower.contains("mealworm")
-}
-
-/// Check if a category represents plant-based ingredients
-pub fn is_plant_category(category: &str) -> bool {
-    let category_lower = category.to_lowercase();
-
-    // This is a broad category - we check if it's NOT an animal product
-    !is_meat_category(category) &&
-    !is_fish_category(category) &&
-    !is_egg_category(category) &&
-    !is_honey_category(category) &&
-    !is_dairy_category(category) &&
-    !is_insect_category(category) &&
-
-    // Or explicitly plant-based categories
-    category_lower.contains("gemüse") ||
-    category_lower.contains("obst") ||
-    category_lower.contains("getreide") ||
-    category_lower.contains("nüsse") ||
-    category_lower.contains("samen") ||
-    category_lower.contains("vegetable") ||
-    category_lower.contains("fruit") ||
-    category_lower.contains("grain") ||
-    category_lower.contains("nut") ||
-    category_lower.contains("seed")
-}
+// Use centralized category service functions
 
 /// Determines if an ingredient should show origin for Knospe <90% CH rules
 /// Based on specific Knospe criteria for ingredient types and percentages
 fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _total_amount: f64, is_mono_product: bool) -> bool {
     // For monoproducts (single ingredient products), always show origin
     if is_mono_product {
+        return true;
+    }
+
+    // Name-giving ingredients (namensgebende Zutat) always show origin for Knospe
+    if ingredient.is_namensgebend == Some(true) {
         return true;
     }
 
@@ -857,7 +780,7 @@ fn validate_meat_origin(
     validation_messages: &mut HashMap<String, &str>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = (ingredient.amount / total_amount) * 100.0;
+        let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
         if percentage > 20.0 {
             // Check if this ingredient is meat-based using the category
             if let Some(category) = &ingredient.category {
@@ -1952,6 +1875,80 @@ mod tests {
         assert!(!label.contains("(Schweiz)"));
         assert!(!label.contains("(EU)"));
         assert!(label.contains("Olivenöl, Hafer"));
+    }
+
+    #[test]
+    fn knospe_under_90_percent_ch_namensgebende_always_shows_origin() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![
+            RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
+        ]);
+        let input = Input {
+            ingredients: vec![
+                Ingredient {
+                    name: "Hafer".to_string(),
+                    amount: 400.,
+                    origin: Some(Country::CH),
+                    is_agricultural: lookup_agricultural("Hafer"),
+                    ..Default::default()
+                },
+                Ingredient {
+                    name: "Olivenöl".to_string(),
+                    amount: 600.,
+                    origin: Some(Country::EU),
+                    is_agricultural: lookup_agricultural("Olivenöl"),
+                    is_namensgebend: Some(true), // This ingredient is name-giving and should show origin
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        let output = calculator.execute(input);
+        let label = output.label;
+
+        // With <90% Swiss agricultural ingredients and name-giving ingredient,
+        // the name-giving ingredient should show its origin
+        assert!(label.contains("(EU)")); // Olivenöl should show origin (name-giving)
+        assert!(label.contains("(Schweiz)")); // Hafer also shows origin (Swiss ingredient >=10%)
+        assert!(label.contains("Olivenöl (EU), Hafer (Schweiz)")); // Both should show origin
+    }
+
+    #[test]
+    fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_origin() {
+        // This test demonstrates that name-giving ingredients show origin even with low percentage
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![
+            RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
+        ]);
+        let input = Input {
+            ingredients: vec![
+                Ingredient {
+                    name: "Hafer".to_string(),
+                    amount: 900., // 90% - Swiss, high percentage
+                    origin: Some(Country::CH),
+                    is_agricultural: lookup_agricultural("Hafer"),
+                    ..Default::default()
+                },
+                Ingredient {
+                    name: "Vanilla".to_string(),
+                    amount: 100., // 10% - EU, low percentage but name-giving
+                    origin: Some(Country::EU),
+                    is_agricultural: lookup_agricultural("Vanilla"),
+                    is_namensgebend: Some(true), // This ingredient is name-giving and should show origin
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        let output = calculator.execute(input);
+        let label = output.label;
+
+        // With <90% Swiss agricultural ingredients:
+        // - Hafer should show origin (Swiss ingredient >=10%)
+        // - Vanilla should show origin even though it's only 10% (name-giving ingredient)
+        assert!(label.contains("(Schweiz)")); // Hafer shows origin (Swiss >=10%)
+        assert!(label.contains("(EU)")); // Vanilla shows origin (name-giving)
+        assert!(label.contains("Hafer (Schweiz), Vanilla (EU)")); // Ordered by weight
     }
 
     #[test]

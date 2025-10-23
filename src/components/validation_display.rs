@@ -24,14 +24,27 @@ pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
         div {
             class: "flex flex-col",
             div {
-                class: "border-red",
+                class: if !relevant_validation_entries().is_empty() { "border border-red-500 rounded-md" } else { "" },
                 {props.children}
             }
-            div {
-                class: "border-red bg-red-100",
-                ul {
-                    for (_path, msg) in relevant_validation_entries() {
-                        li {class: "p-1", "{msg}"}
+            if !relevant_validation_entries().is_empty() {
+                div {
+                    class: "bg-red-50 border border-red-200 rounded-md p-3 mt-2",
+                    for (index, (_path, msg)) in relevant_validation_entries().iter().enumerate() {
+                        div {
+                            class: if index > 0 { "mt-2 pt-2 border-t border-red-200" } else { "" },
+                            div {
+                                class: "flex items-start gap-2 text-red-700 text-sm",
+                                div {
+                                    class: "flex-shrink-0 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5",
+                                    "!"
+                                }
+                                div {
+                                    class: "flex-1",
+                                    "{msg}"
+                                }
+                            }
+                        }
                     }
                 }
             }

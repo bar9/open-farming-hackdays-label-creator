@@ -1,4 +1,5 @@
 pub use conditional_display::ConditionalDisplay;
+pub use country_select::CountrySelect;
 pub use date_input::DateInput;
 pub use field_group_1::FieldGroup1;
 pub use field_group_2::FieldGroup2;
@@ -19,6 +20,7 @@ pub use link_share_modal::LinkShareModal;
 pub use saved_ingredients_manager::SavedIngredientsManager;
 
 mod conditional_display;
+mod country_select;
 mod date_input;
 mod field_group_1;
 mod field_group_2;

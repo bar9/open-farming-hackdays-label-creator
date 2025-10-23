@@ -12,6 +12,7 @@ mod layout;
 mod shared;
 
 mod api;
+mod category_service;
 mod components;
 pub mod core;
 mod form;

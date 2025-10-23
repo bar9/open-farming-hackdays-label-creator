@@ -277,6 +277,17 @@ date_prefixes:
 transition:
   umstellungsbetrieb: Umstellungsbetrieb
 
+origin:
+  herkunft: Herkunft
+  aufzucht: Aufzucht
+  schlachtung: Schlachtung
+  fangort: Fangort
+
+bio_labels:
+  bio: Bio
+  bio_nicht_knospe: Bio (nicht Knospe)
+  aus_umstellbetrieb: Aus Umstellbetrieb
+
 buttons:
   close: schliessen
   back: Zurück

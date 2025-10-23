@@ -112,13 +112,13 @@ pub fn LabelPreview(
                     }
                 }
 
-                // Umstellung message display
+                // Umstellung message display (plain black text, positioned to the left of logo)
                 if conditionals.0().get("umstellung_biologische_landwirtschaft").unwrap_or(&false) == &true {
-                    div { class: "absolute top-20 right-2 max-w-xs text-xs text-center bg-green-100 border border-green-300 rounded p-2",
+                    div { class: "absolute top-2 left-2 max-w-xs text-xs text-black bg-white",
                         "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."
                     }
                 } else if conditionals.0().get("umstellung_bio_suisse_richtlinien").unwrap_or(&false) == &true {
-                    div { class: "absolute top-20 right-2 max-w-xs text-xs text-center bg-green-100 border border-green-300 rounded p-2",
+                    div { class: "absolute top-2 left-2 max-w-xs text-xs text-black bg-white",
                         "Hergestellt im Rahmen der Umstellung auf die Bio Suisse Richtlinien."
                     }
                 }
@@ -325,8 +325,7 @@ pub fn LabelPreview(
                             } else {
                                 rsx! {}
                             }
-                        },
-                        _ => rsx! {},
+                        }
                     }
 
                 // if !(price_per_100().is_empty() && total_price().is_empty()) {
