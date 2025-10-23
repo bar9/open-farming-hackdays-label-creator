@@ -54,6 +54,12 @@ pub enum RuleDef {
     AP7_1_HerkunftBenoetigtUeber50Prozent,
     /// AP7.2: Requires country of origin for name-giving ingredients (Swiss requirement)
     AP7_2_HerkunftNamensgebendeZutat,
+    /// AP7.3: Requires country of origin for meat ingredients >20% of total weight (Swiss requirement)
+    AP7_3_HerkunftFleischUeber20Prozent,
+    /// AP7.4: Requires birthplace and slaughter location for beef ingredients (Swiss requirement)
+    AP7_4_RindfleischHerkunftDetails,
+    /// AP7.5: Requires catch location for fish ingredients (Swiss requirement)
+    AP7_5_FischFangort,
     /// Bio/Knospe: Requires country of origin for ALL ingredients (Bio/Knospe requirement)
     Bio_Knospe_AlleZutatenHerkunft,
     /// Knospe: When 100% of agricultural ingredients are from Switzerland, no origin display needed
@@ -88,6 +94,9 @@ impl Rule for RuleDef {
             RuleDef::AP2_1_ZusammegesetztOutput => RuleType::Output,
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => RuleType::Conditional,
             RuleDef::AP7_2_HerkunftNamensgebendeZutat => RuleType::Conditional,
+            RuleDef::AP7_3_HerkunftFleischUeber20Prozent => RuleType::Conditional,
+            RuleDef::AP7_4_RindfleischHerkunftDetails => RuleType::Conditional,
+            RuleDef::AP7_5_FischFangort => RuleType::Conditional,
             RuleDef::Bio_Knospe_AlleZutatenHerkunft => RuleType::Validation,
             RuleDef::Knospe_100_Percent_CH_NoOrigin => RuleType::Output,
             RuleDef::Knospe_90_99_Percent_CH_ShowOrigin => RuleType::Output,
@@ -100,6 +109,9 @@ impl Rule for RuleDef {
         match self {
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
             RuleDef::AP7_2_HerkunftNamensgebendeZutat => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
+            RuleDef::AP7_3_HerkunftFleischUeber20Prozent => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
+            RuleDef::AP7_4_RindfleischHerkunftDetails => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
+            RuleDef::AP7_5_FischFangort => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
             _ => None
         }
     }
@@ -116,6 +128,9 @@ impl Rule for RuleDef {
             RuleDef::AP2_1_ZusammegesetztOutput => "Zeigt zusammengesetzte Zutaten mit ihren Bestandteilen auf dem Etikett",
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => "Erfordert Herkunftsangabe für Zutaten, die mehr als 50% des Gesamtgewichts ausmachen (Schweizer Vorschrift)",
             RuleDef::AP7_2_HerkunftNamensgebendeZutat => "Erfordert Herkunftsangabe für namensgebende Zutaten (Schweizer Vorschrift)",
+            RuleDef::AP7_3_HerkunftFleischUeber20Prozent => "Erfordert Herkunftsangabe für Fleisch-Zutaten, die mehr als 20% des Gesamtgewichts ausmachen (Schweizer Vorschrift)",
+            RuleDef::AP7_4_RindfleischHerkunftDetails => "Erfordert detaillierte Herkunftsangabe für Rindfleisch: Aufzucht- und Schlachtungsort (Schweizer Vorschrift)",
+            RuleDef::AP7_5_FischFangort => "Erfordert Fangort für Fisch-Zutaten (Schweizer Vorschrift)",
             RuleDef::Bio_Knospe_AlleZutatenHerkunft => "Erfordert Herkunftsangabe für alle Zutaten (Bio/Knospe Anforderung)",
             RuleDef::Knospe_100_Percent_CH_NoOrigin => "Knospe: Bei 100% landwirtschaftlichen Zutaten aus CH keine Herkunftsangabe nötig",
             RuleDef::Knospe_90_99_Percent_CH_ShowOrigin => "Knospe: Bei 90-99.99% landwirtschaftlichen Zutaten aus CH Herkunftsangabe für CH-Zutaten",
@@ -158,6 +173,9 @@ impl RuleRegistry {
                 RuleDef::AP2_1_ZusammegesetztOutput,
                 RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
                 RuleDef::AP7_2_HerkunftNamensgebendeZutat,
+                RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
+                RuleDef::AP7_4_RindfleischHerkunftDetails,
+                RuleDef::AP7_5_FischFangort,
             ],
         );
 

@@ -80,7 +80,6 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         ingredient.sub_components = Some(sub_components);
                     }
                 }
-                }
             }
             name_to_add.set(String::new());
         }

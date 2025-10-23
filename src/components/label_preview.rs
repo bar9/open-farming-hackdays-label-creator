@@ -1,5 +1,5 @@
 use crate::components::{Amount, AmountType, Price};
-use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross};
+use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, Umstellung};
 use crate::shared::Conditionals;
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
@@ -98,7 +98,11 @@ pub fn LabelPreview(
         div { class: "p-8 flex flex-col bg-base-200",
             div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative",
                 // Bio Suisse logo display
-                if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
+                if conditionals.0().get("bio_suisse_umstellung").unwrap_or(&false) == &true {
+                    div { class: "absolute top-2 right-2 w-16",
+                        Umstellung {}
+                    }
+                } else if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
                     div { class: "absolute top-2 right-2 w-16",
                         BioSuisseRegular {}
                     }
@@ -107,6 +111,18 @@ pub fn LabelPreview(
                         BioSuisseNoCross {}
                     }
                 }
+
+                // Umstellung message display
+                if conditionals.0().get("umstellung_biologische_landwirtschaft").unwrap_or(&false) == &true {
+                    div { class: "absolute top-20 right-2 max-w-xs text-xs text-center bg-green-100 border border-green-300 rounded p-2",
+                        "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."
+                    }
+                } else if conditionals.0().get("umstellung_bio_suisse_richtlinien").unwrap_or(&false) == &true {
+                    div { class: "absolute top-20 right-2 max-w-xs text-xs text-center bg-green-100 border border-green-300 rounded p-2",
+                        "Hergestellt im Rahmen der Umstellung auf die Bio Suisse Richtlinien."
+                    }
+                }
+
                 div { class: "grid grid-col-1 divide-y divide-dotted",
                 div {
                     class: "py-2",
