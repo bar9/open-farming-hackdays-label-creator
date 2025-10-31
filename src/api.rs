@@ -1,7 +1,7 @@
 use gloo::net::http::Request;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FoodItem {
     pub id: i64,
     #[serde(rename = "foodName")]
@@ -47,61 +47,49 @@ fn calculate_similarity(s1: &str, s2: &str) -> f32 {
     }
 }
 
-pub async fn search_food(name: &str, lang: &str) -> Result<Option<String>, String> {
+pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String> {
     let url = format!(
-        "https://api.webapp.prod.blv.foodcase-services.com/BLV_WebApp_WS/webresources/BLV-api/foods?search={}&lang={}&limit=10",
+        "https://api.webapp.prod.blv.foodcase-services.com/BLV_WebApp_WS/webresources/BLV-api/foods?search={}&lang={}&limit=100",
         urlencoding::encode(name),
         lang
     );
-    
-    tracing::info!("Fetching food category for '{}' from API", name);
-    
+
+    tracing::info!("Fetching food suggestions for '{}' from API", name);
+
     let response = Request::get(&url)
         .send()
         .await
         .map_err(|e| format!("Failed to send request: {}", e))?;
-    
+
     if !response.ok() {
         tracing::warn!("API returned non-OK status for '{}'", name);
-        return Ok(None);
+        return Ok(Vec::new());
     }
-    
+
     // Parse as array directly since the API returns an array
     let foods: Vec<FoodItem> = response
         .json()
         .await
         .map_err(|e| format!("Failed to parse response: {}", e))?;
-    
+
     tracing::info!("Found {} food items for '{}'", foods.len(), name);
-    
-    // Find the best matching food item based on name similarity
-    let mut best_match: Option<(&FoodItem, f32)> = None;
-    
-    for food in &foods {
-        let similarity = calculate_similarity(&food.food_name, name);
-        
-        if let Some((_, best_score)) = best_match {
-            if similarity > best_score {
-                best_match = Some((food, similarity));
-            }
-        } else {
-            best_match = Some((food, similarity));
-        }
-        
-        tracing::debug!("Food '{}' has similarity score {:.2} with '{}'", food.food_name, similarity, name);
-    }
-    
-    // Return the category of the best matching food item
-    if let Some((best_food, score)) = best_match {
-        if score > 0.3 {  // Only accept matches with reasonable similarity
-            tracing::info!("Best match for '{}' is '{}' with score {:.2}", name, best_food.food_name, score);
-            if let Some(category) = &best_food.category_names {
-                tracing::info!("Returning category '{}' for '{}'", category, name);
-                return Ok(Some(category.clone()));
-            }
-        }
-    }
-    
-    tracing::info!("No suitable category found for '{}'", name);
-    Ok(None)
+
+    // Sort by similarity score, but return all items
+    let mut foods_with_scores: Vec<(FoodItem, f32)> = foods
+        .into_iter()
+        .map(|food| {
+            let similarity = calculate_similarity(&food.food_name, name);
+            tracing::debug!("Food '{}' has similarity score {:.2} with '{}'", food.food_name, similarity, name);
+            (food, similarity)
+        })
+        .collect();
+
+    // Sort by similarity score (highest first)
+    foods_with_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Return sorted food items
+    let sorted_foods: Vec<FoodItem> = foods_with_scores.into_iter().map(|(food, _)| food).collect();
+
+    tracing::info!("Returning {} food suggestions for '{}'", sorted_foods.len(), name);
+    Ok(sorted_foods)
 }

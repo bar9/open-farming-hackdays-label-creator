@@ -21,6 +21,7 @@ mod nl2br;
 mod persistence;
 mod routes;
 mod rules;
+mod services;
 
 mod pages;
 

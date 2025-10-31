@@ -235,6 +235,41 @@ messages:
   please_enter_amount: Inserisci una quantità
   scaling_factor: "Fattore: ×%{factor} (prima: %{before}g → dopo: %{after}g)"
 
+category_selector:
+  title: Seleziona categoria
+  fetch_button: Cerca categoria
+  fetching: Ricerca in corso...
+  suggestions_count: "%{count} suggerimenti trovati"
+  suggestions_available: "%{count} suggerimenti disponibili"
+  select_category: Seleziona
+  filter_placeholder: Filtra suggerimenti...
+  no_matches: Nessun risultato corrispondente
+  no_category: Nessuna categoria
+  cancel: Annulla
+
+symbols:
+  allergen_tooltip: Allergene
+  allergen_unknown: Stato allergene sconosciuto
+  meat_tooltip: Carne
+  meat_unknown: Stato carne sconosciuto
+  fish_tooltip: Pesce
+  fish_unknown: Stato pesce sconosciuto
+  dairy_tooltip: Latticino
+  dairy_unknown: Stato latticino sconosciuto
+  egg_tooltip: Uovo
+  egg_unknown: Stato uovo sconosciuto
+  honey_tooltip: Miele
+  honey_unknown: Stato miele sconosciuto
+  plant_tooltip: Vegetale
+  plant_unknown: Stato vegetale sconosciuto
+  agricultural_tooltip: Agricolo
+  agricultural_unknown: Stato agricolo sconosciuto
+  bio_tooltip: Bio-certificato
+  bio_unknown: Stato bio sconosciuto
+  source_local: Solo dati locali
+  source_blv: Solo dati BLV
+  source_merged: Dati completi
+
 errors:
   page_not_found: Pagina non trovata
   page_not_found_message: Siamo spiacenti, ma la pagina richiesta non esiste.

@@ -1,8 +1,32 @@
+use crate::components::*;
 use crate::core::{Ingredient, SubIngredient};
-use crate::model::{food_db, lookup_allergen};
+use crate::model::{food_db, lookup_allergen, lookup_agricultural};
 use crate::persistence::get_saved_ingredients_list;
+use crate::services::{UnifiedIngredient, IngredientSource};
+// use crate::category_service::*; // Not needed since we don't derive category flags for sub-ingredients
 use dioxus::prelude::*;
 use rust_i18n::t;
+
+/// Convert a SubIngredient to UnifiedIngredient for display purposes
+fn subingredient_to_unified(sub_ingredient: &SubIngredient) -> UnifiedIngredient {
+    // Try to get category information by searching for the ingredient name
+    // Note: Since SubIngredient doesn't store category, we derive it for display
+
+    UnifiedIngredient {
+        name: sub_ingredient.name.clone(),
+        category: None, // Sub-ingredients don't store category, but could be looked up if needed
+        is_allergen: Some(sub_ingredient.is_allergen),
+        is_agricultural: Some(lookup_agricultural(&sub_ingredient.name)), // Derive from local DB
+        is_meat: None, // Could be derived from category if we had it
+        is_fish: None,
+        is_dairy: None,
+        is_egg: None,
+        is_honey: None,
+        is_plant: None,
+        is_bio: None,
+        source: IngredientSource::Local, // Sub-ingredients are typically local
+    }
+}
 
 #[derive(Props, Clone, PartialEq)]
 pub struct SubIngredientsTableProps {
@@ -36,14 +60,13 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         }
     };
 
-    let add_callback = {
+    let mut handle_unified_ingredient_select = {
         let mut ingredients = props.ingredients;
-        let mut name_to_add = name_to_add;
-        move |_evt| {
+        move |unified_ingredient: UnifiedIngredient| {
             if let Some(mut ingredient) = ingredients.get_mut(props.index) {
-                let ingredient_name = name_to_add();
+                let ingredient_name = unified_ingredient.name.clone();
 
-                // Check if this is a saved composite ingredient
+                // Check if this is a saved composite ingredient by checking saved ingredients
                 let saved_ingredients = get_saved_ingredients_list();
                 let is_saved_composite = saved_ingredients.iter().any(|i| i.name == ingredient_name);
 
@@ -62,18 +85,18 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         }
                     }
                 } else {
-                    // Check if ingredient is in database and get allergen status
-                    let allergen_status = lookup_allergen(&ingredient_name);
+                    // Extract allergen status from unified ingredient, falling back to lookup
+                    let allergen_status = unified_ingredient.is_allergen.unwrap_or_else(|| lookup_allergen(&ingredient_name));
 
                     if let Some(sub_components) = &mut ingredient.sub_components {
                         sub_components.push(SubIngredient {
-                            name: ingredient_name.clone(),
+                            name: ingredient_name,
                             is_allergen: allergen_status,
                         });
                     } else {
                         let sub_components = vec![
                             SubIngredient {
-                                name: ingredient_name.clone(),
+                                name: ingredient_name,
                                 is_allergen: allergen_status,
                             }
                         ];
@@ -96,11 +119,18 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 if let Some(sub_components) = props.ingredients.clone().get(props.index).and_then(|ingredient| ingredient.sub_components.clone()) {
                     for (key, ingr) in sub_components.iter().enumerate() {
                         tr { key: "{key}",
-                            td { 
-                                if ingr.is_allergen {
-                                    span { class: "font-bold", "{ingr.name}" }
-                                } else {
-                                    "{ingr.name}"
+                            td {
+                                class: "flex items-center gap-2",
+                                div {
+                                    if ingr.is_allergen {
+                                        span { class: "font-bold", "{ingr.name}" }
+                                    } else {
+                                        "{ingr.name}"
+                                    }
+                                }
+                                // Show ingredient symbols
+                                IngredientSymbolsCompact {
+                                    ingredient: subingredient_to_unified(ingr)
                                 }
                             }
                             td {
@@ -148,38 +178,14 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 }
             }
         }
-        div { class: "flex flex-row gap-4",
-            input {
-                list: "ingredients",
-                r#type: "flex",
-                placeholder: t!("placeholder.zutatName").as_ref(),
-                class: "input input-accent w-full",
-                oninput: move |evt| {
-                    name_to_add.set(evt.data.value());
-                },
-                value: "{name_to_add}",
-                datalist { id: "ingredients",
-                    // First, add saved composite ingredients
-                    for saved_ing in get_saved_ingredients_list() {
-                        option { 
-                            value: "{saved_ing.name}",
-                            label: "(Gespeichert)"
-                        }
-                    }
-                    // Then add database ingredients
-                    for item in food_db().clone() {
-                        option { 
-                            value: "{item.0}",
-                            // Show allergen marker in label without duplicating the name
-                            label: if item.1 { "(Allergen)" } else { "" }
-                        }
-                    }
+        div { class: "flex flex-row gap-4 items-center",
+            div { class: "flex-1",
+                UnifiedIngredientInput {
+                    bound_value: name_to_add,
+                    on_ingredient_select: handle_unified_ingredient_select,
+                    required: false,
+                    placeholder: t!("placeholder.zutatName").to_string()
                 }
-            }
-            button {
-                class: "btn btn-accent",
-                onclick: add_callback,
-                "{t!(\"nav.hinzufuegen\")}"
             }
         }
     }

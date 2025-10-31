@@ -1,8 +1,8 @@
-use crate::api::search_food;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::model::{food_db, lookup_allergen, lookup_agricultural};
 use crate::rules::RuleDef;
+use crate::services::UnifiedIngredient;
 use crate::shared::{Conditionals, Validations};
 use crate::persistence::{save_composite_ingredient, get_saved_ingredients_list};
 use dioxus::prelude::*;
@@ -48,7 +48,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     });
     let mut edit_sub_components = use_signal(|| original_ingredient.sub_components.clone());
     let mut edit_category = use_signal(|| original_ingredient.category.clone());
-    let mut is_fetching_category = use_signal(|| false);
     let mut edit_origin = use_signal(|| original_ingredient.origin.clone());
     let mut edit_aufzucht_ort = use_signal(|| original_ingredient.aufzucht_ort.clone());
     let mut edit_schlachtungs_ort = use_signal(|| original_ingredient.schlachtungs_ort.clone());
@@ -147,10 +146,43 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     });
     
     
+    let mut handle_ingredient_select = move |unified_ingredient: UnifiedIngredient| {
+        // Update name
+        edit_name.set(unified_ingredient.name.clone());
+
+        // Set category from unified ingredient
+        edit_category.set(unified_ingredient.category);
+
+        // Set allergen status - use local DB data if available, otherwise custom value
+        if let Some(is_allergen) = unified_ingredient.is_allergen {
+            is_allergen_custom.set(is_allergen);
+        }
+
+        // Set bio status if available
+        if let Some(is_bio) = unified_ingredient.is_bio {
+            edit_is_bio.set(is_bio);
+        }
+
+        // Determine if this is a custom ingredient based on source
+        match unified_ingredient.source {
+            crate::services::IngredientSource::Local => {
+                is_custom_ingredient.set(false);
+            }
+            crate::services::IngredientSource::BLV => {
+                is_custom_ingredient.set(true);
+            }
+            crate::services::IngredientSource::Merged => {
+                is_custom_ingredient.set(false); // Has local data
+            }
+        }
+
+        // Note: Category is now set from unified ingredient
+    };
+
     let mut update_name = move |new_name: String| {
         // Update local edit state only
         edit_name.set(new_name.clone());
-        
+
         // Check if this is a saved composite ingredient
         let saved_ingredients = get_saved_ingredients_list();
         if let Some(saved) = saved_ingredients.iter().find(|i| i.name == new_name) {
@@ -161,55 +193,23 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
             if saved.category.is_some() {
                 edit_category.set(saved.category.clone());
-                is_fetching_category.set(false);
             }
             is_custom_ingredient.set(true);  // Saved ingredients are treated as custom
             return;  // Don't fetch category again
         }
-        
+
         // Check if the new name is in the food database
         let in_database = food_db().iter().any(|(name, _)| name == &new_name);
         is_custom_ingredient.set(!in_database);
-        
+
         // If switching from database to custom or vice versa, update allergen status
         if in_database {
             is_allergen_custom.set(lookup_allergen(&new_name));
         }
-        
-        // Fetch category from API
-        if !new_name.is_empty() {
-            let name_for_api = new_name.clone();
-            let mut edit_category_clone = edit_category.clone();
-            let mut is_fetching_clone = is_fetching_category.clone();
-            
-            // Clear previous category and set loading state
+
+        // Clear category when name changes (will be set via unified selection)
+        if new_name.is_empty() {
             edit_category.set(None);
-            is_fetching_category.set(true);
-            
-            spawn(async move {
-                // Get current locale for API call
-                let locale = rust_i18n::locale().to_string();
-                let lang = if locale.starts_with("fr") {
-                    "fr"
-                } else if locale.starts_with("it") {
-                    "it"
-                } else {
-                    "de"
-                };
-                
-                match search_food(&name_for_api, lang).await {
-                    Ok(category) => {
-                        edit_category_clone.set(category);
-                    }
-                    Err(e) => {
-                        tracing::warn!("Failed to fetch category: {}", e);
-                    }
-                }
-                is_fetching_clone.set(false);
-            });
-        } else {
-            edit_category.set(None);
-            is_fetching_category.set(false);
         }
     };
 
@@ -325,7 +325,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_category.set(None);
             edit_aus_umstellbetrieb.set(false);
             edit_bio_nicht_knospe.set(false);
-            is_fetching_category.set(false);
         } else {
             // Update existing ingredient
             if scale_all && amount_has_changed() {
@@ -348,6 +347,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
         is_open.set(false);
     };
+
 
     let herkunft_path = format!("herkunft_benoetigt_{}", index);
 
@@ -376,7 +376,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_category.set(None);
                         edit_aus_umstellbetrieb.set(false);
                         edit_bio_nicht_knospe.set(false);
-                        is_fetching_category.set(false);
                     }
                     is_open.toggle();
                 },
@@ -412,7 +411,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_fangort.set(orig.fangort.clone());
                         edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
                         edit_bio_nicht_knospe.set(orig.bio_nicht_knospe.unwrap_or(false));
-                        is_fetching_category.set(false);
                     }
                     is_open.toggle();
                 },
@@ -430,39 +428,21 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 h3 { class: "font-bold text-lg", "{t!(\"label.zutatDetails\")}" }
                 FormField {
                     label: t!("label.zutatEingeben"),
-                    input {
-                        list: "ingredients",
-                        r#type: "flex",
-                        placeholder: t!("placeholder.zutatName").as_ref(),
-                        class: "input input-accent w-full",
-                        oninput: move |evt| update_name(evt.data.value()),
-                        value: "{edit_name}",
-                        datalist { id: "ingredients",
-                            // First, add saved composite ingredients
-                            for saved_ing in get_saved_ingredients_list() {
-                                option { 
-                                    value: "{saved_ing.name}",
-                                    label: t!("label.saved_indicator").to_string()
-                                }
-                            }
-                            // Then add database ingredients
-                            for item in food_db().clone() {
-                                option { 
-                                    value: "{item.0}",
-                                    // Show allergen marker in label without duplicating the name
-                                    label: if item.1 { t!("label.allergen_indicator").to_string() } else { "".to_string() }
-                                }
-                            }
-                        }
+                    UnifiedIngredientInput {
+                        bound_value: edit_name,
+                        on_ingredient_select: handle_ingredient_select,
+                        required: true,
+                        placeholder: t!("placeholder.zutatName").to_string()
                     }
-                    // Show category status - either loading, fetched, or empty
-                    if is_fetching_category() {
-                        div { class: "text-sm text-info mt-1",
-                            {t!("messages.category_loading")}
-                        }
-                    } else if let Some(category) = &edit_category() {
-                        div { class: "text-sm text-success mt-1",
+                    // Show current category if set
+                    if let Some(category) = &edit_category() {
+                        div { class: "text-sm text-success mt-2",
                             {t!("messages.category_display", category = category)}
+                            button {
+                                class: "btn btn-xs btn-ghost ml-2",
+                                onclick: move |_| edit_category.set(None),
+                                "✕"
+                            }
                         }
                     }
                 }
@@ -843,7 +823,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             edit_fangort.set(orig.fangort.clone());
                             edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
                             edit_bio_nicht_knospe.set(orig.bio_nicht_knospe.unwrap_or(false));
-                        is_fetching_category.set(false);
                             is_open.set(false);
                         },
                         "× " {t!("nav.schliessen")},
@@ -899,5 +878,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 button { "" }
             }
         }
+
     }
 }

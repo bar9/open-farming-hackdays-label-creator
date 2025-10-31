@@ -2,9 +2,43 @@ use crate::components::ingredient_detail::IngredientDetail;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::rules::RuleDef;
+use crate::services::{UnifiedIngredient, IngredientSource};
+use crate::category_service::*;
 use dioxus::prelude::*;
 use rust_i18n::t;
 use std::collections::HashMap;
+
+/// Convert an Ingredient to UnifiedIngredient for display purposes
+fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
+    // Calculate category flags if we have a category
+    let (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant) = if let Some(ref category) = ingredient.category {
+        (
+            Some(is_meat_category(category)),
+            Some(is_fish_category(category)),
+            Some(is_dairy_category(category)),
+            Some(is_egg_category(category)),
+            Some(is_honey_category(category)),
+            Some(is_plant_category(category)),
+        )
+    } else {
+        (None, None, None, None, None, None)
+    };
+
+    UnifiedIngredient {
+        name: ingredient.name.clone(),
+        category: ingredient.category.clone(),
+        is_allergen: Some(ingredient.is_allergen),
+        is_agricultural: Some(ingredient.is_agricultural),
+        is_meat,
+        is_fish,
+        is_dairy,
+        is_egg,
+        is_honey,
+        is_plant,
+        is_bio: ingredient.is_bio,
+        source: IngredientSource::Local, // Most ingredients come from local data
+    }
+}
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
@@ -37,13 +71,20 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 // ValidationDisplay {
                 //     paths: vec![format!("ingredients[{}][amount]", key)],
                 div { class: "grid gap-4 grid-cols-4 odd:bg-gray-100 even:bg-white items-center", key: "{key}",
-                    div { 
-                        if ingr.is_allergen {
-                            span { class: "font-bold", "{ingr.composite_name()}" }
-                        } else {
-                            "{ingr.composite_name()}"
+                    div {
+                        class: "flex items-center gap-2",
+                        div {
+                            if ingr.is_allergen {
+                                span { class: "font-bold", "{ingr.composite_name()}" }
+                            } else {
+                                "{ingr.composite_name()}"
+                            }
+                            if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")})"}
                         }
-                        if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")})"}
+                        // Show ingredient symbols
+                        IngredientSymbolsCompact {
+                            ingredient: ingredient_to_unified(ingr)
+                        }
                     }
                     div {
                         class: "text-sm text-gray-600",

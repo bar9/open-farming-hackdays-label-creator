@@ -28,6 +28,7 @@ label:
   aufbewahrungshinweis: Aufbewahrungshinweis
   produktionsland: Produktionsland
   nettogewicht: Nettogewicht
+  saved_ingredients: Gespeicherte Zutaten
   abtropfgewicht: Abtropfgewicht
   adresse: Adresse
   name: Firma / Name
@@ -182,6 +183,7 @@ placeholders:
 placeholder:
   produktname: Sommertraum
   sachbezeichnung: Himbeerkonfitüre
+  ingredient_name: Zutat eingeben...
   zusatzinformationen: |
     vegan
     
@@ -249,6 +251,41 @@ messages:
   category_display: "Kategorie: %{category}"
   please_enter_amount: Bitte Menge eingeben
   scaling_factor: "Faktor: ×%{factor} (vorher: %{before}g → neu: %{after}g)"
+
+category_selector:
+  title: Kategorie auswählen
+  fetch_button: Kategorie suchen
+  fetching: Suche läuft...
+  suggestions_count: "%{count} Vorschläge gefunden"
+  suggestions_available: "%{count} Vorschläge verfügbar"
+  select_category: Auswählen
+  filter_placeholder: Vorschläge filtern...
+  no_matches: Keine passenden Ergebnisse
+  no_category: Keine Kategorie
+  cancel: Abbrechen
+
+symbols:
+  allergen_tooltip: Allergen
+  allergen_unknown: Allergen-Status unbekannt
+  meat_tooltip: Fleisch
+  meat_unknown: Fleisch-Status unbekannt
+  fish_tooltip: Fisch
+  fish_unknown: Fisch-Status unbekannt
+  dairy_tooltip: Milchprodukt
+  dairy_unknown: Milchprodukt-Status unbekannt
+  egg_tooltip: Ei
+  egg_unknown: Ei-Status unbekannt
+  honey_tooltip: Honig
+  honey_unknown: Honig-Status unbekannt
+  plant_tooltip: Pflanzlich
+  plant_unknown: Pflanzlich-Status unbekannt
+  agricultural_tooltip: Landwirtschaftlich
+  agricultural_unknown: Landwirtschaftlich-Status unbekannt
+  bio_tooltip: Bio-zertifiziert
+  bio_unknown: Bio-Status unbekannt
+  source_local: Nur lokale Daten
+  source_blv: Nur BLV-Daten
+  source_merged: Vollständige Daten
 
 errors:
   page_not_found: Seite nicht gefunden
