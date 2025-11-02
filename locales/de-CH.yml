@@ -80,25 +80,25 @@ help:
   ignore_ingredients: |
     Wenn der Produktname oder die Sachbezeichnung ein reines Produkt ohne weitere Zutaten bezeichnet (z.B. reiner Essig), braucht keine Zutatenliste angegeben zu werden.
   produktname: |
-    Der Produktname kann phantasiereich sein. 
+    Der Produktname kann phantasiereich sein.
     Den Phantasienamen mit einer Sachbezeichnung ergänzen (Art. 6 LIV.)
     Sind Produktname und Sachbezeichnung identisch, dieses Feld leer lassen.
   sachbezeichnung: |
     Rechtlich vorgeschriebene Sachbezeichnung verwenden (Bsp. Fruchtaufstrich, Konfitüre, Sirup, Butterzopf).
     Wenn nicht vorhanden verkehrsübliche (Bsp. Berliner, Tomatenketchup) oder beschreibende (Bsp. Fladenbrot) mit Weizenmehl Bezeichnung wählen.
   zutaten: |
-    Zutat aus dem Dropdown auswählen. Wenn nicht vorhanden manuell im Textfeld eingeben. Zusammengesetzte Zutaten (Bsp. Geliermittel) als solches erfassen. Dazu Symbol hinter Zutat anklicken und die einzelnen Zutaten im Untermenü erfassen. 
-    Allergene werden optisch hervorgehoben, wenn aus dem Dropdown ausgewählt. 
+    Zutat aus dem Dropdown auswählen. Wenn nicht vorhanden manuell im Textfeld eingeben. Zusammengesetzte Zutaten (Bsp. Geliermittel) als solches erfassen. Dazu Symbol hinter Zutat anklicken und die einzelnen Zutaten im Untermenü erfassen.
+    Allergene werden optisch hervorgehoben, wenn aus dem Dropdown ausgewählt.
     Die Ausgabe der Zutatenliste erfolgt automatisch in absteigender Reihenfolge.
   datumseingabe: |
     Lebensmittel, die kühl gehalten werden müssen: zu verbrauchen bis ..
-    
+
     * * * * *
-    
+
     Übrige Lebensmittel: mindestens haltbar bis ...
-    
+
     * * * * *
-    
+
     Keine Datumsangabe erforderlich (Bsp. reiner Essig)
   zusatzinformationen: |
     * Alkoholgehalt in Getränken ab 1.2 Vol % (LIV Art. 18)
@@ -110,7 +110,7 @@ help:
     * Chargennummer
     ---
     * Nährwertdeklartion ist obligatorisch (Energiewert, Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker, Eiweiss und Salz je 100 g) ausgenommen sind Lebensmittel nach LIV Anhang 9 (handwerklich hergestellt und lokal im Radius von weniger als 50 km oder direkt verkauft werden).
-  
+
 
   aufbewahrungshinweis: |
     | Aufbewahrungsarten | Bedingungen |
@@ -121,7 +121,7 @@ help:
     | bei Zimmertemperatur lagern | lichtgeschützt lagern |
     | einmal gekühlte Eier dauerhaft bei 5 °C aufbewahren | eigener Text |
   nettogewicht: |
-    Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit. 
+    Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit.
     Achtung: Rückzug bei eingekochten Produkten berücksichtigen Bsp. Sirup
 
   zusammengesetzteZutaten: |
@@ -168,6 +168,11 @@ help:
     **Detailpreis (optional)**
     Preis der Verkaufseinheit
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
+
+  bio_certified: Gibt an, ob diese Zutat bio-zertifiziert ist
+  bio_transitional: Gibt an, ob diese Zutat aus einem Umstellbetrieb stammt
+  bio_non_knospe: Gibt an, ob diese Zutat bio-zertifiziert ist, aber nicht nach Knospe-Standards
+  aufzucht_location: Ort, wo es die meiste Zeit gelebt hat
     
 
 tooltips:
@@ -307,6 +312,9 @@ themes:
 countries:
   switzerland: Schweiz
 
+country_select:
+  please_choose: "Bitte wählen..."
+
 date_prefixes:
   best_before: Mindestens haltbar bis
   use_by: Zu verbrauchen bis
@@ -331,6 +339,7 @@ buttons:
   delete: Löschen
   save_to_storage: Merken
   save_and_transfer: Speichern und übertragen
+  transfer_scaling_title: "Die Mengenanpassung (×%{factor}) auf das gesamte Rezept übertragen"
 
 languages:
   de: DE

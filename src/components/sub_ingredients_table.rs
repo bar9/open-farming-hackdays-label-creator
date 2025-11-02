@@ -3,29 +3,70 @@ use crate::core::{Ingredient, SubIngredient};
 use crate::model::{food_db, lookup_allergen, lookup_agricultural};
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{UnifiedIngredient, IngredientSource};
-// use crate::category_service::*; // Not needed since we don't derive category flags for sub-ingredients
+// Category service not directly imported since we use heuristic name-based derivation
 use dioxus::prelude::*;
 use rust_i18n::t;
 
 /// Convert a SubIngredient to UnifiedIngredient for display purposes
 fn subingredient_to_unified(sub_ingredient: &SubIngredient) -> UnifiedIngredient {
-    // Try to get category information by searching for the ingredient name
-    // Note: Since SubIngredient doesn't store category, we derive it for display
+    // Try to derive category information from ingredient name patterns
+    let ingredient_name = &sub_ingredient.name;
+    let name_lower = ingredient_name.to_lowercase();
+
+    // Basic category derivation based on common ingredient names
+    // This is a heuristic approach since SubIngredient doesn't store category
+    let (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant) = derive_category_flags_from_name(&name_lower);
 
     UnifiedIngredient {
         name: sub_ingredient.name.clone(),
-        category: None, // Sub-ingredients don't store category, but could be looked up if needed
+        category: None, // Sub-ingredients don't store category, but we derive flags below
         is_allergen: Some(sub_ingredient.is_allergen),
-        is_agricultural: Some(lookup_agricultural(&sub_ingredient.name)), // Derive from local DB
-        is_meat: None, // Could be derived from category if we had it
-        is_fish: None,
-        is_dairy: None,
-        is_egg: None,
-        is_honey: None,
-        is_plant: None,
+        is_agricultural: Some(lookup_agricultural(&sub_ingredient.name)),
+        is_meat,
+        is_fish,
+        is_dairy,
+        is_egg,
+        is_honey,
+        is_plant,
         is_bio: None,
         source: IngredientSource::Local, // Sub-ingredients are typically local
     }
+}
+
+/// Derive category flags from ingredient name using heuristic matching
+fn derive_category_flags_from_name(name_lower: &str) -> (Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>) {
+    let is_meat = if name_lower.contains("fleisch") || name_lower.contains("rind") ||
+                     name_lower.contains("schwein") || name_lower.contains("lamm") ||
+                     name_lower.contains("wurst") || name_lower.contains("speck") {
+        Some(true)
+    } else { None };
+
+    let is_fish = if name_lower.contains("fisch") || name_lower.contains("lachs") ||
+                     name_lower.contains("thun") || name_lower.contains("forelle") {
+        Some(true)
+    } else { None };
+
+    let is_dairy = if name_lower.contains("milch") || name_lower.contains("käse") ||
+                      name_lower.contains("butter") || name_lower.contains("sahne") ||
+                      name_lower.contains("joghurt") || name_lower.contains("quark") {
+        Some(true)
+    } else { None };
+
+    let is_egg = if name_lower.contains("ei") && !name_lower.contains("wein") && !name_lower.contains("reis") {
+        Some(true)
+    } else { None };
+
+    let is_honey = if name_lower.contains("honig") {
+        Some(true)
+    } else { None };
+
+    let is_plant = if name_lower.contains("gemüse") || name_lower.contains("obst") ||
+                      name_lower.contains("getreide") || name_lower.contains("weizen") ||
+                      name_lower.contains("reis") || name_lower.contains("kartoffel") {
+        Some(true)
+    } else { None };
+
+    (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant)
 }
 
 #[derive(Props, Clone, PartialEq)]

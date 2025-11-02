@@ -25,7 +25,7 @@ pub struct Output {
     pub success: bool,
     pub label: String,
     pub total_amount: f64,
-    pub validation_messages: HashMap<String, &'static str>,
+    pub validation_messages: HashMap<String, Vec<&'static str>>,
     pub conditional_elements: HashMap<String, bool>,
 }
 
@@ -681,13 +681,12 @@ impl Calculator {
     }
 }
 
-fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut HashMap<String, &str>) {
+fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut HashMap<String, Vec<&str>>) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.amount <= 0. {
-            validation_messages.insert(
-                format!("ingredients[{}][amount]", i),
-                "Die Menge muss grösser als 0 sein.",
-            );
+            validation_messages.entry(format!("ingredients[{}][amount]", i))
+                .or_insert_with(Vec::new)
+                .push("Die Menge muss grösser als 0 sein.");
         }
     }
 }
@@ -695,29 +694,27 @@ fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut Hash
 fn validate_origin(
     ingredients: &Vec<Ingredient>,
     total_amount: f64,
-    validation_messages: &mut HashMap<String, &str>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
         if percentage > 50.0 && ingredient.origin.is_none() {
-            validation_messages.insert(
-                format!("ingredients[{}][origin]", i),
-                "Herkunftsland ist erforderlich für Zutaten über 50%.",
-            );
+            validation_messages.entry(format!("ingredients[{}][origin]", i))
+                .or_insert_with(Vec::new)
+                .push("Herkunftsland ist erforderlich für Zutaten über 50%.");
         }
     }
 }
 
 fn validate_namensgebende_origin(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, &str>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.is_namensgebend == Some(true) && ingredient.origin.is_none() {
-            validation_messages.insert(
-                format!("ingredients[{}][origin]", i),
-                "Herkunftsland ist erforderlich für namensgebende Zutaten.",
-            );
+            validation_messages.entry(format!("ingredients[{}][origin]", i))
+                .or_insert_with(Vec::new)
+                .push("Herkunftsland ist erforderlich für namensgebende Zutaten.");
         }
     }
 }
@@ -777,7 +774,7 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
 fn validate_meat_origin(
     ingredients: &Vec<Ingredient>,
     total_amount: f64,
-    validation_messages: &mut HashMap<String, &str>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
@@ -785,10 +782,9 @@ fn validate_meat_origin(
             // Check if this ingredient is meat-based using the category
             if let Some(category) = &ingredient.category {
                 if is_meat_category(category) && ingredient.origin.is_none() {
-                    validation_messages.insert(
-                        format!("ingredients[{}][origin]", i),
-                        "Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.",
-                    );
+                    validation_messages.entry(format!("ingredients[{}][origin]", i))
+                        .or_insert_with(Vec::new)
+                        .push("Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.");
                 }
             }
         }
@@ -797,21 +793,20 @@ fn validate_meat_origin(
 
 fn validate_all_ingredients_origin(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, &str>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.origin.is_none() {
-            validation_messages.insert(
-                format!("ingredients[{}][origin]", i),
-                "Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).",
-            );
+            validation_messages.entry(format!("ingredients[{}][origin]", i))
+                .or_insert_with(Vec::new)
+                .push("Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).");
         }
     }
 }
 
 fn validate_beef_origin_details(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, &str>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         // Check if this ingredient is beef-based using the category
@@ -819,18 +814,16 @@ fn validate_beef_origin_details(
             if is_beef_category(category) {
                 // Validate aufzucht_ort (birthplace/where it lived)
                 if ingredient.aufzucht_ort.is_none() {
-                    validation_messages.insert(
-                        format!("ingredients[{}][aufzucht_ort]", i),
-                        "Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.",
-                    );
+                    validation_messages.entry(format!("ingredients[{}][aufzucht_ort]", i))
+                        .or_insert_with(Vec::new)
+                        .push("Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.");
                 }
 
                 // Validate schlachtungs_ort (slaughter location)
                 if ingredient.schlachtungs_ort.is_none() {
-                    validation_messages.insert(
-                        format!("ingredients[{}][schlachtungs_ort]", i),
-                        "Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.",
-                    );
+                    validation_messages.entry(format!("ingredients[{}][schlachtungs_ort]", i))
+                        .or_insert_with(Vec::new)
+                        .push("Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.");
                 }
             }
         }
@@ -839,7 +832,7 @@ fn validate_beef_origin_details(
 
 fn validate_fish_catch_location(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, &str>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         // Check if this ingredient is fish-based using the category
@@ -847,10 +840,9 @@ fn validate_fish_catch_location(
             if is_fish_category(category) {
                 // Validate fangort (catch location)
                 if ingredient.fangort.is_none() {
-                    validation_messages.insert(
-                        format!("ingredients[{}][fangort]", i),
-                        "Fangort ist erforderlich für Fisch-Zutaten.",
-                    );
+                    validation_messages.entry(format!("ingredients[{}][fangort]", i))
+                        .or_insert_with(Vec::new)
+                        .push("Fangort ist erforderlich für Fisch-Zutaten.");
                 }
             }
         }
@@ -1060,10 +1052,9 @@ mod tests {
         let output = calculator.execute(input);
         let validation_messages = output.validation_messages;
         assert!(validation_messages.get("ingredients[0][amount]").is_some());
-        assert_eq!(
-            "Die Menge muss grösser als 0 sein.",
-            *validation_messages.get("ingredients[0][amount]").unwrap()
-        )
+        let amount_messages = validation_messages.get("ingredients[0][amount]").unwrap();
+        assert!(!amount_messages.is_empty());
+        assert!(amount_messages.contains(&"Die Menge muss grösser als 0 sein."));
     }
 
     #[test]
@@ -1081,7 +1072,7 @@ mod tests {
         };
         let output = calculator.execute(input);
         let validation_messages = output.validation_messages;
-        assert!(validation_messages.get("ingredients[0][amount]").is_none());
+        assert!(validation_messages.get("ingredients[0][amount]").map_or(true, |v| v.is_empty()));
     }
 
     #[test]
@@ -1201,10 +1192,9 @@ mod tests {
         let output = calculator.execute(input);
         let validation_messages = output.validation_messages;
         assert!(validation_messages.get("ingredients[0][origin]").is_some());
-        assert_eq!(
-            "Herkunftsland ist erforderlich für Zutaten über 50%.",
-            *validation_messages.get("ingredients[0][origin]").unwrap()
-        );
+        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
+        assert!(!origin_messages.is_empty());
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Zutaten über 50%."));
     }
 
     #[test]
@@ -1290,10 +1280,9 @@ mod tests {
         let output = calculator.execute(input);
         let validation_messages = output.validation_messages;
         assert!(validation_messages.get("ingredients[0][origin]").is_some());
-        assert_eq!(
-            "Herkunftsland ist erforderlich für namensgebende Zutaten.",
-            *validation_messages.get("ingredients[0][origin]").unwrap()
-        );
+        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
+        assert!(!origin_messages.is_empty());
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für namensgebende Zutaten."));
     }
 
     #[test]
@@ -1333,7 +1322,7 @@ mod tests {
         let validation_messages = output.validation_messages;
         let conditionals = output.conditional_elements;
         // Should not require origin validation
-        assert!(validation_messages.get("ingredients[0][origin]").is_none());
+        assert!(validation_messages.get("ingredients[0][origin]").map_or(true, |v| v.is_empty()));
         // Should not show origin field
         assert!(conditionals.get("herkunft_benoetigt_0").is_none());
     }
@@ -1515,10 +1504,9 @@ mod tests {
 
         // Should have validation error for missing origin on meat ingredient
         assert!(validation_messages.get("ingredients[0][origin]").is_some());
-        assert_eq!(
-            validation_messages.get("ingredients[0][origin]"),
-            Some(&"Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.")
-        );
+        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
+        assert!(!origin_messages.is_empty());
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
     }
 
     #[test]
@@ -1559,8 +1547,9 @@ mod tests {
 
             if should_require_origin {
                 // Should have validation error for missing origin
+                let origin_messages = validation_messages.get("ingredients[0][origin]");
                 assert!(
-                    validation_messages.get("ingredients[0][origin]").is_some(),
+                    origin_messages.map_or(false, |v| !v.is_empty()),
                     "Expected validation error for {} with category '{}'",
                     ingredient_name, category
                 );
@@ -1572,8 +1561,9 @@ mod tests {
                 );
             } else {
                 // Should NOT have validation error
+                let origin_messages = validation_messages.get("ingredients[0][origin]");
                 assert!(
-                    validation_messages.get("ingredients[0][origin]").is_none(),
+                    origin_messages.map_or(true, |v| v.is_empty()),
                     "Unexpected validation error for {} with category '{}'",
                     ingredient_name, category
                 );
@@ -1672,10 +1662,11 @@ mod tests {
         let output = calculator.execute(input);
 
         // Should have validation error for the ingredient without origin
-        assert_eq!(output.validation_messages.get("ingredients[1][origin]"),
-                   Some(&"Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
+        let ingredient_1_messages = output.validation_messages.get("ingredients[1][origin]");
+        assert!(ingredient_1_messages
+                   .map_or(false, |v| v.contains(&"Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).")));
         // Should NOT have validation error for the ingredient with origin
-        assert_eq!(output.validation_messages.get("ingredients[0][origin]"), None);
+        assert!(output.validation_messages.get("ingredients[0][origin]").map_or(true, |v| v.is_empty()));
     }
 
     #[test]
@@ -1731,10 +1722,111 @@ mod tests {
         let output = calculator.execute(input);
 
         // Should have validation errors for all ingredients
-        assert_eq!(output.validation_messages.get("ingredients[0][origin]"),
-                   Some(&"Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
-        assert_eq!(output.validation_messages.get("ingredients[1][origin]"),
-                   Some(&"Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
+        let origin_messages_0 = output.validation_messages.get("ingredients[0][origin]").unwrap();
+        let origin_messages_1 = output.validation_messages.get("ingredients[1][origin]").unwrap();
+        assert!(origin_messages_0.contains(&"Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
+        assert!(origin_messages_1.contains(&"Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
+    }
+
+    #[test]
+    fn multiple_validation_errors_on_single_ingredient() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![
+            RuleDef::AP1_1_ZutatMengeValidierung, // Amount validation
+            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent, // >50% origin
+            RuleDef::AP7_3_HerkunftFleischUeber20Prozent, // >20% meat origin
+            RuleDef::AP7_4_RindfleischHerkunftDetails, // Beef details
+        ]);
+
+        let input = Input {
+            ingredients: vec![
+                Ingredient {
+                    name: "Rindfleisch".to_string(),
+                    amount: 600.0, // Valid amount, >50% of total
+                    category: Some("Rind".to_string()),
+                    origin: None, // Missing origin - triggers AP7_1 (>50%) and AP7_3 (>20% meat)
+                    aufzucht_ort: None, // Missing - triggers AP7_4
+                    schlachtungs_ort: None, // Missing - triggers AP7_4
+                    ..Default::default()
+                },
+                Ingredient {
+                    name: "Invalid Ingredient".to_string(),
+                    amount: 0.0, // Invalid amount - triggers AP1_1
+                    category: None,
+                    origin: None,
+                    ..Default::default()
+                }
+            ],
+            total: Some(1000.0), // Rindfleisch is 60% of total
+        };
+
+        let output = calculator.execute(input);
+        let validation_messages = output.validation_messages;
+
+        // Verify beef validation errors are present for ingredient 0
+        assert!(validation_messages.contains_key("ingredients[0][origin]"));
+        assert!(validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
+        assert!(validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
+
+        // Verify amount validation error for ingredient 1
+        assert!(validation_messages.contains_key("ingredients[1][amount]"));
+
+        // Verify the messages are correct
+        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
+        let aufzucht_messages = validation_messages.get("ingredients[0][aufzucht_ort]").unwrap();
+        let schlachtungs_messages = validation_messages.get("ingredients[0][schlachtungs_ort]").unwrap();
+        let amount_messages = validation_messages.get("ingredients[1][amount]").unwrap();
+
+        // Should contain multiple origin messages for different rules
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Zutaten über 50%."));
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
+        assert!(aufzucht_messages.contains(&"Aufzuchtort ist erforderlich für Rindfleisch-Zutaten."));
+        assert!(schlachtungs_messages.contains(&"Schlachtungsort ist erforderlich für Rindfleisch-Zutaten."));
+        assert!(amount_messages.contains(&"Die Menge muss grösser als 0 sein."));
+
+        // Count total messages across all fields
+        let total_messages: usize = validation_messages.values().map(|v| v.len()).sum();
+        println!("Multiple validation errors successfully captured: {} fields with {} total messages", validation_messages.len(), total_messages);
+    }
+
+    #[test]
+    fn stacked_validation_messages_demo() {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![
+            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent, // >50% origin
+            RuleDef::AP7_3_HerkunftFleischUeber20Prozent, // >20% meat origin
+        ]);
+
+        let input = Input {
+            ingredients: vec![
+                Ingredient {
+                    name: "Rindfleisch".to_string(),
+                    amount: 600.0, // 60% of total - triggers both rules
+                    category: Some("Rind".to_string()),
+                    origin: None, // Missing origin - triggers both rules
+                    ..Default::default()
+                }
+            ],
+            total: Some(1000.0),
+        };
+
+        let output = calculator.execute(input);
+        let validation_messages = output.validation_messages;
+
+        // Verify that BOTH validation messages are present for the same field
+        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
+
+        println!("Origin validation messages for beef ingredient at 60%:");
+        for msg in origin_messages {
+            println!("  - {}", msg);
+        }
+
+        // Both rules should have added their messages
+        assert_eq!(origin_messages.len(), 2, "Should have exactly 2 validation messages for origin field");
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Zutaten über 50%."));
+        assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
+
+        println!("✅ Successfully demonstrated stacked validation messages!");
     }
 
     #[test]
@@ -2121,8 +2213,10 @@ mod tests {
         // Should have validation errors for both fields
         assert!(output.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
         assert!(output.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
-        assert_eq!(output.validation_messages.get("ingredients[0][aufzucht_ort]").unwrap(), &"Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.");
-        assert_eq!(output.validation_messages.get("ingredients[0][schlachtungs_ort]").unwrap(), &"Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.");
+        let aufzucht_messages = output.validation_messages.get("ingredients[0][aufzucht_ort]").unwrap();
+        let schlachtungs_messages = output.validation_messages.get("ingredients[0][schlachtungs_ort]").unwrap();
+        assert!(aufzucht_messages.contains(&"Aufzuchtort ist erforderlich für Rindfleisch-Zutaten."));
+        assert!(schlachtungs_messages.contains(&"Schlachtungsort ist erforderlich für Rindfleisch-Zutaten."));
 
         // Test with beef ingredient having both fields filled
         let input_with_beef_origins = Input {
@@ -2207,7 +2301,8 @@ mod tests {
 
         // Should have validation error for fangort
         assert!(output_missing.validation_messages.contains_key("ingredients[0][fangort]"));
-        assert_eq!(output_missing.validation_messages.get("ingredients[0][fangort]").unwrap(), &"Fangort ist erforderlich für Fisch-Zutaten.");
+        let fangort_messages = output_missing.validation_messages.get("ingredients[0][fangort]").unwrap();
+        assert!(fangort_messages.contains(&"Fangort ist erforderlich für Fisch-Zutaten."));
 
         // Test with fish ingredient having fangort filled
         let input_with_fangort = Input {

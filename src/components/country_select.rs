@@ -1,5 +1,6 @@
 use crate::model::Country;
 use dioxus::prelude::*;
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct CountrySelectProps {
@@ -119,7 +120,7 @@ pub fn CountrySelect(props: CountrySelectProps) -> Element {
             },
 
             // Basic options (always shown)
-            option { value: "", selected: props.value.is_none(), "Bitte wählen..." }
+            option { value: "", selected: props.value.is_none(), {t!("country_select.please_choose")} }
             option { value: "CH", selected: matches!(props.value.as_ref(), Some(Country::CH)), "Schweiz" }
             option { value: "EU", selected: matches!(props.value.as_ref(), Some(Country::EU)), "EU" }
             option { value: "NoOriginRequired", selected: matches!(props.value.as_ref(), Some(Country::NoOriginRequired)), "Keine Herkunftsangabe benötigt" }

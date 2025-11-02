@@ -31,7 +31,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut is_open = use_signal(|| false);
 
     // Local state for editing - won't be saved until user clicks save
-    let original_ingredient = ingredients.get(index).unwrap().clone();
+    let original_ingredient = if let Some(ingredient) = ingredients.get(index) {
+        ingredient.clone()
+    } else {
+        // Fallback to default ingredient if index is invalid
+        tracing::warn!("Invalid ingredient index {}, using default", index);
+        Ingredient::default()
+    };
     let mut edit_name = use_signal(|| original_ingredient.name.clone());
     let mut edit_amount = use_signal(|| {
         if props.genesis {
@@ -355,8 +361,11 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let validations_context = use_context::<Validations>();
     let has_validation_error = use_memo(move || {
         let validation_entries = (*validations_context.0.read()).clone();
-        validation_entries.contains_key(&format!("ingredients[{}][origin]", index))
-            || validation_entries.contains_key(&format!("ingredients[{}][amount]", index))
+        let has_origin_error = validation_entries.get(&format!("ingredients[{}][origin]", index))
+            .map_or(false, |v| !v.is_empty());
+        let has_amount_error = validation_entries.get(&format!("ingredients[{}][amount]", index))
+            .map_or(false, |v| !v.is_empty());
+        has_origin_error || has_amount_error
     });
 
     rsx! {
@@ -581,7 +590,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if should_show_bio() {
                         rsx! {
                             FormField {
-                                help: Some("Gibt an, ob diese Zutat bio-zertifiziert ist".into()),
+                                help: Some((t!("help.bio_certified")).into()),
                                 label: t!("bio_labels.bio"),
                                 label { class: "label cursor-pointer",
                                     input {
@@ -614,7 +623,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if should_show_umstellung() {
                         rsx! {
                             FormField {
-                                help: Some("Gibt an, ob diese Zutat aus einem Umstellbetrieb stammt".into()),
+                                help: Some((t!("help.bio_transitional")).into()),
                                 label: t!("bio_labels.aus_umstellbetrieb"),
                                 label { class: "label cursor-pointer",
                                     input {
@@ -632,7 +641,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 }
                             }
                             FormField {
-                                help: Some("Gibt an, ob diese Zutat bio-zertifiziert ist, aber nicht nach Knospe-Standards".into()),
+                                help: Some((t!("help.bio_non_knospe")).into()),
                                 label: t!("bio_labels.bio_nicht_knospe"),
                                 label { class: "label cursor-pointer",
                                     input {
@@ -720,7 +729,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         rsx! {
                             FormField {
                                 label: t!("origin.aufzucht"),
-                                help: Some("Ort, wo es die meiste Zeit gelebt hat".into()),
+                                help: Some((t!("help.aufzucht_location")).into()),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][aufzucht_ort]", index)
@@ -847,7 +856,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         button {
                             class: "btn btn-secondary",
                             onclick: move |_| handle_save(true),
-                            title: format!("Die Mengenanpassung (×{:.2}) auf das gesamte Rezept übertragen", scaling_factor()),
+                            title: t!("buttons.transfer_scaling_title", factor = format!("{:.2}", scaling_factor())).to_string(),
                             {t!("buttons.save_and_transfer")}
                         }
                     }

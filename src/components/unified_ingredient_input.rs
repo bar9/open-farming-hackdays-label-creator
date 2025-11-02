@@ -19,6 +19,8 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
     let mut is_dropdown_open = use_signal(|| false);
     let mut search_results = use_signal(|| Vec::<UnifiedIngredient>::new());
     let is_searching = use_signal(|| false);
+    let mut search_request_id = use_signal(|| 0u32); // Track search requests to prevent race conditions
+    let mut search_error = use_signal(|| None::<String>); // Track search errors
 
     // Handle input changes with search
     let mut handle_input = move |value: String| {
@@ -27,6 +29,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
         if value.trim().is_empty() {
             is_dropdown_open.set(false);
             search_results.set(Vec::new());
+            search_error.set(None); // Clear errors
             return;
         }
 
@@ -34,10 +37,17 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
             return; // Wait for at least 2 characters
         }
 
+        // Clear previous errors and increment request ID to track this search
+        search_error.set(None);
+        search_request_id.set(search_request_id() + 1);
+        let current_request_id = search_request_id();
+
         // Trigger search
         let mut search_results_clone = search_results.clone();
         let mut is_searching_clone = is_searching.clone();
         let mut is_dropdown_open_clone = is_dropdown_open.clone();
+        let search_request_id_clone = search_request_id.clone();
+        let mut search_error_clone = search_error.clone();
 
         spawn(async move {
             is_searching_clone.set(true);
@@ -54,17 +64,28 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
 
             match search_unified(&value, lang).await {
                 Ok(results) => {
-                    search_results_clone.set(results);
-                    if !search_results_clone.read().is_empty() {
-                        is_dropdown_open_clone.set(true);
+                    // Check if this response is still relevant (not superseded by newer request)
+                    if current_request_id == search_request_id_clone() {
+                        search_results_clone.set(results);
+                        if !search_results_clone.read().is_empty() {
+                            is_dropdown_open_clone.set(true);
+                        }
                     }
+                    // Else: ignore outdated response
                 }
                 Err(e) => {
                     tracing::warn!("Failed to search unified ingredients: {}", e);
-                    search_results_clone.set(Vec::new());
+                    // Only update if this is still the current request
+                    if current_request_id == search_request_id_clone() {
+                        search_results_clone.set(Vec::new());
+                        search_error_clone.set(Some(format!("Search failed: {}", e)));
+                    }
                 }
             }
-            is_searching_clone.set(false);
+            // Only stop loading indicator if this is the current request
+            if current_request_id == search_request_id_clone() {
+                is_searching_clone.set(false);
+            }
         });
     };
 
@@ -110,6 +131,18 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                 div {
                     class: "absolute right-3 top-1/2 transform -translate-y-1/2",
                     span { class: "loading loading-spinner loading-sm" }
+                }
+            }
+
+            // Error indicator
+            if let Some(error_msg) = search_error() {
+                div {
+                    class: "absolute right-3 top-1/2 transform -translate-y-1/2",
+                    span {
+                        class: "text-error text-sm",
+                        title: "{error_msg}",
+                        "⚠️"
+                    }
                 }
             }
 
