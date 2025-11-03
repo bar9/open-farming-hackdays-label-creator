@@ -17,7 +17,7 @@ pub struct UnifiedIngredientInputProps {
 #[component]
 pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element {
     let mut is_dropdown_open = use_signal(|| false);
-    let mut search_results = use_signal(|| Vec::<UnifiedIngredient>::new());
+    let mut search_results = use_signal(Vec::<UnifiedIngredient>::new);
     let is_searching = use_signal(|| false);
     let mut search_request_id = use_signal(|| 0u32); // Track search requests to prevent race conditions
     let mut search_error = use_signal(|| None::<String>); // Track search errors
@@ -43,11 +43,11 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
         let current_request_id = search_request_id();
 
         // Trigger search
-        let mut search_results_clone = search_results.clone();
-        let mut is_searching_clone = is_searching.clone();
-        let mut is_dropdown_open_clone = is_dropdown_open.clone();
-        let search_request_id_clone = search_request_id.clone();
-        let mut search_error_clone = search_error.clone();
+        let mut search_results_clone = search_results;
+        let mut is_searching_clone = is_searching;
+        let mut is_dropdown_open_clone = is_dropdown_open;
+        let search_request_id_clone = search_request_id;
+        let mut search_error_clone = search_error;
 
         spawn(async move {
             is_searching_clone.set(true);

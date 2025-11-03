@@ -47,7 +47,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
     });
     let mut edit_is_composite = use_signal(|| {
-        original_ingredient.sub_components.as_ref().map_or(false, |s| !s.is_empty())
+        original_ingredient.sub_components.as_ref().is_some_and(|s| !s.is_empty())
     });
     let mut edit_is_namensgebend = use_signal(|| {
         original_ingredient.is_namensgebend.unwrap_or(false)
@@ -142,7 +142,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     // Track changes from SubIngredientsTable back to edit state
     // Only monitor wrapper_ingredients changes
     use_effect(move || {
-        if let Some(wrapper_sub) = wrapper_ingredients.read().get(0).and_then(|i| i.sub_components.as_ref()) {
+        if let Some(wrapper_sub) = wrapper_ingredients.read().first().and_then(|i| i.sub_components.as_ref()) {
             // Only update if actually different
             let current_edit_sub = edit_sub_components();
             if current_edit_sub.as_ref() != Some(wrapper_sub) {
@@ -152,7 +152,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     });
     
     
-    let mut handle_ingredient_select = move |unified_ingredient: UnifiedIngredient| {
+    let handle_ingredient_select = move |unified_ingredient: UnifiedIngredient| {
         // Update name
         edit_name.set(unified_ingredient.name.clone());
 
@@ -185,7 +185,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         // Note: Category is now set from unified ingredient
     };
 
-    let mut update_name = move |new_name: String| {
+    let update_name = move |new_name: String| {
         // Update local edit state only
         edit_name.set(new_name.clone());
 
@@ -244,7 +244,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 Ok(_) => {
                     save_status.set(Some(t!("messages.ingredient_saved_successfully", name = edit_name()).to_string()));
                     // Clear status after 2 seconds
-                    let mut save_status_clone = save_status.clone();
+                    let mut save_status_clone = save_status;
                     spawn(async move {
                         gloo::timers::future::TimeoutFuture::new(2000).await;
                         save_status_clone.set(None);
@@ -253,7 +253,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 Err(e) => {
                     save_status.set(Some(t!("messages.error_generic", error = e).to_string()));
                     // Clear status after 3 seconds
-                    let mut save_status_clone = save_status.clone();
+                    let mut save_status_clone = save_status;
                     spawn(async move {
                         gloo::timers::future::TimeoutFuture::new(3000).await;
                         save_status_clone.set(None);
@@ -362,9 +362,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let has_validation_error = use_memo(move || {
         let validation_entries = (*validations_context.0.read()).clone();
         let has_origin_error = validation_entries.get(&format!("ingredients[{}][origin]", index))
-            .map_or(false, |v| !v.is_empty());
+            .is_some_and(|v| !v.is_empty());
         let has_amount_error = validation_entries.get(&format!("ingredients[{}][amount]", index))
-            .map_or(false, |v| !v.is_empty());
+            .is_some_and(|v| !v.is_empty());
         has_origin_error || has_amount_error
     });
 
@@ -404,7 +404,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_name.set(orig.name.clone());
                         edit_amount.set(Some(orig.amount));
                         edit_is_composite.set(
-                            orig.sub_components.as_ref().map_or(false, |s| !s.is_empty())
+                            orig.sub_components.as_ref().is_some_and(|s| !s.is_empty())
                         );
                         edit_is_namensgebend.set(
                             orig.is_namensgebend.unwrap_or(false)
@@ -584,7 +584,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     // Check if Bio rule is active to show the bio checkbox
                     let should_show_bio = use_memo(move || {
                         let rules = props.rules.read();
-                        rules.iter().any(|rule| *rule == RuleDef::Bio_Knospe_EingabeIstBio)
+                        rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
                     });
 
                     if should_show_bio() {
@@ -617,7 +617,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     // Check if Bio/Knospe rules are active to show the Umstellung checkboxes
                     let should_show_umstellung = use_memo(move || {
                         let rules = props.rules.read();
-                        rules.iter().any(|rule| *rule == RuleDef::Bio_Knospe_EingabeIstBio)
+                        rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
                     });
 
                     if should_show_umstellung() {
@@ -712,7 +712,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     // Check if AP7_4 rule is active and ingredient is beef to show beef specific fields
                     let should_show_beef_fields = use_memo(move || {
                         let rules = props.rules.read();
-                        let has_beef_rule = rules.iter().any(|rule| *rule == RuleDef::AP7_4_RindfleischHerkunftDetails);
+                        let has_beef_rule = rules.contains(&RuleDef::AP7_4_RindfleischHerkunftDetails);
 
                         if has_beef_rule {
                             if let Some(category) = &edit_category() {
@@ -768,7 +768,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     // Check if AP7_5 rule is active and ingredient is fish to show fish specific field
                     let should_show_fish_field = use_memo(move || {
                         let rules = props.rules.read();
-                        let has_fish_rule = rules.iter().any(|rule| *rule == RuleDef::AP7_5_FischFangort);
+                        let has_fish_rule = rules.contains(&RuleDef::AP7_5_FischFangort);
 
                         if has_fish_rule {
                             if let Some(category) = &edit_category() {
@@ -871,7 +871,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     edit_name.set(orig.name.clone());
                     edit_amount.set(Some(orig.amount));
                     edit_is_composite.set(
-                        orig.sub_components.as_ref().map_or(false, |s| !s.is_empty())
+                        orig.sub_components.as_ref().is_some_and(|s| !s.is_empty())
                     );
                     edit_is_namensgebend.set(orig.is_namensgebend.unwrap_or(false));
                     edit_sub_components.set(orig.sub_components.clone());

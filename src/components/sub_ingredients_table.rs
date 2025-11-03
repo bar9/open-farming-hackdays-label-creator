@@ -101,7 +101,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         }
     };
 
-    let mut handle_unified_ingredient_select = {
+    let handle_unified_ingredient_select = {
         let mut ingredients = props.ingredients;
         move |unified_ingredient: UnifiedIngredient| {
             if let Some(mut ingredient) = ingredients.get_mut(props.index) {

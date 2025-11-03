@@ -546,7 +546,7 @@ impl Calculator {
 
             if swiss_percentage >= 100.0 && has_knospe_100_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_100_Percent_CH_NoOrigin);
-                self.log_rule_processing(&RuleDef::Knospe_100_Percent_CH_NoOrigin, "OUTPUT", Some(&format!("100% Swiss ingredients - no origin display needed")));
+                self.log_rule_processing(&RuleDef::Knospe_100_Percent_CH_NoOrigin, "OUTPUT", Some("100% Swiss ingredients - no origin display needed"));
             } else if swiss_percentage >= 90.0 && has_knospe_90_99_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
                 self.log_rule_processing(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin, "OUTPUT", Some(&format!("{:.1}% Swiss ingredients - show origin for Swiss", swiss_percentage)));
@@ -685,7 +685,7 @@ fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut Hash
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.amount <= 0. {
             validation_messages.entry(format!("ingredients[{}][amount]", i))
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push("Die Menge muss grösser als 0 sein.");
         }
     }
@@ -700,7 +700,7 @@ fn validate_origin(
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
         if percentage > 50.0 && ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push("Herkunftsland ist erforderlich für Zutaten über 50%.");
         }
     }
@@ -713,7 +713,7 @@ fn validate_namensgebende_origin(
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.is_namensgebend == Some(true) && ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push("Herkunftsland ist erforderlich für namensgebende Zutaten.");
         }
     }
@@ -783,7 +783,7 @@ fn validate_meat_origin(
             if let Some(category) = &ingredient.category {
                 if is_meat_category(category) && ingredient.origin.is_none() {
                     validation_messages.entry(format!("ingredients[{}][origin]", i))
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push("Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.");
                 }
             }
@@ -798,7 +798,7 @@ fn validate_all_ingredients_origin(
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push("Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).");
         }
     }
@@ -815,14 +815,14 @@ fn validate_beef_origin_details(
                 // Validate aufzucht_ort (birthplace/where it lived)
                 if ingredient.aufzucht_ort.is_none() {
                     validation_messages.entry(format!("ingredients[{}][aufzucht_ort]", i))
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push("Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.");
                 }
 
                 // Validate schlachtungs_ort (slaughter location)
                 if ingredient.schlachtungs_ort.is_none() {
                     validation_messages.entry(format!("ingredients[{}][schlachtungs_ort]", i))
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push("Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.");
                 }
             }
@@ -841,7 +841,7 @@ fn validate_fish_catch_location(
                 // Validate fangort (catch location)
                 if ingredient.fangort.is_none() {
                     validation_messages.entry(format!("ingredients[{}][fangort]", i))
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push("Fangort ist erforderlich für Fisch-Zutaten.");
                 }
             }
@@ -1827,6 +1827,22 @@ mod tests {
         assert!(origin_messages.contains(&"Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
 
         println!("✅ Successfully demonstrated stacked validation messages!");
+    }
+
+    #[test]
+    fn country_flag_emoji_test() {
+        use crate::model::Country;
+
+        // Test some key country flags
+        assert_eq!(Country::CH.flag_emoji(), "🇨🇭");
+        assert_eq!(Country::DE.flag_emoji(), "🇩🇪");
+        assert_eq!(Country::FR.flag_emoji(), "🇫🇷");
+        assert_eq!(Country::IT.flag_emoji(), "🇮🇹");
+        assert_eq!(Country::EU.flag_emoji(), "🇪🇺");
+        assert_eq!(Country::NoOriginRequired.flag_emoji(), "");
+
+        println!("✅ Country flag emojis working correctly!");
+        println!("🇨🇭 Switzerland, 🇩🇪 Germany, 🇫🇷 France, 🇮🇹 Italy, 🇪🇺 EU");
     }
 
     #[test]

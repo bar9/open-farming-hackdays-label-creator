@@ -4,7 +4,7 @@ use rust_i18n::t;
 
 #[component]
 pub fn SavedIngredientsManager() -> Element {
-    let mut saved_ingredients = use_signal(|| get_saved_ingredients());
+    let mut saved_ingredients = use_signal(get_saved_ingredients);
     let mut is_open = use_signal(|| false);
     let mut delete_status = use_signal(|| None::<String>);
     
@@ -23,7 +23,7 @@ pub fn SavedIngredientsManager() -> Element {
                 delete_status.set(Some(t!("messages.ingredient_deleted", name = name).to_string()));
                 
                 // Clear status after 2 seconds
-                let mut delete_status_clone = delete_status.clone();
+                let mut delete_status_clone = delete_status;
                 spawn(async move {
                     gloo::timers::future::TimeoutFuture::new(2000).await;
                     delete_status_clone.set(None);
@@ -33,7 +33,7 @@ pub fn SavedIngredientsManager() -> Element {
                 delete_status.set(Some(t!("messages.error_deleting", error = e).to_string()));
                 
                 // Clear status after 3 seconds
-                let mut delete_status_clone = delete_status.clone();
+                let mut delete_status_clone = delete_status;
                 spawn(async move {
                     gloo::timers::future::TimeoutFuture::new(3000).await;
                     delete_status_clone.set(None);

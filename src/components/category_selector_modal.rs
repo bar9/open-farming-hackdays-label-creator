@@ -9,7 +9,7 @@ pub fn CategorySelectorModal(
     on_select: EventHandler<String>,
     on_cancel: EventHandler<()>,
 ) -> Element {
-    let mut filter_text = use_signal(|| String::new());
+    let mut filter_text = use_signal(String::new);
 
     // Filter suggestions based on search text
     let filtered_suggestions = use_memo(move || {
@@ -22,7 +22,7 @@ pub fn CategorySelectorModal(
                 .filter(|item| {
                     item.food_name.to_lowercase().contains(&filter) ||
                     item.category_names.as_ref()
-                        .map_or(false, |cat| cat.to_lowercase().contains(&filter))
+                        .is_some_and(|cat| cat.to_lowercase().contains(&filter))
                 })
                 .cloned()
                 .collect()

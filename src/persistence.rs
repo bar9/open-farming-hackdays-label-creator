@@ -1,7 +1,6 @@
 use crate::core::Ingredient;
 use serde::{Deserialize, Serialize};
 use web_sys::Storage;
-use serde_json;
 use rust_i18n::t;
 
 const SAVED_INGREDIENTS_KEY: &str = "saved_composite_ingredients";
