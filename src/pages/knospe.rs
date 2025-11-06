@@ -116,7 +116,7 @@ impl Default for Form {
             product_subtitle: String::new(),
             additional_info: String::new(),
             storage_info: String::new(),
-            date_prefix: format!("{} ", t!("date_prefixes.best_before")),
+            date_prefix: t!("label.mindestensHaltbar").to_string(),
             date: String::new(),
             production_country: t!("countries.switzerland").to_string(),
             producer_name: String::new(),

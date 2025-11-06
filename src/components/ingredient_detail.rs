@@ -712,7 +712,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     ],
                                     CountrySelect {
                                         value: edit_aufzucht_ort.read().clone(),
-                                        include_all_countries: false,
+                                        include_all_countries: true,
                                         onchange: move |country| {
                                             edit_aufzucht_ort.set(country);
                                         }
@@ -727,7 +727,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     ],
                                     CountrySelect {
                                         value: edit_schlachtungs_ort.read().clone(),
-                                        include_all_countries: false,
+                                        include_all_countries: true,
                                         onchange: move |country| {
                                             edit_schlachtungs_ort.set(country);
                                         }
@@ -767,7 +767,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     ],
                                     CountrySelect {
                                         value: edit_fangort.read().clone(),
-                                        include_all_countries: false,
+                                        include_all_countries: true,
                                         onchange: move |country| {
                                             edit_fangort.set(country);
                                         }

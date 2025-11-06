@@ -214,6 +214,7 @@ impl RuleRegistry {
                 RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
                 RuleDef::AP7_4_RindfleischHerkunftDetails,
                 RuleDef::AP7_5_FischFangort,
+                RuleDef::Bio_Knospe_AlleZutatenHerkunft,
                 RuleDef::Knospe_100_Percent_CH_NoOrigin,
                 RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
                 RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
