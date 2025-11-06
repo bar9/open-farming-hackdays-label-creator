@@ -499,6 +499,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             r#type: "number",
                             placeholder: t!("placeholders.amount_in_grams").to_string(),
                             class: "input input-accent w-full",
+                            min: "0",
                             oninput: move |evt| {
                                 let value = evt.data.value();
                                 if value.is_empty() {

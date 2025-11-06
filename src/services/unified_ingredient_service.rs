@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 pub struct UnifiedIngredient {
     pub name: String,
     pub category: Option<String>,            // From BLV API
+    pub origin: Option<crate::model::Country>, // Country of origin for flag display
 
     // Binary flags with visual indicators
     pub is_allergen: Option<bool>,          // 🚨 From local DB
@@ -50,6 +51,7 @@ impl UnifiedIngredient {
         Self {
             name: name.clone(),
             category: None,
+            origin: None, // Local entries don't have origin info
             is_allergen: Some(lookup_allergen(&name)),
             is_agricultural: Some(lookup_agricultural(&name)),
             is_meat: None,
@@ -74,6 +76,7 @@ impl UnifiedIngredient {
         Self {
             name: item.food_name,
             category: item.category_names,
+            origin: None, // BLV API doesn't provide origin data
             is_allergen: None,
             is_agricultural: None,
             is_meat: flags.is_meat,
@@ -98,6 +101,7 @@ impl UnifiedIngredient {
         Self {
             name: local_name.clone(),
             category: blv_item.category_names,
+            origin: None, // Local/merged data typically doesn't have origin info
             // From local DB
             is_allergen: Some(lookup_allergen(&local_name)),
             is_agricultural: Some(lookup_agricultural(&local_name)),

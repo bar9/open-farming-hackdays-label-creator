@@ -221,7 +221,7 @@ preview:
   hergestelltInDer: Hergestellt in der
   hergestelltIn: Hergestellt in
   tel: "Tel: %{phone}"
-  email: "Email: %{email}"
+  email: "E-Mail: %{email}"
   website: "Website: %{website}"
   preisPro: "Preis pro %{amount}%{unit}"
   preisTotal: Preis total
@@ -288,7 +288,7 @@ symbols:
   agricultural_unknown: Landwirtschaftlich-Status unbekannt
   bio_tooltip: Bio-zertifiziert
   bio_unknown: Bio-Status unbekannt
-  source_local: Nur lokale Daten
+  source_local: Nur Declarino-Daten
   source_blv: Nur BLV-Daten
   source_merged: Vollständige Daten
 

@@ -20,6 +20,7 @@ fn subingredient_to_unified(sub_ingredient: &SubIngredient) -> UnifiedIngredient
     UnifiedIngredient {
         name: sub_ingredient.name.clone(),
         category: None, // Sub-ingredients don't store category, but we derive flags below
+        origin: None, // Sub-ingredients don't have origin info
         is_allergen: Some(sub_ingredient.is_allergen),
         is_agricultural: Some(lookup_agricultural(&sub_ingredient.name)),
         is_meat,

@@ -379,7 +379,13 @@ pub fn SplitLayout() -> Element {
             if let Some(query_string) = &context.query_string {
                 let full_url = if let Some(window) = window() {
                     if let Ok(href) = window.location().href() {
-                        format!("{}{}", href, query_string)
+                        // Remove existing query parameters from href before appending new ones
+                        let base_url = if let Some(question_mark_pos) = href.find('?') {
+                            &href[..question_mark_pos]
+                        } else {
+                            &href
+                        };
+                        format!("{}{}", base_url, query_string)
                     } else {
                         query_string.clone()
                     }

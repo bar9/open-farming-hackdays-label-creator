@@ -18,15 +18,18 @@ pub fn FormField(props: FormFieldProps) -> Element {
         rsx! {
             div {
                 class: "flex gap-2 flex-col",
-                label {
-                    class: "label cursor-pointer justify-start gap-2 items-center",
-                    {props.children}
-                    span {
-                        class: "label-text font-semibold",
-                        if props.required {
-                            span {class: "text-red-300", "* "}
+                div {
+                    class: "flex items-center gap-2",
+                    label {
+                        class: "label cursor-pointer justify-start gap-2 items-center",
+                        {props.children}
+                        span {
+                            class: "label-text font-semibold",
+                            if props.required {
+                                span {class: "text-red-300", "* "}
+                            }
+                            "{props.label}"
                         }
-                        "{props.label}"
                     }
                     {rsx!{
                         FieldHelp {
@@ -41,12 +44,14 @@ pub fn FormField(props: FormFieldProps) -> Element {
         rsx! {
             div {
                 class: "flex gap-2 flex-col",
-                label {
+                div {
                     class: "flex items-center text-left",
-                    if props.required {
-                        span {class: "text-red-300", "* "}
+                    label {
+                        if props.required {
+                            span {class: "text-red-300", "* "}
+                        }
+                        "{props.label}"
                     }
-                    "{props.label}"
                     {rsx!{
                         FieldHelp {
                             label: props.label,

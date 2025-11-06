@@ -175,6 +175,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                                 let unified = UnifiedIngredient {
                                                     name: saved_clone.name.clone(),
                                                     category: saved_clone.category.clone(),
+                                                    origin: None, // Saved ingredients don't have origin info
                                                 is_allergen: Some(saved_clone.is_allergen),
                                                 is_agricultural: Some(saved_clone.is_agricultural),
                                                 is_meat: None,

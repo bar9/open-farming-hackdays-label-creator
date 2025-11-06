@@ -66,7 +66,7 @@ fn default_volume_unit() -> String {
 }
 
 fn default_date_prefix() -> String {
-    t!("date_prefixes.best_before").to_string()
+    t!("label.mindestensHaltbar").to_string()
 }
 
 impl From<Form> for Input {

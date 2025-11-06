@@ -82,6 +82,16 @@ fn calculate_ingredient_percentage(ingredient_amount: f64, total_amount: f64) ->
     (ingredient_amount / total_amount) * 100.0
 }
 
+/// Format percentage for display, showing "<1%" instead of "0%" for very small percentages
+fn format_percentage(percentage: f64) -> String {
+    let rounded = percentage.round() as u8;
+    if rounded == 0 && percentage > 0.0 {
+        "<1%".to_string()
+    } else {
+        format!("{}%", rounded)
+    }
+}
+
 impl Calculator {
     pub(crate) fn new() -> Self {
         Calculator { rule_defs: vec![] }
@@ -286,20 +296,22 @@ impl OutputFormatter {
             false => self.ingredient.name.clone(),
         };
         if self.RuleDefs.contains(&RuleDef::AllPercentages) {
+            let percentage = (self.ingredient.amount / self.total_amount * 100.);
             output = format!(
-                "{} {}%",
+                "{} {}",
                 output,
-                (self.ingredient.amount / self.total_amount * 100.) as u8
+                format_percentage(percentage)
             )
         }
         if self
             .RuleDefs.contains(&RuleDef::PercentagesStartsWithM)
             && self.ingredient.name.starts_with("M")
         {
+            let percentage = (self.ingredient.amount / self.total_amount * 100.);
             output = format!(
-                "{} {}%",
+                "{} {}",
                 output,
-                (self.ingredient.amount / self.total_amount * 100.) as u8
+                format_percentage(percentage)
             )
         }
         // if self.RuleDefs.iter().find(|x| **x == RuleDef::MaxDetails).is_some() {
@@ -312,10 +324,11 @@ impl OutputFormatter {
             .RuleDefs.contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
         {
             if let Some(true) = self.ingredient.is_namensgebend {
+                let percentage = (self.ingredient.amount / self.total_amount * 100.);
                 output = format!(
-                    "{} {}%",
+                    "{} {}",
                     output,
-                    (self.ingredient.amount / self.total_amount * 100.) as u8
+                    format_percentage(percentage)
                 )
             }
         }

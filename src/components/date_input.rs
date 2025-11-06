@@ -31,14 +31,18 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
         select {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
             class: "select w-full max-w-xs",
-            option {selected: true, "{t!(\"label.mindestensHaltbar\")}"}
-            option {"{t!(\"label.zuVerbrauchen\")}"}
-            option {value: "", "{t!(\"label.keinDatum\")}"}
+            value: "{props.date_prefix}",
+            option {value: "{t!(\"label.mindestensHaltbar\")}", "{t!(\"label.mindestensHaltbar\")}"}
+            option {value: "{t!(\"label.zuVerbrauchen\")}", "{t!(\"label.zuVerbrauchen\")}"}
+            option {value: "{t!(\"label.keinDatum\")}", "{t!(\"label.keinDatum\")}"}
         }
-        input {
-            oninput: move |evt| {
-                ymd_date.set(evt.data.value());
-            },
-            class: "input bg-white input-bordered w-full", r#type: "date", value: "{ymd_date}"}
+        if *props.date_prefix.read() != t!("label.keinDatum") {
+            input {
+                oninput: move |evt| {
+                    ymd_date.set(evt.data.value());
+                },
+                class: "input bg-white input-bordered w-full", r#type: "date", value: "{ymd_date}"
+            }
+        }
     }
 }

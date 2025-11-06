@@ -171,6 +171,28 @@ pub fn DashedX() -> Element {
 }
 
 #[component]
+pub fn Database() -> Element {
+    rsx! {
+        svg {
+            class: "w-3 h-3 inline-block mr-1",
+            fill: "none",
+            height: "16",
+            stroke: "currentColor",
+            stroke_linecap: "round",
+            stroke_linejoin: "round",
+            stroke_width: "2",
+            view_box: "0 0 24 24",
+            width: "16",
+            xmlns: "http://www.w3.org/2000/svg",
+            path { d: "M0 0h24v24H0z", fill: "none", stroke: "none" }
+            ellipse { cx: "12", cy: "5", rx: "9", ry: "3" }
+            path { d: "M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" }
+            path { d: "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" }
+        }
+    }
+}
+
+#[component]
 pub fn BioSuisseRegular() -> Element {
     rsx! {
         svg {

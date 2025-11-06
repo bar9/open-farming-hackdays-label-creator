@@ -236,21 +236,66 @@ pub fn IngredientSymbolsCompact(ingredient: UnifiedIngredient) -> Element {
 /// Data source indicator
 #[component]
 pub fn IngredientSourceBadge(ingredient: UnifiedIngredient) -> Element {
-    let (text, class) = match ingredient.source {
-        crate::services::IngredientSource::Local => ("Lokal", "badge-accent"),
-        crate::services::IngredientSource::BLV => ("BLV", "badge-info"),
-        crate::services::IngredientSource::Merged => ("Vollständig", "badge-success"),
-    };
+    use crate::components::icons::Database;
 
-    rsx! {
-        span {
-            class: "badge badge-sm {class}",
-            title: match ingredient.source {
-                crate::services::IngredientSource::Local => t!("symbols.source_local").to_string(),
-                crate::services::IngredientSource::BLV => t!("symbols.source_blv").to_string(),
-                crate::services::IngredientSource::Merged => t!("symbols.source_merged").to_string(),
-            },
-            {text}
-        }
+    // For merged sources, show both pills
+    match ingredient.source {
+        crate::services::IngredientSource::Local => rsx! {
+            span {
+                class: "badge badge-sm badge-accent flex items-center justify-between gap-1",
+                title: t!("symbols.source_local").to_string(),
+                span {
+                    class: "flex items-center",
+                    Database {}
+                    "Declarino"
+                }
+                if let Some(ref origin) = ingredient.origin {
+                    span { class: "text-xs", "{origin.flag_emoji()}" }
+                }
+            }
+        },
+        crate::services::IngredientSource::BLV => rsx! {
+            span {
+                class: "badge badge-sm badge-info flex items-center justify-between gap-1",
+                title: t!("symbols.source_blv").to_string(),
+                span {
+                    class: "flex items-center",
+                    Database {}
+                    "BLV"
+                }
+                if let Some(ref origin) = ingredient.origin {
+                    span { class: "text-xs", "{origin.flag_emoji()}" }
+                }
+            }
+        },
+        crate::services::IngredientSource::Merged => rsx! {
+            div {
+                class: "flex gap-1",
+                span {
+                    class: "badge badge-sm badge-accent flex items-center justify-between gap-1",
+                    title: t!("symbols.source_local").to_string(),
+                    span {
+                        class: "flex items-center",
+                        Database {}
+                        "Declarino"
+                    }
+                    if let Some(ref origin) = ingredient.origin {
+                        span { class: "text-xs", "{origin.flag_emoji()}" }
+                    }
+                }
+                span {
+                    class: "badge badge-sm badge-info flex items-center justify-between gap-1",
+                    title: t!("symbols.source_blv").to_string(),
+                    span {
+                        class: "flex items-center",
+                        Database {}
+                        "BLV"
+                    }
+                    if let Some(ref origin) = ingredient.origin {
+                        span { class: "text-xs", "{origin.flag_emoji()}" }
+                    }
+                }
+            }
+        },
     }
 }

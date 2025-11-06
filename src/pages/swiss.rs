@@ -66,7 +66,7 @@ fn default_volume_unit() -> String {
 }
 
 fn default_date_prefix() -> String {
-    t!("date_prefixes.best_before").to_string()
+    t!("label.mindestensHaltbar").to_string()
 }
 
 impl From<Form> for Input {
@@ -84,8 +84,28 @@ impl Default for Form {
         if let Some(window) = web_sys::window() {
             if let Ok(mut query_string) = window.location().search() {
                 query_string = query_string.trim_start_matches('?').to_string();
-                if let Ok(app_state_from_query_string) = from_query_string::<Form>(&query_string) {
-                    return app_state_from_query_string;
+                if !query_string.is_empty() {
+                    web_sys::console::log_1(&format!("Parsing query string: {}", query_string).into());
+                    match from_query_string::<Form>(&query_string) {
+                        Ok(app_state_from_query_string) => {
+                            web_sys::console::log_1(&"Successfully parsed URL parameters".into());
+                            return app_state_from_query_string;
+                        }
+                        Err(e) => {
+                            web_sys::console::log_1(&format!("Failed to parse URL parameters: {:?}", e).into());
+
+                            // Try to diagnose specific issues
+                            if query_string.contains("amount[") {
+                                web_sys::console::log_1(&"URL contains amount enum variant syntax".into());
+                            }
+                            if query_string.contains("price[") {
+                                web_sys::console::log_1(&"URL contains price enum variant syntax".into());
+                            }
+                            if query_string.contains("origin=") {
+                                web_sys::console::log_1(&"URL contains origin parameter".into());
+                            }
+                        }
+                    }
                 }
             }
         }

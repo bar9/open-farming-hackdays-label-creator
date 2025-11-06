@@ -27,6 +27,7 @@ fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
     UnifiedIngredient {
         name: ingredient.name.clone(),
         category: ingredient.category.clone(),
+        origin: ingredient.origin.clone(),
         is_allergen: Some(ingredient.is_allergen),
         is_agricultural: Some(ingredient.is_agricultural),
         is_meat,
@@ -61,10 +62,12 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     });
     rsx! {
         div { class: "flex flex-col gap-4",
-            div { class: "grid gap-4 grid-cols-3 border-bottom items-center",
-                span { class: "font-bold", "{t!(\"label.zutat\")}" }
-                span { class: "font-bold text-right", "{t!(\"Menge\")}" }
-                span {}
+            if !props.ingredients.read().is_empty() {
+                div { class: "grid gap-4 grid-cols-3 border-bottom items-center",
+                    span { class: "font-bold", "{t!(\"label.zutat\")}" }
+                    span { class: "font-bold text-right", "{t!(\"Menge\")}" }
+                    span {}
+                }
             }
             for (key , ingr) in props.ingredients.read().iter().enumerate() {
                 // ValidationDisplay {
@@ -130,6 +133,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 r#type: "number",
                                 placeholder: t!("label.manuellesTotal").as_ref(),
                                 class: "input input-accent w-full",
+                                min: "0",
                                 onchange: move |evt| {
                                     if let Ok(amount) = evt.data.value().parse::<f64>() {
                                         props.manual_total.set(Some(amount));

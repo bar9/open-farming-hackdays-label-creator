@@ -33,10 +33,21 @@ pub fn LabelPreview(
     calculated_unit_price: Option<Memo<(bool, usize)>>,
     calculated_total_price: Option<Memo<(bool, usize)>>,
 ) -> Element {
-    fn display_money(cents: Option<usize>) -> String {
+    fn display_money_exact(cents: Option<usize>) -> String {
         match cents {
             None => String::new(),
-            Some(x) => format!("{:.2}", x as f64 / 100.0),
+            Some(x) => format!("{:.2}", x as f64 / 100.0)
+        }
+    }
+
+    fn display_money_rounded(cents: Option<usize>) -> String {
+        match cents {
+            None => String::new(),
+            Some(x) => {
+                // Round to nearest 5 Rappen (5 cents)
+                let rounded_cents = ((x as f64 / 5.0).round() * 5.0) as usize;
+                format!("{:.2}", rounded_cents as f64 / 100.0)
+            }
         }
     }
 
@@ -123,7 +134,7 @@ pub fn LabelPreview(
                     }
                 }
 
-                div { class: "grid grid-col-1 divide-y divide-dotted",
+                div { class: "grid grid-cols-1 divide-y divide-dotted",
                 div {
                     class: "py-2",
                     if (*product_subtitle.read()).is_empty() {
@@ -132,7 +143,7 @@ pub fn LabelPreview(
                         if !(*product_title.read()).is_empty() {
                             {rsx! {
                                 h3 { class: "text-2xl", "{product_title}" }
-                                span { class: "mb-1", "{product_subtitle}" }
+                                span { class: "mb-1 text-base", "{product_subtitle}" }
                             }}
                         } else {
                             {rsx! {
@@ -145,12 +156,12 @@ pub fn LabelPreview(
                 if !ignore_ingredients() {
                     div {
                         class: "py-2",
-                        h4 { class: "font-bold", "{t!(\"preview.zutaten\")}" }
                         if (*label.read()).is_empty() {
                             span { class: "badge badge-warning", {t!("preview.zutatenliste")} }
                         } else {
                             div { class: "text-sm",
-                                dangerous_inner_html: "{label}"
+                                "{t!(\"preview.zutaten\")} "
+                                span { dangerous_inner_html: "{label}" }
                             }
                         }
                     }
@@ -160,9 +171,10 @@ pub fn LabelPreview(
                     div {
                         class: "py-2 grid grid-cols-1 gap-4",
                         span {
+                            class: "text-sm",
                             span {
                                 class: "pr-1",
-                                b {"{date_prefix}"}
+                                "{date_prefix}"
                             }
                             "{date}"
                         }
@@ -179,6 +191,7 @@ pub fn LabelPreview(
                         (_, Some(calculated_amt)) => rsx! {
                             div {
                                 span {
+                                    class: "text-sm",
                                     "{calculated_amt} {get_unit()}"
                                 }
                             }
@@ -187,18 +200,20 @@ pub fn LabelPreview(
                         (Amount::Single(Some(amt)), None) => rsx! {
                             div {
                                 span {
+                                    class: "text-sm",
                                     "{amt} {get_unit()}"
                                 }
                             }
                         },
                         (Amount::Double(Some(netto), Some(brutto)), None) => rsx! {
                             div {
+                                class: "text-sm",
                                 span {
-                                    span {class: "font-bold pr-2", "{t!(\"preview.nettogewicht\")}" }
+                                    span {class: "pr-2", "{t!(\"preview.nettogewicht\")}" }
                                     "{netto} {get_unit()}"
                                 }
                                 span {
-                                    span {class: "font-bold pl-2 pr-2", "{t!(\"preview.abtropfgewicht\")}" }
+                                    span {class: "pl-2 pr-2", "{t!(\"preview.abtropfgewicht\")}" }
                                     "{brutto} {get_unit()}"
                                 }
                             }
@@ -207,16 +222,20 @@ pub fn LabelPreview(
                     }
                 }
 
-                if !additional_info().is_empty() && !storage_info().is_empty() {
+                if !additional_info().is_empty() || !storage_info().is_empty() {
                     div { class: "py-2",
-                        span { class: "text-sm",
-                            {additional_info().nl2br()}
+                        if !additional_info().is_empty() {
+                            span { class: "text-sm",
+                                {additional_info().nl2br()}
+                            }
+                            br {}
                         }
-                        br {}
-                        span { class: "text-sm",
-                            {storage_info().nl2br()}
+                        if !storage_info().is_empty() {
+                            span { class: "text-sm",
+                                {storage_info().nl2br()}
+                            }
+                            br {}
                         }
-                        br {}
                     }
                 }
 
@@ -257,7 +276,10 @@ pub fn LabelPreview(
                         (Price::Single(x), Amount::Double(Some(100), _)) |
                         (Price::Single(x), Amount::Double(Some(250), _)) |
                         (Price::Single(x), Amount::Double(Some(500), _)) => rsx! {
-                            "{display_money(x)} " {t!("units.chf")}
+                            span {
+                                class: "text-sm",
+                                "{display_money_rounded(x)} " {t!("units.chf")}
+                            }
                         },
                         // Handle non-unitary amounts with Price::Single - show both unit price and calculated total
                         (Price::Single(x), _) => {
@@ -268,14 +290,15 @@ pub fn LabelPreview(
 
                                 rsx! (
                                     div {
+                                        class: "text-sm",
                                         span {
-                                            span {class: "font-bold pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
-                                            "{display_money(Some(unit_price))} " {t!("units.chf")}
+                                            span {class: "pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
+                                            "{display_money_exact(Some(unit_price))} " {t!("units.chf")}
                                         }
                                         if let Some(total_price) = total_price_display {
                                             span {
-                                                span {class: "font-bold pl-2 pr-2", {t!("preview.preis")} }
-                                                "{display_money(Some(total_price))} " {t!("units.chf")}
+                                                span {class: "pl-2 pr-2", {t!("preview.preis")} }
+                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf")}
                                             }
                                         }
                                     }
@@ -292,7 +315,10 @@ pub fn LabelPreview(
                         (Price::Double(x, _), Amount::Double(Some(100), _)) |
                         (Price::Double(x, _), Amount::Double(Some(250), _)) |
                         (Price::Double(x, _), Amount::Double(Some(500), _)) => rsx! {
-                            "{display_money(x)} " {t!("units.chf")}
+                            span {
+                                class: "text-sm",
+                                "{display_money_rounded(x)} " {t!("units.chf")}
+                            }
                         },
                         (Price::Double(x, y), _) => {
                             // Use calculated values if available, otherwise use raw price values
@@ -308,16 +334,17 @@ pub fn LabelPreview(
                             if unit_price_display.is_some() || total_price_display.is_some() {
                                 rsx! (
                                     div {
+                                        class: "text-sm",
                                         if let Some(unit_price) = unit_price_display {
                                             span {
-                                                span {class: "font-bold pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
-                                                "{display_money(Some(unit_price))} " {t!("units.chf")}
+                                                span {class: "pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
+                                                "{display_money_exact(Some(unit_price))} " {t!("units.chf")}
                                             }
                                         }
                                         if let Some(total_price) = total_price_display {
                                             span {
-                                                span {class: "font-bold pl-2 pr-2", {t!("preview.preis")} }
-                                                "{display_money(Some(total_price))} " {t!("units.chf")}
+                                                span {class: "pl-2 pr-2", {t!("preview.preis")} }
+                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf")}
                                             }
                                         }
                                     }

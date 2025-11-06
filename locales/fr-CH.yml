@@ -85,7 +85,7 @@ preview:
   hergestelltInDer: Fabriqué dans le
   hergestelltIn: Fabriqué en
   tel: "Tél: %{phone}"
-  email: "Email: %{email}"
+  email: "E-Mail: %{email}"
   website: "Site web: %{website}"
   preisPro: "Prix par %{amount}%{unit}"
   preisTotal: Prix total
@@ -277,7 +277,7 @@ symbols:
   agricultural_unknown: Statut agricole inconnu
   bio_tooltip: Bio-certifié
   bio_unknown: Statut bio inconnu
-  source_local: Données locales uniquement
+  source_local: Données Declarino uniquement
   source_blv: Données BLV uniquement
   source_merged: Données complètes
 
