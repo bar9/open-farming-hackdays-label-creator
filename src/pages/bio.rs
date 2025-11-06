@@ -202,8 +202,6 @@ pub fn Bio() -> Element {
     use_context_provider(|| Validations(validation_messages));
     use_context_provider(|| Conditionals(conditional_display));
 
-    let umstellung = use_signal(|| true);
-
     rsx! {
         div {
             class: "flex h-full",
@@ -230,17 +228,11 @@ pub fn Bio() -> Element {
                                 required: true
                             }
                         }
-                        FormField {
-                            label: t!("Umstellungsbetrieb"),
-                            //help: Some(t!("help.ignore_ingredients").into()),
-                            CheckboxInput {
-                                bound_value: umstellung
-                            }
-                        }
                         SeparatorLine {}
                         FormField {
                             label: t!("label.ignore_ingredients"),
                             help: Some(t!("help.ignore_ingredients").into()),
+                            inline_checkbox: true,
                             CheckboxInput {
                                 bound_value: ignore_ingredients
                             }

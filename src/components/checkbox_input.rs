@@ -19,13 +19,12 @@ pub fn CheckboxInput(mut props: CheckboxInputProps) -> Element {
     });
     rsx! {
         input {
-            class: "toggle bg-base-200 {invalid_class}",
+            class: "checkbox {invalid_class}",
             r#type: "checkbox",
             required: "{props.required}",
-            value: "{props.bound_value}",
+            checked: "{props.bound_value}",
             oninput: move |evt| props.bound_value.set(evt.data.checked()),
             onblur: move |_evt| is_pristine.set(false)
         }
-
     }
 }

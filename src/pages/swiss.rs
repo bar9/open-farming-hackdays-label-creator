@@ -299,6 +299,7 @@ pub fn Swiss() -> Element {
                         FormField {
                             label: t!("label.ignore_ingredients"),
                             help: Some(t!("help.ignore_ingredients").into()),
+                            inline_checkbox: true,
                             CheckboxInput {
                                 bound_value: ignore_ingredients
                             }

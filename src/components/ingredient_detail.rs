@@ -136,6 +136,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
                 bio_nicht_knospe: Some(edit_bio_nicht_knospe()),
             };
+        } else {
+            // Clear wrapper_ingredients sub-components when toggling off composite mode
+            wrapper_ingredients.write()[0].sub_components = None;
         }
     });
     
@@ -157,7 +160,12 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         edit_name.set(unified_ingredient.name.clone());
 
         // Set category from unified ingredient
-        edit_category.set(unified_ingredient.category);
+        edit_category.set(unified_ingredient.category.clone());
+
+        // Log category to console for debugging (hidden from UI)
+        if let Some(category) = &unified_ingredient.category {
+            web_sys::console::log_1(&format!("🏷️ Ingredient '{}' category: {}", unified_ingredient.name, category).into());
+        }
 
         // Set allergen status - use local DB data if available, otherwise custom value
         if let Some(is_allergen) = unified_ingredient.is_allergen {
@@ -197,8 +205,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_sub_components.set(saved.sub_components.clone());
             is_allergen_custom.set(saved.is_allergen);
             edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
-            if saved.category.is_some() {
-                edit_category.set(saved.category.clone());
+            if let Some(category) = &saved.category {
+                edit_category.set(Some(category.clone()));
+                // Log saved category to console for debugging (hidden from UI)
+                web_sys::console::log_1(&format!("🏷️ Loaded saved ingredient '{}' category: {}", new_name, category).into());
             }
             is_custom_ingredient.set(true);  // Saved ingredients are treated as custom
             return;  // Don't fetch category again
@@ -331,6 +341,23 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_category.set(None);
             edit_aus_umstellbetrieb.set(false);
             edit_bio_nicht_knospe.set(false);
+            // Reset wrapper_ingredients for next creation
+            wrapper_ingredients.write()[0] = Ingredient {
+                name: String::new(),
+                amount: 0.0,
+                is_allergen: false,
+                is_namensgebend: None,
+                sub_components: None,
+                origin: None,
+                is_agricultural: false,
+                is_bio: None,
+                category: None,
+                aufzucht_ort: None,
+                schlachtungs_ort: None,
+                fangort: None,
+                aus_umstellbetrieb: None,
+                bio_nicht_knospe: None,
+            };
         } else {
             // Update existing ingredient
             if scale_all && amount_has_changed() {
@@ -385,6 +412,23 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_category.set(None);
                         edit_aus_umstellbetrieb.set(false);
                         edit_bio_nicht_knospe.set(false);
+                        // Reset wrapper_ingredients to clear any previous sub-components
+                        wrapper_ingredients.write()[0] = Ingredient {
+                            name: String::new(),
+                            amount: 0.0,
+                            is_allergen: false,
+                            is_namensgebend: None,
+                            sub_components: None,
+                            origin: None,
+                            is_agricultural: false,
+                            is_bio: None,
+                            category: None,
+                            aufzucht_ort: None,
+                            schlachtungs_ort: None,
+                            fangort: None,
+                            aus_umstellbetrieb: None,
+                            bio_nicht_knospe: None,
+                        };
                     }
                     is_open.toggle();
                 },
@@ -443,17 +487,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         required: true,
                         placeholder: t!("placeholder.zutatName").to_string()
                     }
-                    // Show current category if set
-                    if let Some(category) = &edit_category() {
-                        div { class: "text-sm text-success mt-2",
-                            {t!("messages.category_display", category = category)}
-                            button {
-                                class: "btn btn-xs btn-ghost ml-2",
-                                onclick: move |_| edit_category.set(None),
-                                "✕"
-                            }
-                        }
-                    }
                 }
                 br {}
                 FormField {
@@ -499,20 +532,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         FormField {
                             help: Some((t!("help.allergenManual")).into()),
                             label: t!("label.allergen"),
-                            label { class: "label cursor-pointer",
-                                input {
-                                    class: "checkbox",
-                                    r#type: "checkbox",
-                                    checked: "{is_allergen_custom}",
-                                    oninput: move |e| {
-                                        let is_checked = e.value() == "true";
-                                        is_allergen_custom.set(is_checked);
-                                        // Don't update immediately - wait for save
-                                    },
-                                }
-                                span { class: "label-text",
-                                    {t!("label.allergen")}
-                                }
+                            inline_checkbox: true,
+                            CheckboxInput {
+                                bound_value: is_allergen_custom
                             }
                         }
                         br {}
@@ -531,44 +553,26 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 FormField {
                     label: t!("label.zusammengesetzteZutat"),
                     help: Some((t!("help.zusammengesetzteZutaten")).into()),
-                    label { class: "label cursor-pointer",
-                        input {
-                            class: "checkbox",
-                            r#type: "checkbox",
-                            checked: "{edit_is_composite}",
-                            oninput: move |e| edit_is_composite.set(e.value() == "true"),
-                        }
-                        span { class: "label-text",
-                            "{t!(\"label.zusammengesetzteZutat\")}"
-                        }
-                    }
-                    if edit_is_composite() {
-                        SubIngredientsTable {
-                            ingredients: wrapper_ingredients,
-                            index: 0
-                        }
+                    inline_checkbox: true,
+                    CheckboxInput {
+                        bound_value: edit_is_composite
                     }
                 }
-                br {}
+                if edit_is_composite() {
+                    SubIngredientsTable {
+                        ingredients: wrapper_ingredients,
+                        index: 0
+                    }
+                }
                 br {}
                 ConditionalDisplay {
                     path: "namensgebende_zutat".to_string(),
                     FormField {
                         help: Some((t!("help.namensgebendeZutaten")).into()),
                         label: t!("label.namensgebendeZutat"),
-                        label { class: "label cursor-pointer",
-                            input {
-                                class: "checkbox",
-                                r#type: "checkbox",
-                                checked: "{edit_is_namensgebend}",
-                                oninput: move |e| {
-                                    edit_is_namensgebend.set(e.value() == "true");
-                                    // Don't update immediately - wait for save
-                                },
-                            }
-                            span { class: "label-text",
-                                "{t!(\"label.namensgebendeZutat\")}"
-                            }
+                        inline_checkbox: true,
+                        CheckboxInput {
+                            bound_value: edit_is_namensgebend
                         }
                     }
                 }
@@ -592,19 +596,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             FormField {
                                 help: Some((t!("help.bio_certified")).into()),
                                 label: t!("bio_labels.bio"),
-                                label { class: "label cursor-pointer",
-                                    input {
-                                        class: "checkbox",
-                                        r#type: "checkbox",
-                                        checked: "{edit_is_bio}",
-                                        oninput: move |e| {
-                                            let is_checked = e.value() == "true";
-                                            edit_is_bio.set(is_checked);
-                                        },
-                                    }
-                                    span { class: "label-text",
-                                        {t!("bio_labels.bio")}
-                                    }
+                                inline_checkbox: true,
+                                CheckboxInput {
+                                    bound_value: edit_is_bio
                                 }
                             }
                         }
@@ -625,37 +619,18 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             FormField {
                                 help: Some((t!("help.bio_transitional")).into()),
                                 label: t!("bio_labels.aus_umstellbetrieb"),
-                                label { class: "label cursor-pointer",
-                                    input {
-                                        class: "checkbox",
-                                        r#type: "checkbox",
-                                        checked: "{edit_aus_umstellbetrieb}",
-                                        oninput: move |e| {
-                                            let is_checked = e.value() == "true";
-                                            edit_aus_umstellbetrieb.set(is_checked);
-                                        },
-                                    }
-                                    span { class: "label-text",
-                                        {t!("bio_labels.aus_umstellbetrieb")}
-                                    }
+                                inline_checkbox: true,
+                                CheckboxInput {
+                                    bound_value: edit_aus_umstellbetrieb
                                 }
                             }
+                            br {}
                             FormField {
                                 help: Some((t!("help.bio_non_knospe")).into()),
                                 label: t!("bio_labels.bio_nicht_knospe"),
-                                label { class: "label cursor-pointer",
-                                    input {
-                                        class: "checkbox",
-                                        r#type: "checkbox",
-                                        checked: "{edit_bio_nicht_knospe}",
-                                        oninput: move |e| {
-                                            let is_checked = e.value() == "true";
-                                            edit_bio_nicht_knospe.set(is_checked);
-                                        },
-                                    }
-                                    span { class: "label-text",
-                                        {t!("bio_labels.bio_nicht_knospe")}
-                                    }
+                                inline_checkbox: true,
+                                CheckboxInput {
+                                    bound_value: edit_bio_nicht_knospe
                                 }
                             }
                         }
