@@ -49,7 +49,6 @@ pub fn CategorySelectorModal(
                     button {
                         class: "btn btn-sm btn-circle btn-ghost",
                         onclick: handle_cancel,
-                        "✕"
                     }
                 }
 

@@ -810,7 +810,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             edit_bio_nicht_knospe.set(orig.bio_nicht_knospe.unwrap_or(false));
                             is_open.set(false);
                         },
-                        "× " {t!("nav.schliessen")},
+                        {t!("nav.schliessen")},
                     }
                     
                     // Show "Merken" button only for composite ingredients

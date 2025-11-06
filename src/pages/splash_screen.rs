@@ -11,7 +11,7 @@ pub fn SplashScreen() -> Element {
         div {
             class: "min-h-screen bg-base-200",
             header {
-                class: "bg-base-200 p-4 shadow-md border-b border-base-300",
+                class: "bg-base-200 p-4",
                 div {
                     class: "flex justify-between items-center",
                     div {

@@ -20,7 +20,7 @@ pub fn TextInput(mut props: TextInputProps) -> Element {
     });
     rsx! {
         input {
-            class: "input w-full input-ghost bg-base-200 {invalid_class}",
+            class: "input w-full input-ghost bg-base-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-200 {invalid_class}",
             r#type: "text",
             placeholder: "{props.placeholder}",
             required: "{props.required}",
