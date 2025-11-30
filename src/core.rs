@@ -167,7 +167,7 @@ pub struct Ingredient {
     pub schlachtungs_ort: Option<Country>,
     pub fangort: Option<Country>,
     pub aus_umstellbetrieb: Option<bool>,
-    pub bio_nicht_knospe: Option<bool>,
+    pub bio_ch: Option<bool>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -190,7 +190,7 @@ impl Ingredient {
             schlachtungs_ort: None,
             fangort: None,
             aus_umstellbetrieb: None,
-            bio_nicht_knospe: None,
+            bio_ch: None,
         }
     }
 
@@ -258,7 +258,7 @@ impl Default for Ingredient {
             schlachtungs_ort: None,
             fangort: None,
             aus_umstellbetrieb: None,
-            bio_nicht_knospe: None,
+            bio_ch: None,
         }
     }
 }
@@ -604,7 +604,7 @@ impl Calculator {
 
             // Check if any ingredient needs Umstellung logo
             let has_umstellung = input.ingredients.iter().any(|ing|
-                ing.aus_umstellbetrieb.unwrap_or(false) || ing.bio_nicht_knospe.unwrap_or(false)
+                ing.aus_umstellbetrieb.unwrap_or(false) || ing.bio_ch.unwrap_or(false)
             );
 
             if swiss_percentage >= 90.0 {
@@ -613,11 +613,11 @@ impl Calculator {
                     conditionals.insert(String::from("bio_suisse_umstellung"), true);
 
                     // Determine which message to show
-                    let has_bio_nicht_knospe = input.ingredients.iter().any(|ing|
-                        ing.bio_nicht_knospe.unwrap_or(false)
+                    let has_bio_ch = input.ingredients.iter().any(|ing|
+                        ing.bio_ch.unwrap_or(false)
                     );
 
-                    if has_bio_nicht_knospe {
+                    if has_bio_ch {
                         conditionals.insert(String::from("umstellung_bio_suisse_richtlinien"), true);
                     } else {
                         conditionals.insert(String::from("umstellung_biologische_landwirtschaft"), true);

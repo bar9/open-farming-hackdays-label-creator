@@ -2,7 +2,7 @@ _version: 1
 title: Creator | Lebensmittelkennzeichnung
 
 app:
-  title: Label Creator
+  title: Declarino
   version: Version 0.4.1 vom 17.07.2025
   impressum: Impressum
   release_notes: Release Notes
@@ -17,7 +17,7 @@ routes:
   configuration: Konfiguration
 
 splash:
-  subtitle: Erstelle konforme Lebensmitteletiketten
+  subtitle: Dein Etiketten-Helfer
   description: Um eine Etikette zu erstellen, wähle den passenden Standard. Dieser enthält die spezifischen Regeln.
 label:
   produktname: Produktname
@@ -169,9 +169,9 @@ help:
     Preis der Verkaufseinheit
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
 
-  bio_certified: Gibt an, ob diese Zutat bio-zertifiziert ist
+  bio_knospe: Gibt an, ob diese Zutat nach Bio Suisse Knospe-Standards zertifiziert ist
+  bio_ch: Gibt an, ob diese Zutat nach Schweizer Bio-Verordnung (aber nicht Knospe) zertifiziert ist
   bio_transitional: Gibt an, ob diese Zutat aus einem Umstellbetrieb stammt
-  bio_non_knospe: Gibt an, ob diese Zutat bio-zertifiziert ist, aber nicht nach Knospe-Standards
   aufzucht_location: Ort, wo es die meiste Zeit gelebt hat
     
 
@@ -329,8 +329,8 @@ origin:
   fangort: Fangort
 
 bio_labels:
-  bio: Bio
-  bio_nicht_knospe: Bio (nicht Knospe)
+  bio_knospe: Bio (Knospe)
+  bio_ch: BioCH
   aus_umstellbetrieb: Aus Umstellbetrieb
 
 buttons:
@@ -348,7 +348,7 @@ languages:
 
 badges:
   not_for_meat_dairy: nicht für Fleisch- / Milchprodukte
-  in_development: In Entwicklung
+  in_development: In Bearbeitung
 
 version:
   version: Version

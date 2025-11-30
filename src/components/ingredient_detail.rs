@@ -60,7 +60,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut edit_fangort = use_signal(|| original_ingredient.fangort.clone());
     let mut edit_is_bio = use_signal(|| original_ingredient.is_bio.unwrap_or(false));
     let mut edit_aus_umstellbetrieb = use_signal(|| original_ingredient.aus_umstellbetrieb.unwrap_or(false));
-    let mut edit_bio_nicht_knospe = use_signal(|| original_ingredient.bio_nicht_knospe.unwrap_or(false));
+    let mut edit_bio_ch = use_signal(|| original_ingredient.bio_ch.unwrap_or(false));
     let mut save_status = use_signal(|| None::<String>);
     
     // Check if the current name is in the food database
@@ -111,7 +111,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             schlachtungs_ort: original_ingredient.schlachtungs_ort.clone(),
             fangort: original_ingredient.fangort.clone(),
             aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
-            bio_nicht_knospe: original_ingredient.bio_nicht_knospe,
+            bio_ch: original_ingredient.bio_ch,
         }]
     });
     
@@ -134,7 +134,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 schlachtungs_ort: edit_schlachtungs_ort(),
                 fangort: edit_fangort(),
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                bio_nicht_knospe: Some(edit_bio_nicht_knospe()),
+                bio_ch: Some(edit_bio_ch()),
             };
         } else {
             // Clear wrapper_ingredients sub-components when toggling off composite mode
@@ -247,7 +247,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 schlachtungs_ort: edit_schlachtungs_ort(),
                 fangort: edit_fangort(),
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                bio_nicht_knospe: Some(edit_bio_nicht_knospe()),
+                bio_ch: Some(edit_bio_ch()),
             };
             
             match save_composite_ingredient(&ingredient_to_save) {
@@ -305,7 +305,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             schlachtungs_ort: edit_schlachtungs_ort(),
             fangort: edit_fangort(),
             aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-            bio_nicht_knospe: Some(edit_bio_nicht_knospe()),
+            bio_ch: Some(edit_bio_ch()),
         };
         
         if props.genesis {
@@ -340,7 +340,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             is_allergen_custom.set(false);
             edit_category.set(None);
             edit_aus_umstellbetrieb.set(false);
-            edit_bio_nicht_knospe.set(false);
+            edit_bio_ch.set(false);
             // Reset wrapper_ingredients for next creation
             wrapper_ingredients.write()[0] = Ingredient {
                 name: String::new(),
@@ -356,7 +356,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 schlachtungs_ort: None,
                 fangort: None,
                 aus_umstellbetrieb: None,
-                bio_nicht_knospe: None,
+                bio_ch: None,
             };
         } else {
             // Update existing ingredient
@@ -411,7 +411,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         is_custom_ingredient.set(true);
                         edit_category.set(None);
                         edit_aus_umstellbetrieb.set(false);
-                        edit_bio_nicht_knospe.set(false);
+                        edit_bio_ch.set(false);
                         // Reset wrapper_ingredients to clear any previous sub-components
                         wrapper_ingredients.write()[0] = Ingredient {
                             name: String::new(),
@@ -427,7 +427,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             schlachtungs_ort: None,
                             fangort: None,
                             aus_umstellbetrieb: None,
-                            bio_nicht_knospe: None,
+                            bio_ch: None,
                         };
                     }
                     is_open.toggle();
@@ -463,7 +463,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_schlachtungs_ort.set(orig.schlachtungs_ort.clone());
                         edit_fangort.set(orig.fangort.clone());
                         edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
-                        edit_bio_nicht_knospe.set(orig.bio_nicht_knospe.unwrap_or(false));
+                        edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
                     }
                     is_open.toggle();
                 },
@@ -586,52 +586,79 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
 
                 br {}
                 {
-                    // Check if Bio rule is active to show the bio checkbox
+                    // Check if Bio rule is active and determine configuration
                     let should_show_bio = use_memo(move || {
                         let rules = props.rules.read();
                         rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
                     });
 
-                    if should_show_bio() {
-                        rsx! {
-                            FormField {
-                                help: Some((t!("help.bio_certified")).into()),
-                                label: t!("bio_labels.bio"),
-                                inline_checkbox: true,
-                                CheckboxInput {
-                                    bound_value: edit_is_bio
-                                }
-                            }
-                        }
-                    } else {
-                        rsx! {}
-                    }
-                }
-                br {}
-                {
-                    // Check if Bio/Knospe rules are active to show the Umstellung checkboxes
-                    let should_show_umstellung = use_memo(move || {
+                    let is_knospe_config = use_memo(move || {
                         let rules = props.rules.read();
-                        rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
+                        rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo)
                     });
 
-                    if should_show_umstellung() {
-                        rsx! {
-                            FormField {
-                                help: Some((t!("help.bio_transitional")).into()),
-                                label: t!("bio_labels.aus_umstellbetrieb"),
-                                inline_checkbox: true,
-                                CheckboxInput {
-                                    bound_value: edit_aus_umstellbetrieb
+                    if should_show_bio() {
+                        if is_knospe_config() {
+                            // Knospe configuration: Show both Bio (Knospe) and BioCH with mutual exclusion
+                            rsx! {
+                                FormField {
+                                    help: Some((t!("help.bio_knospe")).into()),
+                                    label: t!("bio_labels.bio_knospe"),
+                                    inline_checkbox: true,
+                                    input {
+                                        r#type: "checkbox",
+                                        class: "checkbox checkbox-accent",
+                                        checked: edit_is_bio(),
+                                        disabled: edit_bio_ch(),
+                                        onchange: move |evt| {
+                                            edit_is_bio.set(evt.data.value() == "true");
+                                        }
+                                    }
+                                }
+                                br {}
+                                FormField {
+                                    help: Some((t!("help.bio_ch")).into()),
+                                    label: t!("bio_labels.bio_ch"),
+                                    inline_checkbox: true,
+                                    input {
+                                        r#type: "checkbox",
+                                        class: "checkbox checkbox-accent",
+                                        checked: edit_bio_ch(),
+                                        disabled: edit_is_bio(),
+                                        onchange: move |evt| {
+                                            edit_bio_ch.set(evt.data.value() == "true");
+                                        }
+                                    }
+                                }
+                                br {}
+                                FormField {
+                                    help: Some((t!("help.bio_transitional")).into()),
+                                    label: t!("bio_labels.aus_umstellbetrieb"),
+                                    inline_checkbox: true,
+                                    CheckboxInput {
+                                        bound_value: edit_aus_umstellbetrieb
+                                    }
                                 }
                             }
-                            br {}
-                            FormField {
-                                help: Some((t!("help.bio_non_knospe")).into()),
-                                label: t!("bio_labels.bio_nicht_knospe"),
-                                inline_checkbox: true,
-                                CheckboxInput {
-                                    bound_value: edit_bio_nicht_knospe
+                        } else {
+                            // Bio configuration: Show only BioCH
+                            rsx! {
+                                FormField {
+                                    help: Some((t!("help.bio_ch")).into()),
+                                    label: t!("bio_labels.bio_ch"),
+                                    inline_checkbox: true,
+                                    CheckboxInput {
+                                        bound_value: edit_bio_ch
+                                    }
+                                }
+                                br {}
+                                FormField {
+                                    help: Some((t!("help.bio_transitional")).into()),
+                                    label: t!("bio_labels.aus_umstellbetrieb"),
+                                    inline_checkbox: true,
+                                    CheckboxInput {
+                                        bound_value: edit_aus_umstellbetrieb
+                                    }
                                 }
                             }
                         }
@@ -807,7 +834,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             edit_schlachtungs_ort.set(orig.schlachtungs_ort.clone());
                             edit_fangort.set(orig.fangort.clone());
                             edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
-                            edit_bio_nicht_knospe.set(orig.bio_nicht_knospe.unwrap_or(false));
+                            edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
                             is_open.set(false);
                         },
                         {t!("nav.schliessen")},
