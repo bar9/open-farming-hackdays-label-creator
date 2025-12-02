@@ -44,6 +44,8 @@ pub struct Form {
     #[serde(default)]
     pub producer_city: String,
     #[serde(default)]
+    pub certification_body: String,
+    #[serde(default)]
     pub manual_total: Option<f64>,
     #[serde(default)]
     pub amount_type: AmountType,
@@ -106,6 +108,7 @@ impl Default for Form {
             producer_phone: String::new(),
             producer_zip: String::new(),
             producer_city: String::new(),
+            certification_body: String::new(),
             manual_total: None,
             amount_type: AmountType::Weight,
             weight_unit: t!("weight_units.g").to_string(),
@@ -135,6 +138,7 @@ pub fn Bio() -> Element {
     let producer_phone = use_signal(|| initial_form.read().producer_phone.clone());
     let producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
     let producer_city = use_signal(|| initial_form.read().producer_city.clone());
+    let certification_body = use_signal(|| initial_form.read().certification_body.clone());
     let manual_total = use_signal(|| initial_form.read().manual_total);
     let amount_type: Signal<AmountType> = use_signal(|| initial_form.read().amount_type.clone());
     let weight_unit: Signal<String> = use_signal(|| initial_form.read().weight_unit.clone());
@@ -161,6 +165,7 @@ pub fn Bio() -> Element {
         producer_email: producer_email(),
         producer_zip: producer_zip(),
         producer_city: producer_city(),
+        certification_body: certification_body(),
         manual_total: manual_total(),
         amount_type: amount_type(),
         weight_unit: weight_unit(),
@@ -334,6 +339,14 @@ pub fn Bio() -> Element {
                                 }
                             }
                         }
+                        SeparatorLine {}
+                        FormField {
+                            label: "Zertifizierungsstelle",
+                            help: Some("Wählen Sie Ihre Bio-Zertifizierungsstelle aus".into()),
+                            CertificationBodySelect {
+                                bound_value: certification_body
+                            }
+                        }
                     }
                 }
             }
@@ -354,6 +367,7 @@ pub fn Bio() -> Element {
             producer_email: producer_email,
             producer_phone: producer_phone,
             producer_website: producer_website,
+            certification_body: Some(certification_body),
             amount_type: amount_type,
             weight_unit: weight_unit,
             volume_unit: volume_unit,

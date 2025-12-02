@@ -22,6 +22,8 @@ pub fn LabelPreview(
     producer_email: Signal<String>,
     producer_website: Signal<String>,
     producer_phone: Signal<String>,
+    #[props(default)]
+    certification_body: Option<Signal<String>>,
     amount_type: Signal<AmountType>,
     weight_unit: Signal<String>,
     volume_unit: Signal<String>,
@@ -365,6 +367,17 @@ pub fn LabelPreview(
                 //         }
                 //     }
                 // }
+
+                // Display certification body if provided and not empty
+                if let Some(cert_body_signal) = certification_body {
+                    if !cert_body_signal.read().is_empty() {
+                        div { class: "py-2",
+                            span { class: "text-sm",
+                                "Bio-Zertifizierung: {cert_body_signal}"
+                            }
+                        }
+                    }
+                }
                 }
             }
         }
