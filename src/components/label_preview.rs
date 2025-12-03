@@ -368,13 +368,15 @@ pub fn LabelPreview(
                 //     }
                 // }
 
-                // Display certification body if provided and not empty
+                // Display certification body if provided
                 if let Some(cert_body_signal) = certification_body {
-                    if !cert_body_signal.read().is_empty() {
-                        div { class: "py-2",
+                    div { class: "py-2",
+                        if !cert_body_signal.read().is_empty() {
                             span { class: "text-sm",
                                 "Bio-Zertifizierung: {cert_body_signal}"
                             }
+                        } else {
+                            span { class: "badge badge-warning", "Bio-Zertifizierungsstelle" }
                         }
                     }
                 }

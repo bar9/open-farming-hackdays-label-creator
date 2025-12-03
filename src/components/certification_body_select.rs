@@ -9,6 +9,7 @@ pub fn CertificationBodySelect(mut props: CertificationBodySelectProps) -> Eleme
     rsx! {
         select {
             class: "select select-bordered w-full",
+            required: true,
             value: props.bound_value.read().clone(),
             onchange: move |e| {
                 props.bound_value.set(e.value());

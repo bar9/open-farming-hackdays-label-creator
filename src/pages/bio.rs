@@ -76,6 +76,11 @@ impl From<Form> for Input {
         Input {
             ingredients: val.ingredients,
             total: val.manual_total,
+            certification_body: if val.certification_body.is_empty() {
+                None
+            } else {
+                Some(val.certification_body)
+            },
             ..Default::default()
         }
     }
@@ -428,8 +433,9 @@ pub fn Bio() -> Element {
                         }
                         SeparatorLine {}
                         FormField {
-                            label: "Zertifizierungsstelle",
-                            help: Some("Wählen Sie Ihre Bio-Zertifizierungsstelle aus".into()),
+                            label: "Bio-Zertifizierungsstelle *",
+                            required: true,
+                            help: Some("Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Bio-Zertifizierung)".into()),
                             CertificationBodySelect {
                                 bound_value: certification_body
                             }

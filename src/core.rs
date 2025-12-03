@@ -10,6 +10,7 @@ use std::mem;
 pub struct Input {
     pub(crate) ingredients: Vec<Ingredient>,
     pub total: Option<f64>,
+    pub certification_body: Option<String>,
 }
 
 impl Input {
@@ -516,6 +517,10 @@ impl Calculator {
                 self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for ALL ingredients (Bio/Knospe)"));
                 validate_all_ingredients_origin(&input.ingredients, &mut validation_messages)
             }
+            if let RuleDef::Bio_Knospe_ZertifizierungsstellePflicht = ruleDef {
+                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking mandatory certification body for Bio/Knospe"));
+                validate_certification_body(&input.certification_body, &mut validation_messages);
+            }
             if let RuleDef::Knospe_Under90_Percent_CH_IngredientRules = ruleDef {
                 self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking Knospe <90% specific ingredient origin requirements"));
                 validate_knospe_under90_origin(&input.ingredients, total_amount, &mut validation_messages);
@@ -885,6 +890,17 @@ fn validate_all_ingredients_origin(
                 .or_default()
                 .push("Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).");
         }
+    }
+}
+
+fn validate_certification_body(
+    certification_body: &Option<String>,
+    validation_messages: &mut HashMap<String, Vec<&str>>,
+) {
+    if certification_body.is_none() || certification_body.as_ref().map_or(true, |s| s.is_empty()) {
+        validation_messages.entry("certification_body".to_string())
+            .or_default()
+            .push("Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.");
     }
 }
 
