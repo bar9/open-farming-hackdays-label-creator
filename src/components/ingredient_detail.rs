@@ -597,7 +597,12 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo)
                     });
 
-                    if should_show_bio() {
+                    // Check if ingredient is agricultural (water, salt etc. are not)
+                    let is_agricultural = use_memo(move || {
+                        lookup_agricultural(&edit_name())
+                    });
+
+                    if should_show_bio() && is_agricultural() {
                         if is_knospe_config() {
                             // Knospe configuration: Show both Bio (Knospe) and BioCH with mutual exclusion
                             rsx! {
