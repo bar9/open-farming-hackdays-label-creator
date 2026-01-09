@@ -614,7 +614,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         r#type: "checkbox",
                                         class: "checkbox checkbox-accent",
                                         checked: edit_is_bio(),
-                                        disabled: edit_bio_ch(),
+                                        disabled: edit_bio_ch() || edit_aus_umstellbetrieb(),
                                         onchange: move |evt| {
                                             edit_is_bio.set(evt.data.value() == "true");
                                         }
@@ -629,7 +629,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         r#type: "checkbox",
                                         class: "checkbox checkbox-accent",
                                         checked: edit_bio_ch(),
-                                        disabled: edit_is_bio(),
+                                        disabled: edit_is_bio() || edit_aus_umstellbetrieb(),
                                         onchange: move |evt| {
                                             edit_bio_ch.set(evt.data.value() == "true");
                                         }
@@ -640,20 +640,32 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     help: Some((t!("help.bio_transitional")).into()),
                                     label: t!("bio_labels.aus_umstellbetrieb"),
                                     inline_checkbox: true,
-                                    CheckboxInput {
-                                        bound_value: edit_aus_umstellbetrieb
+                                    input {
+                                        r#type: "checkbox",
+                                        class: "checkbox checkbox-accent",
+                                        checked: edit_aus_umstellbetrieb(),
+                                        disabled: edit_is_bio() || edit_bio_ch(),
+                                        onchange: move |evt| {
+                                            edit_aus_umstellbetrieb.set(evt.data.value() == "true");
+                                        }
                                     }
                                 }
                             }
                         } else {
-                            // Bio configuration: Show only BioCH
+                            // Bio configuration: Show only BioCH with mutual exclusion to Umstellbetrieb
                             rsx! {
                                 FormField {
                                     help: Some((t!("help.bio_ch")).into()),
                                     label: t!("bio_labels.bio_ch"),
                                     inline_checkbox: true,
-                                    CheckboxInput {
-                                        bound_value: edit_bio_ch
+                                    input {
+                                        r#type: "checkbox",
+                                        class: "checkbox checkbox-accent",
+                                        checked: edit_bio_ch(),
+                                        disabled: edit_aus_umstellbetrieb(),
+                                        onchange: move |evt| {
+                                            edit_bio_ch.set(evt.data.value() == "true");
+                                        }
                                     }
                                 }
                                 br {}
@@ -661,8 +673,14 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     help: Some((t!("help.bio_transitional")).into()),
                                     label: t!("bio_labels.aus_umstellbetrieb"),
                                     inline_checkbox: true,
-                                    CheckboxInput {
-                                        bound_value: edit_aus_umstellbetrieb
+                                    input {
+                                        r#type: "checkbox",
+                                        class: "checkbox checkbox-accent",
+                                        checked: edit_aus_umstellbetrieb(),
+                                        disabled: edit_bio_ch(),
+                                        onchange: move |evt| {
+                                            edit_aus_umstellbetrieb.set(evt.data.value() == "true");
+                                        }
                                     }
                                 }
                             }
