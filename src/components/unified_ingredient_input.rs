@@ -123,6 +123,38 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                     if !search_results.read().is_empty() {
                         is_dropdown_open.set(true);
                     }
+                },
+                onkeydown: move |evt: KeyboardEvent| {
+                    if evt.key() == Key::Enter {
+                        evt.prevent_default();
+                        let value = (props.bound_value)();
+                        if !value.trim().is_empty() {
+                            // Check if there are search results to select from
+                            let results = search_results.read();
+                            if !results.is_empty() && is_dropdown_open() {
+                                // Select first result
+                                handle_ingredient_select(results[0].clone());
+                            } else {
+                                // Create custom ingredient from free text
+                                let custom_ingredient = UnifiedIngredient {
+                                    name: value.clone(),
+                                    category: None,
+                                    origin: None,
+                                    is_allergen: None,  // User will set manually
+                                    is_agricultural: None,
+                                    is_meat: None,
+                                    is_fish: None,
+                                    is_dairy: None,
+                                    is_egg: None,
+                                    is_honey: None,
+                                    is_plant: None,
+                                    is_bio: None,
+                                    source: crate::services::IngredientSource::Local,
+                                };
+                                handle_ingredient_select(custom_ingredient);
+                            }
+                        }
+                    }
                 }
             }
 

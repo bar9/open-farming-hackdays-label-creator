@@ -160,7 +160,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 }
                 if let Some(sub_components) = props.ingredients.clone().get(props.index).and_then(|ingredient| ingredient.sub_components.clone()) {
                     for (key, ingr) in sub_components.iter().enumerate() {
-                        tr { key: "{key}",
+                        tr { key: "{key}-{ingr.name}",
                             td {
                                 class: "flex items-center gap-2",
                                 div {
@@ -187,8 +187,8 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                                     class: "checkbox",
                                                     r#type: "checkbox",
                                                     checked: "{ingr.is_allergen}",
-                                                    oninput: move |e| {
-                                                        toggle_allergen_callback(props.index, key, e.value() == "true");
+                                                    oninput: move |evt| {
+                                                        toggle_allergen_callback(props.index, key, evt.data.checked());
                                                     },
                                                 }
                                                 span { class: "label-text ml-2",
