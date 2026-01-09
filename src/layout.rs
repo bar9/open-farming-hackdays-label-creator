@@ -268,10 +268,11 @@ pub fn SplitLayout() -> Element {
                                 role: "button",
                                 class: "btn btn-ghost btn-sm",
                                 {match rust_i18n::locale().as_ref() {
-                                    "fr-CH" => "FR ",
-                                    "it-CH" => "IT ",
-                                    _ => "DE ",
+                                    "fr-CH" => t!("languages.fr"),
+                                    "it-CH" => t!("languages.it"),
+                                    _ => t!("languages.de"),
                                 }}
+                                " "
                                 svg {
                                     class: "w-4 h-4 ml-1",
                                     fill: "none",
@@ -300,7 +301,7 @@ pub fn SplitLayout() -> Element {
                                                 let _ = window.location().reload();
                                             }
                                         },
-                                        "DE"
+                                        {t!("languages.de")}
                                     }
                                 }
                                 li {
@@ -315,7 +316,7 @@ pub fn SplitLayout() -> Element {
                                                 let _ = window.location().reload();
                                             }
                                         },
-                                        "FR"
+                                        {t!("languages.fr")}
                                     }
                                 }
                                 li {
@@ -330,7 +331,7 @@ pub fn SplitLayout() -> Element {
                                                 let _ = window.location().reload();
                                             }
                                         },
-                                        "IT"
+                                        {t!("languages.it")}
                                     }
                                 }
                             }
@@ -348,7 +349,7 @@ pub fn SplitLayout() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        "Version " {env!("CARGO_PKG_VERSION")} " vom " {
+                        {t!("version.version")} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from")} " " {
                             // Convert UTC time string to a more readable format
                             let build_time = built_info::BUILT_TIME_UTC;
                             // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
@@ -412,11 +413,11 @@ pub fn SplitLayout() -> Element {
                     class: "modal-box",
                     h3 {
                         class: "font-bold text-lg",
-                        "Warnung"
+                        {t!("warnings.title")}
                     }
                     p {
                         class: "py-4",
-                        "Ihre Daten gehen verloren, wenn Sie in einen anderen Standard wechseln"
+                        {t!("warnings.data_loss_on_switch")}
                     }
                     div {
                         class: "modal-action",
@@ -426,7 +427,7 @@ pub fn SplitLayout() -> Element {
                                 show_warning.set(false);
                                 target_route.set(None);
                             },
-                            "Abbrechen"
+                            {t!("buttons.cancel")}
                         }
                         button {
                             class: "btn btn-primary",
@@ -436,7 +437,7 @@ pub fn SplitLayout() -> Element {
                                     nav.push(route);
                                 }
                             },
-                            "OK"
+                            {t!("buttons.ok")}
                         }
                     }
                 }

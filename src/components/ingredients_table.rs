@@ -45,7 +45,7 @@ fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
 pub struct IngredientsTableProps {
     ingredients: Signal<Vec<Ingredient>>,
     manual_total: Signal<Option<f64>>,
-    validation_messages: Memo<HashMap<String, Vec<&'static str>>>,
+    validation_messages: Memo<HashMap<String, Vec<String>>>,
     rules: Memo<Vec<RuleDef>>,
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {

@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use rust_i18n::t;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct CertificationBodySelectProps {
@@ -14,11 +15,11 @@ pub fn CertificationBodySelect(mut props: CertificationBodySelectProps) -> Eleme
             onchange: move |e| {
                 props.bound_value.set(e.value());
             },
-            option { value: "", "Bitte wählen..." }
-            option { value: "CH-BIO-006", "CH-BIO-006 (bio.inspecta AG)" }
-            option { value: "CH-BIO-086", "CH-BIO-086 (Bio Test Agro AG (BTA))" }
-            option { value: "CH-BIO-038", "CH-BIO-038 (ProCert AG)" }
-            option { value: "CH-BIO-004", "CH-BIO-004 (Ecocert Swiss AG)" }
+            option { value: "", {t!("certification_body.please_select")} }
+            option { value: "CH-BIO-006", {t!("certification_body.bio_006")} }
+            option { value: "CH-BIO-086", {t!("certification_body.bio_086")} }
+            option { value: "CH-BIO-038", {t!("certification_body.bio_038")} }
+            option { value: "CH-BIO-004", {t!("certification_body.bio_004")} }
         }
     }
 }

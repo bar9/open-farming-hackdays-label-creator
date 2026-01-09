@@ -16,7 +16,7 @@ pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
         validation_entries
             .iter()
             .filter(|(k, _v)| props.paths.contains(&**k))
-            .flat_map(|(k, v)| v.iter().map(move |msg| (k.clone(), *msg)))
+            .flat_map(|(k, v)| v.iter().map(move |msg| (k.clone(), msg.clone())))
             .collect::<Vec<_>>()
     });
 

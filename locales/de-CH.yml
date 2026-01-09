@@ -303,6 +303,24 @@ errors:
   api_request_failed: "Fehler beim Senden der Anfrage: %{error}"
   api_parse_failed: "Fehler beim Parsen der Antwort: %{error}"
 
+validation:
+  amount_greater_than_zero: Die Menge muss grösser als 0 sein.
+  origin_required_over_50_percent: Herkunftsland ist erforderlich für Zutaten über 50%.
+  origin_required_name_giving: Herkunftsland ist erforderlich für namensgebende Zutaten.
+  origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
+  origin_required_bio_knospe: Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).
+  certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
+  beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
+  beef_slaughter_location_required: Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.
+  fish_catch_location_required: Fangort ist erforderlich für Fisch-Zutaten.
+  knospe_mono_origin_required: Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel).
+  knospe_name_giving_origin_required: Herkunftsland ist erforderlich für namensgebende Zutaten (Knospe <90% CH Regel).
+  knospe_plants_over_50_origin_required: Herkunftsland ist erforderlich für pflanzliche Zutaten >50% (Knospe <90% CH Regel).
+  knospe_egg_honey_fish_origin_required: Herkunftsland ist erforderlich für Eier/Honig/Fisch >10% (Knospe <90% CH Regel).
+  knospe_dairy_meat_insects_origin_required: Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel).
+  knospe_over_10_percent_origin_required: Herkunftsland ist erforderlich für Zutaten ≥10% (Knospe <90% CH Regel).
+  knospe_general_origin_required: Herkunftsland ist erforderlich (Knospe <90% CH Regel).
+
 themes:
   swiss: swiss
   bio: bio
@@ -314,6 +332,17 @@ countries:
 
 country_select:
   please_choose: "Bitte wählen..."
+
+certification_body:
+  please_select: "Bitte wählen..."
+  bio_006: "CH-BIO-006 (bio.inspecta AG)"
+  bio_086: "CH-BIO-086 (Bio Test Agro AG (BTA))"
+  bio_038: "CH-BIO-038 (ProCert AG)"
+  bio_004: "CH-BIO-004 (Ecocert Swiss AG)"
+
+warnings:
+  title: Warnung
+  data_loss_on_switch: Ihre Daten gehen verloren, wenn Sie in einen anderen Standard wechseln
 
 date_prefixes:
   best_before: Mindestens haltbar bis
@@ -340,6 +369,8 @@ buttons:
   save_to_storage: Merken
   save_and_transfer: Speichern und übertragen
   transfer_scaling_title: "Die Mengenanpassung (×%{factor}) auf das gesamte Rezept übertragen"
+  cancel: Abbrechen
+  ok: OK
 
 languages:
   de: DE

@@ -281,6 +281,24 @@ errors:
   api_request_failed: "Errore nell'invio della richiesta: %{error}"
   api_parse_failed: "Errore nell'analisi della risposta: %{error}"
 
+validation:
+  amount_greater_than_zero: La quantità deve essere maggiore di 0.
+  origin_required_over_50_percent: Il paese di origine è richiesto per gli ingredienti superiori al 50%.
+  origin_required_name_giving: Il paese di origine è richiesto per gli ingredienti caratterizzanti.
+  origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
+  origin_required_bio_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Bio/Gemma).
+  certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
+  beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
+  beef_slaughter_location_required: Il luogo di macellazione è richiesto per gli ingredienti di manzo.
+  fish_catch_location_required: Il luogo di cattura è richiesto per gli ingredienti di pesce.
+  knospe_mono_origin_required: Il paese di origine è richiesto per i monoprodotti (regola Gemma <90% CH).
+  knospe_name_giving_origin_required: Il paese di origine è richiesto per gli ingredienti caratterizzanti (regola Gemma <90% CH).
+  knospe_plants_over_50_origin_required: Il paese di origine è richiesto per gli ingredienti vegetali >50% (regola Gemma <90% CH).
+  knospe_egg_honey_fish_origin_required: Il paese di origine è richiesto per uova/miele/pesce >10% (regola Gemma <90% CH).
+  knospe_dairy_meat_insects_origin_required: Il paese di origine è richiesto per latte/carne/insetti (regola Gemma <90% CH).
+  knospe_over_10_percent_origin_required: Il paese di origine è richiesto per gli ingredienti ≥10% (regola Gemma <90% CH).
+  knospe_general_origin_required: Il paese di origine è richiesto (regola Gemma <90% CH).
+
 themes:
   swiss: swiss
   bio: bio
@@ -289,6 +307,20 @@ themes:
 
 countries:
   switzerland: Svizzera
+
+country_select:
+  please_choose: "Seleziona..."
+
+certification_body:
+  please_select: "Seleziona..."
+  bio_006: "CH-BIO-006 (bio.inspecta AG)"
+  bio_086: "CH-BIO-086 (Bio Test Agro AG (BTA))"
+  bio_038: "CH-BIO-038 (ProCert AG)"
+  bio_004: "CH-BIO-004 (Ecocert Swiss AG)"
+
+warnings:
+  title: Avvertimento
+  data_loss_on_switch: I tuoi dati andranno persi se passi a un altro standard
 
 date_prefixes:
   best_before: Da consumarsi preferibilmente entro
@@ -303,6 +335,9 @@ buttons:
   delete: Elimina
   save_to_storage: Memorizza
   save_and_transfer: Salva e trasferisci
+  transfer_scaling_title: "Trasferisci l'adeguamento delle quantità (×%{factor}) all'intera ricetta"
+  cancel: Annulla
+  ok: OK
 
 languages:
   de: DE

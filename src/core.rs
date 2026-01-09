@@ -1,6 +1,7 @@
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
 use crate::rules::{RuleDef, Rule};
 use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
@@ -26,7 +27,7 @@ pub struct Output {
     pub success: bool,
     pub label: String,
     pub total_amount: f64,
-    pub validation_messages: HashMap<String, Vec<&'static str>>,
+    pub validation_messages: HashMap<String, Vec<String>>,
     pub conditional_elements: HashMap<String, bool>,
 }
 
@@ -770,12 +771,12 @@ impl Calculator {
     }
 }
 
-fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut HashMap<String, Vec<&str>>) {
+fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut HashMap<String, Vec<String>>) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.amount <= 0. {
             validation_messages.entry(format!("ingredients[{}][amount]", i))
                 .or_default()
-                .push("Die Menge muss grösser als 0 sein.");
+                .push(t!("validation.amount_greater_than_zero").to_string());
         }
     }
 }
@@ -783,27 +784,27 @@ fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut Hash
 fn validate_origin(
     ingredients: &Vec<Ingredient>,
     total_amount: f64,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
         if percentage > 50.0 && ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
-                .push("Herkunftsland ist erforderlich für Zutaten über 50%.");
+                .push(t!("validation.origin_required_over_50_percent").to_string());
         }
     }
 }
 
 fn validate_namensgebende_origin(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.is_namensgebend == Some(true) && ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
-                .push("Herkunftsland ist erforderlich für namensgebende Zutaten.");
+                .push(t!("validation.origin_required_name_giving").to_string());
         }
     }
 }
@@ -863,7 +864,7 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
 fn validate_meat_origin(
     ingredients: &Vec<Ingredient>,
     total_amount: f64,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
@@ -873,7 +874,7 @@ fn validate_meat_origin(
                 if is_meat_category(category) && ingredient.origin.is_none() {
                     validation_messages.entry(format!("ingredients[{}][origin]", i))
                         .or_default()
-                        .push("Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.");
+                        .push(t!("validation.origin_required_meat_over_20").to_string());
                 }
             }
         }
@@ -882,31 +883,31 @@ fn validate_meat_origin(
 
 fn validate_all_ingredients_origin(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
-                .push("Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).");
+                .push(t!("validation.origin_required_bio_knospe").to_string());
         }
     }
 }
 
 fn validate_certification_body(
     certification_body: &Option<String>,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     if certification_body.is_none() || certification_body.as_ref().map_or(true, |s| s.is_empty()) {
         validation_messages.entry("certification_body".to_string())
             .or_default()
-            .push("Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.");
+            .push(t!("validation.certification_body_required").to_string());
     }
 }
 
 fn validate_beef_origin_details(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         // Check if this ingredient is beef-based using the category
@@ -916,14 +917,14 @@ fn validate_beef_origin_details(
                 if ingredient.aufzucht_ort.is_none() {
                     validation_messages.entry(format!("ingredients[{}][aufzucht_ort]", i))
                         .or_default()
-                        .push("Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.");
+                        .push(t!("validation.beef_breeding_location_required").to_string());
                 }
 
                 // Validate schlachtungs_ort (slaughter location)
                 if ingredient.schlachtungs_ort.is_none() {
                     validation_messages.entry(format!("ingredients[{}][schlachtungs_ort]", i))
                         .or_default()
-                        .push("Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.");
+                        .push(t!("validation.beef_slaughter_location_required").to_string());
                 }
             }
         }
@@ -932,7 +933,7 @@ fn validate_beef_origin_details(
 
 fn validate_fish_catch_location(
     ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         // Check if this ingredient is fish-based using the category
@@ -942,7 +943,7 @@ fn validate_fish_catch_location(
                 if ingredient.fangort.is_none() {
                     validation_messages.entry(format!("ingredients[{}][fangort]", i))
                         .or_default()
-                        .push("Fangort ist erforderlich für Fisch-Zutaten.");
+                        .push(t!("validation.fish_catch_location_required").to_string());
                 }
             }
         }
@@ -952,7 +953,7 @@ fn validate_fish_catch_location(
 fn validate_knospe_under90_origin(
     ingredients: &Vec<Ingredient>,
     total_amount: f64,
-    validation_messages: &mut HashMap<String, Vec<&str>>,
+    validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
@@ -962,25 +963,25 @@ fn validate_knospe_under90_origin(
 
         if requires_origin && ingredient.origin.is_none() {
             let reason = if is_mono_product {
-                "Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel)."
+                t!("validation.knospe_mono_origin_required").to_string()
             } else if ingredient.is_namensgebend == Some(true) {
-                "Herkunftsland ist erforderlich für namensgebende Zutaten (Knospe <90% CH Regel)."
+                t!("validation.knospe_name_giving_origin_required").to_string()
             } else if let Some(category) = &ingredient.category {
                 if is_plant_category(category) && percentage > 50.0 {
-                    "Herkunftsland ist erforderlich für pflanzliche Zutaten >50% (Knospe <90% CH Regel)."
+                    t!("validation.knospe_plants_over_50_origin_required").to_string()
                 } else if (is_egg_category(category) || is_honey_category(category) || is_fish_category(category)) && percentage > 10.0 {
-                    "Herkunftsland ist erforderlich für Eier/Honig/Fisch >10% (Knospe <90% CH Regel)."
+                    t!("validation.knospe_egg_honey_fish_origin_required").to_string()
                 } else if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category) {
-                    "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."
+                    t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
                 } else if percentage >= 10.0 {
-                    "Herkunftsland ist erforderlich für Zutaten ≥10% (Knospe <90% CH Regel)."
+                    t!("validation.knospe_over_10_percent_origin_required").to_string()
                 } else {
-                    "Herkunftsland ist erforderlich (Knospe <90% CH Regel)."
+                    t!("validation.knospe_general_origin_required").to_string()
                 }
             } else if percentage >= 10.0 {
-                "Herkunftsland ist erforderlich für Zutaten ≥10% (Knospe <90% CH Regel)."
+                t!("validation.knospe_over_10_percent_origin_required").to_string()
             } else {
-                "Herkunftsland ist erforderlich (Knospe <90% CH Regel)."
+                t!("validation.knospe_general_origin_required").to_string()
             };
 
             validation_messages.entry(format!("ingredients[{}][origin]", i))

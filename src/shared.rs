@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
-pub struct Validations(pub Memo<HashMap<String, Vec<&'static str>>>);
+pub struct Validations(pub Memo<HashMap<String, Vec<String>>>);
 
 #[derive(Clone, Copy)]
 pub struct Conditionals(pub Memo<HashMap<String, bool>>);
