@@ -375,7 +375,7 @@ impl OutputFormatter {
         } else if has_knospe_90_99_rule {
             // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
             if let Some(Country::CH) = &self.ingredient.origin {
-                output = format!("{} (Schweiz)", output);
+                output = format!("{} {}", output, t!("origin.switzerland_parentheses"));
             }
         } else if has_knospe_under90_rule {
             // Rule C: <90% Swiss agricultural ingredients - show origin based on specific ingredient criteria
@@ -398,11 +398,11 @@ impl OutputFormatter {
                         let mut beef_origin_parts = Vec::new();
 
                         if let Some(aufzucht_ort) = &self.ingredient.aufzucht_ort {
-                            beef_origin_parts.push(format!("Geburtsort: {}", aufzucht_ort.display_name()));
+                            beef_origin_parts.push(t!("origin.birthplace", country = aufzucht_ort.display_name()).to_string());
                         }
 
                         if let Some(schlachtungs_ort) = &self.ingredient.schlachtungs_ort {
-                            beef_origin_parts.push(format!("Geschlachtet in: {}", schlachtungs_ort.display_name()));
+                            beef_origin_parts.push(t!("origin.slaughtered_in", country = schlachtungs_ort.display_name()).to_string());
                         }
 
                         if !beef_origin_parts.is_empty() {

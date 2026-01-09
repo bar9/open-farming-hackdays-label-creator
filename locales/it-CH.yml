@@ -307,6 +307,8 @@ themes:
 
 countries:
   switzerland: Svizzera
+  no_origin_required: Nessuna indicazione di origine richiesta
+  EU: UE
 
 country_select:
   please_choose: "Seleziona..."
@@ -351,6 +353,20 @@ badges:
 version:
   version: Versione
   from: del
+
+origin:
+  herkunft: Origine
+  aufzucht: Allevamento
+  schlachtung: Macellazione
+  fangort: Luogo di cattura
+  switzerland_parentheses: (Svizzera)
+  birthplace: "Luogo di nascita: %{country}"
+  slaughtered_in: "Macellato in: %{country}"
+
+bio_labels:
+  bio_knospe: Bio (Gemma)
+  bio_ch: BioCH
+  aus_umstellbetrieb: Da azienda in conversione
 
 weight_units:
   mg: mg

@@ -22,7 +22,9 @@ splash:
 
 label:
   produktname: Nom du produit
+  certification_body: Organisme de certification bio
   sachbezeichnung: Dénomination spécifique
+  saved_ingredients: Ingrédients enregistrés
   zutaten: Ingrédients
   datumseingabe: Conservation
   zusatzinformationen: Informations supplémentaires
@@ -226,6 +228,13 @@ help:
     Prix de l'unité de vente
     Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
 
+  bio_knospe: Indique si cet ingrédient est certifié selon les normes Bio Suisse Bourgeon
+  bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
+  bio_transitional: Indique si cet ingrédient provient d'une exploitation en reconversion
+  aufzucht_location: Lieu où l'animal a vécu la majeure partie de sa vie
+  certification_body_bio: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bio)
+  certification_body_knospe: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bourgeon)
+
 link_share_title: Partager le lien
 link_type_full: Lien complet
 link_type_short: Lien court
@@ -318,6 +327,8 @@ themes:
 
 countries:
   switzerland: Suisse
+  no_origin_required: Aucune indication d'origine requise
+  EU: UE
 
 country_select:
   please_choose: "Veuillez choisir..."
@@ -362,6 +373,20 @@ badges:
 version:
   version: Version
   from: du
+
+origin:
+  herkunft: Origine
+  aufzucht: Élevage
+  schlachtung: Abattage
+  fangort: Lieu de capture
+  switzerland_parentheses: (Suisse)
+  birthplace: "Lieu de naissance: %{country}"
+  slaughtered_in: "Abattu en: %{country}"
+
+bio_labels:
+  bio_knospe: Bio (Bourgeon)
+  bio_ch: BioCH
+  aus_umstellbetrieb: Issu d'exploitation en reconversion
 
 weight_units:
   mg: mg

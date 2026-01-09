@@ -433,9 +433,9 @@ pub fn Knospe() -> Element {
                         }
                         SeparatorLine {}
                         FormField {
-                            label: "Bio-Zertifizierungsstelle *",
+                            label: "{t!(\"label.certification_body\")} *",
                             required: true,
-                            help: Some("Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Knospe-Zertifizierung)".into()),
+                            help: Some(t!("help.certification_body_knospe").to_string()),
                             CertificationBodySelect {
                                 bound_value: certification_body
                             }

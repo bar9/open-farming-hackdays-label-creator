@@ -433,9 +433,9 @@ pub fn Bio() -> Element {
                         }
                         SeparatorLine {}
                         FormField {
-                            label: "Bio-Zertifizierungsstelle *",
+                            label: "{t!(\"label.certification_body\")} *",
                             required: true,
-                            help: Some("Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Bio-Zertifizierung)".into()),
+                            help: Some(t!("help.certification_body_bio").to_string()),
                             CertificationBodySelect {
                                 bound_value: certification_body
                             }
