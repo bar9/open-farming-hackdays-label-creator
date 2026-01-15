@@ -668,7 +668,23 @@ impl Calculator {
                     }
                 } else {
                     // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
-                    conditionals.insert(String::from("bio_suisse_no_cross"), true);
+                    if has_umstellung {
+                        // Bio Knospe Umstellung (without Swiss cross)
+                        conditionals.insert(String::from("bio_suisse_no_cross_umstellung"), true);
+
+                        // Determine which message to show
+                        let has_bio_ch = input.ingredients.iter().any(|ing|
+                            ing.bio_ch.unwrap_or(false)
+                        );
+
+                        if has_bio_ch {
+                            conditionals.insert(String::from("umstellung_bio_suisse_richtlinien"), true);
+                        } else {
+                            conditionals.insert(String::from("umstellung_biologische_landwirtschaft"), true);
+                        }
+                    } else {
+                        conditionals.insert(String::from("bio_suisse_no_cross"), true);
+                    }
                 }
             } else {
                 #[cfg(target_arch = "wasm32")]

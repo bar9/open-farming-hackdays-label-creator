@@ -1,5 +1,5 @@
 use crate::components::{Amount, AmountType, Price};
-use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, Umstellung};
+use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, Umstellung, UmstellungNoCross};
 use crate::shared::Conditionals;
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
@@ -114,6 +114,10 @@ pub fn LabelPreview(
                 if conditionals.0().get("bio_suisse_umstellung").unwrap_or(&false) == &true {
                     div { class: "absolute top-2 right-2 w-16",
                         Umstellung {}
+                    }
+                } else if conditionals.0().get("bio_suisse_no_cross_umstellung").unwrap_or(&false) == &true {
+                    div { class: "absolute top-2 right-2 w-16",
+                        UmstellungNoCross {}
                     }
                 } else if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
                     div { class: "absolute top-2 right-2 w-16",
