@@ -3,6 +3,7 @@ use crate::persistence::get_saved_ingredients_list;
 use crate::services::{search_unified, UnifiedIngredient};
 use dioxus::prelude::*;
 use rust_i18n::t;
+use std::rc::Rc;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct UnifiedIngredientInputProps {
@@ -14,6 +15,9 @@ pub struct UnifiedIngredientInputProps {
     pub placeholder: String,
     #[props(default = false)]
     pub autofocus: bool,
+    /// Signal that triggers focus when it becomes true (e.g., when a modal opens)
+    #[props(default = None)]
+    pub focus_when_true: Option<Signal<bool>>,
 }
 
 #[component]
@@ -23,6 +27,24 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
     let is_searching = use_signal(|| false);
     let mut search_request_id = use_signal(|| 0u32); // Track search requests to prevent race conditions
     let mut search_error = use_signal(|| None::<String>); // Track search errors
+
+    // Store reference to the input element for programmatic focus
+    let mut input_element: Signal<Option<Rc<MountedData>>> = use_signal(|| None);
+
+    // Effect to set focus when focus_when_true signal becomes true
+    use_effect(move || {
+        if let Some(focus_signal) = props.focus_when_true {
+            if focus_signal() {
+                if let Some(element) = (*input_element.read()).clone() {
+                    spawn(async move {
+                        // Small delay to ensure the modal is fully visible
+                        gloo::timers::future::TimeoutFuture::new(50).await;
+                        let _ = element.set_focus(true).await;
+                    });
+                }
+            }
+        }
+    });
 
     // Handle input changes with search
     let mut handle_input = move |value: String| {
@@ -120,9 +142,14 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                 list: "", // Disable browser autocomplete
                 autocomplete: "off",
                 onmounted: move |element| {
+                    // Store element reference for later focus operations
+                    input_element.set(Some(element.data().clone()));
+
+                    // Initial autofocus (only works if element is visible at mount time)
                     if props.autofocus {
+                        let element_data = element.data().clone();
                         spawn(async move {
-                            let _ = element.data().set_focus(true).await;
+                            let _ = element_data.set_focus(true).await;
                         });
                     }
                 },
