@@ -123,6 +123,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_bio_details: original_ingredient.erlaubte_ausnahme_bio_details.clone(),
             erlaubte_ausnahme_knospe: original_ingredient.erlaubte_ausnahme_knospe,
             erlaubte_ausnahme_knospe_details: original_ingredient.erlaubte_ausnahme_knospe_details.clone(),
+            verarbeitungsverfahren: original_ingredient.verarbeitungsverfahren.clone(),
         }]
     });
     
@@ -161,6 +162,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
+                verarbeitungsverfahren: None,  // TODO: Add UI for this field in future ticket
             };
         } else {
             // Clear wrapper_ingredients sub-components when toggling off composite mode
@@ -279,8 +281,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
+                verarbeitungsverfahren: None,  // TODO: Add UI for this field in future ticket
             };
-            
+
             match save_composite_ingredient(&ingredient_to_save) {
                 Ok(_) => {
                     save_status.set(Some(t!("messages.ingredient_saved_successfully", name = edit_name()).to_string()));
@@ -342,8 +345,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
             erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
             erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
+            verarbeitungsverfahren: None,  // TODO: Add UI for this field in future ticket
         };
-        
+
         if props.genesis {
             // Check if ingredient with same name and properties already exists (only for non-composite)
             if new_ingredient.sub_components.is_none() || new_ingredient.sub_components.as_ref().unwrap().is_empty() {
@@ -400,6 +404,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_bio_details: None,
                 erlaubte_ausnahme_knospe: None,
                 erlaubte_ausnahme_knospe_details: None,
+                verarbeitungsverfahren: None,
             };
         } else {
             // Update existing ingredient
@@ -482,6 +487,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             erlaubte_ausnahme_bio_details: None,
                             erlaubte_ausnahme_knospe: None,
                             erlaubte_ausnahme_knospe_details: None,
+                            verarbeitungsverfahren: None,
                         };
                     }
                     is_open.toggle();

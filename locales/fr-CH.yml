@@ -392,9 +392,13 @@ origin:
   aufzucht: Élevage
   schlachtung: Abattage
   fangort: Lieu de capture
-  switzerland_parentheses: (Suisse)
+  switzerland_parentheses: "[Suisse]"
   birthplace: "Lieu de naissance: %{country}"
   slaughtered_in: "Abattu en: %{country}"
+
+bio_legend:
+  aus_biologischer_landwirtschaft: issu de l'agriculture biologique
+  aus_umstellbetrieb: issu d'exploitation en reconversion vers l'agriculture biologique
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)

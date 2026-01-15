@@ -643,13 +643,17 @@ origin:
   aufzucht: Aufzucht
   schlachtung: Schlachtung
   fangort: Fangort
-  switzerland_parentheses: (Schweiz)
+  switzerland_parentheses: "[Schweiz]"
   birthplace: "Geburtsort: %{country}"
   slaughtered_in: "Geschlachtet in: %{country}"
   add_country: Land hinzufügen
   remove_country: Land entfernen
   regions_header: Regionen
   countries_header: Länder
+
+bio_legend:
+  aus_biologischer_landwirtschaft: aus biologischer Landwirtschaft
+  aus_umstellbetrieb: aus Umstellbetrieb auf biologische Landwirtschaft
 
 bio_labels:
   bio_knospe: Bio (Knospe)

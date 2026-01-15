@@ -419,6 +419,8 @@ pub struct Ingredient {
     pub erlaubte_ausnahme_bio_details: Option<String>,
     pub erlaubte_ausnahme_knospe: Option<bool>,
     pub erlaubte_ausnahme_knospe_details: Option<String>,
+    /// Verarbeitungsverfahren (z.B. "past." für pasteurisiert, "UHT", etc.)
+    pub verarbeitungsverfahren: Option<String>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -463,6 +465,7 @@ impl Ingredient {
             erlaubte_ausnahme_bio_details: None,
             erlaubte_ausnahme_knospe: None,
             erlaubte_ausnahme_knospe_details: None,
+            verarbeitungsverfahren: None,
         }
     }
 
@@ -542,6 +545,7 @@ impl Default for Ingredient {
             erlaubte_ausnahme_bio_details: None,
             erlaubte_ausnahme_knospe: None,
             erlaubte_ausnahme_knospe_details: None,
+            verarbeitungsverfahren: None,
         }
     }
 }
@@ -579,6 +583,22 @@ impl OutputFormatter {
             true => format! {"<b>{}</b>", self.ingredient.name},
             false => self.ingredient.name.clone(),
         };
+
+        // Verarbeitungsverfahren hinzufügen (z.B. "past." für pasteurisiert)
+        if let Some(verfahren) = &self.ingredient.verarbeitungsverfahren {
+            output = format!("{} {}", output, verfahren);
+        }
+
+        // Bio-Stern (*) oder Umstellbetrieb-Stern (**) hinzufügen
+        // Nur wenn Bio/Knospe-Regeln aktiv sind
+        if self.RuleDefs.contains(&RuleDef::Bio_Knospe_EingabeIstBio) {
+            if self.ingredient.is_bio == Some(true) || self.ingredient.bio_ch == Some(true) {
+                output = format!("{}*", output);
+            } else if self.ingredient.aus_umstellbetrieb == Some(true) {
+                output = format!("{}**", output);
+            }
+        }
+
         if self.RuleDefs.contains(&RuleDef::AllPercentages) {
             let percentage = self.ingredient.amount / self.total_amount * 100.;
             output = format!(
@@ -662,7 +682,7 @@ impl OutputFormatter {
                         .collect();
                     if !valid_origins.is_empty() {
                         let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
-                        output = format!("{} ({})", output, country_names.join(", "));
+                        output = format!("{} [{}]", output, country_names.join(", "));
                     }
                 }
             }
@@ -682,7 +702,7 @@ impl OutputFormatter {
                         }
 
                         if !beef_origin_parts.is_empty() {
-                            output = format!("{} ({})", output, beef_origin_parts.join(", "));
+                            output = format!("{} [{}]", output, beef_origin_parts.join(", "));
                         }
                     }
                 }
@@ -692,7 +712,7 @@ impl OutputFormatter {
                 if let Some(category) = &self.ingredient.category {
                     if is_fish_category(category) {
                         if let Some(fangort) = &self.ingredient.fangort {
-                            output = format!("{} ({})", output, fangort.display_name());
+                            output = format!("{} [{}]", output, fangort.display_name());
                         }
                     }
                 }
@@ -711,7 +731,7 @@ impl OutputFormatter {
                         .collect();
                     if !valid_origins.is_empty() {
                         let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
-                        output = format!("{} ({})", output, country_names.join(", "));
+                        output = format!("{} [{}]", output, country_names.join(", "));
                     }
                 }
             }
@@ -1056,14 +1076,41 @@ impl Calculator {
             web_sys::console::log_1(&format!("⚖️ Total amount: {}g", total_amount).into());
         }
 
+        // Prüfe ob Bio-Zutaten oder Umstellbetrieb vorhanden sind (für Legende)
+        let has_bio_rules = output_rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
+        let has_bio_ingredients = has_bio_rules && sorted_ingredients.iter().any(|ing|
+            ing.is_bio == Some(true) || ing.bio_ch == Some(true)
+        );
+        let has_umstellung_ingredients = has_bio_rules && sorted_ingredients.iter().any(|ing|
+            ing.aus_umstellbetrieb == Some(true)
+        );
+
+        // Generiere Zutatenliste
+        let ingredients_label = sorted_ingredients
+            .into_iter()
+            .map(|item| OutputFormatter::from(item, total_amount, output_rules.clone()))
+            .map(|fmt| fmt.format())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        // Legende anhängen wenn Bio/Umstellbetrieb-Zutaten vorhanden
+        let mut legend_parts = Vec::new();
+        if has_bio_ingredients {
+            legend_parts.push(format!("* {}", t!("bio_legend.aus_biologischer_landwirtschaft")));
+        }
+        if has_umstellung_ingredients {
+            legend_parts.push(format!("** {}", t!("bio_legend.aus_umstellbetrieb")));
+        }
+
+        let label = if !legend_parts.is_empty() {
+            format!("{}<br><br>{}", ingredients_label, legend_parts.join("<br>"))
+        } else {
+            ingredients_label
+        };
+
         Output {
             success: true,
-            label: sorted_ingredients
-                .into_iter()
-                .map(|item| OutputFormatter::from(item, total_amount, output_rules.clone()))
-                .map(|fmt| fmt.format())
-                .collect::<Vec<_>>()
-                .join(", "),
+            label,
             total_amount,
             validation_messages,
             conditional_elements: conditionals,

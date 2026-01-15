@@ -373,9 +373,13 @@ origin:
   aufzucht: Allevamento
   schlachtung: Macellazione
   fangort: Luogo di cattura
-  switzerland_parentheses: (Svizzera)
+  switzerland_parentheses: "[Svizzera]"
   birthplace: "Luogo di nascita: %{country}"
   slaughtered_in: "Macellato in: %{country}"
+
+bio_legend:
+  aus_biologischer_landwirtschaft: da agricoltura biologica
+  aus_umstellbetrieb: da azienda in conversione all'agricoltura biologica
 
 bio_labels:
   bio_knospe: Bio (Gemma)
