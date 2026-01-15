@@ -405,6 +405,7 @@ pub fn Swiss() -> Element {
                                 }
                                 FormField {
                                     required: true,
+                                    help: Some((t!("help.plz")).into()),
                                     label: t!("label.plz"),
                                     TextInput { required: true, bound_value: producer_zip, placeholder: t!("placeholder.plz")}
                                 }

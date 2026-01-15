@@ -161,6 +161,9 @@ help:
   ort: |
     Ortschaft der Produktions
 
+  plz: |
+    Ergänzen Sie CH- (Schweiz) oder FL- (Liechtenstein) vor der PLZ, um die Angabe des Produktionslandes sicherzustellen.
+
   preisProX: |
     **Grundpreis (optional)**
     Preis pro %{unit}.
