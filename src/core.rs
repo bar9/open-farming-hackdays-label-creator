@@ -283,6 +283,27 @@ fn calculate_knospe_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
     (knospe_certified_amount / total_agricultural_amount) * 100.0
 }
 
+fn calculate_bio_ch_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
+    let total_agricultural_amount: f64 = ingredients
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    if total_agricultural_amount == 0.0 {
+        return 100.0;
+    }
+
+    let bio_ch_certified_amount: f64 = ingredients
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .filter(|ingredient| ingredient.bio_ch.unwrap_or(false))
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    (bio_ch_certified_amount / total_agricultural_amount) * 100.0
+}
+
 /// Calculate the percentage of an ingredient relative to the total amount
 fn calculate_ingredient_percentage(ingredient_amount: f64, total_amount: f64) -> f64 {
     (ingredient_amount / total_amount) * 100.0
@@ -947,6 +968,18 @@ impl Calculator {
             } else {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
+            }
+        }
+
+        // Bio-V/CH Bio: Add "Bio" to Sachbezeichnung when 100% Bio-CH certified
+        if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
+            let bio_ch_percentage = calculate_bio_ch_certified_percentage(&input.ingredients);
+
+            if bio_ch_percentage >= 100.0 {
+                conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
+                conditionals.insert(String::from("bio_marketing_allowed"), true);
+            } else if bio_ch_percentage > 0.0 {
+                conditionals.insert(String::from("bio_marketing_not_allowed"), true);
             }
         }
 

@@ -385,6 +385,10 @@ bio_labels:
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
   erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...
 
+bio_hints:
+  marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."
+  marketing_not_allowed: "Il prodotto NON può essere commercializzato come prodotto biologico perché non tutti gli ingredienti agricoli sono certificati bio. Solo alcuni ingredienti possono essere contrassegnati come biologici."
+
 weight_units:
   mg: mg
   g: g

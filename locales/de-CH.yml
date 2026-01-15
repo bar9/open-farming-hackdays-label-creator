@@ -659,6 +659,10 @@ bio_labels:
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat
   erlaubte_ausnahme_details_placeholder: Begründung / Referenz eingeben...
 
+bio_hints:
+  marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."
+  marketing_not_allowed: "Das Produkt darf NICHT als Bio-Produkt vermarktet werden, da nicht alle landwirtschaftlichen Zutaten bio-zertifiziert sind. Es dürfen nur einzelne Zutaten als biologisch gekennzeichnet werden."
+
 buttons:
   close: schliessen
   back: Zurück

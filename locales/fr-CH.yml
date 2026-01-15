@@ -404,6 +404,10 @@ bio_labels:
   erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
   erlaubte_ausnahme_details_placeholder: Saisir la justification / référence...
 
+bio_hints:
+  marketing_allowed: "Le produit peut être commercialisé comme produit bio. Bio peut figurer dans la dénomination, le nom de fantaisie ou librement sur l'emballage."
+  marketing_not_allowed: "Le produit ne peut PAS être commercialisé comme produit bio car tous les ingrédients agricoles ne sont pas certifiés bio. Seuls certains ingrédients peuvent être désignés comme biologiques."
+
 weight_units:
   mg: mg
   g: g

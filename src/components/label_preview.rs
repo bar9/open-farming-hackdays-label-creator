@@ -146,15 +146,22 @@ pub fn LabelPreview(
                     if (*product_subtitle.read()).is_empty() {
                         span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung")}}
                     } else {
-                        if !(*product_title.read()).is_empty() {
-                            {rsx! {
-                                h3 { class: "text-2xl", "{product_title}" }
-                                span { class: "mb-1 text-base", "{product_subtitle}" }
-                            }}
-                        } else {
-                            {rsx! {
-                                h3 { class: "text-2xl mb-1", "{product_subtitle}" }
-                            }}
+                        {
+                            let bio_suffix = if conditionals.0().get("bio_sachbezeichnung_suffix").unwrap_or(&false) == &true {
+                                " Bio"
+                            } else {
+                                ""
+                            };
+                            if !(*product_title.read()).is_empty() {
+                                rsx! {
+                                    h3 { class: "text-2xl", "{product_title}" }
+                                    span { class: "mb-1 text-base", "{product_subtitle}{bio_suffix}" }
+                                }
+                            } else {
+                                rsx! {
+                                    h3 { class: "text-2xl mb-1", "{product_subtitle}{bio_suffix}" }
+                                }
+                            }
                         }
                     }
 
@@ -382,6 +389,18 @@ pub fn LabelPreview(
                         } else {
                             span { class: "badge badge-warning", "Bio-Zertifizierungsstelle" }
                         }
+                    }
+                }
+
+                // Bio Marketing Hints
+                if conditionals.0().get("bio_marketing_allowed").unwrap_or(&false) == &true {
+                    div { class: "mt-2 p-2 bg-success/10 text-success text-xs rounded",
+                        {t!("bio_hints.marketing_allowed")}
+                    }
+                }
+                if conditionals.0().get("bio_marketing_not_allowed").unwrap_or(&false) == &true {
+                    div { class: "mt-2 p-2 bg-warning/10 text-warning text-xs rounded",
+                        {t!("bio_hints.marketing_not_allowed")}
                     }
                 }
                 }

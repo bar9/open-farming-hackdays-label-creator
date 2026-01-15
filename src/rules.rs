@@ -75,6 +75,8 @@ pub enum RuleDef {
     Knospe_ShowBioSuisseLogo,
     /// Bio/Knospe: Requires certification body for Bio and Knospe products
     Bio_Knospe_ZertifizierungsstellePflicht,
+    /// Bio-V: Shows "Bio" in Sachbezeichnung when 100% Bio-CH certified
+    Bio_ShowBioSachbezeichnung,
 }
 
 impl RuleDef {
@@ -115,6 +117,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_Knospe_EingabeIstBio => RuleType::Conditional,
             RuleDef::Knospe_ShowBioSuisseLogo => RuleType::Conditional,
             RuleDef::Bio_Knospe_ZertifizierungsstellePflicht => RuleType::Validation,
+            RuleDef::Bio_ShowBioSachbezeichnung => RuleType::Conditional,
         }
     }
 
@@ -149,6 +152,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_Knospe_EingabeIstBio => "Ermöglicht die Eingabe ob eine Zutat bio-zertifiziert ist",
             RuleDef::Knospe_ShowBioSuisseLogo => "Zeigt Bio Suisse Logo basierend auf Schweizer Zutaten-Prozentsatz",
             RuleDef::Bio_Knospe_ZertifizierungsstellePflicht => "Erfordert die Angabe der Bio-Zertifizierungsstelle für Bio und Knospe Produkte",
+            RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn 100% Bio-CH zertifiziert",
         }
     }
 }
@@ -205,6 +209,7 @@ impl RuleRegistry {
                 RuleDef::AP7_5_FischFangort,
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
+                RuleDef::Bio_ShowBioSachbezeichnung,
             ],
         );
 
