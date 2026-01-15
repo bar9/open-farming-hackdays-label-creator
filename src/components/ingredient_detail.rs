@@ -513,7 +513,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }
                 br {}
                 FormField {
-                    label: t!("label.menge"),
+                    label: format!("{} (g)", t!("label.menge")),
+                    help: Some((t!("help.menge")).into()),
                     ValidationDisplay {
                         paths: vec![
                             format!("ingredients[{}][amount]", index)

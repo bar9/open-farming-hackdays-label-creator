@@ -65,6 +65,7 @@ label:
   saved_indicator: (Salvato)
   allergen_indicator: (Allergene)
   rezepturVollstaendig: Ricetta completamente inserita
+  liv_anhang7_format: "100g di prodotto finito contengono %{grams}g"
 
 nav:
   linkKopieren: Copia link
@@ -181,6 +182,10 @@ help:
 
   namensgebendeZutaten: |
     Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, deve essere selezionato il simbolo dietro l'ingrediente. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
+
+  menge: |
+    La quantità si riferisce agli **ingredienti preparati** (sbucciati, preparati).
+    Esempio: Per le patate, inserire il peso dopo la sbucciatura, non il peso lordo.
 
   manuellesTotal: |
     **Peso finale pesato (opzionale)**

@@ -575,11 +575,22 @@ impl OutputFormatter {
         {
             if let Some(true) = self.ingredient.is_namensgebend {
                 let percentage = self.ingredient.amount / self.total_amount * 100.;
-                output = format!(
-                    "{} {}",
-                    output,
-                    format_percentage(percentage)
-                )
+
+                // LIV Anhang 7: Bei >100% alternatives Format verwenden
+                if percentage > 100.0 {
+                    let grams_per_100g = percentage.round() as u32;
+                    output = format!(
+                        "{} ({})",
+                        output,
+                        t!("label.liv_anhang7_format", grams = grams_per_100g)
+                    )
+                } else {
+                    output = format!(
+                        "{} {}",
+                        output,
+                        format_percentage(percentage)
+                    )
+                }
             }
         }
         if self

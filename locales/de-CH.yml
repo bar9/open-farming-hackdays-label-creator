@@ -66,6 +66,7 @@ label:
   saved_indicator: (Gespeichert)
   allergen_indicator: (Allergen)
   rezepturVollstaendig: Rezeptur vollständig eingegeben
+  liv_anhang7_format: "100g Enderzeugnis enthalten %{grams}g"
 
 nav:
   linkKopieren: Link kopieren
@@ -136,6 +137,10 @@ help:
 
   namensgebendeZutaten: |
     Werden Zutaten in der Sach- oder Phantasiebezeichnung mit Worten hervorgehoben oder auf der Etikette abgebildet muss das Symbol hinter der Zutat angewählt werden. Dadurch erfolgt in der Zutatenliste bei diesem Rohstoff automatisch die Massenprozentangabe.
+
+  menge: |
+    Die Menge bezieht sich auf die **gerüsteten Zutaten** (geschält, gerüstet, vorbereitet).
+    Beispiel: Bei Kartoffeln die Menge nach dem Schälen eingeben, nicht das Rohgewicht.
 
   manuellesTotal: |
     **Gewogenes Endgewicht (optional)**
