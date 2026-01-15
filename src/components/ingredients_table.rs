@@ -63,13 +63,6 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     });
     rsx! {
         div { class: "flex flex-col gap-4",
-            if !props.ingredients.read().is_empty() {
-                div { class: "grid gap-4 grid-cols-3 border-bottom items-center",
-                    span { class: "font-bold", "{t!(\"label.zutat\")}" }
-                    span { class: "font-bold text-right", "{t!(\"Menge\")}" }
-                    span {}
-                }
-            }
             for (key , ingr) in props.ingredients.read().iter().enumerate() {
                 // ValidationDisplay {
                 //     paths: vec![format!("ingredients[{}][amount]", key)],
