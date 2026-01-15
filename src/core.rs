@@ -420,6 +420,9 @@ pub struct Ingredient {
     pub erlaubte_ausnahme_knospe_details: Option<String>,
     /// Ausgewählte Verarbeitungsschritte (Bio Suisse)
     pub processing_steps: Option<Vec<String>>,
+    /// Backwards compatibility field for old URLs
+    #[serde(default)]
+    pub aus_umstellbetrieb: Option<bool>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -464,6 +467,7 @@ impl Ingredient {
             erlaubte_ausnahme_knospe: None,
             erlaubte_ausnahme_knospe_details: None,
             processing_steps: None,
+            aus_umstellbetrieb: None,
         }
     }
 
@@ -543,6 +547,7 @@ impl Default for Ingredient {
             erlaubte_ausnahme_knospe: None,
             erlaubte_ausnahme_knospe_details: None,
             processing_steps: None,
+            aus_umstellbetrieb: None,
         }
     }
 }

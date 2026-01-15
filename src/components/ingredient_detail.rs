@@ -124,6 +124,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_knospe: original_ingredient.erlaubte_ausnahme_knospe,
             erlaubte_ausnahme_knospe_details: original_ingredient.erlaubte_ausnahme_knospe_details.clone(),
             processing_steps: original_ingredient.processing_steps.clone(),
+            aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
         }]
     });
 
@@ -162,6 +163,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
                 processing_steps: edit_processing_steps(),
+                aus_umstellbetrieb: None,
             };
         } else {
             // Clear wrapper_ingredients sub-components when toggling off composite mode
@@ -280,6 +282,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
                 processing_steps: edit_processing_steps(),
+                aus_umstellbetrieb: None,
             };
 
             match save_composite_ingredient(&ingredient_to_save) {
@@ -343,6 +346,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
             erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
             processing_steps: edit_processing_steps(),
+            aus_umstellbetrieb: None,
         };
 
         if props.genesis {
@@ -400,6 +404,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_knospe: None,
                 erlaubte_ausnahme_knospe_details: None,
                 processing_steps: None,
+                aus_umstellbetrieb: None,
             };
         } else {
             // Update existing ingredient
@@ -482,6 +487,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             erlaubte_ausnahme_knospe: None,
                             erlaubte_ausnahme_knospe_details: None,
                             processing_steps: None,
+                aus_umstellbetrieb: None,
                         };
                     }
                     is_open.toggle();
