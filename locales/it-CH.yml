@@ -142,14 +142,16 @@ help:
     L'elenco degli ingredienti viene visualizzato automaticamente in ordine decrescente.
   datumseingabe: |
     Alimenti che devono essere conservati al fresco: da consumare entro ..
-    
+
     * * * * *
-    
+
     Altri alimenti: da consumarsi preferibilmente entro ...
-    
+
     * * * * *
-    
+
     Nessuna indicazione di data richiesta (es. aceto puro)
+
+    [Scheda informativa sulla conservazione (PDF)](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/gesundheit/lebensmittelkontrollen/MD-00112.pdf)
   zusatzinformationen: |
     * La dichiarazione nutrizionale è obbligatoria (valore energetico, grassi, acidi grassi saturi, carboidrati, zuccheri, proteine e sale per 100 g) ad eccezione delle derrate alimentari secondo l'allegato 9 ODerr (prodotte artigianalmente e vendute localmente in un raggio inferiore a 50 km o in vendita diretta).
     * Tenore alcolico a partire da 1,2 % vol (ODerr Art. 18)

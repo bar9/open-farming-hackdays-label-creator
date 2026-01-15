@@ -155,14 +155,16 @@ help:
     La liste des ingrédients est automatiquement affichée par ordre décroissant.
   datumseingabe: |
     Aliments devant être conservés au frais: à consommer jusqu'au ..
-    
+
     * * * * *
-    
+
     Autres aliments: à consommer de préférence avant ...
-    
+
     * * * * *
-    
+
     Aucune indication de date requise (ex. vinaigre pur)
+
+    [Fiche d'information sur la conservation (PDF)](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/gesundheit/lebensmittelkontrollen/MD-00112.pdf)
   zusatzinformationen: |
     * La déclaration nutritionnelle est obligatoire (valeur énergétique, matières grasses, acides gras saturés, glucides, sucres, protéines et sel pour 100 g) sauf pour les denrées alimentaires selon l'annexe 9 ODAl (fabriquées artisanalement et vendues localement dans un rayon de moins de 50 km ou en vente directe).
     * Teneur en alcool à partir de 1,2 % vol (ODAl Art. 18)
