@@ -88,8 +88,14 @@ impl Default for Form {
             if let Ok(mut query_string) = window.location().search() {
                 query_string = query_string.trim_start_matches('?').to_string();
                 if !query_string.is_empty() {
-                    web_sys::console::log_1(&format!("Parsing query string: {}", query_string).into());
-                    match from_query_string::<Form>(&query_string) {
+                    // URL decode the query string before parsing
+                    let decoded_query_string = js_sys::decode_uri_component(&query_string)
+                        .unwrap_or_else(|_| query_string.clone().into())
+                        .as_string()
+                        .unwrap_or(query_string.clone());
+
+                    web_sys::console::log_1(&format!("Parsing query string: {}", decoded_query_string).into());
+                    match from_query_string::<Form>(&decoded_query_string) {
                         Ok(app_state_from_query_string) => {
                             web_sys::console::log_1(&"Successfully parsed URL parameters".into());
                             return app_state_from_query_string;
