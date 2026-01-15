@@ -11,8 +11,22 @@ pub struct DateInputProps {
 
 pub fn DateInput(mut props: DateInputProps) -> Element {
     let in_a_year: DateTime<Utc> = Utc::now().add(TimeDelta::days(365));
-    let formatted_date = in_a_year.format("%Y-%m-%d").to_string();
-    let mut ymd_date: Signal<String> = use_signal(|| formatted_date);
+    let default_date = in_a_year.format("%Y-%m-%d").to_string();
+
+    // Initialize from props.date_value if available, converting DD.MM.YYYY -> YYYY-MM-DD
+    let initial_ymd = {
+        let date_str = props.date_value.peek();
+        if !date_str.is_empty() {
+            // Try to parse DD.MM.YYYY and convert to YYYY-MM-DD
+            NaiveDate::parse_from_str(&date_str, "%d.%m.%Y")
+                .map(|d| d.format("%Y-%m-%d").to_string())
+                .unwrap_or_else(|_| default_date.clone())
+        } else {
+            default_date.clone()
+        }
+    };
+
+    let mut ymd_date: Signal<String> = use_signal(|| initial_ymd);
     use_effect(move || {
         let datestr = &*ymd_date.read();
         // Only update if we have a valid date string
