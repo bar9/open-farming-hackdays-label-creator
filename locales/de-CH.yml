@@ -625,7 +625,7 @@ buttons:
   back: Zurück
   delete: Löschen
   save_to_storage: Merken
-  save_and_transfer: Speichern und übertragen
+  save_and_transfer: Alle Mengen anpassen
   transfer_scaling_title: "Die Mengenanpassung (×%{factor}) auf das gesamte Rezept übertragen"
   cancel: Abbrechen
   ok: OK

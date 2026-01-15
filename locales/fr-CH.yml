@@ -354,7 +354,7 @@ buttons:
   back: Retour
   delete: Supprimer
   save_to_storage: Mémoriser
-  save_and_transfer: Enregistrer et transférer
+  save_and_transfer: Ajuster toutes les quantités
   transfer_scaling_title: "Transférer l'ajustement des quantités (×%{factor}) à l'ensemble de la recette"
   cancel: Annuler
   ok: OK

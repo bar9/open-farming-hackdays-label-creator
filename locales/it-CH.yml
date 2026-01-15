@@ -334,7 +334,7 @@ buttons:
   back: Indietro
   delete: Elimina
   save_to_storage: Memorizza
-  save_and_transfer: Salva e trasferisci
+  save_and_transfer: Regola tutte le quantità
   transfer_scaling_title: "Trasferisci l'adeguamento delle quantità (×%{factor}) all'intera ricetta"
   cancel: Annulla
   ok: OK
