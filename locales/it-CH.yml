@@ -267,9 +267,6 @@ symbols:
   agricultural_unknown: Stato agricolo sconosciuto
   bio_tooltip: Bio-certificato
   bio_unknown: Stato bio sconosciuto
-  source_local: Solo dati Declarino
-  source_blv: Solo dati BLV
-  source_merged: Dati completi
 
 errors:
   page_not_found: Pagina non trovata

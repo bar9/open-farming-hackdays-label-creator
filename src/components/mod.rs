@@ -20,7 +20,7 @@ pub use impressum::Impressum;
 pub use link_share_modal::LinkShareModal;
 pub use saved_ingredients_manager::SavedIngredientsManager;
 // pub use category_selector_modal::CategorySelectorModal; // Replaced by UnifiedIngredientInput
-pub use ingredient_symbols::{IngredientSymbolsCompact, IngredientSourceBadge};
+pub use ingredient_symbols::IngredientSymbolsCompact;
 pub use unified_ingredient_input::UnifiedIngredientInput;
 
 mod conditional_display;

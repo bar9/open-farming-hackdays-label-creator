@@ -292,9 +292,6 @@ symbols:
   agricultural_unknown: Landwirtschaftlich-Status unbekannt
   bio_tooltip: Bio-zertifiziert
   bio_unknown: Bio-Status unbekannt
-  source_local: Nur Declarino-Daten
-  source_blv: Nur BLV-Daten
-  source_merged: Vollständige Daten
 
 errors:
   page_not_found: Seite nicht gefunden

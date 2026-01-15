@@ -249,12 +249,9 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                 move |_| handle_ingredient_select(ingredient_clone.clone())
                             },
 
-                            div { class: "flex items-center justify-between",
-                                div { class: "flex items-center gap-2 flex-1",
-                                    span { class: "font-medium", {ingredient.name.clone()} }
-                                    IngredientSymbolsCompact { ingredient: ingredient.clone() }
-                                }
-                                IngredientSourceBadge { ingredient: ingredient.clone() }
+                            div { class: "flex items-center gap-2",
+                                span { class: "font-medium", {ingredient.name.clone()} }
+                                IngredientSymbolsCompact { ingredient: ingredient.clone() }
                             }
 
                             if let Some(category) = &ingredient.category {
