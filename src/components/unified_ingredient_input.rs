@@ -12,6 +12,8 @@ pub struct UnifiedIngredientInputProps {
     pub required: bool,
     #[props(default = String::new())]
     pub placeholder: String,
+    #[props(default = false)]
+    pub autofocus: bool,
 }
 
 #[component]
@@ -117,6 +119,13 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                 required: props.required,
                 list: "", // Disable browser autocomplete
                 autocomplete: "off",
+                onmounted: move |element| {
+                    if props.autofocus {
+                        spawn(async move {
+                            let _ = element.data().set_focus(true).await;
+                        });
+                    }
+                },
                 oninput: move |evt| handle_input(evt.value()),
                 onblur: handle_blur,
                 onfocus: move |_| {

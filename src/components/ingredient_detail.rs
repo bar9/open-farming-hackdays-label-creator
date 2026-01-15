@@ -497,7 +497,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         bound_value: edit_name,
                         on_ingredient_select: handle_ingredient_select,
                         required: true,
-                        placeholder: t!("placeholder.zutatName").to_string()
+                        placeholder: t!("placeholder.zutatName").to_string(),
+                        autofocus: true
                     }
                 }
                 br {}
