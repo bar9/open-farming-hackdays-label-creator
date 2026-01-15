@@ -58,8 +58,8 @@ pub enum RuleDef {
     AP7_4_RindfleischHerkunftDetails,
     /// AP7.5: Requires catch location for fish ingredients (Swiss requirement)
     AP7_5_FischFangort,
-    /// Bio/Knospe: Requires country of origin for ALL ingredients (Bio/Knospe requirement)
-    Bio_Knospe_AlleZutatenHerkunft,
+    /// Knospe: Requires country of origin for ALL ingredients (Knospe requirement)
+    Knospe_AlleZutatenHerkunft,
     /// Knospe: When 100% of agricultural ingredients are from Switzerland, no origin display needed
     Knospe_100_Percent_CH_NoOrigin,
     /// Knospe: When 90-99.99% of agricultural ingredients are from Switzerland, show origin for Swiss ingredients
@@ -98,7 +98,7 @@ impl Rule for RuleDef {
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent => RuleType::Conditional,
             RuleDef::AP7_4_RindfleischHerkunftDetails => RuleType::Conditional,
             RuleDef::AP7_5_FischFangort => RuleType::Conditional,
-            RuleDef::Bio_Knospe_AlleZutatenHerkunft => RuleType::Validation,
+            RuleDef::Knospe_AlleZutatenHerkunft => RuleType::Validation,
             RuleDef::Knospe_100_Percent_CH_NoOrigin => RuleType::Output,
             RuleDef::Knospe_90_99_Percent_CH_ShowOrigin => RuleType::Output,
             RuleDef::Knospe_Under90_Percent_CH_IngredientRules => RuleType::Output,
@@ -132,7 +132,7 @@ impl Rule for RuleDef {
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent => "Erfordert Herkunftsangabe für Fleisch-Zutaten, die mehr als 20% des Gesamtgewichts ausmachen (Schweizer Vorschrift)",
             RuleDef::AP7_4_RindfleischHerkunftDetails => "Erfordert detaillierte Herkunftsangabe für Rindfleisch: Aufzucht- und Schlachtungsort (Schweizer Vorschrift)",
             RuleDef::AP7_5_FischFangort => "Erfordert Fangort für Fisch-Zutaten (Schweizer Vorschrift)",
-            RuleDef::Bio_Knospe_AlleZutatenHerkunft => "Erfordert Herkunftsangabe für alle Zutaten (Bio/Knospe Anforderung)",
+            RuleDef::Knospe_AlleZutatenHerkunft => "Erfordert Herkunftsangabe für alle Zutaten (Knospe Anforderung)",
             RuleDef::Knospe_100_Percent_CH_NoOrigin => "Knospe: Bei 100% landwirtschaftlichen Zutaten aus CH keine Herkunftsangabe nötig",
             RuleDef::Knospe_90_99_Percent_CH_ShowOrigin => "Knospe: Bei 90-99.99% landwirtschaftlichen Zutaten aus CH Herkunftsangabe für CH-Zutaten",
             RuleDef::Knospe_Under90_Percent_CH_IngredientRules => "Knospe: Bei <90% landwirtschaftlichen Zutaten aus CH Herkunftsangabe nach spezifischen Zutatkriterien",
@@ -193,7 +193,6 @@ impl RuleRegistry {
                 RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
                 RuleDef::AP7_4_RindfleischHerkunftDetails,
                 RuleDef::AP7_5_FischFangort,
-                RuleDef::Bio_Knospe_AlleZutatenHerkunft,
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
             ],
@@ -211,7 +210,7 @@ impl RuleRegistry {
                 RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
                 RuleDef::AP7_4_RindfleischHerkunftDetails,
                 RuleDef::AP7_5_FischFangort,
-                RuleDef::Bio_Knospe_AlleZutatenHerkunft,
+                RuleDef::Knospe_AlleZutatenHerkunft,
                 RuleDef::Knospe_100_Percent_CH_NoOrigin,
                 RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
                 RuleDef::Knospe_Under90_Percent_CH_IngredientRules,

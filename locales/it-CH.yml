@@ -284,7 +284,7 @@ validation:
   origin_required_over_50_percent: Il paese di origine è richiesto per gli ingredienti superiori al 50%.
   origin_required_name_giving: Il paese di origine è richiesto per gli ingredienti caratterizzanti.
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
-  origin_required_bio_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Bio/Gemma).
+  origin_required_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Gemma).
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
   beef_slaughter_location_required: Il luogo di macellazione è richiesto per gli ingredienti di manzo.

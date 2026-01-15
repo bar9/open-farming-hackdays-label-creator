@@ -312,7 +312,7 @@ validation:
   origin_required_over_50_percent: Herkunftsland ist erforderlich für Zutaten über 50%.
   origin_required_name_giving: Herkunftsland ist erforderlich für namensgebende Zutaten.
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
-  origin_required_bio_knospe: Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).
+  origin_required_knospe: Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
   beef_slaughter_location_required: Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.

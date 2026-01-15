@@ -304,7 +304,7 @@ validation:
   origin_required_over_50_percent: Le pays d'origine est requis pour les ingrédients de plus de 50%.
   origin_required_name_giving: Le pays d'origine est requis pour les ingrédients caractéristiques.
   origin_required_meat_over_20: Le pays d'origine est requis pour les ingrédients de viande de plus de 20%.
-  origin_required_bio_knospe: Le pays d'origine est requis pour tous les ingrédients (exigence Bio/Bourgeon).
+  origin_required_knospe: Le pays d'origine est requis pour tous les ingrédients (exigence Bourgeon).
   certification_body_required: L'organisme de certification bio est obligatoire pour les produits Bio et Bourgeon.
   beef_breeding_location_required: Le lieu d'élevage est requis pour les ingrédients de boeuf.
   beef_slaughter_location_required: Le lieu d'abattage est requis pour les ingrédients de boeuf.

@@ -507,7 +507,7 @@ impl Calculator {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking fish catch location"));
                     validate_fish_catch_location(&input.ingredients, &mut validation_messages);
                 }
-                if let RuleDef::Bio_Knospe_AlleZutatenHerkunft = ruleDef {
+                if let RuleDef::Knospe_AlleZutatenHerkunft = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for ALL ingredients (Bio/Knospe)"));
                     validate_all_ingredients_origin(&input.ingredients, &mut validation_messages)
                 }
@@ -569,7 +569,7 @@ impl Calculator {
         let has_50_percent_rule = self
             .rule_defs.contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
         let has_bio_knospe_rule = self
-            .rule_defs.contains(&RuleDef::Bio_Knospe_AlleZutatenHerkunft);
+            .rule_defs.contains(&RuleDef::Knospe_AlleZutatenHerkunft);
 
         // Handle Knospe-specific percentage-based rules
         let has_knospe_100_rule = self
@@ -879,7 +879,7 @@ fn validate_all_ingredients_origin(
         if ingredient.origin.is_none() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
-                .push(t!("validation.origin_required_bio_knospe").to_string());
+                .push(t!("validation.origin_required_knospe").to_string());
         }
     }
 }
@@ -1677,7 +1677,7 @@ mod tests {
     #[test]
     fn bio_knospe_alle_zutaten_herkunft_conditional() {
         let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_AlleZutatenHerkunft]);
+        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
         let input = Input {
             certification_body: None,
             rezeptur_vollstaendig: true,
@@ -1707,7 +1707,7 @@ mod tests {
     #[test]
     fn bio_knospe_validation_missing_origin_for_all_ingredients() {
         let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_AlleZutatenHerkunft]);
+        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
         let input = Input {
             certification_body: None,
             rezeptur_vollstaendig: true,
@@ -1740,7 +1740,7 @@ mod tests {
     #[test]
     fn bio_knospe_country_display_on_label_for_all_ingredients() {
         let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_AlleZutatenHerkunft]);
+        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
         let input = Input {
             certification_body: None,
             rezeptur_vollstaendig: false,
@@ -1771,7 +1771,7 @@ mod tests {
     #[test]
     fn bio_knospe_validation_all_ingredients_missing_origin() {
         let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_AlleZutatenHerkunft]);
+        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
         let input = Input {
             certification_body: None,
             rezeptur_vollstaendig: true,
@@ -1924,7 +1924,7 @@ mod tests {
     #[test]
     fn bio_knospe_no_validation_errors_when_all_have_origin() {
         let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_AlleZutatenHerkunft]);
+        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
         let input = Input {
             certification_body: None,
             rezeptur_vollstaendig: false,

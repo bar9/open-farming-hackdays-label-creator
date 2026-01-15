@@ -704,16 +704,16 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     // Get context access outside the memo to avoid hook-in-hook violation
                     let conditionals_context = use_context::<Conditionals>();
 
-                    // Check if Bio/Knospe rules are active (always show origin field) or traditional conditional is set
+                    // Check if Knospe rules are active (always show origin field) or traditional conditional is set
                     let should_show_origin = use_memo(move || {
                         let rules = props.rules.read();
-                        let has_bio_knospe = rules.iter().any(|rule|
-                            *rule == RuleDef::Bio_Knospe_AlleZutatenHerkunft ||
+                        let has_knospe = rules.iter().any(|rule|
+                            *rule == RuleDef::Knospe_AlleZutatenHerkunft ||
                             *rule == RuleDef::Knospe_100_Percent_CH_NoOrigin ||
                             *rule == RuleDef::Knospe_90_99_Percent_CH_ShowOrigin
                         );
 
-                        if has_bio_knospe {
+                        if has_knospe {
                             true
                         } else {
                             // Fall back to traditional conditional check
