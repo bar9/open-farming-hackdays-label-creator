@@ -422,18 +422,12 @@ impl OutputFormatter {
                     }
                 }
             }
-            // Add country of origin display for traditional herkunft rules (only if no Knospe rules apply)
-            else if self
-                .RuleDefs
-                .iter()
-                .any(|x| *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent || *x == RuleDef::AP7_2_HerkunftNamensgebendeZutat || *x == RuleDef::AP7_3_HerkunftFleischUeber20Prozent || *x == RuleDef::Bio_Knospe_AlleZutatenHerkunft)
-            {
-                if let Some(origin) = &self.ingredient.origin {
-                    // Don't show origin for "NoOriginRequired"
-                    if !matches!(origin, Country::NoOriginRequired) {
-                        let country_name = origin.display_name();
-                        output = format!("{} ({})", output, country_name);
-                    }
+            // Always display country of origin when set (CH food law requirement)
+            else if let Some(origin) = &self.ingredient.origin {
+                // Don't show origin for "NoOriginRequired"
+                if !matches!(origin, Country::NoOriginRequired) {
+                    let country_name = origin.display_name();
+                    output = format!("{} ({})", output, country_name);
                 }
             }
         }
