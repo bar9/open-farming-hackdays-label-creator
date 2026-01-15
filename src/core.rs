@@ -669,7 +669,7 @@ impl OutputFormatter {
         } else if has_knospe_90_99_rule {
             // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
             if self.ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)) {
-                output = format!("{} {}", output, t!("origin.switzerland_parentheses"));
+                output = format!("{} (Schweiz)", output);
             }
         } else if has_knospe_under90_rule {
             // Rule C: <90% Swiss agricultural ingredients - show origin based on specific ingredient criteria
@@ -684,7 +684,7 @@ impl OutputFormatter {
                         .collect();
                     if !valid_origins.is_empty() {
                         let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
-                        output = format!("{} [{}]", output, country_names.join(", "));
+                        output = format!("{} ({})", output, country_names.join(", "));
                     }
                 }
             }
@@ -704,7 +704,7 @@ impl OutputFormatter {
                         }
 
                         if !beef_origin_parts.is_empty() {
-                            output = format!("{} [{}]", output, beef_origin_parts.join(", "));
+                            output = format!("{} ({})", output, beef_origin_parts.join(", "));
                         }
                     }
                 }
@@ -714,13 +714,13 @@ impl OutputFormatter {
                 if let Some(category) = &self.ingredient.category {
                     if is_fish_category(category) {
                         if let Some(fangort) = &self.ingredient.fangort {
-                            output = format!("{} [{}]", output, fangort.display_name());
+                            output = format!("{} ({})", output, fangort.display_name());
                         }
                     }
                 }
             }
             // Add country of origin display for traditional herkunft rules (only if no Knospe rules apply)
-            else if self
+            if self
                 .RuleDefs
                 .iter()
                 .any(|x| *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent || *x == RuleDef::AP7_3_HerkunftFleischUeber20Prozent || *x == RuleDef::Knospe_AlleZutatenHerkunft)
@@ -733,7 +733,7 @@ impl OutputFormatter {
                         .collect();
                     if !valid_origins.is_empty() {
                         let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
-                        output = format!("{} [{}]", output, country_names.join(", "));
+                        output = format!("{} ({})", output, country_names.join(", "));
                     }
                 }
             }
@@ -2082,7 +2082,7 @@ mod tests {
         // Should have validation error for the ingredient without origin
         let ingredient_1_messages = output.validation_messages.get("ingredients[1][origin]");
         assert!(ingredient_1_messages
-                   .map_or(false, |v| v.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung).")));
+                   .map_or(false, |v| v.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).")));
         // Should NOT have validation error for the ingredient with origin
         assert!(output.validation_messages.get("ingredients[0][origin]").map_or(true, |v| v.is_empty()));
     }
@@ -2146,8 +2146,8 @@ mod tests {
         // Should have validation errors for all ingredients
         let origin_messages_0 = output.validation_messages.get("ingredients[0][origin]").unwrap();
         let origin_messages_1 = output.validation_messages.get("ingredients[1][origin]").unwrap();
-        assert!(origin_messages_0.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
-        assert!(origin_messages_1.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Bio/Knospe Anforderung)."));
+        assert!(origin_messages_0.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung)."));
+        assert!(origin_messages_1.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung)."));
     }
 
     #[test]
