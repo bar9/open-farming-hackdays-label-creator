@@ -1426,6 +1426,7 @@ dependencies = [
  "csv",
  "dioxus",
  "gloo",
+ "js-sys",
  "markdown",
  "rust-i18n",
  "serde",

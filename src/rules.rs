@@ -1,3 +1,6 @@
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
 /// Types of rules that can be applied in the label generation process
 #[derive(Clone, Debug, PartialEq)]
 pub enum RuleType {
@@ -29,7 +32,7 @@ pub trait Rule {
 ///
 /// Swiss food labeling rules follow the format AP{section}_{rule}_{description}
 /// where section corresponds to Swiss food labeling law sections.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, EnumIter)]
 #[allow(non_camel_case_types)]
 pub enum RuleDef {
     /// Display percentage for all ingredients on labels (debugging/testing rule)
@@ -72,6 +75,13 @@ pub enum RuleDef {
     Knospe_ShowBioSuisseLogo,
     /// Bio/Knospe: Requires certification body for Bio and Knospe products
     Bio_Knospe_ZertifizierungsstellePflicht,
+}
+
+impl RuleDef {
+    /// Returns all available rule variants using strum's EnumIter
+    pub fn all_rules() -> Vec<RuleDef> {
+        RuleDef::iter().collect()
+    }
 }
 
 impl Rule for RuleDef {

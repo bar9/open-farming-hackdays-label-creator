@@ -121,28 +121,42 @@ impl Calculator {
         Calculator { rule_defs: vec![] }
     }
 
-    /// Debug logging method to log all active rules to browser console
+    /// Debug logging method to display all rules as a table in browser console
+    /// Shows all rules with their active status, type, and description
     #[cfg(target_arch = "wasm32")]
     fn log_active_rules(&self) {
-        // Log to browser console for debugging
-        web_sys::console::log_1(&"🔧 Rules Debug".into());
+        use js_sys::{Array, Object, Reflect};
 
-        if self.rule_defs.is_empty() {
-            web_sys::console::warn_1(&"⚠️ No rules are active".into());
-        } else {
-            web_sys::console::log_1(&format!("✅ {} rules are active:", self.rule_defs.len()).into());
+        let table_data = Array::new();
 
-            for (index, rule) in self.rule_defs.iter().enumerate() {
-                let rule_info = format!(
-                    "  {}. {:?} - {} (Type: {:?})",
-                    index + 1,
-                    rule,
-                    rule.get_description(),
-                    rule.get_type()
-                );
-                web_sys::console::log_1(&rule_info.into());
-            }
+        for rule in RuleDef::all_rules() {
+            let row = Object::new();
+            let is_active = self
+                .rule_defs
+                .iter()
+                .any(|r| std::mem::discriminant(r) == std::mem::discriminant(&rule));
+
+            let _ = Reflect::set(
+                &row,
+                &"Aktiv".into(),
+                &(if is_active { "✅" } else { "❌" }).into(),
+            );
+            let _ = Reflect::set(&row, &"Regel".into(), &format!("{:?}", rule).into());
+            let _ = Reflect::set(&row, &"Typ".into(), &format!("{:?}", rule.get_type()).into());
+            let _ = Reflect::set(&row, &"Beschreibung".into(), &rule.get_description().into());
+
+            table_data.push(&row);
         }
+
+        web_sys::console::log_1(
+            &format!(
+                "📋 Regel-Übersicht ({} von {} aktiv)",
+                self.rule_defs.len(),
+                RuleDef::all_rules().len()
+            )
+            .into(),
+        );
+        web_sys::console::table_1(&table_data);
     }
 
     #[cfg(not(target_arch = "wasm32"))]
