@@ -19,6 +19,7 @@ mod form;
 mod model;
 mod nl2br;
 mod persistence;
+pub mod processing_service;
 mod routes;
 mod rules;
 mod services;

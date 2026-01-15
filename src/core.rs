@@ -419,8 +419,8 @@ pub struct Ingredient {
     pub erlaubte_ausnahme_bio_details: Option<String>,
     pub erlaubte_ausnahme_knospe: Option<bool>,
     pub erlaubte_ausnahme_knospe_details: Option<String>,
-    /// Verarbeitungsverfahren (z.B. "past." für pasteurisiert, "UHT", etc.)
-    pub verarbeitungsverfahren: Option<String>,
+    /// Ausgewählte Verarbeitungsschritte (Bio Suisse)
+    pub processing_steps: Option<Vec<String>>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -465,7 +465,7 @@ impl Ingredient {
             erlaubte_ausnahme_bio_details: None,
             erlaubte_ausnahme_knospe: None,
             erlaubte_ausnahme_knospe_details: None,
-            verarbeitungsverfahren: None,
+            processing_steps: None,
         }
     }
 
@@ -545,7 +545,7 @@ impl Default for Ingredient {
             erlaubte_ausnahme_bio_details: None,
             erlaubte_ausnahme_knospe: None,
             erlaubte_ausnahme_knospe_details: None,
-            verarbeitungsverfahren: None,
+            processing_steps: None,
         }
     }
 }
@@ -583,11 +583,6 @@ impl OutputFormatter {
             true => format! {"<b>{}</b>", self.ingredient.name},
             false => self.ingredient.name.clone(),
         };
-
-        // Verarbeitungsverfahren hinzufügen (z.B. "past." für pasteurisiert)
-        if let Some(verfahren) = &self.ingredient.verarbeitungsverfahren {
-            output = format!("{} {}", output, verfahren);
-        }
 
         // Bio-Stern (*) oder Umstellbetrieb-Stern (**) hinzufügen
         // Nur wenn Bio/Knospe-Regeln aktiv sind
@@ -652,6 +647,13 @@ impl OutputFormatter {
             && self.ingredient.sub_components.is_some()
         {
             output = format! {"{} {}", output, self.ingredient.composites()};
+        }
+        // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
+        if let Some(steps) = &self.ingredient.processing_steps {
+            if !steps.is_empty() {
+                let steps_text = steps.join(", ");
+                output = format!("{}, {}", output, steps_text);
+            }
         }
         // Handle Knospe-specific rules first (they take precedence)
         let has_knospe_100_rule = self

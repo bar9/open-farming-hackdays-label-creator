@@ -68,6 +68,7 @@ label:
   allergen_indicator: (Allergène)
   rezepturVollstaendig: Recette complètement saisie
   liv_anhang7_format: "100g de produit fini contiennent %{grams}g"
+  verarbeitungsschritte: Procédés de transformation
 
 nav:
   linkKopieren: Copier le lien
@@ -195,6 +196,10 @@ help:
 
   namensgebendeZutaten: |
     Si des ingrédients sont mis en évidence dans la dénomination spécifique ou fantaisiste avec des mots ou représentés sur l'étiquette, le symbole derrière l'ingrédient doit être sélectionné. Ainsi, le pourcentage massique est automatiquement indiqué pour cette matière première dans la liste des ingrédients.
+
+  verarbeitungsschritte: |
+    Sélectionnez les procédés de transformation applicables à ce produit.
+    Ils seront affichés sur l'étiquette dans la liste des ingrédients.
 
   menge: |
     La quantité se réfère aux **ingrédients préparés** (épluchés, préparés).

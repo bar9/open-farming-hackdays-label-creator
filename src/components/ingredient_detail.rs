@@ -67,6 +67,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut edit_erlaubte_ausnahme_bio_details = use_signal(|| original_ingredient.erlaubte_ausnahme_bio_details.clone().unwrap_or_default());
     let mut edit_erlaubte_ausnahme_knospe = use_signal(|| original_ingredient.erlaubte_ausnahme_knospe.unwrap_or(false));
     let mut edit_erlaubte_ausnahme_knospe_details = use_signal(|| original_ingredient.erlaubte_ausnahme_knospe_details.clone().unwrap_or_default());
+    // Verarbeitungsschritte (Bio Suisse)
+    let mut edit_processing_steps = use_signal(|| original_ingredient.processing_steps.clone());
     let mut save_status = use_signal(|| None::<String>);
     
     // Check if the current name is in the food database
@@ -123,10 +125,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_bio_details: original_ingredient.erlaubte_ausnahme_bio_details.clone(),
             erlaubte_ausnahme_knospe: original_ingredient.erlaubte_ausnahme_knospe,
             erlaubte_ausnahme_knospe_details: original_ingredient.erlaubte_ausnahme_knospe_details.clone(),
-            verarbeitungsverfahren: original_ingredient.verarbeitungsverfahren.clone(),
+            processing_steps: original_ingredient.processing_steps.clone(),
         }]
     });
-    
+
     // When composite mode changes, sync the wrapper
     use_effect(move || {
         let _ = edit_is_composite(); // Track this dependency
@@ -162,7 +164,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-                verarbeitungsverfahren: None,  // TODO: Add UI for this field in future ticket
+                processing_steps: edit_processing_steps(),
             };
         } else {
             // Clear wrapper_ingredients sub-components when toggling off composite mode
@@ -281,7 +283,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-                verarbeitungsverfahren: None,  // TODO: Add UI for this field in future ticket
+                processing_steps: edit_processing_steps(),
             };
 
             match save_composite_ingredient(&ingredient_to_save) {
@@ -345,7 +347,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
             erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
             erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-            verarbeitungsverfahren: None,  // TODO: Add UI for this field in future ticket
+            processing_steps: edit_processing_steps(),
         };
 
         if props.genesis {
@@ -404,7 +406,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_bio_details: None,
                 erlaubte_ausnahme_knospe: None,
                 erlaubte_ausnahme_knospe_details: None,
-                verarbeitungsverfahren: None,
+                processing_steps: None,
             };
         } else {
             // Update existing ingredient
@@ -466,6 +468,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_erlaubte_ausnahme_bio_details.set(String::new());
                         edit_erlaubte_ausnahme_knospe.set(false);
                         edit_erlaubte_ausnahme_knospe_details.set(String::new());
+                        edit_processing_steps.set(None);
                         // Reset wrapper_ingredients to clear any previous sub-components
                         wrapper_ingredients.write()[0] = Ingredient {
                             name: String::new(),
@@ -487,7 +490,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             erlaubte_ausnahme_bio_details: None,
                             erlaubte_ausnahme_knospe: None,
                             erlaubte_ausnahme_knospe_details: None,
-                            verarbeitungsverfahren: None,
+                            processing_steps: None,
                         };
                     }
                     is_open.toggle();
@@ -849,6 +852,74 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                                     edit_erlaubte_ausnahme_bio_details.set(evt.data.value());
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        rsx! {}
+                    }
+                }
+                // Verarbeitungsschritte - nur im Knospe-Modus anzeigen
+                {
+                    let should_show_processing = use_memo(move || {
+                        let rules = props.rules.read();
+                        let is_knospe = rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo);
+
+                        if is_knospe {
+                            if let Some(category) = &edit_category() {
+                                crate::processing_service::has_processing_steps_for_blv_category(category)
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    });
+
+                    if should_show_processing() {
+                        let available_steps = use_memo(move || {
+                            if let Some(category) = &edit_category() {
+                                crate::processing_service::get_steps_for_blv_category(category)
+                            } else {
+                                vec![]
+                            }
+                        });
+
+                        rsx! {
+                            br {}
+                            FormField {
+                                label: t!("label.verarbeitungsschritte"),
+                                help: Some((t!("help.verarbeitungsschritte")).into()),
+                                div { class: "flex flex-col gap-2",
+                                    for step in available_steps.read().iter() {
+                                        label { class: "flex items-center gap-2 cursor-pointer",
+                                            input {
+                                                r#type: "checkbox",
+                                                class: "checkbox checkbox-accent checkbox-sm",
+                                                checked: edit_processing_steps()
+                                                    .as_ref()
+                                                    .map_or(false, |s| s.contains(&step.step_de)),
+                                                onchange: {
+                                                    let step_name = step.step_de.clone();
+                                                    move |evt: dioxus::prelude::Event<dioxus::prelude::FormData>| {
+                                                        let mut current = edit_processing_steps()
+                                                            .unwrap_or_default();
+                                                        if evt.data.value() == "true" {
+                                                            if !current.contains(&step_name) {
+                                                                current.push(step_name.clone());
+                                                            }
+                                                        } else {
+                                                            current.retain(|s| s != &step_name);
+                                                        }
+                                                        edit_processing_steps.set(
+                                                            if current.is_empty() { None } else { Some(current) }
+                                                        );
+                                                    }
+                                                }
+                                            }
+                                            span { "{step.step_de}" }
                                         }
                                     }
                                 }

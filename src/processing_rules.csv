@@ -1,0 +1,89 @@
+biosuisse_hauptgruppe,biosuisse_untergruppe,step_de,step_fr,applies_to,is_default
+Milch und Milchprodukte,Genussfertige Kuhmilch,pasteurisiert,pasteurisé,,true
+Milch und Milchprodukte,Genussfertige Kuhmilch,bactofugiert,bactofugé,,false
+Milch und Milchprodukte,Genussfertige Kuhmilch,doppelbactofugiert,double-bactofugé,,false
+Milch und Milchprodukte,Genussfertige Kuhmilch,mikrofiltriert,microfiltré,,false
+Milch und Milchprodukte,Genussfertige Kuhmilch,frisch,frais,,false
+Milch und Milchprodukte,Produkte aus Milch anderer Säugetierarten,tiefgekühlt,surgelé,,false
+Milch und Milchprodukte,"Joghurt und andere gegorene Milcharten (Sauermilch , Kefir)",pasteurisiert,pasteurisé,Milch,false
+Milch und Milchprodukte,"Joghurt und andere gegorene Milcharten (Sauermilch , Kefir)",eingedampft,évaporé,Milch,false
+Milch und Milchprodukte,"Joghurt und andere gegorene Milcharten (Sauermilch , Kefir)",homogenisiert,homogénéisé,Milch,false
+Milch und Milchprodukte,Trockenmilch und Trockenmilchprodukte,Proteingehalt,teneur en protéines,Milch,false
+Milch und Milchprodukte,Rahm und Rahmprodukte,pasteurisiert,pasteurisé,Milch,false
+Milch und Milchprodukte,Rahm und Rahmprodukte,UHT-erhitzt,traité UHT,Milch,false
+Milch und Milchprodukte,"Käse (Frischkäse, gereifter Käse und durch Säure-Hitze-Fällung hergestellte Produkte)",aus thermisierter Milch,à base de lait thermisé,Milch,false
+Milch und Milchprodukte,"Käse (Frischkäse, gereifter Käse und durch Säure-Hitze-Fällung hergestellte Produkte)",aus pasteurisierter Milch,à base de lait pasteurisé,Milch,false
+Milch und Milchprodukte,"Käse (Frischkäse, gereifter Käse und durch Säure-Hitze-Fällung hergestellte Produkte)",thermisiert,thermisé,Milch,false
+Milch und Milchprodukte,"Käse (Frischkäse, gereifter Käse und durch Säure-Hitze-Fällung hergestellte Produkte)",pasteurisiert,pasteurisé,Milch,false
+Milch und Milchprodukte,"Butter, Butterzubereitungen und Milchfettfraktionen",thermisiert,thermisé,Rahm,false
+Milch und Milchprodukte,"Butter, Butterzubereitungen und Milchfettfraktionen",pasteurisiert,pasteurisé,Rahm,false
+Milch und Milchprodukte,"Butter, Butterzubereitungen und Milchfettfraktionen",Wärmebehandlung mit Thermisationseffekt,traitement thermique avec effet de thermisation,Rahm,false
+Milch und Milchprodukte,"Butter, Butterzubereitungen und Milchfettfraktionen",Zudosierung von Milchsäurekonzentrat,addition de concentré d'acide lactique,,false
+Milch und Milchprodukte,"Butter, Butterzubereitungen und Milchfettfraktionen",enthält tiefgekühlte Butter,contient du beurre surgelé,,false
+Milch und Milchprodukte,"Süssspeisen und Desserts (Panna Cotta, Milchreis, Flan, Cremen)",homogenisiert,homogénéisé,Milch,false
+Milch und Milchprodukte,"Süssspeisen und Desserts (Panna Cotta, Milchreis, Flan, Cremen)",pasteurisiert,pasteurisé,Milch,false
+Milch und Milchprodukte,"Süssspeisen und Desserts (Panna Cotta, Milchreis, Flan, Cremen)",thermisiert,thermisé,Milch,false
+Milch und Milchprodukte,"Süssspeisen und Desserts (Panna Cotta, Milchreis, Flan, Cremen)",bactofugiert,bactofugé,Milch,false
+Milch und Milchprodukte,"Süssspeisen und Desserts (Panna Cotta, Milchreis, Flan, Cremen)",doppelbactofugiert,double-bactofugé,Milch,false
+Milch und Milchprodukte,Speiseeis und Sorbet,homogenisiert,homogénéisé,"Milch, Rahm",false
+Milch und Milchprodukte,Speiseeis und Sorbet,pasteurisiert,pasteurisé,"Milch, Rahm",false
+Fleisch und Fleischerzeugnisse,,aufgetaut,décongelé,,false
+Fleisch und Fleischerzeugnisse,,Umrötung mit Hilfe des Nitrats aus Gemüsepulver,saumurage à l'aide de nitrate provenant de poudre de légumes,,false
+Fleisch und Fleischerzeugnisse,,Umrötung durch fermentativ hergestelltes Nitrit,saumurage par nitrite produit par fermentation,,false
+Fleisch und Fleischerzeugnisse,,sterilisiert,stérilisé,,false
+Fleisch und Fleischerzeugnisse,,Niederdruckseparatorenfleisch,viande séparée mécaniquement basse pression,,false
+Insekten und Insektenerzeugnisse,,pasteurisiert,pasteurisé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüseerzeugnisse inkl. Konserven,aus zertifizierter Wildsammlung,issu de cueillette sauvage certifiée,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüseerzeugnisse inkl. Konserven,pasteurisiert,pasteurisé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüseerzeugnisse inkl. Konserven,sterilisiert,stérilisé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,gezuckert,sucré,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,aus zertifizierter Wildsammlung,issu de cueillette sauvage certifiée,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,pasteurisiert,pasteurisé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,sterilisiert,stérilisé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,tiefgekühlt,surgelé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,hochdruckpasteurisiert,pasteurisé à haute pression,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Obst- und Gemüsesäfte sowie Nektare und Sirupe,UHT,UHT,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei",Konfitüre und Gelée,aus zertifizierter Wildsammlung,issu de cueillette sauvage certifiée,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei","Kaltgetränke aus Tee, Kräutern, Obst, Gemüse (Eistees und Limonaden)",pasteurisiert,pasteurisé,,false
+"Obst, Gemüse, Kräuter, Pilze, Sprossen und Treiberei","Kaltgetränke aus Tee, Kräutern, Obst, Gemüse (Eistees und Limonaden)",sterilisiert,stérilisé,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Getreide, Hülsenfrüchte, Müllereiprodukte, Getreidemischungen, Müesli",gedarrt,torréfié,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Getreide, Hülsenfrüchte, Müllereiprodukte, Getreidemischungen, Müesli",gedämpft,étuvé,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Getreide, Hülsenfrüchte, Müllereiprodukte, Getreidemischungen, Müesli",extrudiert,extrudé,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Teige, Brote, Fein- und Dauerbackwaren inkl. Fertigmehlmischungen",aufgetaut,décongelé,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Teige, Brote, Fein- und Dauerbackwaren inkl. Fertigmehlmischungen",tiefgekühlte Backlinge,produits de boulangerie surgelés à finir de cuire,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Teige, Brote, Fein- und Dauerbackwaren inkl. Fertigmehlmischungen",tiefgekühlte Teiglinge,pâtons surgelés,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Teige, Brote, Fein- und Dauerbackwaren inkl. Fertigmehlmischungen",extrudiert,extrudé,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse","Teige, Brote, Fein- und Dauerbackwaren inkl. Fertigmehlmischungen",mittels Extrusion hergestellt,fabriqué par extrusion,,false
+"Getreide, Hülsenfrüchte, Pflanzenproteine und deren Erzeugnisse",Teigwaren inkl. gefüllte Teigwaren,pasteurisiert,pasteurisé,,false
+Eier und Eiprodukte,Flüssige Eiprodukte,homogenisiert,homogénéisé,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Gewürze,sattdampfentkeimt,stérilisé à la vapeur saturée,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Gewürze,UVC-sterilisiert,stérilisé aux UVC,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Gewürze,pasteurisiert,pasteurisé,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Sojasauce und Flüssigwürze,pasteurisiert,pasteurisé,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Sojasauce und Flüssigwürze,sterilisiert,stérilisé,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Sämtliche Suppen- und Saucenerzeugnisse,pasteurisiert,pasteurisé,,false
+"Gewürze, Würze, Bouillon, Suppen und Saucen",Sämtliche Suppen- und Saucenerzeugnisse,sterilisiert,stérilisé,,false
+Pflanzliche Öle  und pflanzliche Fette,Margarine,pasteurisiert,pasteurisé,,false
+Pflanzliche Öle  und pflanzliche Fette,Margarine,mit tierischen Fetten,avec graisses animales,,false
+Pflanzliche Öle  und pflanzliche Fette,Mayonnaise,pasteurisiert,pasteurisé,,false
+Pflanzliche Öle  und pflanzliche Fette,Salatsauce,pasteurisiert,pasteurisé,,false
+Alkoholika und Essig,Bier,pasteurisiert,pasteurisé,,false
+Alkoholika und Essig,Bier,kurzzeiterhitzt,chauffé brièvement,,false
+Alkoholika und Essig,Obstwein und Fruchtwein,pasteurisiert,pasteurisé,,false
+Alkoholika und Essig,Obstwein und Fruchtwein,angesüsst durch Zugabe von Apfeldirektsaft zum Apfelwein,sucré par adjonction de jus de pomme direct au cidre,,false
+Alkoholika und Essig,Essig,pasteurisiert,pasteurisé,,false
+Alkoholika und Essig,Essig,aus Apfelsaftkonzentrat und Wasser hergestellt,fabriqué à partir de concentré de jus de pomme et d'eau,,false
+Imkereiprodukte,Honig,tiefgekühlt,surgelé,,false
+Imkereiprodukte,Honig,Zur Verzögerung der Kristallisation zwischenzeitlich tiefgekühlt,surgelé temporairement pour retarder la cristallisation,,false
+Imkereiprodukte,Wabenhonig,tiefgekühlt,surgelé,,false
+Imkereiprodukte,Wabenhonig,Zur Verzögerung der Kristallisation zwischenzeitlich tiefgekühlt,surgelé temporairement pour retarder la cristallisation,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten","Drinks aus Getreide, Hülsenfrüchte, Hartschalenobst und Kernen",pasteurisiert,pasteurisé,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten","Drinks aus Getreide, Hülsenfrüchte, Hartschalenobst und Kernen",homogenisiert,homogénéisé,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten","Drinks aus Getreide, Hülsenfrüchte, Hartschalenobst und Kernen",UHT,UHT,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten",Fermentierte/nicht fermentierte Milchproduktealternativen,fermentiert,fermenté,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten",Fermentierte/nicht fermentierte Milchproduktealternativen,pasteurisiert,pasteurisé,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten",Fermentierte/nicht fermentierte Milchproduktealternativen,homogenisiert,homogénéisé,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten",Fermentierte/nicht fermentierte Milchproduktealternativen,UHT,UHT,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten","Tofu, Tempeh und andere Produkte aus Pflanzenprotein",pasteurisiert,pasteurisé,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten","Tofu, Tempeh und andere Produkte aus Pflanzenprotein",extrudiert,extrudé,,false
+"Pflanzliche Alternativen zu Milch- und Fleischprodukten","Tofu, Tempeh und andere Produkte aus Pflanzenprotein",aufgetaut,décongelé,,false
