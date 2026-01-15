@@ -223,6 +223,15 @@ help:
     Prezzo dell'unità di vendita
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
+  erlaubte_ausnahme_bio: |
+    Secondo l'allegato 3 dell'ordinanza WBF sull'agricoltura biologica, alcuni ingredienti
+    possono essere non biologici (ad es. alcuni additivi). Eccezione: gli ingredienti con
+    la dicitura "solo da produzione biologica" devono essere biologici.
+  erlaubte_ausnahme_knospe: |
+    Secondo le direttive Bio Suisse parte III, sono ammesse eccezioni specifiche per alcuni
+    ingredienti non Gemma (ad es. pectina, alcuni additivi). Gli ingredienti semplici come
+    farina, pepe ecc. devono essere certificati Gemma.
+
 link_share_title: Condividi link
 link_type_full: Link completo
 link_type_short: Link breve
@@ -372,6 +381,9 @@ bio_labels:
   bio_knospe: Bio (Gemma)
   bio_ch: BioCH
   aus_umstellbetrieb: Da azienda in conversione
+  erlaubte_ausnahme_bio: Ingrediente non biologico consentito
+  erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
+  erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...
 
 weight_units:
   mg: mg

@@ -203,7 +203,16 @@ help:
     *2bis Anstelle des Herkunftslandes kann bei der freiwilligen Angabe der Herkunft von Zutaten ein übergeordneter geografischer Raum angegeben werden, wie "EU" oder "Südamerika".*
 
     [LIV auf Fedlex](https://www.fedlex.admin.ch/eli/cc/2017/158/de)
-    
+  erlaubte_ausnahme_bio: |
+    Gemäss Anhang 3 der WBF-Verordnung zur biologischen Landwirtschaft dürfen bestimmte
+    Zutaten nicht-biologisch sein (z.B. gewisse Zusatzstoffe). Ausnahme: Zutaten mit dem
+    Vermerk "nur aus biologischer Produktion" müssen biologisch sein.
+    Referenz: https://www.fedlex.admin.ch/eli/cc/1997/2519_2519_2519/de#annex_3
+  erlaubte_ausnahme_knospe: |
+    Gemäss Bio Suisse Richtlinien Teil III sind produktspezifische Ausnahmen für bestimmte
+    nicht-Knospe Zutaten erlaubt (z.B. Pektin, bestimmte Zusatzstoffe). Einfache Zutaten
+    wie Mehl, Pfeffer etc. müssen Knospe-zertifiziert sein.
+
 
 tooltips:
   manage_saved_ingredients: Gespeicherte zusammengesetzte Zutaten verwalten
@@ -646,6 +655,9 @@ bio_labels:
   bio_knospe: Bio (Knospe)
   bio_ch: Bio
   aus_umstellbetrieb: Aus Umstellbetrieb
+  erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
+  erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat
+  erlaubte_ausnahme_details_placeholder: Begründung / Referenz eingeben...
 
 buttons:
   close: schliessen

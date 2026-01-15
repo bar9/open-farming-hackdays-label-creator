@@ -62,6 +62,11 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut edit_is_bio = use_signal(|| original_ingredient.is_bio.unwrap_or(false));
     let mut edit_aus_umstellbetrieb = use_signal(|| original_ingredient.aus_umstellbetrieb.unwrap_or(false));
     let mut edit_bio_ch = use_signal(|| original_ingredient.bio_ch.unwrap_or(false));
+    // Erlaubte Ausnahmen für nicht-bio/nicht-knospe Zutaten
+    let mut edit_erlaubte_ausnahme_bio = use_signal(|| original_ingredient.erlaubte_ausnahme_bio.unwrap_or(false));
+    let mut edit_erlaubte_ausnahme_bio_details = use_signal(|| original_ingredient.erlaubte_ausnahme_bio_details.clone().unwrap_or_default());
+    let mut edit_erlaubte_ausnahme_knospe = use_signal(|| original_ingredient.erlaubte_ausnahme_knospe.unwrap_or(false));
+    let mut edit_erlaubte_ausnahme_knospe_details = use_signal(|| original_ingredient.erlaubte_ausnahme_knospe_details.clone().unwrap_or_default());
     let mut save_status = use_signal(|| None::<String>);
     
     // Check if the current name is in the food database
@@ -114,6 +119,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             fangort: original_ingredient.fangort.clone(),
             aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
             bio_ch: original_ingredient.bio_ch,
+            erlaubte_ausnahme_bio: original_ingredient.erlaubte_ausnahme_bio,
+            erlaubte_ausnahme_bio_details: original_ingredient.erlaubte_ausnahme_bio_details.clone(),
+            erlaubte_ausnahme_knospe: original_ingredient.erlaubte_ausnahme_knospe,
+            erlaubte_ausnahme_knospe_details: original_ingredient.erlaubte_ausnahme_knospe_details.clone(),
         }]
     });
     
@@ -148,6 +157,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 fangort: edit_fangort(),
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
                 bio_ch: Some(edit_bio_ch()),
+                erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
+                erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
+                erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
+                erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
             };
         } else {
             // Clear wrapper_ingredients sub-components when toggling off composite mode
@@ -262,6 +275,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 fangort: edit_fangort(),
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
                 bio_ch: Some(edit_bio_ch()),
+                erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
+                erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
+                erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
+                erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
             };
             
             match save_composite_ingredient(&ingredient_to_save) {
@@ -321,6 +338,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             fangort: edit_fangort(),
             aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
             bio_ch: Some(edit_bio_ch()),
+            erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
+            erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
+            erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
+            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
         };
         
         if props.genesis {
@@ -375,6 +396,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 fangort: None,
                 aus_umstellbetrieb: None,
                 bio_ch: None,
+                erlaubte_ausnahme_bio: None,
+                erlaubte_ausnahme_bio_details: None,
+                erlaubte_ausnahme_knospe: None,
+                erlaubte_ausnahme_knospe_details: None,
             };
         } else {
             // Update existing ingredient
@@ -432,6 +457,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_aus_umstellbetrieb.set(false);
                         edit_bio_ch.set(false);
                         edit_is_bio.set(false);
+                        edit_erlaubte_ausnahme_bio.set(false);
+                        edit_erlaubte_ausnahme_bio_details.set(String::new());
+                        edit_erlaubte_ausnahme_knospe.set(false);
+                        edit_erlaubte_ausnahme_knospe_details.set(String::new());
                         // Reset wrapper_ingredients to clear any previous sub-components
                         wrapper_ingredients.write()[0] = Ingredient {
                             name: String::new(),
@@ -449,6 +478,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             fangort: None,
                             aus_umstellbetrieb: None,
                             bio_ch: None,
+                            erlaubte_ausnahme_bio: None,
+                            erlaubte_ausnahme_bio_details: None,
+                            erlaubte_ausnahme_knospe: None,
+                            erlaubte_ausnahme_knospe_details: None,
                         };
                     }
                     is_open.toggle();
@@ -691,6 +724,63 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         }
                                     }
                                 }
+                                // Erlaubte Ausnahmen - nur anzeigen wenn keine Bio-Option gewählt
+                                if !edit_is_bio() && !edit_bio_ch() && !edit_aus_umstellbetrieb() {
+                                    br {}
+                                    div { class: "border-t border-base-300 pt-2 mt-2",
+                                        // Erlaubte nicht-biologische Zutat (Bio-V)
+                                        FormField {
+                                            help: Some((t!("help.erlaubte_ausnahme_bio")).into()),
+                                            label: t!("bio_labels.erlaubte_ausnahme_bio"),
+                                            inline_checkbox: true,
+                                            input {
+                                                r#type: "checkbox",
+                                                class: "checkbox checkbox-accent",
+                                                checked: edit_erlaubte_ausnahme_bio(),
+                                                onchange: move |evt| {
+                                                    edit_erlaubte_ausnahme_bio.set(evt.data.value() == "true");
+                                                }
+                                            }
+                                        }
+                                        if edit_erlaubte_ausnahme_bio() {
+                                            textarea {
+                                                class: "textarea textarea-bordered w-full mt-2",
+                                                placeholder: t!("bio_labels.erlaubte_ausnahme_details_placeholder").to_string(),
+                                                rows: 2,
+                                                value: "{edit_erlaubte_ausnahme_bio_details}",
+                                                oninput: move |evt| {
+                                                    edit_erlaubte_ausnahme_bio_details.set(evt.data.value());
+                                                }
+                                            }
+                                        }
+                                        br {}
+                                        // Erlaubte nicht-Knospe Zutat
+                                        FormField {
+                                            help: Some((t!("help.erlaubte_ausnahme_knospe")).into()),
+                                            label: t!("bio_labels.erlaubte_ausnahme_knospe"),
+                                            inline_checkbox: true,
+                                            input {
+                                                r#type: "checkbox",
+                                                class: "checkbox checkbox-accent",
+                                                checked: edit_erlaubte_ausnahme_knospe(),
+                                                onchange: move |evt| {
+                                                    edit_erlaubte_ausnahme_knospe.set(evt.data.value() == "true");
+                                                }
+                                            }
+                                        }
+                                        if edit_erlaubte_ausnahme_knospe() {
+                                            textarea {
+                                                class: "textarea textarea-bordered w-full mt-2",
+                                                placeholder: t!("bio_labels.erlaubte_ausnahme_details_placeholder").to_string(),
+                                                rows: 2,
+                                                value: "{edit_erlaubte_ausnahme_knospe_details}",
+                                                oninput: move |evt| {
+                                                    edit_erlaubte_ausnahme_knospe_details.set(evt.data.value());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         } else {
                             // Bio configuration: Show only BioCH with mutual exclusion to Umstellbetrieb
@@ -721,6 +811,37 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         disabled: edit_bio_ch(),
                                         onchange: move |evt| {
                                             edit_aus_umstellbetrieb.set(evt.data.value() == "true");
+                                        }
+                                    }
+                                }
+                                // Erlaubte Ausnahmen - nur anzeigen wenn keine Bio-Option gewählt
+                                // Im Bio-Modus (nicht Knospe) nur Bio-Ausnahme-Feld zeigen
+                                if !edit_bio_ch() && !edit_aus_umstellbetrieb() {
+                                    br {}
+                                    div { class: "border-t border-base-300 pt-2 mt-2",
+                                        FormField {
+                                            help: Some((t!("help.erlaubte_ausnahme_bio")).into()),
+                                            label: t!("bio_labels.erlaubte_ausnahme_bio"),
+                                            inline_checkbox: true,
+                                            input {
+                                                r#type: "checkbox",
+                                                class: "checkbox checkbox-accent",
+                                                checked: edit_erlaubte_ausnahme_bio(),
+                                                onchange: move |evt| {
+                                                    edit_erlaubte_ausnahme_bio.set(evt.data.value() == "true");
+                                                }
+                                            }
+                                        }
+                                        if edit_erlaubte_ausnahme_bio() {
+                                            textarea {
+                                                class: "textarea textarea-bordered w-full mt-2",
+                                                placeholder: t!("bio_labels.erlaubte_ausnahme_details_placeholder").to_string(),
+                                                rows: 2,
+                                                value: "{edit_erlaubte_ausnahme_bio_details}",
+                                                oninput: move |evt| {
+                                                    edit_erlaubte_ausnahme_bio_details.set(evt.data.value());
+                                                }
+                                            }
                                         }
                                     }
                                 }

@@ -393,6 +393,11 @@ pub struct Ingredient {
     pub fangort: Option<Country>,
     pub aus_umstellbetrieb: Option<bool>,
     pub bio_ch: Option<bool>,
+    // Erlaubte Ausnahmen für nicht-bio/nicht-knospe Zutaten
+    pub erlaubte_ausnahme_bio: Option<bool>,
+    pub erlaubte_ausnahme_bio_details: Option<String>,
+    pub erlaubte_ausnahme_knospe: Option<bool>,
+    pub erlaubte_ausnahme_knospe_details: Option<String>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -433,6 +438,10 @@ impl Ingredient {
             fangort: None,
             aus_umstellbetrieb: None,
             bio_ch: None,
+            erlaubte_ausnahme_bio: None,
+            erlaubte_ausnahme_bio_details: None,
+            erlaubte_ausnahme_knospe: None,
+            erlaubte_ausnahme_knospe_details: None,
         }
     }
 
@@ -508,6 +517,10 @@ impl Default for Ingredient {
             fangort: None,
             aus_umstellbetrieb: None,
             bio_ch: None,
+            erlaubte_ausnahme_bio: None,
+            erlaubte_ausnahme_bio_details: None,
+            erlaubte_ausnahme_knospe: None,
+            erlaubte_ausnahme_knospe_details: None,
         }
     }
 }

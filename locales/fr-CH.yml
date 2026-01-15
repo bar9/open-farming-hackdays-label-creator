@@ -242,6 +242,14 @@ help:
   aufzucht_location: Lieu où l'animal a vécu la majeure partie de sa vie
   certification_body_bio: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bio)
   certification_body_knospe: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bourgeon)
+  erlaubte_ausnahme_bio: |
+    Selon l'annexe 3 de l'ordonnance WBF sur l'agriculture biologique, certains ingrédients
+    peuvent être non-biologiques (p.ex. certains additifs). Exception: les ingrédients portant
+    la mention "uniquement de production biologique" doivent être biologiques.
+  erlaubte_ausnahme_knospe: |
+    Selon les directives Bio Suisse partie III, des exceptions spécifiques aux produits sont
+    autorisées pour certains ingrédients non-Bourgeon (p.ex. pectine, certains additifs).
+    Les ingrédients simples comme farine, poivre etc. doivent être certifiés Bourgeon.
 
 link_share_title: Partager le lien
 link_type_full: Lien complet
@@ -392,6 +400,9 @@ bio_labels:
   bio_knospe: Bio (Bourgeon)
   bio_ch: BioCH
   aus_umstellbetrieb: Issu d'exploitation en reconversion
+  erlaubte_ausnahme_bio: Ingrédient non-biologique autorisé
+  erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
+  erlaubte_ausnahme_details_placeholder: Saisir la justification / référence...
 
 weight_units:
   mg: mg
