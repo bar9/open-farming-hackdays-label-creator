@@ -351,6 +351,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_category.set(None);
             edit_aus_umstellbetrieb.set(false);
             edit_bio_ch.set(false);
+            edit_is_bio.set(false);
             // Reset wrapper_ingredients for next creation
             wrapper_ingredients.write()[0] = Ingredient {
                 name: String::new(),
@@ -422,6 +423,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_category.set(None);
                         edit_aus_umstellbetrieb.set(false);
                         edit_bio_ch.set(false);
+                        edit_is_bio.set(false);
                         // Reset wrapper_ingredients to clear any previous sub-components
                         wrapper_ingredients.write()[0] = Ingredient {
                             name: String::new(),
