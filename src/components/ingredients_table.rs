@@ -91,7 +91,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     }
                     div {
                         class: "text-right",
-                        "{ingr.amount} " {t!("units.g")}
+                        "{ingr.amount} " {t!(ingr.unit.translation_key())}
                     }
                     div {
                         class: "text-right",

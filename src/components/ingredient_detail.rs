@@ -1,5 +1,5 @@
 use crate::components::*;
-use crate::core::Ingredient;
+use crate::core::{Ingredient, AmountUnit};
 use crate::model::{food_db, lookup_allergen, lookup_agricultural};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
@@ -46,6 +46,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             Some(original_ingredient.amount)  // Show existing amount for edits
         }
     });
+    let mut edit_unit = use_signal(|| original_ingredient.unit.clone());
     let mut edit_is_composite = use_signal(|| {
         original_ingredient.sub_components.as_ref().is_some_and(|s| !s.is_empty())
     });
@@ -100,6 +101,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         vec![Ingredient {
             name: original_ingredient.name.clone(),
             amount: original_ingredient.amount,
+            unit: original_ingredient.unit.clone(),
             is_allergen: original_ingredient.is_allergen,
             is_namensgebend: original_ingredient.is_namensgebend,
             sub_components: original_ingredient.sub_components.clone(),
@@ -133,6 +135,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             wrapper_ingredients.write()[0] = Ingredient {
                 name: edit_name(),
                 amount: edit_amount().unwrap_or(0.0),  // Use 0 as fallback for sub-ingredients
+                unit: edit_unit(),
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
                 sub_components: sub_components_to_use,
@@ -246,6 +249,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             let ingredient_to_save = Ingredient {
                 name: edit_name(),
                 amount: 100.0,  // Save with standard amount
+                unit: edit_unit(),
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
                 sub_components: edit_sub_components(),
@@ -304,6 +308,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         let new_ingredient = Ingredient {
             name: edit_name(),
             amount,
+            unit: edit_unit(),
             is_allergen: allergen_status,
             is_namensgebend: Some(edit_is_namensgebend()),
             sub_components: edit_sub_components(),
@@ -344,6 +349,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             // Reset local state for next creation
             edit_name.set(String::new());
             edit_amount.set(None);
+            edit_unit.set(AmountUnit::default());
             edit_is_composite.set(false);
             edit_is_namensgebend.set(false);
             edit_sub_components.set(None);
@@ -356,6 +362,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             wrapper_ingredients.write()[0] = Ingredient {
                 name: String::new(),
                 amount: 0.0,
+                unit: AmountUnit::default(),
                 is_allergen: false,
                 is_namensgebend: None,
                 sub_components: None,
@@ -415,6 +422,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if !is_open() {
                         edit_name.set(String::new());
                         edit_amount.set(None);  // Blank amount field
+                        edit_unit.set(AmountUnit::default());
                         edit_is_composite.set(false);
                         edit_is_namensgebend.set(false);
                         edit_sub_components.set(None);
@@ -428,6 +436,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         wrapper_ingredients.write()[0] = Ingredient {
                             name: String::new(),
                             amount: 0.0,
+                            unit: AmountUnit::default(),
                             is_allergen: false,
                             is_namensgebend: None,
                             sub_components: None,
@@ -459,6 +468,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         let orig = ingredients.get(index).unwrap().clone();
                         edit_name.set(orig.name.clone());
                         edit_amount.set(Some(orig.amount));
+                        edit_unit.set(orig.unit.clone());
                         edit_is_composite.set(
                             orig.sub_components.as_ref().is_some_and(|s| !s.is_empty())
                         );
@@ -503,26 +513,42 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }
                 br {}
                 FormField {
-                    label: format!("{} (g)", t!("label.menge")),
+                    label: t!("label.menge"),
                     ValidationDisplay {
                         paths: vec![
                             format!("ingredients[{}][amount]", index)
                         ],
-                        input {
-                            r#type: "number",
-                            placeholder: t!("placeholders.amount_in_grams").to_string(),
-                            class: "input input-accent w-full",
-                            min: "0",
-                            step: "any",
-                            oninput: move |evt| {
-                                let value = evt.data.value();
-                                if value.is_empty() {
-                                    edit_amount.set(None);
-                                } else if let Ok(amount) = value.parse::<f64>() {
-                                    edit_amount.set(Some(amount));
-                                }
-                            },
-                            value: edit_amount().map_or(String::new(), |v| v.to_string()),
+                        div { class: "flex gap-2",
+                            input {
+                                r#type: "number",
+                                placeholder: t!("placeholders.amount_in_grams").to_string(),
+                                class: "input input-accent flex-1",
+                                min: "0",
+                                step: "any",
+                                oninput: move |evt| {
+                                    let value = evt.data.value();
+                                    if value.is_empty() {
+                                        edit_amount.set(None);
+                                    } else if let Ok(amount) = value.parse::<f64>() {
+                                        edit_amount.set(Some(amount));
+                                    }
+                                },
+                                value: edit_amount().map_or(String::new(), |v| v.to_string()),
+                            }
+                            select {
+                                class: "select select-accent w-20",
+                                value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
+                                onchange: move |evt| {
+                                    let value = evt.data.value();
+                                    if value == "ml" {
+                                        edit_unit.set(AmountUnit::Milliliter);
+                                    } else {
+                                        edit_unit.set(AmountUnit::Gram);
+                                    }
+                                },
+                                option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g")} }
+                                option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml")} }
+                            }
                         }
                     }
                     // Show scaling factor when amount changes

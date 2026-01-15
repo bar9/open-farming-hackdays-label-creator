@@ -194,6 +194,8 @@ pub struct Ingredient {
     pub name: String,
     pub is_allergen: bool,
     pub amount: f64,
+    #[serde(default)]
+    pub unit: AmountUnit,
     pub sub_components: Option<Vec<SubIngredient>>,
     pub is_namensgebend: Option<bool>,
     pub origin: Option<Country>,
@@ -212,6 +214,22 @@ fn default_is_agricultural() -> bool {
     true
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub enum AmountUnit {
+    #[default]
+    Gram,
+    Milliliter,
+}
+
+impl AmountUnit {
+    pub fn translation_key(&self) -> &'static str {
+        match self {
+            AmountUnit::Gram => "units.g",
+            AmountUnit::Milliliter => "units.ml",
+        }
+    }
+}
+
 impl Ingredient {
     pub fn from_name_amount(name: String, amount: f64) -> Self {
         Self {
@@ -219,6 +237,7 @@ impl Ingredient {
             is_allergen: lookup_allergen(&name),
             is_agricultural: lookup_agricultural(&name),
             amount,
+            unit: AmountUnit::default(),
             sub_components: None,
             is_namensgebend: None,
             origin: None,
@@ -292,6 +311,7 @@ impl Default for Ingredient {
             name: String::new(),
             is_allergen: false,
             amount: 0.,
+            unit: AmountUnit::default(),
             sub_components: Some(vec![]),
             is_namensgebend: None,
             origin: None,
