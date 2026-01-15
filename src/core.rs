@@ -264,10 +264,16 @@ impl Ingredient {
                     &subs
                         .iter()
                         .map(|sub| {
-                            if sub.is_allergen {
+                            let base_name = if sub.is_allergen {
                                 format!("<b>{}</b>", sub.name)
                             } else {
                                 sub.name.clone()
+                            };
+                            // Append origin if present
+                            if let Some(origin) = &sub.origin {
+                                format!("{} ({})", base_name, origin.display_name())
+                            } else {
+                                base_name
                             }
                         })
                         .collect::<Vec<String>>()
@@ -305,6 +311,7 @@ impl Default for Ingredient {
 pub struct SubIngredient {
     pub name: String,
     pub is_allergen: bool,
+    pub origin: Option<Country>,
 }
 
 struct OutputFormatter {

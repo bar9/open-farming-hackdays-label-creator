@@ -1,6 +1,6 @@
 use crate::components::*;
 use crate::core::{Ingredient, SubIngredient};
-use crate::model::{food_db, lookup_allergen, lookup_agricultural};
+use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{UnifiedIngredient, IngredientSource};
 // Category service not directly imported since we use heuristic name-based derivation
@@ -102,6 +102,19 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         }
     };
 
+    let mut update_origin_callback = {
+        let mut ingredients = props.ingredients;
+        move |index: usize, sub_index: usize, origin: Option<Country>| {
+            if let Some(mut ingredient) = ingredients.get_mut(index) {
+                if let Some(sub_components) = &mut ingredient.sub_components {
+                    if let Some(sub_ingredient) = sub_components.get_mut(sub_index) {
+                        sub_ingredient.origin = origin;
+                    }
+                }
+            }
+        }
+    };
+
     let handle_unified_ingredient_select = {
         let mut ingredients = props.ingredients;
         move |unified_ingredient: UnifiedIngredient| {
@@ -134,12 +147,14 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         sub_components.push(SubIngredient {
                             name: ingredient_name,
                             is_allergen: allergen_status,
+                            origin: None,
                         });
                     } else {
                         let sub_components = vec![
                             SubIngredient {
                                 name: ingredient_name,
                                 is_allergen: allergen_status,
+                                origin: None,
                             }
                         ];
                         ingredient.sub_components = Some(sub_components);
@@ -155,6 +170,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             table { class: "table border-solid",
                 tr {
                     th { "{t!(\"label.zutat\")}" }
+                    th { "{t!(\"origin.herkunft\")}" }
                     th { "" }
                     th { "" }
                 }
@@ -173,6 +189,21 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                 // Show ingredient symbols
                                 IngredientSymbolsCompact {
                                     ingredient: subingredient_to_unified(ingr)
+                                }
+                            }
+                            td {
+                                {
+                                    let current_origin = ingr.origin.clone();
+                                    rsx! {
+                                        CountrySelect {
+                                            value: current_origin,
+                                            onchange: move |origin: Option<Country>| {
+                                                update_origin_callback(props.index, key, origin);
+                                            },
+                                            class: "select select-bordered select-sm w-full max-w-xs",
+                                            include_all_countries: true
+                                        }
+                                    }
                                 }
                             }
                             td {
