@@ -38,12 +38,8 @@ pub fn ListDetail() -> Element {
             xmlns: "http://www.w3.org/2000/svg",
             fill: "none",
             path { stroke: "none", d: "M0 0h24v24H0z", fill: "none" }
-            path { d: "M13 5h8" }
-            path { d: "M13 9h5" }
-            path { d: "M13 15h8" }
-            path { d: "M13 19h5" }
-            path { d: "M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" }
-            path { d: "M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" }
+            path { d: "M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" }
+            path { d: "M13.5 6.5l4 4" }
         }
     }
 }
