@@ -1,5 +1,5 @@
 use crate::components::{Amount, AmountType, Price};
-use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, Umstellung, UmstellungNoCross};
+use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross};
 use crate::shared::Conditionals;
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
@@ -111,32 +111,13 @@ pub fn LabelPreview(
         div { class: "p-8 flex flex-col bg-base-200",
             div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative",
                 // Bio Suisse logo display
-                if conditionals.0().get("bio_suisse_umstellung").unwrap_or(&false) == &true {
-                    div { class: "absolute top-2 right-2 w-16",
-                        Umstellung {}
-                    }
-                } else if conditionals.0().get("bio_suisse_no_cross_umstellung").unwrap_or(&false) == &true {
-                    div { class: "absolute top-2 right-2 w-16",
-                        UmstellungNoCross {}
-                    }
-                } else if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
+                if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
                     div { class: "absolute top-2 right-2 w-16",
                         BioSuisseRegular {}
                     }
                 } else if conditionals.0().get("bio_suisse_no_cross").unwrap_or(&false) == &true {
                     div { class: "absolute top-2 right-2 w-16",
                         BioSuisseNoCross {}
-                    }
-                }
-
-                // Umstellung message display (plain black text, positioned to the left of logo)
-                if conditionals.0().get("umstellung_biologische_landwirtschaft").unwrap_or(&false) == &true {
-                    div { class: "absolute top-2 left-2 max-w-xs text-xs text-black bg-white",
-                        "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."
-                    }
-                } else if conditionals.0().get("umstellung_bio_suisse_richtlinien").unwrap_or(&false) == &true {
-                    div { class: "absolute top-2 left-2 max-w-xs text-xs text-black bg-white",
-                        "Hergestellt im Rahmen der Umstellung auf die Bio Suisse Richtlinien."
                     }
                 }
 

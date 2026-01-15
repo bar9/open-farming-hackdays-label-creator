@@ -342,9 +342,6 @@ date_prefixes:
   best_before: Da consumarsi preferibilmente entro
   use_by: Da consumare entro
 
-transition:
-  umstellungsbetrieb: Azienda in conversione
-
 buttons:
   close: chiudi
   back: Indietro
@@ -379,12 +376,10 @@ origin:
 
 bio_legend:
   aus_biologischer_landwirtschaft: da agricoltura biologica
-  aus_umstellbetrieb: da azienda in conversione all'agricoltura biologica
 
 bio_labels:
   bio_knospe: Bio (Gemma)
   bio_ch: BioCH
-  aus_umstellbetrieb: Da azienda in conversione
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
   erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...

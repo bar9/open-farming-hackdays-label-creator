@@ -171,25 +171,52 @@ pub fn is_insect_category(category: &str) -> bool {
 pub fn is_plant_category(category: &str) -> bool {
     let category_lower = category.to_lowercase();
 
-    // This is a broad category - we check if it's NOT an animal product
-    !is_meat_category(category) &&
-    !is_fish_category(category) &&
-    !is_egg_category(category) &&
-    !is_honey_category(category) &&
-    !is_dairy_category(category) &&
-    !is_insect_category(category) &&
+    // First exclude animal products
+    if is_meat_category(category) ||
+       is_fish_category(category) ||
+       is_egg_category(category) ||
+       is_honey_category(category) ||
+       is_dairy_category(category) ||
+       is_insect_category(category) {
+        return false;
+    }
 
-    // Or explicitly plant-based categories
+    // Check for plant-based category keywords
     category_lower.contains("gemüse") ||
     category_lower.contains("obst") ||
     category_lower.contains("getreide") ||
     category_lower.contains("nüsse") ||
     category_lower.contains("samen") ||
+    category_lower.contains("früchte") ||
+    category_lower.contains("hülsenfrüchte") ||
+    category_lower.contains("kräuter") ||
+    category_lower.contains("sprossen") ||
+    category_lower.contains("kartoffel") ||
+    category_lower.contains("brot") ||
+    category_lower.contains("teigwaren") ||
+    category_lower.contains("zucker") ||
+    category_lower.contains("kaffee") ||
+    category_lower.contains("kakao") ||
+    category_lower.contains("schokolade") ||
+    category_lower.contains("wein") ||
+    category_lower.contains("bier") ||
+    category_lower.contains("öl") ||
+    category_lower.contains("pflanzlich") ||
+    category_lower.contains("hefe") ||
+    category_lower.contains("konfitüre") ||
+    // English keywords
     category_lower.contains("vegetable") ||
     category_lower.contains("fruit") ||
     category_lower.contains("grain") ||
     category_lower.contains("nut") ||
-    category_lower.contains("seed")
+    category_lower.contains("seed") ||
+    category_lower.contains("legume") ||
+    category_lower.contains("pulse") ||
+    category_lower.contains("herb") ||
+    category_lower.contains("potato") ||
+    category_lower.contains("bread") ||
+    category_lower.contains("pasta") ||
+    category_lower.contains("plant")
 }
 
 /// Get a summary of all category flags for a given category string

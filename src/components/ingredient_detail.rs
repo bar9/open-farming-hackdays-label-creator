@@ -60,7 +60,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     let mut edit_schlachtungs_ort = use_signal(|| original_ingredient.schlachtungs_ort.clone());
     let mut edit_fangort = use_signal(|| original_ingredient.fangort.clone());
     let mut edit_is_bio = use_signal(|| original_ingredient.is_bio.unwrap_or(false));
-    let mut edit_aus_umstellbetrieb = use_signal(|| original_ingredient.aus_umstellbetrieb.unwrap_or(false));
     let mut edit_bio_ch = use_signal(|| original_ingredient.bio_ch.unwrap_or(false));
     // Erlaubte Ausnahmen für nicht-bio/nicht-knospe Zutaten
     let mut edit_erlaubte_ausnahme_bio = use_signal(|| original_ingredient.erlaubte_ausnahme_bio.unwrap_or(false));
@@ -119,7 +118,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             aufzucht_ort: original_ingredient.aufzucht_ort.clone(),
             schlachtungs_ort: original_ingredient.schlachtungs_ort.clone(),
             fangort: original_ingredient.fangort.clone(),
-            aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
             bio_ch: original_ingredient.bio_ch,
             erlaubte_ausnahme_bio: original_ingredient.erlaubte_ausnahme_bio,
             erlaubte_ausnahme_bio_details: original_ingredient.erlaubte_ausnahme_bio_details.clone(),
@@ -158,8 +156,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 aufzucht_ort: edit_aufzucht_ort(),
                 schlachtungs_ort: edit_schlachtungs_ort(),
                 fangort: edit_fangort(),
-                aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                bio_ch: Some(edit_bio_ch()),
+                                bio_ch: Some(edit_bio_ch()),
                 erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
                 erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
@@ -277,8 +274,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 aufzucht_ort: edit_aufzucht_ort(),
                 schlachtungs_ort: edit_schlachtungs_ort(),
                 fangort: edit_fangort(),
-                aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                bio_ch: Some(edit_bio_ch()),
+                                bio_ch: Some(edit_bio_ch()),
                 erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
                 erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
                 erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
@@ -341,8 +337,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             aufzucht_ort: edit_aufzucht_ort(),
             schlachtungs_ort: edit_schlachtungs_ort(),
             fangort: edit_fangort(),
-            aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-            bio_ch: Some(edit_bio_ch()),
+                        bio_ch: Some(edit_bio_ch()),
             erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
             erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
             erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
@@ -382,7 +377,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_sub_components.set(None);
             is_allergen_custom.set(false);
             edit_category.set(None);
-            edit_aus_umstellbetrieb.set(false);
             edit_bio_ch.set(false);
             edit_is_bio.set(false);
             // Reset wrapper_ingredients for next creation
@@ -400,7 +394,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 aufzucht_ort: None,
                 schlachtungs_ort: None,
                 fangort: None,
-                aus_umstellbetrieb: None,
                 bio_ch: None,
                 erlaubte_ausnahme_bio: None,
                 erlaubte_ausnahme_bio_details: None,
@@ -461,8 +454,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         is_allergen_custom.set(false);
                         is_custom_ingredient.set(true);
                         edit_category.set(None);
-                        edit_aus_umstellbetrieb.set(false);
-                        edit_bio_ch.set(false);
+                                    edit_bio_ch.set(false);
                         edit_is_bio.set(false);
                         edit_erlaubte_ausnahme_bio.set(false);
                         edit_erlaubte_ausnahme_bio_details.set(String::new());
@@ -484,8 +476,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             aufzucht_ort: None,
                             schlachtungs_ort: None,
                             fangort: None,
-                            aus_umstellbetrieb: None,
-                            bio_ch: None,
+                                        bio_ch: None,
                             erlaubte_ausnahme_bio: None,
                             erlaubte_ausnahme_bio_details: None,
                             erlaubte_ausnahme_knospe: None,
@@ -526,7 +517,6 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_aufzucht_ort.set(orig.aufzucht_ort.clone());
                         edit_schlachtungs_ort.set(orig.schlachtungs_ort.clone());
                         edit_fangort.set(orig.fangort.clone());
-                        edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
                         edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
                     }
                     is_open.toggle();
@@ -698,7 +688,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         r#type: "checkbox",
                                         class: "checkbox checkbox-accent",
                                         checked: edit_is_bio(),
-                                        disabled: edit_bio_ch() || edit_aus_umstellbetrieb(),
+                                        disabled: edit_bio_ch(),
                                         onchange: move |evt| {
                                             edit_is_bio.set(evt.data.value() == "true");
                                         }
@@ -713,29 +703,14 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         r#type: "checkbox",
                                         class: "checkbox checkbox-accent",
                                         checked: edit_bio_ch(),
-                                        disabled: edit_is_bio() || edit_aus_umstellbetrieb(),
+                                        disabled: edit_is_bio(),
                                         onchange: move |evt| {
                                             edit_bio_ch.set(evt.data.value() == "true");
                                         }
                                     }
                                 }
-                                br {}
-                                FormField {
-                                    help: Some((t!("help.bio_transitional")).into()),
-                                    label: t!("bio_labels.aus_umstellbetrieb"),
-                                    inline_checkbox: true,
-                                    input {
-                                        r#type: "checkbox",
-                                        class: "checkbox checkbox-accent",
-                                        checked: edit_aus_umstellbetrieb(),
-                                        disabled: edit_is_bio() || edit_bio_ch(),
-                                        onchange: move |evt| {
-                                            edit_aus_umstellbetrieb.set(evt.data.value() == "true");
-                                        }
-                                    }
-                                }
                                 // Erlaubte Ausnahmen - nur anzeigen wenn keine Bio-Option gewählt
-                                if !edit_is_bio() && !edit_bio_ch() && !edit_aus_umstellbetrieb() {
+                                if !edit_is_bio() && !edit_bio_ch() {
                                     br {}
                                     div { class: "border-t border-base-300 pt-2 mt-2",
                                         // Erlaubte nicht-biologische Zutat (Bio-V)
@@ -803,30 +778,14 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         r#type: "checkbox",
                                         class: "checkbox checkbox-accent",
                                         checked: edit_bio_ch(),
-                                        disabled: edit_aus_umstellbetrieb(),
                                         onchange: move |evt| {
                                             edit_bio_ch.set(evt.data.value() == "true");
                                         }
                                     }
                                 }
-                                br {}
-                                FormField {
-                                    help: Some((t!("help.bio_transitional")).into()),
-                                    label: t!("bio_labels.aus_umstellbetrieb"),
-                                    inline_checkbox: true,
-                                    input {
-                                        r#type: "checkbox",
-                                        class: "checkbox checkbox-accent",
-                                        checked: edit_aus_umstellbetrieb(),
-                                        disabled: edit_bio_ch(),
-                                        onchange: move |evt| {
-                                            edit_aus_umstellbetrieb.set(evt.data.value() == "true");
-                                        }
-                                    }
-                                }
                                 // Erlaubte Ausnahmen - nur anzeigen wenn keine Bio-Option gewählt
                                 // Im Bio-Modus (nicht Knospe) nur Bio-Ausnahme-Feld zeigen
-                                if !edit_bio_ch() && !edit_aus_umstellbetrieb() {
+                                if !edit_bio_ch() {
                                     br {}
                                     div { class: "border-t border-base-300 pt-2 mt-2",
                                         FormField {
@@ -1098,8 +1057,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             edit_aufzucht_ort.set(orig.aufzucht_ort.clone());
                             edit_schlachtungs_ort.set(orig.schlachtungs_ort.clone());
                             edit_fangort.set(orig.fangort.clone());
-                            edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
-                            edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
+                                edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
                             is_open.set(false);
                         },
                         {t!("nav.schliessen")},

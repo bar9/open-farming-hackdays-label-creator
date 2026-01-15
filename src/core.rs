@@ -412,7 +412,6 @@ pub struct Ingredient {
     pub aufzucht_ort: Option<Country>,
     pub schlachtungs_ort: Option<Country>,
     pub fangort: Option<Country>,
-    pub aus_umstellbetrieb: Option<bool>,
     pub bio_ch: Option<bool>,
     // Erlaubte Ausnahmen für nicht-bio/nicht-knospe Zutaten
     pub erlaubte_ausnahme_bio: Option<bool>,
@@ -459,7 +458,6 @@ impl Ingredient {
             aufzucht_ort: None,
             schlachtungs_ort: None,
             fangort: None,
-            aus_umstellbetrieb: None,
             bio_ch: None,
             erlaubte_ausnahme_bio: None,
             erlaubte_ausnahme_bio_details: None,
@@ -539,7 +537,6 @@ impl Default for Ingredient {
             aufzucht_ort: None,
             schlachtungs_ort: None,
             fangort: None,
-            aus_umstellbetrieb: None,
             bio_ch: None,
             erlaubte_ausnahme_bio: None,
             erlaubte_ausnahme_bio_details: None,
@@ -589,8 +586,6 @@ impl OutputFormatter {
         if self.RuleDefs.contains(&RuleDef::Bio_Knospe_EingabeIstBio) {
             if self.ingredient.is_bio == Some(true) || self.ingredient.bio_ch == Some(true) {
                 output = format!("{}*", output);
-            } else if self.ingredient.aus_umstellbetrieb == Some(true) {
-                output = format!("{}**", output);
             }
         }
 
@@ -942,50 +937,12 @@ impl Calculator {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("🇨🇭 Swiss percentage of Knospe ingredients: {:.1}%", swiss_percentage).into());
 
-                // Check if any ingredient needs Umstellung logo
-                let has_umstellung = input.ingredients.iter().any(|ing|
-                    ing.aus_umstellbetrieb.unwrap_or(false) || ing.bio_ch.unwrap_or(false)
-                );
-
                 if swiss_percentage >= 90.0 {
                     // Knospe with Swiss cross (>= 90% Swiss)
-                    if has_umstellung {
-                        // Use Umstellung logo instead of regular BioSuisse when Swiss percentage >= 90%
-                        conditionals.insert(String::from("bio_suisse_umstellung"), true);
-
-                        // Determine which message to show
-                        let has_bio_ch = input.ingredients.iter().any(|ing|
-                            ing.bio_ch.unwrap_or(false)
-                        );
-
-                        if has_bio_ch {
-                            conditionals.insert(String::from("umstellung_bio_suisse_richtlinien"), true);
-                        } else {
-                            conditionals.insert(String::from("umstellung_biologische_landwirtschaft"), true);
-                        }
-                    } else {
-                        // Regular BioSuisse logo with Swiss cross
-                        conditionals.insert(String::from("bio_suisse_regular"), true);
-                    }
+                    conditionals.insert(String::from("bio_suisse_regular"), true);
                 } else {
                     // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
-                    if has_umstellung {
-                        // Bio Knospe Umstellung (without Swiss cross)
-                        conditionals.insert(String::from("bio_suisse_no_cross_umstellung"), true);
-
-                        // Determine which message to show
-                        let has_bio_ch = input.ingredients.iter().any(|ing|
-                            ing.bio_ch.unwrap_or(false)
-                        );
-
-                        if has_bio_ch {
-                            conditionals.insert(String::from("umstellung_bio_suisse_richtlinien"), true);
-                        } else {
-                            conditionals.insert(String::from("umstellung_biologische_landwirtschaft"), true);
-                        }
-                    } else {
-                        conditionals.insert(String::from("bio_suisse_no_cross"), true);
-                    }
+                    conditionals.insert(String::from("bio_suisse_no_cross"), true);
                 }
             } else {
                 #[cfg(target_arch = "wasm32")]
@@ -1083,9 +1040,6 @@ impl Calculator {
         let has_bio_ingredients = has_bio_rules && sorted_ingredients.iter().any(|ing|
             ing.is_bio == Some(true) || ing.bio_ch == Some(true)
         );
-        let has_umstellung_ingredients = has_bio_rules && sorted_ingredients.iter().any(|ing|
-            ing.aus_umstellbetrieb == Some(true)
-        );
 
         // Generiere Zutatenliste
         let ingredients_label = sorted_ingredients
@@ -1095,17 +1049,9 @@ impl Calculator {
             .collect::<Vec<_>>()
             .join(", ");
 
-        // Legende anhängen wenn Bio/Umstellbetrieb-Zutaten vorhanden
-        let mut legend_parts = Vec::new();
-        if has_bio_ingredients {
-            legend_parts.push(format!("* {}", t!("bio_legend.aus_biologischer_landwirtschaft")));
-        }
-        if has_umstellung_ingredients {
-            legend_parts.push(format!("** {}", t!("bio_legend.aus_umstellbetrieb")));
-        }
-
-        let label = if !legend_parts.is_empty() {
-            format!("{}<br><br>{}", ingredients_label, legend_parts.join("<br>"))
+        // Legende anhängen wenn Bio-Zutaten vorhanden
+        let label = if has_bio_ingredients {
+            format!("{}<br><br>* {}", ingredients_label, t!("bio_legend.aus_biologischer_landwirtschaft"))
         } else {
             ingredients_label
         };

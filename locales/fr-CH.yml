@@ -366,9 +366,6 @@ date_prefixes:
   best_before: À consommer de préférence avant
   use_by: À consommer jusqu'au
 
-transition:
-  umstellungsbetrieb: Exploitation en reconversion
-
 buttons:
   close: fermer
   back: Retour
@@ -403,12 +400,10 @@ origin:
 
 bio_legend:
   aus_biologischer_landwirtschaft: issu de l'agriculture biologique
-  aus_umstellbetrieb: issu d'exploitation en reconversion vers l'agriculture biologique
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)
   bio_ch: BioCH
-  aus_umstellbetrieb: Issu d'exploitation en reconversion
   erlaubte_ausnahme_bio: Ingrédient non-biologique autorisé
   erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
   erlaubte_ausnahme_details_placeholder: Saisir la justification / référence...

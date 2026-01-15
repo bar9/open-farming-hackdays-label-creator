@@ -640,9 +640,6 @@ date_prefixes:
   best_before: Mindestens haltbar bis
   use_by: Zu verbrauchen bis
 
-transition:
-  umstellungsbetrieb: Umstellungsbetrieb
-
 origin:
   herkunft: Herkunft
   aufzucht: Aufzucht
@@ -658,12 +655,10 @@ origin:
 
 bio_legend:
   aus_biologischer_landwirtschaft: aus biologischer Landwirtschaft
-  aus_umstellbetrieb: aus Umstellbetrieb auf biologische Landwirtschaft
 
 bio_labels:
   bio_knospe: Bio (Knospe)
   bio_ch: Bio
-  aus_umstellbetrieb: Aus Umstellbetrieb
   erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat
   erlaubte_ausnahme_details_placeholder: Begründung / Referenz eingeben...
