@@ -878,15 +878,16 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         }
                     });
 
-                    if should_show_processing() {
-                        let available_steps = use_memo(move || {
-                            if let Some(category) = &edit_category() {
-                                crate::processing_service::get_steps_for_blv_category(category)
-                            } else {
-                                vec![]
-                            }
-                        });
+                    // Hook must be called unconditionally to maintain consistent hook ordering
+                    let available_steps = use_memo(move || {
+                        if let Some(category) = &edit_category() {
+                            crate::processing_service::get_steps_for_blv_category(category)
+                        } else {
+                            vec![]
+                        }
+                    });
 
+                    if should_show_processing() {
                         rsx! {
                             br {}
                             FormField {
