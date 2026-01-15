@@ -17,6 +17,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
     let mut short_url = use_signal(|| None::<String>);
     let mut is_shortening = use_signal(|| false);
     let mut show_shorten_button = use_signal(|| true);
+    let mut shorten_error = use_signal(|| None::<String>);
 
     let url_clone1 = url.clone();
     let url_clone2 = url.clone();
@@ -79,6 +80,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
         spawn(async move {
             is_shortening.set(true);
             show_shorten_button.set(false);
+            shorten_error.set(None);
 
             // Using TinyURL as a reliable URL shortener
             let encoded_url = urlencoding::encode(&url_to_shorten);
@@ -88,10 +90,15 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 Ok(response) => {
                     if let Ok(shortened) = response.text().await {
                         short_url.set(Some(shortened));
+                        shorten_error.set(None);
+                    } else {
+                        shorten_error.set(Some("URL konnte nicht gekürzt werden. Bitte den vollständigen Link verwenden.".to_string()));
+                        show_shorten_button.set(true);
                     }
                 }
                 Err(e) => {
                     tracing::error!("Failed to shorten URL: {:?}", e);
+                    shorten_error.set(Some("URL konnte nicht gekürzt werden. Bitte den vollständigen Link verwenden.".to_string()));
                     // Reset button on error
                     show_shorten_button.set(true);
                 }
@@ -106,6 +113,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
         if link_type() == LinkType::Full {
             short_url.set(None);
             show_shorten_button.set(true);
+            shorten_error.set(None);
         }
     });
 
@@ -172,6 +180,24 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                         {t!("shorten_url_button")}
                                     }
                                 }
+                            }
+                        }
+
+                        if let Some(error_msg) = shorten_error() {
+                            div {
+                                class: "alert alert-error mb-4",
+                                svg {
+                                    class: "w-6 h-6 shrink-0 stroke-current",
+                                    fill: "none",
+                                    view_box: "0 0 24 24",
+                                    path {
+                                        stroke_linecap: "round",
+                                        stroke_linejoin: "round",
+                                        stroke_width: "2",
+                                        d: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    }
+                                }
+                                span { {error_msg} }
                             }
                         }
                     }

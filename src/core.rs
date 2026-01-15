@@ -403,7 +403,7 @@ pub struct Ingredient {
     pub is_namensgebend: Option<bool>,
     /// Multiple origin countries (LIV Art. 16 Abs. 2)
     /// Backwards compatible: deserializes both single Country and Vec<Country>
-    #[serde(default, deserialize_with = "deserialize_origins")]
+    #[serde(default, deserialize_with = "deserialize_origins", alias = "origin")]
     pub origins: Option<Vec<Country>>,
     #[serde(default = "default_is_agricultural")]
     pub is_agricultural: bool,

@@ -33,9 +33,21 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
             class: "select w-full max-w-xs select-bordered bg-base-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-200",
             value: "{props.date_prefix}",
-            option {value: "{t!(\"label.mindestensHaltbar\")}", "{t!(\"label.mindestensHaltbar\")}"}
-            option {value: "{t!(\"label.zuVerbrauchen\")}", "{t!(\"label.zuVerbrauchen\")}"}
-            option {value: "{t!(\"label.keinDatum\")}", "{t!(\"label.keinDatum\")}"}
+            option {
+                value: "{t!(\"label.mindestensHaltbar\")}",
+                selected: *props.date_prefix.read() == t!("label.mindestensHaltbar"),
+                "{t!(\"label.mindestensHaltbar\")}"
+            }
+            option {
+                value: "{t!(\"label.zuVerbrauchen\")}",
+                selected: *props.date_prefix.read() == t!("label.zuVerbrauchen"),
+                "{t!(\"label.zuVerbrauchen\")}"
+            }
+            option {
+                value: "{t!(\"label.keinDatum\")}",
+                selected: *props.date_prefix.read() == t!("label.keinDatum"),
+                "{t!(\"label.keinDatum\")}"
+            }
         }
         if *props.date_prefix.read() != t!("label.keinDatum") {
             input {
