@@ -182,6 +182,22 @@ help:
   aufzucht_location: Ort, wo es die meiste Zeit gelebt hat
   certification_body_bio: Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Bio-Zertifizierung)
   certification_body_knospe: Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Knospe-Zertifizierung)
+  herkunft_liv_art_16: |
+    Wir empfehlen gemäss LIV Art. 16 die Herkunft der Zutaten anzugeben. Die Herkunftsangabe kann gelöscht werden, wenn die Verpackung nicht irreführend ist.
+
+    **LIV Art. 16 Angabe der Herkunft von Zutaten**
+
+    *1 Die Herkunft eines Ausgangsproduktes nach Artikel 15 Abs. 2, das als Zutat zur Herstellung von Lebensmitteln verwendet wird, ist anzugeben, wenn:*
+
+    *a) der Anteil dieser Zutat am Enderzeugnis 50 Massenprozent oder mehr beträgt; und*
+
+    *b) die Aufmachung des Produkts darauf schliessen lässt, dass diese Zutat eine Herkunft hat, die nicht zutrifft.*
+
+    *2 Stammt eine nach Absatz 1 zu deklarierende Zutat aus unterschiedlichen Ländern, sind alle Herkunftsländer anzugeben.*
+
+    *2bis Anstelle des Herkunftslandes kann bei der freiwilligen Angabe der Herkunft von Zutaten ein übergeordneter geografischer Raum angegeben werden, wie "EU" oder "Südamerika".*
+
+    [LIV auf Fedlex](https://www.fedlex.admin.ch/eli/cc/2017/158/de)
     
 
 tooltips:
@@ -616,6 +632,10 @@ origin:
   switzerland_parentheses: (Schweiz)
   birthplace: "Geburtsort: %{country}"
   slaughtered_in: "Geschlachtet in: %{country}"
+  add_country: Land hinzufügen
+  remove_country: Land entfernen
+  regions_header: Regionen
+  countries_header: Länder
 
 bio_labels:
   bio_knospe: Bio (Knospe)

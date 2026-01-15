@@ -55,7 +55,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     });
     let mut edit_sub_components = use_signal(|| original_ingredient.sub_components.clone());
     let mut edit_category = use_signal(|| original_ingredient.category.clone());
-    let mut edit_origin = use_signal(|| original_ingredient.origin.clone());
+    let mut edit_origins = use_signal(|| original_ingredient.origins.clone());
     let mut edit_aufzucht_ort = use_signal(|| original_ingredient.aufzucht_ort.clone());
     let mut edit_schlachtungs_ort = use_signal(|| original_ingredient.schlachtungs_ort.clone());
     let mut edit_fangort = use_signal(|| original_ingredient.fangort.clone());
@@ -105,7 +105,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             is_allergen: original_ingredient.is_allergen,
             is_namensgebend: original_ingredient.is_namensgebend,
             sub_components: original_ingredient.sub_components.clone(),
-            origin: original_ingredient.origin.clone(),
+            origins: original_ingredient.origins.clone(),
             is_agricultural: original_ingredient.is_agricultural,
             is_bio: original_ingredient.is_bio,
             category: original_ingredient.category.clone(),
@@ -139,7 +139,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
                 sub_components: sub_components_to_use,
-                origin: edit_origin(),
+                origins: edit_origins(),
                 is_agricultural: lookup_agricultural(&edit_name()),
                 is_bio: Some(edit_is_bio()),
                 category: edit_category(),
@@ -253,7 +253,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
                 sub_components: edit_sub_components(),
-                origin: edit_origin(),
+                origins: edit_origins(),
                 is_agricultural: lookup_agricultural(&edit_name()),
                 is_bio: Some(edit_is_bio()),
                 category: edit_category(),
@@ -312,7 +312,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             is_allergen: allergen_status,
             is_namensgebend: Some(edit_is_namensgebend()),
             sub_components: edit_sub_components(),
-            origin: edit_origin(),
+            origins: edit_origins(),
             is_agricultural: lookup_agricultural(&edit_name()),
             is_bio: Some(edit_is_bio()),
             category: edit_category(),
@@ -366,7 +366,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 is_allergen: false,
                 is_namensgebend: None,
                 sub_components: None,
-                origin: None,
+                origins: None,
                 is_agricultural: false,
                 is_bio: None,
                 category: None,
@@ -440,7 +440,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             is_allergen: false,
                             is_namensgebend: None,
                             sub_components: None,
-                            origin: None,
+                            origins: None,
                             is_agricultural: false,
                             is_bio: None,
                             category: None,
@@ -756,14 +756,15 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         rsx! {
                             FormField {
                                 label: t!("origin.herkunft"),
+                                help: Some((t!("help.herkunft_liv_art_16")).into()),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][origin]", index)
                                     ],
-                                    CountrySelect {
-                                        value: edit_origin.read().clone(),
-                                        onchange: move |country| {
-                                            edit_origin.set(country);
+                                    MultiCountrySelect {
+                                        values: edit_origins.read().clone(),
+                                        onchange: move |countries| {
+                                            edit_origins.set(countries);
                                         }
                                     }
                                 }

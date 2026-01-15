@@ -2,10 +2,192 @@ use crate::model::{lookup_allergen, lookup_agricultural, Country};
 use crate::rules::{RuleDef, Rule};
 use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::mem;
+
+/// Custom deserializer for origins field that handles backwards compatibility.
+/// Accepts either a single Country (old format) or Vec<Country> (new format).
+fn deserialize_origins<'de, D>(deserializer: D) -> Result<Option<Vec<Country>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::{self, Visitor, SeqAccess};
+
+    struct OriginsVisitor;
+
+    impl<'de> Visitor<'de> for OriginsVisitor {
+        type Value = Option<Vec<Country>>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("null, a single country, or an array of countries")
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            deserializer.deserialize_any(OriginsInnerVisitor)
+        }
+    }
+
+    struct OriginsInnerVisitor;
+
+    impl<'de> Visitor<'de> for OriginsInnerVisitor {
+        type Value = Option<Vec<Country>>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a single country or an array of countries")
+        }
+
+        // Handle single country as string (e.g., "CH")
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            // Parse country code directly
+            let country = parse_country_code(value).ok_or_else(|| {
+                de::Error::unknown_variant(value, &["valid country code"])
+            })?;
+            Ok(Some(vec![country]))
+        }
+
+        // Handle array of countries
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            let mut countries = Vec::new();
+            while let Some(country) = seq.next_element()? {
+                countries.push(country);
+            }
+            if countries.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(countries))
+            }
+        }
+
+        // Handle map format (single country serialized as object)
+        fn visit_map<M>(self, map: M) -> Result<Self::Value, M::Error>
+        where
+            M: de::MapAccess<'de>,
+        {
+            let country: Country = Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))?;
+            Ok(Some(vec![country]))
+        }
+    }
+
+    deserializer.deserialize_option(OriginsVisitor)
+}
+
+/// Helper function to parse a country code string into a Country enum
+fn parse_country_code(value: &str) -> Option<Country> {
+    match value {
+        "CH" => Some(Country::CH),
+        "EU" => Some(Country::EU),
+        "NoOriginRequired" => Some(Country::NoOriginRequired),
+        "AD" => Some(Country::AD), "AE" => Some(Country::AE), "AF" => Some(Country::AF),
+        "AG" => Some(Country::AG), "AI" => Some(Country::AI), "AL" => Some(Country::AL),
+        "AM" => Some(Country::AM), "AO" => Some(Country::AO), "AQ" => Some(Country::AQ),
+        "AR" => Some(Country::AR), "AS" => Some(Country::AS), "AT" => Some(Country::AT),
+        "AU" => Some(Country::AU), "AW" => Some(Country::AW), "AX" => Some(Country::AX),
+        "AZ" => Some(Country::AZ), "BA" => Some(Country::BA), "BB" => Some(Country::BB),
+        "BD" => Some(Country::BD), "BE" => Some(Country::BE), "BF" => Some(Country::BF),
+        "BG" => Some(Country::BG), "BH" => Some(Country::BH), "BI" => Some(Country::BI),
+        "BJ" => Some(Country::BJ), "BL" => Some(Country::BL), "BM" => Some(Country::BM),
+        "BN" => Some(Country::BN), "BO" => Some(Country::BO), "BQ" => Some(Country::BQ),
+        "BR" => Some(Country::BR), "BS" => Some(Country::BS), "BT" => Some(Country::BT),
+        "BV" => Some(Country::BV), "BW" => Some(Country::BW), "BY" => Some(Country::BY),
+        "BZ" => Some(Country::BZ), "CA" => Some(Country::CA), "CC" => Some(Country::CC),
+        "CD" => Some(Country::CD), "CF" => Some(Country::CF), "CG" => Some(Country::CG),
+        "CI" => Some(Country::CI), "CK" => Some(Country::CK), "CL" => Some(Country::CL),
+        "CM" => Some(Country::CM), "CN" => Some(Country::CN), "CO" => Some(Country::CO),
+        "CR" => Some(Country::CR), "CU" => Some(Country::CU), "CV" => Some(Country::CV),
+        "CW" => Some(Country::CW), "CX" => Some(Country::CX), "CY" => Some(Country::CY),
+        "CZ" => Some(Country::CZ), "DE" => Some(Country::DE), "DJ" => Some(Country::DJ),
+        "DK" => Some(Country::DK), "DM" => Some(Country::DM), "DO" => Some(Country::DO),
+        "DZ" => Some(Country::DZ), "EC" => Some(Country::EC), "EE" => Some(Country::EE),
+        "EG" => Some(Country::EG), "EH" => Some(Country::EH), "ER" => Some(Country::ER),
+        "ES" => Some(Country::ES), "ET" => Some(Country::ET), "FI" => Some(Country::FI),
+        "FJ" => Some(Country::FJ), "FK" => Some(Country::FK), "FM" => Some(Country::FM),
+        "FO" => Some(Country::FO), "FR" => Some(Country::FR), "GA" => Some(Country::GA),
+        "GB" => Some(Country::GB), "GD" => Some(Country::GD), "GE" => Some(Country::GE),
+        "GF" => Some(Country::GF), "GG" => Some(Country::GG), "GH" => Some(Country::GH),
+        "GI" => Some(Country::GI), "GL" => Some(Country::GL), "GM" => Some(Country::GM),
+        "GN" => Some(Country::GN), "GP" => Some(Country::GP), "GQ" => Some(Country::GQ),
+        "GR" => Some(Country::GR), "GS" => Some(Country::GS), "GT" => Some(Country::GT),
+        "GU" => Some(Country::GU), "GW" => Some(Country::GW), "GY" => Some(Country::GY),
+        "HK" => Some(Country::HK), "HM" => Some(Country::HM), "HN" => Some(Country::HN),
+        "HR" => Some(Country::HR), "HT" => Some(Country::HT), "HU" => Some(Country::HU),
+        "ID" => Some(Country::ID), "IE" => Some(Country::IE), "IL" => Some(Country::IL),
+        "IM" => Some(Country::IM), "IN" => Some(Country::IN), "IO" => Some(Country::IO),
+        "IQ" => Some(Country::IQ), "IR" => Some(Country::IR), "IS" => Some(Country::IS),
+        "IT" => Some(Country::IT), "JE" => Some(Country::JE), "JM" => Some(Country::JM),
+        "JO" => Some(Country::JO), "JP" => Some(Country::JP), "KE" => Some(Country::KE),
+        "KG" => Some(Country::KG), "KH" => Some(Country::KH), "KI" => Some(Country::KI),
+        "KM" => Some(Country::KM), "KN" => Some(Country::KN), "KP" => Some(Country::KP),
+        "KR" => Some(Country::KR), "KW" => Some(Country::KW), "KY" => Some(Country::KY),
+        "KZ" => Some(Country::KZ), "LA" => Some(Country::LA), "LB" => Some(Country::LB),
+        "LC" => Some(Country::LC), "LI" => Some(Country::LI), "LK" => Some(Country::LK),
+        "LR" => Some(Country::LR), "LS" => Some(Country::LS), "LT" => Some(Country::LT),
+        "LU" => Some(Country::LU), "LV" => Some(Country::LV), "LY" => Some(Country::LY),
+        "MA" => Some(Country::MA), "MC" => Some(Country::MC), "MD" => Some(Country::MD),
+        "ME" => Some(Country::ME), "MF" => Some(Country::MF), "MG" => Some(Country::MG),
+        "MH" => Some(Country::MH), "MK" => Some(Country::MK), "ML" => Some(Country::ML),
+        "MM" => Some(Country::MM), "MN" => Some(Country::MN), "MO" => Some(Country::MO),
+        "MP" => Some(Country::MP), "MQ" => Some(Country::MQ), "MR" => Some(Country::MR),
+        "MS" => Some(Country::MS), "MT" => Some(Country::MT), "MU" => Some(Country::MU),
+        "MV" => Some(Country::MV), "MW" => Some(Country::MW), "MX" => Some(Country::MX),
+        "MY" => Some(Country::MY), "MZ" => Some(Country::MZ), "NA" => Some(Country::NA),
+        "NC" => Some(Country::NC), "NE" => Some(Country::NE), "NF" => Some(Country::NF),
+        "NG" => Some(Country::NG), "NI" => Some(Country::NI), "NL" => Some(Country::NL),
+        "NO" => Some(Country::NO), "NP" => Some(Country::NP), "NR" => Some(Country::NR),
+        "NU" => Some(Country::NU), "NZ" => Some(Country::NZ), "OM" => Some(Country::OM),
+        "PA" => Some(Country::PA), "PE" => Some(Country::PE), "PF" => Some(Country::PF),
+        "PG" => Some(Country::PG), "PH" => Some(Country::PH), "PK" => Some(Country::PK),
+        "PL" => Some(Country::PL), "PM" => Some(Country::PM), "PN" => Some(Country::PN),
+        "PR" => Some(Country::PR), "PS" => Some(Country::PS), "PT" => Some(Country::PT),
+        "PW" => Some(Country::PW), "PY" => Some(Country::PY), "QA" => Some(Country::QA),
+        "RE" => Some(Country::RE), "RO" => Some(Country::RO), "RS" => Some(Country::RS),
+        "RU" => Some(Country::RU), "RW" => Some(Country::RW), "SA" => Some(Country::SA),
+        "SB" => Some(Country::SB), "SC" => Some(Country::SC), "SD" => Some(Country::SD),
+        "SE" => Some(Country::SE), "SG" => Some(Country::SG), "SH" => Some(Country::SH),
+        "SI" => Some(Country::SI), "SJ" => Some(Country::SJ), "SK" => Some(Country::SK),
+        "SL" => Some(Country::SL), "SM" => Some(Country::SM), "SN" => Some(Country::SN),
+        "SO" => Some(Country::SO), "SR" => Some(Country::SR), "SS" => Some(Country::SS),
+        "ST" => Some(Country::ST), "SV" => Some(Country::SV), "SX" => Some(Country::SX),
+        "SY" => Some(Country::SY), "SZ" => Some(Country::SZ), "TC" => Some(Country::TC),
+        "TD" => Some(Country::TD), "TF" => Some(Country::TF), "TG" => Some(Country::TG),
+        "TH" => Some(Country::TH), "TJ" => Some(Country::TJ), "TK" => Some(Country::TK),
+        "TL" => Some(Country::TL), "TM" => Some(Country::TM), "TN" => Some(Country::TN),
+        "TO" => Some(Country::TO), "TR" => Some(Country::TR), "TT" => Some(Country::TT),
+        "TV" => Some(Country::TV), "TW" => Some(Country::TW), "TZ" => Some(Country::TZ),
+        "UA" => Some(Country::UA), "UG" => Some(Country::UG), "UM" => Some(Country::UM),
+        "US" => Some(Country::US), "UY" => Some(Country::UY), "UZ" => Some(Country::UZ),
+        "VA" => Some(Country::VA), "VC" => Some(Country::VC), "VE" => Some(Country::VE),
+        "VG" => Some(Country::VG), "VI" => Some(Country::VI), "VN" => Some(Country::VN),
+        "VU" => Some(Country::VU), "WF" => Some(Country::WF), "WS" => Some(Country::WS),
+        "YE" => Some(Country::YE), "YT" => Some(Country::YT), "ZA" => Some(Country::ZA),
+        "ZM" => Some(Country::ZM), "ZW" => Some(Country::ZW),
+        _ => None,
+    }
+}
 
 #[derive(Clone, Default)]
 pub struct Input {
@@ -50,7 +232,7 @@ fn calculate_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) -> f64
     let swiss_agricultural_amount: f64 = ingredients
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| matches!(ingredient.origin, Some(Country::CH)))
+        .filter(|ingredient| ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)))
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -73,7 +255,7 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) ->
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
-        .filter(|ingredient| matches!(ingredient.origin, Some(Country::CH)))
+        .filter(|ingredient| ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)))
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -198,7 +380,10 @@ pub struct Ingredient {
     pub unit: AmountUnit,
     pub sub_components: Option<Vec<SubIngredient>>,
     pub is_namensgebend: Option<bool>,
-    pub origin: Option<Country>,
+    /// Multiple origin countries (LIV Art. 16 Abs. 2)
+    /// Backwards compatible: deserializes both single Country and Vec<Country>
+    #[serde(default, deserialize_with = "deserialize_origins")]
+    pub origins: Option<Vec<Country>>,
     #[serde(default = "default_is_agricultural")]
     pub is_agricultural: bool,
     pub is_bio: Option<bool>,
@@ -240,7 +425,7 @@ impl Ingredient {
             unit: AmountUnit::default(),
             sub_components: None,
             is_namensgebend: None,
-            origin: None,
+            origins: None,
             is_bio: None,
             category: None,
             aufzucht_ort: None,
@@ -314,7 +499,7 @@ impl Default for Ingredient {
             unit: AmountUnit::default(),
             sub_components: Some(vec![]),
             is_namensgebend: None,
-            origin: None,
+            origins: None,
             is_agricultural: true,
             is_bio: None,
             category: None,
@@ -416,7 +601,7 @@ impl OutputFormatter {
             // Do nothing, origin already not displayed by default
         } else if has_knospe_90_99_rule {
             // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
-            if let Some(Country::CH) = &self.ingredient.origin {
+            if self.ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)) {
                 output = format!("{} {}", output, t!("origin.switzerland_parentheses"));
             }
         } else if has_knospe_under90_rule {
@@ -425,10 +610,14 @@ impl OutputFormatter {
             let is_mono_product = self.total_amount == self.ingredient.amount; // Simple check for single ingredient
 
             if should_show_origin_knospe_under90(&self.ingredient, percentage, self.total_amount, is_mono_product) {
-                if let Some(origin) = &self.ingredient.origin {
-                    if !matches!(origin, Country::NoOriginRequired) {
-                        let country_name = origin.display_name();
-                        output = format!("{} ({})", output, country_name);
+                if let Some(origins) = &self.ingredient.origins {
+                    let valid_origins: Vec<&Country> = origins
+                        .iter()
+                        .filter(|o| !matches!(o, Country::NoOriginRequired))
+                        .collect();
+                    if !valid_origins.is_empty() {
+                        let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
+                        output = format!("{} ({})", output, country_names.join(", "));
                     }
                 }
             }
@@ -463,12 +652,22 @@ impl OutputFormatter {
                     }
                 }
             }
-            // Always display country of origin when set (CH food law requirement)
-            else if let Some(origin) = &self.ingredient.origin {
-                // Don't show origin for "NoOriginRequired"
-                if !matches!(origin, Country::NoOriginRequired) {
-                    let country_name = origin.display_name();
-                    output = format!("{} ({})", output, country_name);
+            // Add country of origin display for traditional herkunft rules (only if no Knospe rules apply)
+            else if self
+                .RuleDefs
+                .iter()
+                .any(|x| *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent || *x == RuleDef::AP7_3_HerkunftFleischUeber20Prozent || *x == RuleDef::Knospe_AlleZutatenHerkunft)
+            {
+                if let Some(origins) = &self.ingredient.origins {
+                    // Filter out "NoOriginRequired" and join multiple origins
+                    let valid_origins: Vec<&Country> = origins
+                        .iter()
+                        .filter(|o| !matches!(o, Country::NoOriginRequired))
+                        .collect();
+                    if !valid_origins.is_empty() {
+                        let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
+                        output = format!("{} ({})", output, country_names.join(", "));
+                    }
                 }
             }
         }
@@ -832,7 +1031,8 @@ fn validate_origin(
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
-        if percentage > 50.0 && ingredient.origin.is_none() {
+        let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+        if percentage > 50.0 && !has_origin {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_over_50_percent").to_string());
@@ -858,7 +1058,7 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
     }
 
     // Swiss ingredients with at least 10% share
-    if matches!(ingredient.origin, Some(Country::CH)) && percentage >= 10.0 {
+    if ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)) && percentage >= 10.0 {
         return true;
     }
 
@@ -902,7 +1102,8 @@ fn validate_meat_origin(
         if percentage > 20.0 {
             // Check if this ingredient is meat-based using the category
             if let Some(category) = &ingredient.category {
-                if is_meat_category(category) && ingredient.origin.is_none() {
+                let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+                if is_meat_category(category) && !has_origin {
                     validation_messages.entry(format!("ingredients[{}][origin]", i))
                         .or_default()
                         .push(t!("validation.origin_required_meat_over_20").to_string());
@@ -917,7 +1118,8 @@ fn validate_all_ingredients_origin(
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        if ingredient.origin.is_none() {
+        let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+        if !has_origin {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_knospe").to_string());
@@ -991,8 +1193,9 @@ fn validate_knospe_under90_origin(
         let is_mono_product = total_amount == ingredient.amount; // Simple check for single ingredient
 
         let requires_origin = should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product);
+        let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
 
-        if requires_origin && ingredient.origin.is_none() {
+        if requires_origin && !has_origin {
             let reason = if is_mono_product {
                 t!("validation.knospe_mono_origin_required").to_string()
             } else if ingredient.is_namensgebend == Some(true) {
@@ -1395,7 +1598,7 @@ mod tests {
             ingredients: vec![Ingredient {
                 name: "Milch".to_string(),
                 amount: 700.,
-                origin: None, // Missing origin
+                origins: None, // Missing origin
                 ..Default::default()
             }],
             total: Some(350.), // This makes Milch 200% of total
@@ -1419,13 +1622,13 @@ mod tests {
                 Ingredient {
                     name: "Milch".to_string(),
                     amount: 600.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Zucker".to_string(),
                     amount: 200.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     ..Default::default()
                 },
             ],
@@ -1447,7 +1650,7 @@ mod tests {
             ingredients: vec![Ingredient {
                 name: "Milch".to_string(),
                 amount: 700.,
-                origin: None, // No origin set
+                origins: None, // No origin set
                 ..Default::default()
             }],
             total: Some(350.),
@@ -1474,14 +1677,14 @@ mod tests {
                     name: "Hackfleisch".to_string(),
                     amount: 250., // 25% of 1000 - meat over 20%
                     category: Some("Fleisch".to_string()),
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Nudeln".to_string(),
                     amount: 750., // 75% but not meat
                     category: Some("Getreide".to_string()),
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     ..Default::default()
                 },
             ],
@@ -1513,14 +1716,14 @@ mod tests {
                     name: "Hackfleisch".to_string(),
                     amount: 250., // 25% of 1000 - meat over 20%
                     category: Some("Fleisch".to_string()),
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Nudeln".to_string(),
                     amount: 750., // 75% but not meat
                     category: Some("Getreide".to_string()),
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     ..Default::default()
                 },
             ],
@@ -1562,7 +1765,7 @@ mod tests {
                     name: "Pasta".to_string(),
                     amount: 850., // 85% - over 50%
                     category: Some("Getreide".to_string()),
-                    origin: Some(Country::IT),
+                    origins: Some(vec![Country::IT]),
                     ..Default::default()
                 },
             ],
@@ -1693,7 +1896,7 @@ mod tests {
                     name: "Rohwurst".to_string(),
                     amount: 250., // 25% - over 20% threshold
                     category: Some("Rohwurstware".to_string()),
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     ..Default::default()
                 },
                 Ingredient {
@@ -1756,13 +1959,13 @@ mod tests {
                 Ingredient {
                     name: "Milch".to_string(),
                     amount: 300.,
-                    origin: Some(Country::CH), // Has origin
+                    origins: Some(vec![Country::CH]), // Has origin
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Zucker".to_string(),
                     amount: 200.,
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     ..Default::default()
                 },
             ],
@@ -1789,13 +1992,13 @@ mod tests {
                 Ingredient {
                     name: "Milch".to_string(),
                     amount: 300.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Zucker".to_string(),
                     amount: 200.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     ..Default::default()
                 },
             ],
@@ -1820,13 +2023,13 @@ mod tests {
                 Ingredient {
                     name: "Milch".to_string(),
                     amount: 300.,
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Zucker".to_string(),
                     amount: 200.,
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     ..Default::default()
                 },
             ],
@@ -1859,7 +2062,7 @@ mod tests {
                     name: "Rindfleisch".to_string(),
                     amount: 600.0, // Valid amount, >50% of total
                     category: Some("Rind".to_string()),
-                    origin: None, // Missing origin - triggers AP7_1 (>50%) and AP7_3 (>20% meat)
+                    origins: None, // Missing origin - triggers AP7_1 (>50%) and AP7_3 (>20% meat)
                     aufzucht_ort: None, // Missing - triggers AP7_4
                     schlachtungs_ort: None, // Missing - triggers AP7_4
                     ..Default::default()
@@ -1868,7 +2071,7 @@ mod tests {
                     name: "Invalid Ingredient".to_string(),
                     amount: 0.0, // Invalid amount - triggers AP1_1
                     category: None,
-                    origin: None,
+                    origins: None,
                     ..Default::default()
                 }
             ],
@@ -1920,7 +2123,7 @@ mod tests {
                     name: "Rindfleisch".to_string(),
                     amount: 600.0, // 60% of total - triggers both rules
                     category: Some("Rind".to_string()),
-                    origin: None, // Missing origin - triggers both rules
+                    origins: None, // Missing origin - triggers both rules
                     ..Default::default()
                 }
             ],
@@ -1973,13 +2176,13 @@ mod tests {
                 Ingredient {
                     name: "Milch".to_string(),
                     amount: 300.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Zucker".to_string(),
                     amount: 200.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     ..Default::default()
                 },
             ],
@@ -2005,14 +2208,14 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 600.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Weizenmehl".to_string(),
                     amount: 400.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Weizenmehl"),
                     ..Default::default()
                 },
@@ -2042,21 +2245,21 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 500.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Weizenmehl".to_string(),
                     amount: 400.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Weizenmehl"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Olivenöl".to_string(),
                     amount: 100.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Olivenöl"),
                     ..Default::default()
                 },
@@ -2087,14 +2290,14 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 400.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Olivenöl".to_string(),
                     amount: 600.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Olivenöl"),
                     ..Default::default()
                 },
@@ -2123,14 +2326,14 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 400.,
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Olivenöl".to_string(),
                     amount: 600.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Olivenöl"),
                     is_namensgebend: Some(true), // This ingredient is name-giving and should show origin
                     ..Default::default()
@@ -2162,14 +2365,14 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 900., // 90% - Swiss, high percentage
-                    origin: Some(Country::CH),
+                    origins: Some(vec![Country::CH]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Vanilla".to_string(),
                     amount: 100., // 10% - EU, low percentage but name-giving
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Vanilla"),
                     is_namensgebend: Some(true), // This ingredient is name-giving and should show origin
                     ..Default::default()
@@ -2194,14 +2397,14 @@ mod tests {
             Ingredient {
                 name: "Hafer".to_string(),
                 amount: 600.,
-                origin: Some(Country::CH),
+                origins: Some(vec![Country::CH]),
                 is_agricultural: lookup_agricultural("Hafer"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Weizenmehl".to_string(),
                 amount: 400.,
-                origin: Some(Country::CH),
+                origins: Some(vec![Country::CH]),
                 is_agricultural: lookup_agricultural("Weizenmehl"),
                 ..Default::default()
             },
@@ -2217,21 +2420,21 @@ mod tests {
             Ingredient {
                 name: "Hafer".to_string(),
                 amount: 500.,
-                origin: Some(Country::CH),
+                origins: Some(vec![Country::CH]),
                 is_agricultural: lookup_agricultural("Hafer"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Weizenmehl".to_string(),
                 amount: 400.,
-                origin: Some(Country::CH),
+                origins: Some(vec![Country::CH]),
                 is_agricultural: lookup_agricultural("Weizenmehl"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Olivenöl".to_string(),
                 amount: 100.,
-                origin: Some(Country::EU),
+                origins: Some(vec![Country::EU]),
                 is_agricultural: lookup_agricultural("Olivenöl"),
                 ..Default::default()
             },
@@ -2247,14 +2450,14 @@ mod tests {
             Ingredient {
                 name: "Hafer".to_string(),
                 amount: 500.,
-                origin: Some(Country::CH),
+                origins: Some(vec![Country::CH]),
                 is_agricultural: lookup_agricultural("Hafer"),
                 ..Default::default()
             },
             Ingredient {
                 name: "Salz".to_string(),
                 amount: 500.,
-                origin: Some(Country::EU),
+                origins: Some(vec![Country::EU]),
                 is_agricultural: lookup_agricultural("Salz"),  // Should be false from database
                 ..Default::default()
             },
@@ -2293,7 +2496,7 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 850.,
-                    origin: Some(Country::EU), // 85% non-Swiss agricultural
+                    origins: Some(vec![Country::EU]), // 85% non-Swiss agricultural
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
@@ -2301,7 +2504,7 @@ mod tests {
                     name: "Eier".to_string(),
                     amount: 150., // 15% > 10% threshold
                     category: Some("Eier".to_string()),
-                    origin: None, // Missing origin - should trigger validation
+                    origins: None, // Missing origin - should trigger validation
                     is_agricultural: lookup_agricultural("Eier"),
                     ..Default::default()
                 },
@@ -2328,7 +2531,7 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 850.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
@@ -2336,7 +2539,7 @@ mod tests {
                     name: "Honig".to_string(),
                     amount: 150., // 15% > 10% threshold
                     category: Some("Honig".to_string()),
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     is_agricultural: lookup_agricultural("Honig"),
                     ..Default::default()
                 },
@@ -2363,7 +2566,7 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 950., // 95% - making dairy only 5%
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
@@ -2371,7 +2574,7 @@ mod tests {
                     name: "Milch".to_string(),
                     amount: 50., // Only 5% but should still require origin (dairy rule)
                     category: Some("Milch".to_string()),
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     is_agricultural: lookup_agricultural("Milch"),
                     ..Default::default()
                 },
@@ -2398,7 +2601,7 @@ mod tests {
                 Ingredient {
                     name: "Hafer".to_string(),
                     amount: 970.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Hafer"),
                     ..Default::default()
                 },
@@ -2406,7 +2609,7 @@ mod tests {
                     name: "Fleisch".to_string(),
                     amount: 30., // Only 3% but should still require origin (meat rule)
                     category: Some("Fleisch".to_string()),
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     is_agricultural: lookup_agricultural("Fleisch"),
                     ..Default::default()
                 },
@@ -2434,14 +2637,14 @@ mod tests {
                     name: "Weizen".to_string(),
                     amount: 600., // 60% > 50% threshold
                     category: Some("Getreide".to_string()),
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     is_agricultural: lookup_agricultural("Weizen"),
                     ..Default::default()
                 },
                 Ingredient {
                     name: "Zucker".to_string(),
                     amount: 400.,
-                    origin: Some(Country::EU),
+                    origins: Some(vec![Country::EU]),
                     is_agricultural: lookup_agricultural("Zucker"),
                     ..Default::default()
                 },
@@ -2468,7 +2671,7 @@ mod tests {
                 Ingredient {
                     name: "Olivenöl".to_string(),
                     amount: 1000., // 100% - monoproduct
-                    origin: None, // Missing origin
+                    origins: None, // Missing origin
                     is_agricultural: lookup_agricultural("Olivenöl"),
                     ..Default::default()
                 },

@@ -1,5 +1,6 @@
 pub use conditional_display::ConditionalDisplay;
 pub use country_select::CountrySelect;
+pub use multi_country_select::MultiCountrySelect;
 pub use date_input::DateInput;
 pub use field_group_1::FieldGroup1;
 pub use field_group_2::FieldGroup2;
@@ -25,6 +26,7 @@ pub use unified_ingredient_input::UnifiedIngredientInput;
 
 mod conditional_display;
 mod country_select;
+mod multi_country_select;
 mod date_input;
 mod field_group_1;
 mod field_group_2;

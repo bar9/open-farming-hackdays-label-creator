@@ -27,7 +27,8 @@ fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
     UnifiedIngredient {
         name: ingredient.name.clone(),
         category: ingredient.category.clone(),
-        origin: ingredient.origin.clone(),
+        // Take first origin for display (UnifiedIngredient uses single origin for flag display)
+        origin: ingredient.origins.as_ref().and_then(|o| o.first().cloned()),
         is_allergen: Some(ingredient.is_allergen),
         is_agricultural: Some(ingredient.is_agricultural),
         is_meat,
@@ -71,9 +72,11 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                         class: "flex items-center gap-2",
                         div {
                             class: "flex items-center gap-1",
-                            // Show country flag if origin is set
-                            if let Some(origin) = &ingr.origin {
-                                span { class: "text-lg", "{origin.flag_emoji()}" }
+                            // Show country flags if origins are set
+                            if let Some(origins) = &ingr.origins {
+                                for origin in origins.iter() {
+                                    span { class: "text-lg", "{origin.flag_emoji()}" }
+                                }
                             }
                             div {
                                 if ingr.is_allergen {
