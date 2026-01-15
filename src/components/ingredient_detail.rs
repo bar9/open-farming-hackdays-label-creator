@@ -119,13 +119,23 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     use_effect(move || {
         let _ = edit_is_composite(); // Track this dependency
         if edit_is_composite() {
+            // Only copy sub_components if they actually exist, otherwise start fresh
+            // This prevents stale sub_components from a previous composite ingredient
+            // from appearing when creating a new composite ingredient
+            let current_sub_components = edit_sub_components();
+            let sub_components_to_use = if current_sub_components.as_ref().is_some_and(|s| !s.is_empty()) {
+                current_sub_components
+            } else {
+                None  // Start with empty sub_components for new composite ingredients
+            };
+
             // Initialize wrapper with current edit state
             wrapper_ingredients.write()[0] = Ingredient {
                 name: edit_name(),
                 amount: edit_amount().unwrap_or(0.0),  // Use 0 as fallback for sub-ingredients
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: edit_sub_components(),
+                sub_components: sub_components_to_use,
                 origin: edit_origin(),
                 is_agricultural: lookup_agricultural(&edit_name()),
                 is_bio: Some(edit_is_bio()),
