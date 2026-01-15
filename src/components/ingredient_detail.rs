@@ -203,7 +203,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         // Note: Category is now set from unified ingredient
     };
 
-    let update_name = move |new_name: String| {
+    let _update_name = move |new_name: String| {
         // Update local edit state only
         edit_name.set(new_name.clone());
 
