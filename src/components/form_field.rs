@@ -25,10 +25,10 @@ pub fn FormField(props: FormFieldProps) -> Element {
                         {props.children}
                         span {
                             class: "label-text font-semibold",
-                            if props.required {
-                                span {class: "text-red-300", "* "}
-                            }
                             "{props.label}"
+                            if props.required {
+                                span {class: "text-red-300", " *"}
+                            }
                         }
                     }
                     {rsx!{
@@ -47,10 +47,10 @@ pub fn FormField(props: FormFieldProps) -> Element {
                 div {
                     class: "flex items-center text-left",
                     label {
-                        if props.required {
-                            span {class: "text-red-300", "* "}
-                        }
                         "{props.label}"
+                        if props.required {
+                            span {class: "text-red-300", " *"}
+                        }
                     }
                     {rsx!{
                         FieldHelp {
