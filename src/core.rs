@@ -12,6 +12,7 @@ pub struct Input {
     pub(crate) ingredients: Vec<Ingredient>,
     pub total: Option<f64>,
     pub certification_body: Option<String>,
+    pub rezeptur_vollstaendig: bool,
 }
 
 impl Input {
@@ -490,41 +491,45 @@ impl Calculator {
         #[cfg(target_arch = "wasm32")]
         web_sys::console::log_1(&"📋 Validation Rules".into());
         for ruleDef in &self.rule_defs {
-            if let RuleDef::AP1_1_ZutatMengeValidierung = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking ingredient amounts > 0"));
-                validate_amount(&input.ingredients, &mut validation_messages)
+            // Ingredient validations only run when recipe is marked as complete
+            if input.rezeptur_vollstaendig {
+                if let RuleDef::AP1_1_ZutatMengeValidierung = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking ingredient amounts > 0"));
+                    validate_amount(&input.ingredients, &mut validation_messages)
+                }
+                if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking origin for ingredients >50% of {}g total", total_amount)));
+                    validate_origin(&input.ingredients, total_amount, &mut validation_messages);
+                }
+                if let RuleDef::AP7_2_HerkunftNamensgebendeZutat = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for name-giving ingredients"));
+                    validate_namensgebende_origin(&input.ingredients, &mut validation_messages)
+                }
+                if let RuleDef::AP7_3_HerkunftFleischUeber20Prozent = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking meat origin for ingredients >20% of {}g total", total_amount)));
+                    validate_meat_origin(&input.ingredients, total_amount, &mut validation_messages);
+                }
+                if let RuleDef::AP7_4_RindfleischHerkunftDetails = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking beef origin details (birthplace/slaughter)"));
+                    validate_beef_origin_details(&input.ingredients, &mut validation_messages);
+                }
+                if let RuleDef::AP7_5_FischFangort = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking fish catch location"));
+                    validate_fish_catch_location(&input.ingredients, &mut validation_messages);
+                }
+                if let RuleDef::Bio_Knospe_AlleZutatenHerkunft = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for ALL ingredients (Bio/Knospe)"));
+                    validate_all_ingredients_origin(&input.ingredients, &mut validation_messages)
+                }
+                if let RuleDef::Knospe_Under90_Percent_CH_IngredientRules = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking Knospe <90% specific ingredient origin requirements"));
+                    validate_knospe_under90_origin(&input.ingredients, total_amount, &mut validation_messages);
+                }
             }
-            if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking origin for ingredients >50% of {}g total", total_amount)));
-                validate_origin(&input.ingredients, total_amount, &mut validation_messages);
-            }
-            if let RuleDef::AP7_2_HerkunftNamensgebendeZutat = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for name-giving ingredients"));
-                validate_namensgebende_origin(&input.ingredients, &mut validation_messages)
-            }
-            if let RuleDef::AP7_3_HerkunftFleischUeber20Prozent = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking meat origin for ingredients >20% of {}g total", total_amount)));
-                validate_meat_origin(&input.ingredients, total_amount, &mut validation_messages);
-            }
-            if let RuleDef::AP7_4_RindfleischHerkunftDetails = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking beef origin details (birthplace/slaughter)"));
-                validate_beef_origin_details(&input.ingredients, &mut validation_messages);
-            }
-            if let RuleDef::AP7_5_FischFangort = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking fish catch location"));
-                validate_fish_catch_location(&input.ingredients, &mut validation_messages);
-            }
-            if let RuleDef::Bio_Knospe_AlleZutatenHerkunft = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for ALL ingredients (Bio/Knospe)"));
-                validate_all_ingredients_origin(&input.ingredients, &mut validation_messages)
-            }
+            // Non-ingredient validations always run
             if let RuleDef::Bio_Knospe_ZertifizierungsstellePflicht = ruleDef {
                 self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking mandatory certification body for Bio/Knospe"));
                 validate_certification_body(&input.certification_body, &mut validation_messages);
-            }
-            if let RuleDef::Knospe_Under90_Percent_CH_IngredientRules = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking Knospe <90% specific ingredient origin requirements"));
-                validate_knospe_under90_origin(&input.ingredients, total_amount, &mut validation_messages);
             }
         }
         #[cfg(target_arch = "wasm32")]

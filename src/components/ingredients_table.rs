@@ -47,6 +47,7 @@ pub struct IngredientsTableProps {
     manual_total: Signal<Option<f64>>,
     validation_messages: Memo<HashMap<String, Vec<String>>>,
     rules: Memo<Vec<RuleDef>>,
+    rezeptur_vollstaendig: Signal<bool>,
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
@@ -147,6 +148,20 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                         div {
 
                         }
+                    }
+                }
+                // Checkbox to mark recipe as complete - enables validation
+                div { class: "form-control mt-4",
+                    label { class: "label cursor-pointer justify-start gap-2",
+                        input {
+                            r#type: "checkbox",
+                            class: "checkbox checkbox-primary",
+                            checked: (props.rezeptur_vollstaendig)(),
+                            onchange: move |evt| {
+                                props.rezeptur_vollstaendig.set(evt.checked());
+                            }
+                        }
+                        span { class: "label-text", "{t!(\"label.rezepturVollstaendig\")}" }
                     }
                 }
             }

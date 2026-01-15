@@ -64,6 +64,7 @@ label:
   actions: Azioni
   saved_indicator: (Salvato)
   allergen_indicator: (Allergene)
+  rezepturVollstaendig: Ricetta completamente inserita
 
 nav:
   linkKopieren: Copia link

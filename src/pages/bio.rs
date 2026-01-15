@@ -57,6 +57,8 @@ pub struct Form {
     pub amount: Amount,
     #[serde(default)]
     pub price: Price,
+    #[serde(default)]
+    pub rezeptur_vollstaendig: bool,
 }
 
 fn default_weight_unit() -> String {
@@ -81,6 +83,7 @@ impl From<Form> for Input {
             } else {
                 Some(val.certification_body)
             },
+            rezeptur_vollstaendig: val.rezeptur_vollstaendig,
             ..Default::default()
         }
     }
@@ -140,6 +143,7 @@ impl Default for Form {
             volume_unit: t!("volume_units.ml").to_string(),
             amount: Amount::Single(Some(0)),
             price: Price::Single(Some(0)),
+            rezeptur_vollstaendig: false,
         }
     }
 }
@@ -147,6 +151,7 @@ impl Default for Form {
 pub fn Bio() -> Element {
     let initial_form = use_memo(Form::default);
     let ignore_ingredients = use_signal(|| false);
+    let rezeptur_vollstaendig = use_signal(|| initial_form.read().rezeptur_vollstaendig);
     let ingredients: Signal<Vec<Ingredient>> =
         use_signal(|| initial_form.read().ingredients.clone());
     let product_title = use_signal(|| initial_form.read().product_title.clone());
@@ -197,6 +202,7 @@ pub fn Bio() -> Element {
         volume_unit: volume_unit(),
         amount: amount(),
         price: price(),
+        rezeptur_vollstaendig: rezeptur_vollstaendig(),
     });
 
     let query_string = use_memo(move || {
@@ -343,7 +349,8 @@ pub fn Bio() -> Element {
                                     ingredients: ingredients,
                                     validation_messages: validation_messages,
                                     manual_total: manual_total,
-                                    rules: rules
+                                    rules: rules,
+                                    rezeptur_vollstaendig: rezeptur_vollstaendig
                                 }
                             }
                         }

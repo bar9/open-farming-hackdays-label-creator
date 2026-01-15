@@ -65,6 +65,7 @@ label:
   actions: Aktionen
   saved_indicator: (Gespeichert)
   allergen_indicator: (Allergen)
+  rezepturVollstaendig: Rezeptur vollständig eingegeben
 
 nav:
   linkKopieren: Link kopieren
