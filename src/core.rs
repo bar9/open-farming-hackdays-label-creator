@@ -495,10 +495,6 @@ impl Calculator {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking origin for ingredients >50% of {}g total", total_amount)));
                     validate_origin(&input.ingredients, total_amount, &mut validation_messages);
                 }
-                if let RuleDef::AP7_2_HerkunftNamensgebendeZutat = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for name-giving ingredients"));
-                    validate_namensgebende_origin(&input.ingredients, &mut validation_messages)
-                }
                 if let RuleDef::AP7_3_HerkunftFleischUeber20Prozent = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking meat origin for ingredients >20% of {}g total", total_amount)));
                     validate_meat_origin(&input.ingredients, total_amount, &mut validation_messages);
@@ -572,8 +568,6 @@ impl Calculator {
         web_sys::console::log_1(&"🌍 Origin Requirement Rules".into());
         let has_50_percent_rule = self
             .rule_defs.contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
-        let has_namensgebende_rule = self
-            .rule_defs.contains(&RuleDef::AP7_2_HerkunftNamensgebendeZutat);
         let has_bio_knospe_rule = self
             .rule_defs.contains(&RuleDef::Bio_Knospe_AlleZutatenHerkunft);
 
@@ -695,7 +689,7 @@ impl Calculator {
         let has_meat_rule = self
             .rule_defs.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent);
 
-        if has_50_percent_rule || has_namensgebende_rule || has_bio_knospe_rule || has_meat_rule {
+        if has_50_percent_rule || has_bio_knospe_rule || has_meat_rule {
             let mut has_any_herkunft_required = false;
             #[cfg(target_arch = "wasm32")]
             web_sys::console::log_1(&"🌍 Analyzing origin requirements for each ingredient:".into());
@@ -719,12 +713,6 @@ impl Calculator {
                             reasons.push(format!("meat >20% ({:.1}%)", percentage));
                         }
                     }
-                }
-
-                // Check if namensgebende rule applies
-                if has_namensgebende_rule && ingredient.is_namensgebend == Some(true) {
-                    requires_herkunft = true;
-                    reasons.push("name-giving".to_string());
                 }
 
                 // Check if Bio/Knospe rule applies (requires origin for ALL ingredients)
@@ -807,19 +795,6 @@ fn validate_origin(
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_over_50_percent").to_string());
-        }
-    }
-}
-
-fn validate_namensgebende_origin(
-    ingredients: &Vec<Ingredient>,
-    validation_messages: &mut HashMap<String, Vec<String>>,
-) {
-    for (i, ingredient) in ingredients.iter().enumerate() {
-        if ingredient.is_namensgebend == Some(true) && ingredient.origin.is_none() {
-            validation_messages.entry(format!("ingredients[{}][origin]", i))
-                .or_default()
-                .push(t!("validation.origin_required_name_giving").to_string());
         }
     }
 }
@@ -1441,138 +1416,6 @@ mod tests {
         assert!(label.contains("Milch"));
         assert!(!label.contains("(Schweiz)"));
         assert!(!label.contains("(EU)"));
-    }
-
-    #[test]
-    fn ap7_2_herkunft_namensgebende_zutat_conditional() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_2_HerkunftNamensgebendeZutat]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                amount: 300.,
-                is_namensgebend: Some(true),
-                ..Default::default()
-            }],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        assert!(conditionals.get("herkunft_benoetigt_0").is_some());
-        assert_eq!(true, *conditionals.get("herkunft_benoetigt_0").unwrap());
-    }
-
-    #[test]
-    fn validation_missing_origin_for_namensgebende_ingredient() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_2_HerkunftNamensgebendeZutat]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                amount: 300.,
-                is_namensgebend: Some(true),
-                origin: None, // Missing origin
-                ..Default::default()
-            }],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-        assert!(validation_messages.get("ingredients[0][origin]").is_some());
-        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
-        assert!(!origin_messages.is_empty());
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für namensgebende Zutaten."));
-    }
-
-    #[test]
-    fn country_display_on_label_for_namensgebende_ingredient() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_2_HerkunftNamensgebendeZutat]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                amount: 300.,
-                is_namensgebend: Some(true),
-                origin: Some(Country::CH),
-                ..Default::default()
-            }],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Milch (Schweiz)"));
-    }
-
-    #[test]
-    fn no_origin_required_for_non_namensgebende_ingredient() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_2_HerkunftNamensgebendeZutat]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Zucker".to_string(),
-                amount: 300.,
-                is_namensgebend: Some(false), // Not namensgebend
-                origin: None,
-                ..Default::default()
-            }],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-        let conditionals = output.conditional_elements;
-        // Should not require origin validation
-        assert!(validation_messages.get("ingredients[0][origin]").map_or(true, |v| v.is_empty()));
-        // Should not show origin field
-        assert!(conditionals.get("herkunft_benoetigt_0").is_none());
-    }
-
-    #[test]
-    fn combined_rules_both_50_percent_and_namensgebende() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 600., // >50% of 1000
-                    is_namensgebend: Some(false),
-                    origin: Some(Country::CH),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Vanille".to_string(),
-                    amount: 50., // <50% but namensgebend
-                    is_namensgebend: Some(true),
-                    origin: Some(Country::EU),
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        let label = output.label;
-
-        // Both ingredients should show origin fields
-        assert!(conditionals.get("herkunft_benoetigt_0").is_some());
-        assert!(conditionals.get("herkunft_benoetigt_1").is_some());
-
-        // Both should display country on label
-        assert!(label.contains("Milch (Schweiz)"));
-        assert!(label.contains("Vanille (EU)"));
     }
 
     #[test]
@@ -2640,7 +2483,6 @@ mod tests {
             RuleDef::AP1_4_ManuelleEingabeTotal,
             RuleDef::AP2_1_ZusammegesetztOutput,
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat,
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
             RuleDef::AP7_4_RindfleischHerkunftDetails,
         ]);
@@ -2777,7 +2619,6 @@ mod tests {
             RuleDef::AP1_4_ManuelleEingabeTotal,
             RuleDef::AP2_1_ZusammegesetztOutput,
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat,
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
             RuleDef::AP7_4_RindfleischHerkunftDetails,
             RuleDef::AP7_5_FischFangort,

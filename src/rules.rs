@@ -52,8 +52,6 @@ pub enum RuleDef {
     AP2_1_ZusammegesetztOutput,
     /// AP7.1: Requires country of origin for ingredients >50% of total weight (Swiss requirement)
     AP7_1_HerkunftBenoetigtUeber50Prozent,
-    /// AP7.2: Requires country of origin for name-giving ingredients (Swiss requirement)
-    AP7_2_HerkunftNamensgebendeZutat,
     /// AP7.3: Requires country of origin for meat ingredients >20% of total weight (Swiss requirement)
     AP7_3_HerkunftFleischUeber20Prozent,
     /// AP7.4: Requires birthplace and slaughter location for beef ingredients (Swiss requirement)
@@ -97,7 +95,6 @@ impl Rule for RuleDef {
             RuleDef::AP1_4_ManuelleEingabeTotal => RuleType::Conditional,
             RuleDef::AP2_1_ZusammegesetztOutput => RuleType::Output,
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => RuleType::Conditional,
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat => RuleType::Conditional,
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent => RuleType::Conditional,
             RuleDef::AP7_4_RindfleischHerkunftDetails => RuleType::Conditional,
             RuleDef::AP7_5_FischFangort => RuleType::Conditional,
@@ -114,7 +111,6 @@ impl Rule for RuleDef {
     fn get_specs_url(&self) -> Option<&'static str> {
         match self {
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
             RuleDef::AP7_4_RindfleischHerkunftDetails => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
             RuleDef::AP7_5_FischFangort => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
@@ -133,7 +129,6 @@ impl Rule for RuleDef {
             RuleDef::AP1_4_ManuelleEingabeTotal => "Ermöglicht die manuelle Eingabe der Gesamtmenge",
             RuleDef::AP2_1_ZusammegesetztOutput => "Zeigt zusammengesetzte Zutaten mit ihren Bestandteilen auf dem Etikett",
             RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => "Erfordert Herkunftsangabe für Zutaten, die mehr als 50% des Gesamtgewichts ausmachen (Schweizer Vorschrift)",
-            RuleDef::AP7_2_HerkunftNamensgebendeZutat => "Erfordert Herkunftsangabe für namensgebende Zutaten (Schweizer Vorschrift)",
             RuleDef::AP7_3_HerkunftFleischUeber20Prozent => "Erfordert Herkunftsangabe für Fleisch-Zutaten, die mehr als 20% des Gesamtgewichts ausmachen (Schweizer Vorschrift)",
             RuleDef::AP7_4_RindfleischHerkunftDetails => "Erfordert detaillierte Herkunftsangabe für Rindfleisch: Aufzucht- und Schlachtungsort (Schweizer Vorschrift)",
             RuleDef::AP7_5_FischFangort => "Erfordert Fangort für Fisch-Zutaten (Schweizer Vorschrift)",
@@ -180,7 +175,6 @@ impl RuleRegistry {
                 RuleDef::AP1_4_ManuelleEingabeTotal,
                 RuleDef::AP2_1_ZusammegesetztOutput,
                 RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-                RuleDef::AP7_2_HerkunftNamensgebendeZutat,
                 RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
                 RuleDef::AP7_4_RindfleischHerkunftDetails,
                 RuleDef::AP7_5_FischFangort,
@@ -196,7 +190,6 @@ impl RuleRegistry {
                 RuleDef::AP1_4_ManuelleEingabeTotal,
                 RuleDef::AP2_1_ZusammegesetztOutput,
                 RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-                RuleDef::AP7_2_HerkunftNamensgebendeZutat,
                 RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
                 RuleDef::AP7_4_RindfleischHerkunftDetails,
                 RuleDef::AP7_5_FischFangort,
@@ -215,7 +208,6 @@ impl RuleRegistry {
                 RuleDef::AP1_4_ManuelleEingabeTotal,
                 RuleDef::AP2_1_ZusammegesetztOutput,
                 RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-                RuleDef::AP7_2_HerkunftNamensgebendeZutat,
                 RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
                 RuleDef::AP7_4_RindfleischHerkunftDetails,
                 RuleDef::AP7_5_FischFangort,
