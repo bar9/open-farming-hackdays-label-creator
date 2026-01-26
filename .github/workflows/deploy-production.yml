@@ -43,6 +43,12 @@ jobs:
           # Build Tailwind CSS Styles
           npx @tailwindcss/cli -i input.css -o assets/tailwind.css
 
+      - name: Update base path for production deployment
+        run: |
+          # Change base_path from "open-farming-hackdays-label-creator" to "declarino" for production
+          sed -i 's/base_path = "open-farming-hackdays-label-creator"/base_path = "declarino"/' Dioxus.toml
+          echo "Updated Dioxus.toml base_path for production deployment"
+
       - name: Build with Dioxus (Production - hidebio feature)
         run: |
           # Build your application with dx with hidebio feature enabled
