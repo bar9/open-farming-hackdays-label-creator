@@ -40,8 +40,8 @@ pub enum Route {
 #[component]
 fn PageNotFound(route: Vec<String>) -> Element {
     rsx! {
-        h1 { {t!("errors.page_not_found")} }
-        p { {t!("errors.page_not_found_message")} }
+        h1 { {t!("errors.page_not_found").to_string()} }
+        p { {t!("errors.page_not_found_message").to_string()} }
         pre { color: "red", {format!("{}\n{:?}", t!("errors.attempted_to_navigate"), route)} }
     }
 }

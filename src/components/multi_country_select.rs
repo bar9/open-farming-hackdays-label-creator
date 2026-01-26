@@ -145,7 +145,7 @@ pub fn MultiCountrySelect(props: MultiCountrySelectProps) -> Element {
                                     button {
                                         class: "btn btn-xs btn-ghost btn-circle",
                                         r#type: "button",
-                                        title: "{t!(\"origin.remove_country\")}",
+                                        title: "{t!(\"origin.remove_country\").to_string()}",
                                         onclick: move |_| {
                                             let mut new_values: Vec<Country> = values_for_remove
                                                 .iter()
@@ -175,17 +175,17 @@ pub fn MultiCountrySelect(props: MultiCountrySelectProps) -> Element {
                     add_country(e.value());
                 },
 
-                option { value: "", "{t!(\"origin.add_country\")}" }
+                option { value: "", "{t!(\"origin.add_country\").to_string()}" }
 
                 // Regions section
-                optgroup { label: "{t!(\"origin.regions_header\")}",
+                optgroup { label: "{t!(\"origin.regions_header\").to_string()}",
                     option { value: "CH", "Schweiz" }
                     option { value: "EU", "EU" }
                     option { value: "NoOriginRequired", "Keine Herkunftsangabe benötigt" }
                 }
 
                 // Common European countries
-                optgroup { label: "{t!(\"origin.countries_header\")}",
+                optgroup { label: "{t!(\"origin.countries_header\").to_string()}",
                     option { value: "DE", "Deutschland" }
                     option { value: "FR", "Frankreich" }
                     option { value: "IT", "Italien" }

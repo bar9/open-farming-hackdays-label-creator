@@ -230,7 +230,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                         if !matching_saved.is_empty() {
                             rsx! {
                                 div { class: "px-3 py-2 text-sm font-semibold text-base-content/70 bg-base-200",
-                                    "💾 " {t!("label.saved_ingredients")}
+                                    "💾 " {t!("label.saved_ingredients").to_string()}
                                 }
                                 for (saved_idx, saved) in matching_saved.iter().enumerate() {
                                     div {
@@ -264,7 +264,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                             }
                                         }
                                         span { class: "text-xs text-base-content/50",
-                                            {t!("label.saved_indicator")}
+                                            {t!("label.saved_indicator").to_string()}
                                         }
                                     }
                                 }
@@ -300,11 +300,11 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
 
                     // Legend at the bottom
                     div { class: "px-3 py-2 text-xs text-base-content/50 bg-base-100 border-t border-base-300",
-                        "🚨" {t!("symbols.allergen_tooltip")} " • "
-                        "🥩" {t!("symbols.meat_tooltip")} " • "
-                        "🐟" {t!("symbols.fish_tooltip")} " • "
-                        "🥛" {t!("symbols.dairy_tooltip")} " • "
-                        "🌱" {t!("symbols.plant_tooltip")}
+                        "🚨" {t!("symbols.allergen_tooltip").to_string()} " • "
+                        "🥩" {t!("symbols.meat_tooltip").to_string()} " • "
+                        "🐟" {t!("symbols.fish_tooltip").to_string()} " • "
+                        "🥛" {t!("symbols.dairy_tooltip").to_string()} " • "
+                        "🌱" {t!("symbols.plant_tooltip").to_string()}
                     }
                 }
             }

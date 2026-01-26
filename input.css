@@ -5,6 +5,7 @@
 */
 
 @import "tailwindcss";
+@source "./src/**/*.{rs,html,css}";
 @plugin "@tailwindcss/typography";
 @plugin "daisyui" {
     themes: corporate --default;

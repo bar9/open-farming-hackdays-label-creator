@@ -12,7 +12,7 @@ pub fn Impressum() -> Element {
                     Link {
                         to: crate::routes::Route::SplashScreen {},
                         class: "btn btn-primary",
-                        "{t!(\"nav.zurueck\")}"
+                        "{t!(\"nav.zurueck\").to_string()}"
                     }
                 }
             }

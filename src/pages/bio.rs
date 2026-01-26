@@ -320,27 +320,27 @@ pub fn Bio() -> Element {
                     class: "flex-1 overflow-y-scroll",
                     div { class: "flex flex-col gap-6 p-8 pb-12",
                         FormField {
-                            label: t!("label.produktname"),
-                            help: Some(t!("help.produktname").into()),
+                            label: t!("label.produktname").to_string(),
+                            help: Some(t!("help.produktname").to_string().into()),
                             TextInput {
-                                placeholder: t!("placeholder.produktname"),
+                                placeholder: t!("placeholder.produktname").to_string(),
                                 bound_value: product_title
                             }
                         }
                         FormField {
-                            label: t!("label.sachbezeichnung"),
-                            help: Some((t!("help.sachbezeichnung")).into()),
+                            label: t!("label.sachbezeichnung").to_string(),
+                            help: Some((t!("help.sachbezeichnung").to_string()).into()),
                             required: true,
                             TextInput {
-                                placeholder: t!("placeholder.sachbezeichnung"),
+                                placeholder: t!("placeholder.sachbezeichnung").to_string(),
                                 bound_value: product_subtitle,
                                 required: true
                             }
                         }
                         SeparatorLine {}
                         FormField {
-                            label: t!("label.ignore_ingredients"),
-                            help: Some(t!("help.ignore_ingredients").into()),
+                            label: t!("label.ignore_ingredients").to_string(),
+                            help: Some(t!("help.ignore_ingredients").to_string().into()),
                             inline_checkbox: true,
                             CheckboxInput {
                                 bound_value: ignore_ingredients
@@ -348,8 +348,8 @@ pub fn Bio() -> Element {
                         }
                         if !ignore_ingredients() {
                             FormField {
-                                label: t!("label.zutaten"),
-                                help: Some((t!("help.zutaten")).into()),
+                                label: t!("label.zutaten").to_string(),
+                                help: Some((t!("help.zutaten").to_string()).into()),
                                 required: true,
                                 IngredientsTable {
                                     ingredients: ingredients,
@@ -364,18 +364,18 @@ pub fn Bio() -> Element {
                         FieldGroup2 {
                             FormField {
                                 required: true,
-                                label: t!("label.datumseingabe"),
-                                help: Some((t!("help.datumseingabe")).into()),
+                                label: t!("label.datumseingabe").to_string(),
+                                help: Some((t!("help.datumseingabe").to_string()).into()),
                                 DateInput {
                                     date_value: date,
                                     date_prefix: date_prefix
                                 }
 
                             }
-                            FormField { label: t!("label.zusatzinformationen"),
-                                help: Some((t!("help.zusatzinformationen")).into()),
+                            FormField { label: t!("label.zusatzinformationen").to_string(),
+                                help: Some((t!("help.zusatzinformationen").to_string()).into()),
                                 TextareaInput {
-                                    placeholder: t!("placeholder.zusatzinformationen"),
+                                    placeholder: t!("placeholder.zusatzinformationen").to_string(),
                                     rows: "5",
                                     bound_value: additional_info
                                 }
@@ -383,11 +383,11 @@ pub fn Bio() -> Element {
                         }
                         FieldGroup2 {
                             FormField {
-                                label: t!("label.aufbewahrungshinweis"),
-                                help: Some((t!("help.aufbewahrungshinweis")).into()),
+                                label: t!("label.aufbewahrungshinweis").to_string(),
+                                help: Some((t!("help.aufbewahrungshinweis").to_string()).into()),
                                 TextareaInput{
                                     rows: "2",
-                                    placeholder: t!("placeholder.aufbewahrungshinweis"),
+                                    placeholder: t!("placeholder.aufbewahrungshinweis").to_string(),
                                     bound_value: storage_info
                                 }
                             }
@@ -395,7 +395,7 @@ pub fn Bio() -> Element {
                         SeparatorLine {}
 
                         FieldGroup1 {
-                            label: t!("label.gewichtUndPreis"),
+                            label: t!("label.gewichtUndPreis").to_string(),
                             AmountPrice {
                                 amount_type: amount_type,
                                 weight_unit: weight_unit,
@@ -405,48 +405,48 @@ pub fn Bio() -> Element {
                             }
                         }
                         SeparatorLine {}
-                        FieldGroup1 { label: t!("label.adresse"),
+                        FieldGroup1 { label: t!("label.adresse").to_string(),
                             FormField {
                                 required: true,
-                                help: Some((t!("help.name")).into()),
-                                label: t!("label.name"),
-                                TextInput { required: true, bound_value: producer_name, placeholder: t!("placeholder.name") }
+                                help: Some((t!("help.name").to_string()).into()),
+                                label: t!("label.name").to_string(),
+                                TextInput { required: true, bound_value: producer_name, placeholder: t!("placeholder.name").to_string() }
                             }
                             div { class: "grid grid-cols-3 gap-4",
                                 FormField {
                                     required: true,
-                                    help: Some((t!("help.adresse")).into()),
-                                    label: t!("label.adresse"),
-                                    TextInput { required: true, bound_value: producer_address, placeholder: t!("placeholder.adresse")}
+                                    help: Some((t!("help.adresse").to_string()).into()),
+                                    label: t!("label.adresse").to_string(),
+                                    TextInput { required: true, bound_value: producer_address, placeholder: t!("placeholder.adresse").to_string()}
                                 }
                                 FormField {
                                     required: true,
-                                    label: t!("label.plz"),
-                                    TextInput { required: true, bound_value: producer_zip, placeholder: t!("placeholder.plz")}
+                                    label: t!("label.plz").to_string(),
+                                    TextInput { required: true, bound_value: producer_zip, placeholder: t!("placeholder.plz").to_string()}
                                 }
                                 FormField {
                                     required: true,
-                                    help: Some((t!("help.ort")).into()),
-                                    label: t!("label.ort"),
-                                    TextInput { required: true, bound_value: producer_city, placeholder: t!("placeholder.ort")}
+                                    help: Some((t!("help.ort").to_string()).into()),
+                                    label: t!("label.ort").to_string(),
+                                    TextInput { required: true, bound_value: producer_city, placeholder: t!("placeholder.ort").to_string()}
                                 }
                                 FormField {
-                                    label: t!("label.telefon"),
-                                    TextInput { bound_value: producer_phone, placeholder: t!("placeholder.telefon")}
+                                    label: t!("label.telefon").to_string(),
+                                    TextInput { bound_value: producer_phone, placeholder: t!("placeholder.telefon").to_string()}
                                 }
                                 FormField {
-                                    label: t!("label.email"),
-                                    TextInput { bound_value: producer_email, placeholder: t!("placeholder.email")}
+                                    label: t!("label.email").to_string(),
+                                    TextInput { bound_value: producer_email, placeholder: t!("placeholder.email").to_string()}
                                 }
                                 FormField {
-                                    label: t!("label.website"),
-                                    TextInput { bound_value: producer_website, placeholder: t!("placeholder.website")}
+                                    label: t!("label.website").to_string(),
+                                    TextInput { bound_value: producer_website, placeholder: t!("placeholder.website").to_string()}
                                 }
                             }
                         }
                         SeparatorLine {}
                         FormField {
-                            label: "{t!(\"label.certification_body\")} *",
+                            label: "{t!(\"label.certification_body\").to_string()} *",
                             required: true,
                             help: Some(t!("help.certification_body_bio").to_string()),
                             CertificationBodySelect {

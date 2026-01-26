@@ -84,7 +84,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 } else {
                                     "{ingr.composite_name()}"
                                 }
-                                if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\")})"}
+                                if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\").to_string()})"}
                             }
                         }
                         // Show ingredient symbols
@@ -94,7 +94,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     }
                     div {
                         class: "text-right",
-                        "{ingr.amount} " {t!(ingr.unit.translation_key())}
+                        "{ingr.amount} " {t!(ingr.unit.translation_key()).to_string()}
                     }
                     div {
                         class: "text-right",
@@ -117,18 +117,18 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                     path: "manuelles_total".to_string(),
                     div {
                         class: "grid grid-cols-3 gap-4",
-                        div {{t!("label.total")}}
+                        div {{t!("label.total").to_string()}}
                         div {
                             class: "text-right",
-                            "{total_amount} " {t!("units.g")}
+                            "{total_amount} " {t!("units.g").to_string()}
                         }
 
                         FormField {
-                            label: "{t!(\"label.manuellesTotal\")}",
-                            help: Some((t!("help.manuellesTotal")).into()),
+                            label: "{t!(\"label.manuellesTotal\").to_string()}",
+                            help: Some((t!("help.manuellesTotal").to_string()).into()),
                             input {
                                 r#type: "number",
-                                placeholder: t!("label.manuellesTotal").as_ref(),
+                                placeholder: t!("label.manuellesTotal").to_string().as_ref(),
                                 class: "input input-accent w-full",
                                 min: "0",
                                 onchange: move |evt| {
@@ -157,7 +157,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                                 props.rezeptur_vollstaendig.set(evt.checked());
                             }
                         }
-                        span { class: "label-text", "{t!(\"label.rezepturVollstaendig\")}" }
+                        span { class: "label-text", "{t!(\"label.rezepturVollstaendig\").to_string()}" }
                     }
                 }
             }
@@ -166,7 +166,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             // input {
             //     list: "ingredients",
             //     r#type: "flex",
-            //     placeholder: t!("placeholder.zutatName").as_ref(),
+            //     placeholder: t!("placeholder.zutatName").to_string().as_ref(),
             //     class: "input input-bordered bg-white input-accent w-full",
             //     oninput: move |evt| name_to_add.set(evt.data.value()),
             //     value: "{name_to_add}",
@@ -180,7 +180,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             //     class: "flex flex-row gap-4 items-center text-right",
             //     input {
             //         r#type: "number",
-            //         placeholder: t!("placeholder.menge").as_ref(),
+            //         placeholder: t!("placeholder.menge").to_string().as_ref(),
             //         class: "input input-bordered bg-white input-accent w-full",
             //         oninput: move |evt| {
             //             if let Ok(amount) = evt.data.value().parse::<i32>() {
@@ -202,7 +202,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             // button {
             //     class: "btn btn-accent",
             //     onclick: move |_evt| { },
-            //     "{t!(\"nav.hinzufuegen\")}"
+            //     "{t!(\"nav.hinzufuegen\").to_string()}"
             // }
         }
 

@@ -47,13 +47,13 @@ pub fn SavedIngredientsManager() -> Element {
             class: "btn btn-secondary btn-sm",
             onclick: move |_| is_open.toggle(),
             title: t!("tooltips.manage_saved_ingredients").to_string(),
-            {t!("nav.saved_ingredients")}
+            {t!("nav.saved_ingredients").to_string()}
         }
         
         dialog { open: is_open(), class: "modal",
             div { class: "modal-box bg-base-100 max-w-3xl",
                 h3 { class: "font-bold text-lg mb-4", 
-                    {t!("headers.saved_composite_ingredients")} 
+                    {t!("headers.saved_composite_ingredients").to_string()} 
                 }
                 
                 // Show delete status if any
@@ -65,16 +65,16 @@ pub fn SavedIngredientsManager() -> Element {
                 
                 if saved_ingredients().is_empty() {
                     div { class: "text-center py-8 text-gray-500",
-                        {t!("messages.no_saved_ingredients")}
+                        {t!("messages.no_saved_ingredients").to_string()}
                     }
                 } else {
                     div { class: "overflow-x-auto",
                         table { class: "table table-zebra",
                             thead {
                                 tr {
-                                    th { {t!("label.zutat")} }
-                                    th { {t!("label.components")} }
-                                    th { {t!("label.actions")} }
+                                    th { {t!("label.zutat").to_string()} }
+                                    th { {t!("label.components").to_string()} }
+                                    th { {t!("label.actions").to_string()} }
                                 }
                             }
                             tbody {
@@ -106,7 +106,7 @@ pub fn SavedIngredientsManager() -> Element {
                                                     let name = saved.ingredient.name.clone();
                                                     move |_| handle_delete(name.clone())
                                                 },
-                                                {t!("buttons.delete")}
+                                                {t!("buttons.delete").to_string()}
                                             }
                                         }
                                     }
@@ -120,7 +120,7 @@ pub fn SavedIngredientsManager() -> Element {
                     button {
                         class: "btn",
                         onclick: move |_| is_open.set(false),
-                        {t!("buttons.close")}
+                        {t!("buttons.close").to_string()}
                     }
                 }
             }

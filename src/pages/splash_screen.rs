@@ -16,7 +16,7 @@ pub fn SplashScreen() -> Element {
                     class: "flex justify-between items-center",
                     div {
                         class: "text-2xl font-bold",
-                        {t!("app.title")}
+                        {t!("app.title").to_string()}
                     }
                     div {
                         class: "dropdown dropdown-end",
@@ -25,9 +25,9 @@ pub fn SplashScreen() -> Element {
                             role: "button",
                             class: "btn btn-ghost btn-sm",
                             {match rust_i18n::locale().as_ref() {
-                                "fr-CH" => t!("languages.fr"),
-                                "it-CH" => t!("languages.it"),
-                                _ => t!("languages.de"),
+                                "fr-CH" => t!("languages.fr").to_string(),
+                                "it-CH" => t!("languages.it").to_string(),
+                                _ => t!("languages.de").to_string(),
                             }}
                             svg {
                                 class: "w-4 h-4 ml-1",
@@ -57,7 +57,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    {t!("languages.de")}
+                                    {t!("languages.de").to_string()}
                                 }
                             }
                             li {
@@ -72,7 +72,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    {t!("languages.fr")}
+                                    {t!("languages.fr").to_string()}
                                 }
                             }
                             li {
@@ -87,7 +87,7 @@ pub fn SplashScreen() -> Element {
                                             let _ = window.location().reload();
                                         }
                                     },
-                                    {t!("languages.it")}
+                                    {t!("languages.it").to_string()}
                                 }
                             }
                         }
@@ -100,15 +100,15 @@ pub fn SplashScreen() -> Element {
                     class: "text-center max-w-4xl",
                     h1 {
                         class: "text-4xl md:text-5xl font-bold mb-4 text-base-content",
-                        {t!("app.title")}
+                        {t!("app.title").to_string()}
                     }
                     h2 {
                         class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content",
-                        {t!("splash.subtitle")}
+                        {t!("splash.subtitle").to_string()}
                     }
                     p {
                         class: "text-lg md:text-xl text-base-content/70 mb-12 max-w-2xl mx-auto",
-                        {t!("splash.description")}
+                        {t!("splash.description").to_string()}
                     }
                     div {
                         class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
@@ -122,7 +122,7 @@ pub fn SplashScreen() -> Element {
                             class: "card-body items-center text-center",
                             h3 {
                                 class: "card-title text-xl mb-4",
-                                {t!("routes.swiss")}
+                                {t!("routes.swiss").to_string()}
                             }
                             div {
                                 class: "w-24 h-24 flex items-center justify-center mb-2",
@@ -152,7 +152,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-info text-xs px-2 py-1",
-                                {t!("badges.not_for_meat_dairy")}
+                                {t!("badges.not_for_meat_dairy").to_string()}
                             }
                         }
                     }
@@ -166,7 +166,7 @@ pub fn SplashScreen() -> Element {
                             class: "card-body items-center text-center",
                             h3 {
                                 class: "card-title text-xl mb-4",
-                                {t!("routes.bio")}
+                                {t!("routes.bio").to_string()}
                             }
                             div {
                                 class: "w-24 h-24 flex flex-col items-center justify-center mb-2",
@@ -175,7 +175,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
-                                {t!("badges.in_development")}
+                                {t!("badges.in_development").to_string()}
                             }
                         }
                     }
@@ -189,7 +189,7 @@ pub fn SplashScreen() -> Element {
                             class: "card-body items-center text-center",
                             h3 {
                                 class: "card-title text-xl mb-4",
-                                {t!("routes.knospe")}
+                                {t!("routes.knospe").to_string()}
                             }
                             div {
                                 class: "w-24 h-24 flex items-center justify-center mb-2",
@@ -232,7 +232,7 @@ pub fn SplashScreen() -> Element {
                             }
                             div {
                                 class: "badge badge-warning text-xs px-2 py-1",
-                                {t!("badges.in_development")}
+                                {t!("badges.in_development").to_string()}
                             }
                         }
                     }
@@ -246,7 +246,7 @@ pub fn SplashScreen() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        {t!("version.version")} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from")} " " {
+                        {t!("version.version").to_string()} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from").to_string()} " " {
                             // Convert UTC time string to a more readable format
                             let build_time = built_info::BUILT_TIME_UTC;
                             // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
@@ -260,12 +260,12 @@ pub fn SplashScreen() -> Element {
                     Link {
                         to: Route::Impressum {},
                         class: "link link-blue hover:link-primary",
-                        {t!("app.impressum")}
+                        {t!("app.impressum").to_string()}
                     }
                     a {
                         class: "link link-blue hover:link-primary",
                         href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                        {t!("app.release_notes")}
+                        {t!("app.release_notes").to_string()}
                     }
                 }
             }

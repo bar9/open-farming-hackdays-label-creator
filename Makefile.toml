@@ -3,9 +3,12 @@
 command = "dx"
 args = ["serve"]
 
-[tasks.tailwind-dev]
-command = "npx"
-args = ["@tailwindcss/cli", "-i",  "./input.css", "-o", "./assets/tailwind.css", "--watch"]
+# Tailwind CSS is now handled automatically by dx 0.7
+# [tasks.tailwind-dev]
+# command = "npx"
+# args = ["@tailwindcss/cli", "-i",  "./input.css", "-o", "./assets/tailwind.css", "--watch"]
 
 [tasks.dev]
-run_task = { name = ["tailwind-dev", "frontend-dev"], parallel = true}
+# run_task = { name = ["tailwind-dev", "frontend-dev"], parallel = true}
+# With dx 0.7, just run the frontend since Tailwind is automatic
+run_task = { name = ["frontend-dev"] }

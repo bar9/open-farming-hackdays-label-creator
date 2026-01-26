@@ -35,11 +35,8 @@ pub fn SplitLayout() -> Element {
     let nav = use_navigator();
 
     rsx! {
-        document::Stylesheet {
-            href: asset!("assets/tailwind.css")
-        }
         div {
-            key: "split-layout",
+            key: "{&theme_context.read().theme}",
             class: "min-h-screen flex flex-col",
             "data-theme": "{theme_context.read().theme}",
             header {
@@ -51,7 +48,7 @@ pub fn SplitLayout() -> Element {
                         Link {
                             to: Route::SplashScreen {},
                             class: "text-2xl font-bold hover:text-primary transition-colors",
-                            {t!("app.title")}
+                            {t!("app.title").to_string()}
                         }
                         div {
                             class: "dropdown dropdown-end",
@@ -71,7 +68,7 @@ pub fn SplitLayout() -> Element {
                                                 rect { x: "6", y: "13", width: "20", height: "6", fill: "white" }
                                             }
                                         }
-                                        {t!("routes.swiss")}
+                                        {t!("routes.swiss").to_string()}
                                     },
                                     Route::Bio { .. } => rsx! {
                                         div {
@@ -79,7 +76,7 @@ pub fn SplitLayout() -> Element {
                                             span { class: "text-green-700 font-bold text-[6px] leading-none", "CH" }
                                             span { class: "text-green-700 font-bold text-[6px] leading-none", "BIO" }
                                         }
-                                        {t!("routes.bio")}
+                                        {t!("routes.bio").to_string()}
                                     },
                                     Route::Knospe { .. } => rsx! {
                                         div {
@@ -110,10 +107,10 @@ pub fn SplitLayout() -> Element {
                                                 }
                                             }
                                         }
-                                        {t!("routes.knospe")}
+                                        {t!("routes.knospe").to_string()}
                                     },
                                     _ => rsx! {
-                                        {t!("routes.configuration")}
+                                        {t!("routes.configuration").to_string()}
                                     }
                                 }}
                                 svg {
@@ -157,8 +154,8 @@ pub fn SplitLayout() -> Element {
                                         }
                                         div {
                                             class: "flex flex-col",
-                                            span { class: "font-medium", {t!("routes.swiss")} }
-                                            span { class: "text-sm text-base-content/70", {t!("routes.swiss_desc")} }
+                                            span { class: "font-medium", {t!("routes.swiss").to_string()} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.swiss_desc").to_string()} }
                                         }
                                     }
                                 }
@@ -182,8 +179,8 @@ pub fn SplitLayout() -> Element {
                                         }
                                         div {
                                             class: "flex flex-col",
-                                            span { class: "font-medium", {t!("routes.bio")} }
-                                            span { class: "text-sm text-base-content/70", {t!("routes.bio_desc")} }
+                                            span { class: "font-medium", {t!("routes.bio").to_string()} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.bio_desc").to_string()} }
                                         }
                                     }
                                 }
@@ -230,8 +227,8 @@ pub fn SplitLayout() -> Element {
                                         }
                                         div {
                                             class: "flex flex-col",
-                                            span { class: "font-medium", {t!("routes.knospe")} }
-                                            span { class: "text-sm text-base-content/70", {t!("routes.knospe_desc")} }
+                                            span { class: "font-medium", {t!("routes.knospe").to_string()} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.knospe_desc").to_string()} }
                                         }
                                     }
                                 }
@@ -250,7 +247,7 @@ pub fn SplitLayout() -> Element {
                                             show_link_modal.set(true);
                                         },
                                         icons::Clipboard {}
-                                        "{t!(\"nav.linkKopieren\")}"
+                                        "{t!(\"nav.linkKopieren\").to_string()}"
                                     }
                                 }
                             } else {
@@ -268,9 +265,9 @@ pub fn SplitLayout() -> Element {
                                 role: "button",
                                 class: "btn btn-ghost btn-sm",
                                 {match rust_i18n::locale().as_ref() {
-                                    "fr-CH" => t!("languages.fr"),
-                                    "it-CH" => t!("languages.it"),
-                                    _ => t!("languages.de"),
+                                    "fr-CH" => t!("languages.fr").to_string(),
+                                    "it-CH" => t!("languages.it").to_string(),
+                                    _ => t!("languages.de").to_string(),
                                 }}
                                 " "
                                 svg {
@@ -301,7 +298,7 @@ pub fn SplitLayout() -> Element {
                                                 let _ = window.location().reload();
                                             }
                                         },
-                                        {t!("languages.de")}
+                                        {t!("languages.de").to_string()}
                                     }
                                 }
                                 li {
@@ -316,7 +313,7 @@ pub fn SplitLayout() -> Element {
                                                 let _ = window.location().reload();
                                             }
                                         },
-                                        {t!("languages.fr")}
+                                        {t!("languages.fr").to_string()}
                                     }
                                 }
                                 li {
@@ -331,7 +328,7 @@ pub fn SplitLayout() -> Element {
                                                 let _ = window.location().reload();
                                             }
                                         },
-                                        {t!("languages.it")}
+                                        {t!("languages.it").to_string()}
                                     }
                                 }
                             }
@@ -349,7 +346,7 @@ pub fn SplitLayout() -> Element {
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {
-                        {t!("version.version")} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from")} " " {
+                        {t!("version.version").to_string()} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from").to_string()} " " {
                             // Convert UTC time string to a more readable format
                             let build_time = built_info::BUILT_TIME_UTC;
                             // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
@@ -363,12 +360,12 @@ pub fn SplitLayout() -> Element {
                     Link {
                         to: Route::Impressum {},
                         class: "link link-blue hover:link-primary",
-                        {t!("app.impressum")}
+                        {t!("app.impressum").to_string()}
                     }
                     a {
                         class: "link link-blue hover:link-primary",
                         href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                        {t!("app.release_notes")}
+                        {t!("app.release_notes").to_string()}
                     }
                 }
             }
@@ -413,11 +410,11 @@ pub fn SplitLayout() -> Element {
                     class: "modal-box",
                     h3 {
                         class: "font-bold text-lg",
-                        {t!("warnings.title")}
+                        {t!("warnings.title").to_string()}
                     }
                     p {
                         class: "py-4",
-                        {t!("warnings.data_loss_on_switch")}
+                        {t!("warnings.data_loss_on_switch").to_string()}
                     }
                     div {
                         class: "modal-action",
@@ -427,7 +424,7 @@ pub fn SplitLayout() -> Element {
                                 show_warning.set(false);
                                 target_route.set(None);
                             },
-                            {t!("buttons.cancel")}
+                            {t!("buttons.cancel").to_string()}
                         }
                         button {
                             class: "btn btn-primary",
@@ -437,7 +434,7 @@ pub fn SplitLayout() -> Element {
                                     nav.push(route);
                                 }
                             },
-                            {t!("buttons.ok")}
+                            {t!("buttons.ok").to_string()}
                         }
                     }
                 }

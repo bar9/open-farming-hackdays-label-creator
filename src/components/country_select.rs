@@ -120,7 +120,7 @@ pub fn CountrySelect(props: CountrySelectProps) -> Element {
             },
 
             // Basic options (always shown)
-            option { value: "", selected: props.value.is_none(), {t!("country_select.please_choose")} }
+            option { value: "", selected: props.value.is_none(), {t!("country_select.please_choose").to_string()} }
             option { value: "CH", selected: matches!(props.value.as_ref(), Some(Country::CH)), "Schweiz" }
             option { value: "EU", selected: matches!(props.value.as_ref(), Some(Country::EU)), "EU" }
             option { value: "NoOriginRequired", selected: matches!(props.value.as_ref(), Some(Country::NoOriginRequired)), "Keine Herkunftsangabe benötigt" }

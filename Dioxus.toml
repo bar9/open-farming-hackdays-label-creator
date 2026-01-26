@@ -29,3 +29,7 @@ watch_path = ["src", "public"]
 
 # uncomment line below if using Router
 index_on_404 = true
+
+[web.build]
+# Enable automatic Tailwind CSS detection and building
+tailwind = true

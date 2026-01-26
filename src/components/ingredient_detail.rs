@@ -492,7 +492,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     }
                     is_open.toggle();
                 },
-                "{t!(\"nav.hinzufuegen\")}"
+                "{t!(\"nav.hinzufuegen\").to_string()}"
             }
         } else {
             button {
@@ -538,9 +538,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
         dialog { open: "{is_open}", class: "modal",
             div { class: "modal-box bg-base-100",
-                h3 { class: "font-bold text-lg", "{t!(\"label.zutatDetails\")}" }
+                h3 { class: "font-bold text-lg", "{t!(\"label.zutatDetails\").to_string()}" }
                 FormField {
-                    label: t!("label.zutatEingeben"),
+                    label: t!("label.zutatEingeben").to_string(),
                     UnifiedIngredientInput {
                         bound_value: edit_name,
                         on_ingredient_select: handle_ingredient_select,
@@ -552,8 +552,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }
                 br {}
                 FormField {
-                    label: format!("{} (g)", t!("label.menge")),
-                    help: Some((t!("help.menge")).into()),
+                    label: format!("{} (g)", t!("label.menge").to_string()),
+                    help: Some((t!("help.menge").to_string()).into()),
                     ValidationDisplay {
                         paths: vec![
                             format!("ingredients[{}][amount]", index)
@@ -586,8 +586,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         edit_unit.set(AmountUnit::Gram);
                                     }
                                 },
-                                option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g")} }
-                                option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml")} }
+                                option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
+                                option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
                             }
                         }
                     }
@@ -595,9 +595,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if !props.genesis && amount_has_changed() {
                         div { class: "text-sm text-info mt-2",
                             if let Some(amt) = edit_amount() {
-                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_ingredient.amount.to_string(), after = amt.to_string())}
+                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_ingredient.amount.to_string(), after = amt.to_string()).to_string()}
                             } else {
-                                {t!("messages.please_enter_amount")}
+                                {t!("messages.please_enter_amount").to_string()}
                             }
                         }
                     }
@@ -611,8 +611,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if is_custom_ingredient() {
                         // Custom ingredient - show checkbox
                         FormField {
-                            help: Some((t!("help.allergenManual")).into()),
-                            label: t!("label.allergen"),
+                            help: Some((t!("help.allergenManual").to_string()).into()),
+                            label: t!("label.allergen").to_string(),
                             inline_checkbox: true,
                             CheckboxInput {
                                 bound_value: is_allergen_custom
@@ -622,9 +622,9 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     } else if is_allergen_custom() {
                         // Database allergen - show text only
                         FormField {
-                            label: t!("label.allergen"),
+                            label: t!("label.allergen").to_string(),
                             div { class: "py-2",
-                                span { class: "font-bold", "({t!(\"label.allergen\")})" }
+                                span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
                             }
                         }
                         br {}
@@ -632,8 +632,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 }
 
                 FormField {
-                    label: t!("label.zusammengesetzteZutat"),
-                    help: Some((t!("help.zusammengesetzteZutaten")).into()),
+                    label: t!("label.zusammengesetzteZutat").to_string(),
+                    help: Some((t!("help.zusammengesetzteZutaten").to_string()).into()),
                     inline_checkbox: true,
                     CheckboxInput {
                         bound_value: edit_is_composite
@@ -649,8 +649,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 ConditionalDisplay {
                     path: "namensgebende_zutat".to_string(),
                     FormField {
-                        help: Some((t!("help.namensgebendeZutaten")).into()),
-                        label: t!("label.namensgebendeZutat"),
+                        help: Some((t!("help.namensgebendeZutaten").to_string()).into()),
+                        label: t!("label.namensgebendeZutat").to_string(),
                         inline_checkbox: true,
                         CheckboxInput {
                             bound_value: edit_is_namensgebend
@@ -687,8 +687,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             // Knospe configuration: Show both Bio (Knospe) and BioCH with mutual exclusion
                             rsx! {
                                 FormField {
-                                    help: Some((t!("help.bio_knospe")).into()),
-                                    label: t!("bio_labels.bio_knospe"),
+                                    help: Some((t!("help.bio_knospe").to_string()).into()),
+                                    label: t!("bio_labels.bio_knospe").to_string(),
                                     inline_checkbox: true,
                                     input {
                                         r#type: "checkbox",
@@ -702,8 +702,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 }
                                 br {}
                                 FormField {
-                                    help: Some((t!("help.bio_ch")).into()),
-                                    label: t!("bio_labels.bio_ch"),
+                                    help: Some((t!("help.bio_ch").to_string()).into()),
+                                    label: t!("bio_labels.bio_ch").to_string(),
                                     inline_checkbox: true,
                                     input {
                                         r#type: "checkbox",
@@ -721,8 +721,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     div { class: "border-t border-base-300 pt-2 mt-2",
                                         // Erlaubte nicht-biologische Zutat (Bio-V)
                                         FormField {
-                                            help: Some((t!("help.erlaubte_ausnahme_bio")).into()),
-                                            label: t!("bio_labels.erlaubte_ausnahme_bio"),
+                                            help: Some((t!("help.erlaubte_ausnahme_bio").to_string()).into()),
+                                            label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
                                             inline_checkbox: true,
                                             input {
                                                 r#type: "checkbox",
@@ -747,8 +747,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         br {}
                                         // Erlaubte nicht-Knospe Zutat
                                         FormField {
-                                            help: Some((t!("help.erlaubte_ausnahme_knospe")).into()),
-                                            label: t!("bio_labels.erlaubte_ausnahme_knospe"),
+                                            help: Some((t!("help.erlaubte_ausnahme_knospe").to_string()).into()),
+                                            label: t!("bio_labels.erlaubte_ausnahme_knospe").to_string(),
                                             inline_checkbox: true,
                                             input {
                                                 r#type: "checkbox",
@@ -777,8 +777,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             // Bio configuration: Show only BioCH with mutual exclusion to Umstellbetrieb
                             rsx! {
                                 FormField {
-                                    help: Some((t!("help.bio_ch")).into()),
-                                    label: t!("bio_labels.bio_ch"),
+                                    help: Some((t!("help.bio_ch").to_string()).into()),
+                                    label: t!("bio_labels.bio_ch").to_string(),
                                     inline_checkbox: true,
                                     input {
                                         r#type: "checkbox",
@@ -795,8 +795,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     br {}
                                     div { class: "border-t border-base-300 pt-2 mt-2",
                                         FormField {
-                                            help: Some((t!("help.erlaubte_ausnahme_bio")).into()),
-                                            label: t!("bio_labels.erlaubte_ausnahme_bio"),
+                                            help: Some((t!("help.erlaubte_ausnahme_bio").to_string()).into()),
+                                            label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
                                             inline_checkbox: true,
                                             input {
                                                 r#type: "checkbox",
@@ -856,8 +856,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         rsx! {
                             br {}
                             FormField {
-                                label: t!("label.verarbeitungsschritte"),
-                                help: Some((t!("help.verarbeitungsschritte")).into()),
+                                label: t!("label.verarbeitungsschritte").to_string(),
+                                help: Some((t!("help.verarbeitungsschritte").to_string()).into()),
                                 div { class: "flex flex-col gap-2",
                                     for step in available_steps.read().iter() {
                                         label { class: "flex items-center gap-2 cursor-pointer",
@@ -921,8 +921,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if should_show_origin() {
                         rsx! {
                             FormField {
-                                label: t!("origin.herkunft"),
-                                help: Some((t!("help.herkunft_liv_art_16")).into()),
+                                label: t!("origin.herkunft").to_string(),
+                                help: Some((t!("help.herkunft_liv_art_16").to_string()).into()),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][origin]", index)
@@ -961,8 +961,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if should_show_beef_fields() {
                         rsx! {
                             FormField {
-                                label: t!("origin.aufzucht"),
-                                help: Some((t!("help.aufzucht_location")).into()),
+                                label: t!("origin.aufzucht").to_string(),
+                                help: Some((t!("help.aufzucht_location").to_string()).into()),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][aufzucht_ort]", index)
@@ -977,7 +977,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 }
                             }
                             FormField {
-                                label: t!("origin.schlachtung"),
+                                label: t!("origin.schlachtung").to_string(),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][schlachtungs_ort]", index)
@@ -1017,7 +1017,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if should_show_fish_field() {
                         rsx! {
                             FormField {
-                                label: t!("origin.fangort"),
+                                label: t!("origin.fangort").to_string(),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][fangort]", index)
@@ -1066,7 +1066,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
                             is_open.set(false);
                         },
-                        {t!("nav.schliessen")},
+                        {t!("nav.schliessen").to_string()},
                     }
                     
                     // Show "Merken" button only for composite ingredients
@@ -1075,21 +1075,21 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             class: "btn btn-info",
                             onclick: handle_save_to_storage,
                             title: t!("tooltips.save_composite_ingredient").to_string(),
-                            {t!("buttons.save_to_storage")}
+                            {t!("buttons.save_to_storage").to_string()}
                         }
                     }
                     
                     button {
                         class: "btn btn-primary",
                         onclick: move |_| handle_save(false),
-                        {t!("nav.speichern")},
+                        {t!("nav.speichern").to_string()},
                     }
                     if !props.genesis && amount_has_changed() {
                         button {
                             class: "btn btn-secondary",
                             onclick: move |_| handle_save(true),
                             title: t!("buttons.transfer_scaling_title", factor = format!("{:.2}", scaling_factor())).to_string(),
-                            {t!("buttons.save_and_transfer")}
+                            {t!("buttons.save_and_transfer").to_string()}
                         }
                     }
                 }

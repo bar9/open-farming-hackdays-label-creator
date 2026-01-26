@@ -45,7 +45,7 @@ pub fn CategorySelectorModal(
             class: "modal",
             div { class: "modal-box w-11/12 max-w-5xl",
                 div { class: "flex justify-between items-center mb-4",
-                    h3 { class: "font-bold text-lg", {t!("category_selector.title")} }
+                    h3 { class: "font-bold text-lg", {t!("category_selector.title").to_string()} }
                     button {
                         class: "btn btn-sm btn-circle btn-ghost",
                         onclick: handle_cancel,
@@ -54,7 +54,7 @@ pub fn CategorySelectorModal(
 
                 // Show count of suggestions
                 div { class: "text-sm text-base-content/70 mb-4",
-                    {t!("category_selector.suggestions_count", count = food_suggestions.read().len())}
+                    {t!("category_selector.suggestions_count", count = food_suggestions.read().len()).to_string()}
                 }
 
                 // Filter input
@@ -74,7 +74,7 @@ pub fn CategorySelectorModal(
                 div { class: "max-h-96 overflow-y-auto",
                     if filtered_suggestions.read().is_empty() {
                         div { class: "text-center py-8 text-base-content/50",
-                            {t!("category_selector.no_matches")}
+                            {t!("category_selector.no_matches").to_string()}
                         }
                     } else {
                         for (_index, item) in filtered_suggestions.read().iter().enumerate() {
@@ -96,7 +96,7 @@ pub fn CategorySelectorModal(
                                             }
                                         } else {
                                             div { class: "text-sm text-base-content/50 mt-1",
-                                                {t!("category_selector.no_category")}
+                                                {t!("category_selector.no_category").to_string()}
                                             }
                                         }
                                     }
@@ -114,7 +114,7 @@ pub fn CategorySelectorModal(
                     button {
                         class: "btn btn-ghost",
                         onclick: handle_cancel,
-                        {t!("category_selector.cancel")}
+                        {t!("category_selector.cancel").to_string()}
                     }
                 }
             }

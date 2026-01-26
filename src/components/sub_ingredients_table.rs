@@ -169,8 +169,8 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         div { class: "flex flex-col gap-4",
             table { class: "table border-solid",
                 tr {
-                    th { "{t!(\"label.zutat\")}" }
-                    th { "{t!(\"origin.herkunft\")}" }
+                    th { "{t!(\"label.zutat\").to_string()}" }
+                    th { "{t!(\"origin.herkunft\").to_string()}" }
                     th { "" }
                     th { "" }
                 }
@@ -223,14 +223,14 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                                     },
                                                 }
                                                 span { class: "label-text ml-2",
-                                                    {t!("label.allergen")}
+                                                    {t!("label.allergen").to_string()}
                                                 }
                                             }
                                         }
                                     } else if ingr.is_allergen {
                                         rsx! {
                                             // Database allergen - show text only
-                                            span { class: "font-bold", "({t!(\"label.allergen\")})" }
+                                            span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
                                         }
                                     } else {
                                         rsx! {}

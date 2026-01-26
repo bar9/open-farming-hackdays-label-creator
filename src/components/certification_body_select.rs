@@ -15,11 +15,11 @@ pub fn CertificationBodySelect(mut props: CertificationBodySelectProps) -> Eleme
             onchange: move |e| {
                 props.bound_value.set(e.value());
             },
-            option { value: "", {t!("certification_body.please_select")} }
-            option { value: "CH-BIO-006", {t!("certification_body.bio_006")} }
-            option { value: "CH-BIO-086", {t!("certification_body.bio_086")} }
-            option { value: "CH-BIO-038", {t!("certification_body.bio_038")} }
-            option { value: "CH-BIO-004", {t!("certification_body.bio_004")} }
+            option { value: "", {t!("certification_body.please_select").to_string()} }
+            option { value: "CH-BIO-006", {t!("certification_body.bio_006").to_string()} }
+            option { value: "CH-BIO-086", {t!("certification_body.bio_086").to_string()} }
+            option { value: "CH-BIO-038", {t!("certification_body.bio_038").to_string()} }
+            option { value: "CH-BIO-004", {t!("certification_body.bio_004").to_string()} }
         }
     }
 }

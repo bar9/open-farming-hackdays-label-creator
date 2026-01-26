@@ -125,7 +125,7 @@ pub fn LabelPreview(
                 div {
                     class: "py-2",
                     if (*product_subtitle.read()).is_empty() {
-                        span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung")}}
+                        span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung").to_string()}}
                     } else {
                         {
                             let bio_suffix = if conditionals.0().get("bio_sachbezeichnung_suffix").unwrap_or(&false) == &true {
@@ -151,10 +151,10 @@ pub fn LabelPreview(
                     div {
                         class: "py-2",
                         if (*label.read()).is_empty() {
-                            span { class: "badge badge-warning", {t!("preview.zutatenliste")} }
+                            span { class: "badge badge-warning", {t!("preview.zutatenliste").to_string()} }
                         } else {
                             div { class: "text-sm",
-                                "{t!(\"preview.zutaten\")} "
+                                "{t!(\"preview.zutaten\").to_string()} "
                                 span { dangerous_inner_html: "{label}" }
                             }
                         }
@@ -203,11 +203,11 @@ pub fn LabelPreview(
                             div {
                                 class: "text-sm",
                                 span {
-                                    span {class: "pr-2", "{t!(\"preview.nettogewicht\")}" }
+                                    span {class: "pr-2", "{t!(\"preview.nettogewicht\").to_string()}" }
                                     "{netto} {get_unit()}"
                                 }
                                 span {
-                                    span {class: "pl-2 pr-2", "{t!(\"preview.abtropfgewicht\")}" }
+                                    span {class: "pl-2 pr-2", "{t!(\"preview.abtropfgewicht\").to_string()}" }
                                     "{brutto} {get_unit()}"
                                 }
                             }
@@ -241,22 +241,22 @@ pub fn LabelPreview(
                             "{address_combined}"
                         }
                     } else {
-                        span {class: "badge badge-warning", {t!("preview.herstelleradresse")} }
+                        span {class: "badge badge-warning", {t!("preview.herstelleradresse").to_string()} }
                     }
                     if !producer_phone.read().is_empty() {
                         div {class: "text-sm",
-                            "{t!(\"preview.tel\", phone=producer_phone)}"
+                            "{t!(\"preview.tel\", phone=producer_phone).to_string()}"
                         }
                     }
                     if !producer_email.read().is_empty() {
                         div {class: "text-sm",
-                            "{t!(\"preview.email\", email=producer_email)}"
+                            "{t!(\"preview.email\", email=producer_email).to_string()}"
                         }
                     }
 
                     if !producer_website.read().is_empty() {
                         div {class: "text-sm",
-                            "{t!(\"preview.website\", website=producer_website)}"
+                            "{t!(\"preview.website\", website=producer_website).to_string()}"
                         }
                     }
                 }
@@ -272,7 +272,7 @@ pub fn LabelPreview(
                         (Price::Single(x), Amount::Double(Some(500), _)) => rsx! {
                             span {
                                 class: "text-sm",
-                                "{display_money_rounded(x)} " {t!("units.chf")}
+                                "{display_money_rounded(x)} " {t!("units.chf").to_string()}
                             }
                         },
                         // Handle non-unitary amounts with Price::Single - show both unit price and calculated total
@@ -286,13 +286,13 @@ pub fn LabelPreview(
                                     div {
                                         class: "text-sm",
                                         span {
-                                            span {class: "pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
-                                            "{display_money_exact(Some(unit_price))} " {t!("units.chf")}
+                                            span {class: "pr-2", {t!("units.chfPro").to_string()} {get_base_factor_and_unit()} }
+                                            "{display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
                                         }
                                         if let Some(total_price) = total_price_display {
                                             span {
-                                                span {class: "pl-2 pr-2", {t!("preview.preis")} }
-                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf")}
+                                                span {class: "pl-2 pr-2", {t!("preview.preis").to_string()} }
+                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
                                             }
                                         }
                                     }
@@ -311,7 +311,7 @@ pub fn LabelPreview(
                         (Price::Double(x, _), Amount::Double(Some(500), _)) => rsx! {
                             span {
                                 class: "text-sm",
-                                "{display_money_rounded(x)} " {t!("units.chf")}
+                                "{display_money_rounded(x)} " {t!("units.chf").to_string()}
                             }
                         },
                         (Price::Double(x, y), _) => {
@@ -331,14 +331,14 @@ pub fn LabelPreview(
                                         class: "text-sm",
                                         if let Some(unit_price) = unit_price_display {
                                             span {
-                                                span {class: "pr-2", {t!("units.chfPro")} {get_base_factor_and_unit()} }
-                                                "{display_money_exact(Some(unit_price))} " {t!("units.chf")}
+                                                span {class: "pr-2", {t!("units.chfPro").to_string()} {get_base_factor_and_unit()} }
+                                                "{display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
                                             }
                                         }
                                         if let Some(total_price) = total_price_display {
                                             span {
-                                                span {class: "pl-2 pr-2", {t!("preview.preis")} }
-                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf")}
+                                                span {class: "pl-2 pr-2", {t!("preview.preis").to_string()} }
+                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
                                             }
                                         }
                                     }
@@ -352,10 +352,10 @@ pub fn LabelPreview(
                 // if !(price_per_100().is_empty() && total_price().is_empty()) {
                 //     div { class: "py-2 grid grid-cols-2 gap-4",
                 //         div {
-                //             span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\")}"} "{price_per_100} " {t!("units.chf")}
+                //             span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\").to_string()}"} "{price_per_100} " {t!("units.chf").to_string()}
                 //         }
                 //         div {
-                //             span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\")}"} "{total_price} " {t!("units.chf")}
+                //             span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\").to_string()}"} "{total_price} " {t!("units.chf").to_string()}
                 //         }
                 //     }
                 // }
@@ -376,12 +376,12 @@ pub fn LabelPreview(
                 // Bio Marketing Hints
                 if conditionals.0().get("bio_marketing_allowed").unwrap_or(&false) == &true {
                     div { class: "mt-2 p-2 bg-success/10 text-success text-xs rounded",
-                        {t!("bio_hints.marketing_allowed")}
+                        {t!("bio_hints.marketing_allowed").to_string()}
                     }
                 }
                 if conditionals.0().get("bio_marketing_not_allowed").unwrap_or(&false) == &true {
                     div { class: "mt-2 p-2 bg-warning/10 text-warning text-xs rounded",
-                        {t!("bio_hints.marketing_not_allowed")}
+                        {t!("bio_hints.marketing_not_allowed").to_string()}
                     }
                 }
                 }

@@ -125,7 +125,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 class: "modal-box w-11/12 max-w-2xl",
                 h3 {
                     class: "font-bold text-lg mb-4",
-                    {t!("link_share_title")}
+                    {t!("link_share_title").to_string()}
                 }
 
                 div {
@@ -143,7 +143,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                     link_type.set(LinkType::Full);
                                 }
                             }
-                            span { class: "label-text", {t!("link_type_full")} }
+                            span { class: "label-text", {t!("link_type_full").to_string()} }
                         }
                         label {
                             class: "label cursor-pointer flex items-center gap-2",
@@ -156,14 +156,14 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                     link_type.set(LinkType::Short);
                                 }
                             }
-                            span { class: "label-text", {t!("link_type_short")} }
+                            span { class: "label-text", {t!("link_type_short").to_string()} }
                         }
                     }
 
                     if link_type() == LinkType::Short {
                         div {
                             class: "text-sm text-base-content/70 mb-4",
-                            {t!("link_short_disclaimer")}
+                            {t!("link_short_disclaimer").to_string()}
                         }
 
                         if short_url().is_none() && show_shorten_button() {
@@ -175,9 +175,9 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                     onclick: shorten_url_action,
                                     if is_shortening() {
                                         span { class: "loading loading-spinner loading-sm" }
-                                        {t!("shortening")}
+                                        {t!("shortening").to_string()}
                                     } else {
-                                        {t!("shorten_url_button")}
+                                        {t!("shorten_url_button").to_string()}
                                     }
                                 }
                             }
@@ -253,7 +253,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                             if copy_success() {
                                 div {
                                     class: "text-success text-sm mt-2",
-                                    {t!("link_copied_success")}
+                                    {t!("link_copied_success").to_string()}
                                 }
                             }
                         }
@@ -265,7 +265,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                     button {
                         class: "btn",
                         onclick: move |_| show.set(false),
-                        {t!("close")}
+                        {t!("close").to_string()}
                     }
                 }
             }
@@ -273,7 +273,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 method: "dialog",
                 class: "modal-backdrop",
                 onclick: move |_| show.set(false),
-                button { {t!("buttons.close")} }
+                button { {t!("buttons.close").to_string()} }
             }
         }
     }
