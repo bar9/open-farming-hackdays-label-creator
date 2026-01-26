@@ -36,6 +36,22 @@ cargo make dev
 ```
 and open `http://localhost:8080/open-farming-hackdays-label-creator` (without a trailing slash!)
 
+## Build Options
+
+This project supports feature flags to control which pages are included in the build:
+
+### Development Build (All Pages)
+```bash
+dx build
+```
+Includes all pages: Swiss food law (Lebensmittelrecht), Bio, and Knospe certification pages.
+
+### Production Build (Swiss Only)
+```bash
+dx build --features hidebio
+```
+Includes only the Swiss food law (Lebensmittelrecht) page. Bio and Knospe certification pages are disabled and shown as "Coming Soon".
+
 ## Eingabefelder und Feldtypen
 
 1. Sachbezeichnung / “Name des Produkts" (Textfeld)

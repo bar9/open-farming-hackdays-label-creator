@@ -1,0 +1,73 @@
+name: Deploy Production to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Change this to match the branch you want to deploy from
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+            target: wasm32-unknown-unknown
+
+      - name: Download Dioxus CLI binary
+        run: wget https://github.com/DioxusLabs/dioxus/releases/download/v0.7.3/dx-x86_64-unknown-linux-gnu.tar.gz
+
+      - name: Extract binary
+        run: tar -xzf dx-x86_64-unknown-linux-gnu.tar.gz
+
+      - name: Make binary executable
+        run: chmod +x dx
+
+      - name: Move binary to PATH
+        run: sudo mv dx /usr/local/bin/
+
+      - name: Verify installation
+        run: dx --version
+
+      - name: NPM Install
+        run: |
+          npm install
+
+      - name: Tailwind CSS Generation
+        run: |
+          # Build Tailwind CSS Styles
+          npx @tailwindcss/cli -i input.css -o assets/tailwind.css
+
+      - name: Build with Dioxus (Production - hidebio feature)
+        run: |
+          # Build your application with dx with hidebio feature enabled
+          dx build --release --features hidebio
+
+      - name: Create fallback pages for client-side routing
+        run: |
+          # Create the public directory structure
+          PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
+
+          # Only create directory for Swiss route in production
+          mkdir -p "$PUBLIC_DIR/lebensmittelrecht"
+          mkdir -p "$PUBLIC_DIR/impressum"
+
+          # Copy index.html to each route directory for fallback
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/lebensmittelrecht/index.html"
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/impressum/index.html"
+
+          echo "Created fallback pages for production routes"
+
+      - name: Deploy to Production GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
+          external_repository: bar9/declarino
+          publish_branch: gh-pages
+          publish_dir: ./target/dx/open-farming-hackdays-label-creator/release/web/public
+          clean: true

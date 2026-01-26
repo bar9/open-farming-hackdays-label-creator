@@ -1,7 +1,9 @@
 use crate::layout::FullLayout;
 use crate::layout::SplitLayout;
+#[cfg(not(feature = "hidebio"))]
 use crate::pages::bio::Bio;
 use crate::pages::impressum::Impressum;
+#[cfg(not(feature = "hidebio"))]
 use crate::pages::knospe::Knospe;
 use crate::pages::splash_screen::SplashScreen;
 use crate::pages::swiss::Swiss;
@@ -16,9 +18,11 @@ pub enum Route {
             #[route("/lebensmittelrecht")]
             Swiss {},
 
+            #[cfg(not(feature = "hidebio"))]
             #[route("/bio")]
             Bio {},
 
+            #[cfg(not(feature = "hidebio"))]
             #[route("/knospe")]
             Knospe {},
         #[end_layout]

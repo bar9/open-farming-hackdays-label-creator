@@ -158,9 +158,17 @@ pub fn SplashScreen() -> Element {
                     }
 
                         button {
-                            class: "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: if cfg!(feature = "hidebio") {
+                                "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
+                            } else {
+                                "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
+                            },
+                            disabled: cfg!(feature = "hidebio"),
                             onclick: move |_| {
-                                nav.push(Route::Bio {});
+                                #[cfg(not(feature = "hidebio"))]
+                                {
+                                    nav.push(Route::Bio {});
+                                }
                             },
                         div {
                             class: "card-body items-center text-center",
@@ -174,16 +182,34 @@ pub fn SplashScreen() -> Element {
                                 span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                             }
                             div {
-                                class: "badge badge-warning text-xs px-2 py-1",
-                                {t!("badges.in_development").to_string()}
+                                class: if cfg!(feature = "hidebio") {
+                                    "badge badge-secondary text-xs px-2 py-1"
+                                } else {
+                                    "badge badge-warning text-xs px-2 py-1"
+                                },
+{
+                                    if cfg!(feature = "hidebio") {
+                                        "Coming Soon".to_string()
+                                    } else {
+                                        t!("badges.in_development").to_string()
+                                    }
+                                }
                             }
                         }
                     }
 
                         button {
-                            class: "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                            class: if cfg!(feature = "hidebio") {
+                                "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
+                            } else {
+                                "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
+                            },
+                            disabled: cfg!(feature = "hidebio"),
                             onclick: move |_| {
-                                nav.push(Route::Knospe {});
+                                #[cfg(not(feature = "hidebio"))]
+                                {
+                                    nav.push(Route::Knospe {});
+                                }
                             },
                         div {
                             class: "card-body items-center text-center",
@@ -231,8 +257,18 @@ pub fn SplashScreen() -> Element {
                                 }
                             }
                             div {
-                                class: "badge badge-warning text-xs px-2 py-1",
-                                {t!("badges.in_development").to_string()}
+                                class: if cfg!(feature = "hidebio") {
+                                    "badge badge-secondary text-xs px-2 py-1"
+                                } else {
+                                    "badge badge-warning text-xs px-2 py-1"
+                                },
+{
+                                    if cfg!(feature = "hidebio") {
+                                        "Coming Soon".to_string()
+                                    } else {
+                                        t!("badges.in_development").to_string()
+                                    }
+                                }
                             }
                         }
                     }
