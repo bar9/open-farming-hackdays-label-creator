@@ -57,8 +57,9 @@ jobs:
           # Create the public directory structure
           PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
 
-          # Copy development-specific 404.html for SPA routing
-          cp "./public/404-dev.html" "$PUBLIC_DIR/404.html"
+          # Copy index.html as 404.html for proper SPA routing
+          # This preserves the URL when GitHub Pages serves 404.html
+          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/404.html"
 
           echo "Configured SPA routing with 404.html for development"
           
