@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Label Creator</title>
+    <script type="text/javascript">
+        // GitHub Pages SPA redirect for development environment
+        // Redirects /lebensmittelrecht?params to /open-farming-hackdays-label-creator/?params
+        // while preserving all query parameters
+        (function(l) {
+            var pathname = l.pathname || '';
+            var search = l.search || '';
+            var hash = l.hash || '';
+
+            // Redirect to the base path, preserving the original route and all parameters
+            var redirect = '/open-farming-hackdays-label-creator/' + search + hash;
+            window.location.replace(redirect);
+        }(window.location))
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>
