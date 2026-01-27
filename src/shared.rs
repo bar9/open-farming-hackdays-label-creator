@@ -13,3 +13,15 @@ pub enum Configuration {
     Bio,
     Knospe,
 }
+
+pub fn restore_params_from_session_storage() -> Option<String> {
+    if let Some(window) = web_sys::window() {
+        if let Ok(Some(storage)) = window.session_storage() {
+            if let Ok(Some(saved_params)) = storage.get_item("pre_route_params") {
+                let _ = storage.remove_item("pre_route_params");
+                return Some(saved_params);
+            }
+        }
+    }
+    None
+}

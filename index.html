@@ -12,6 +12,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
+    <script>
+      // Capture query parameters before the router processes them
+      (function() {
+        const search = window.location.search;
+        if (search && search.length > 1) {
+          // Save to sessionStorage so our component can read it
+          sessionStorage.setItem('pre_route_params', search.substring(1)); // Remove the '?'
+        }
+      })();
+    </script>
     <div id="main"></div>
   </body>
 </html>

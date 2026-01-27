@@ -2,7 +2,7 @@ use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::layout::{CopyLinkContext, ThemeContext};
 use crate::rules::{RuleDef, RuleRegistry};
-use crate::shared::{Conditionals, Configuration, Validations};
+use crate::shared::{restore_params_from_session_storage, Conditionals, Configuration, Validations};
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
@@ -91,40 +91,6 @@ impl From<Form> for Input {
 
 impl Default for Form {
     fn default() -> Self {
-        if let Some(window) = web_sys::window() {
-            if let Ok(mut query_string) = window.location().search() {
-                query_string = query_string.trim_start_matches('?').to_string();
-                if !query_string.is_empty() {
-                    // URL decode the query string before parsing
-                    let decoded_query_string = js_sys::decode_uri_component(&query_string)
-                        .unwrap_or_else(|_| query_string.clone().into())
-                        .as_string()
-                        .unwrap_or(query_string.clone());
-
-                    web_sys::console::log_1(&format!("Parsing query string: {}", decoded_query_string).into());
-                    match from_query_string::<Form>(&decoded_query_string) {
-                        Ok(app_state_from_query_string) => {
-                            web_sys::console::log_1(&"Successfully parsed URL parameters".into());
-                            return app_state_from_query_string;
-                        }
-                        Err(e) => {
-                            web_sys::console::log_1(&format!("Failed to parse URL parameters: {:?}", e).into());
-
-                            // Try to diagnose specific issues
-                            if query_string.contains("amount[") {
-                                web_sys::console::log_1(&"URL contains amount enum variant syntax".into());
-                            }
-                            if query_string.contains("price[") {
-                                web_sys::console::log_1(&"URL contains price enum variant syntax".into());
-                            }
-                            if query_string.contains("origin=") {
-                                web_sys::console::log_1(&"URL contains origin parameter".into());
-                            }
-                        }
-                    }
-                }
-            }
-        }
         Form {
             ingredients: Vec::new(),
             ignore_ingredients: false,
@@ -154,33 +120,89 @@ impl Default for Form {
     }
 }
 
+fn parse_form_from_saved_params(params: &str) -> Option<Form> {
+    let decoded_query_string = js_sys::decode_uri_component(params)
+        .unwrap_or_else(|_| params.into())
+        .as_string()
+        .unwrap_or(params.to_string());
+
+    from_query_string::<Form>(&decoded_query_string).ok()
+}
+
 pub fn Bio() -> Element {
-    let initial_form = use_memo(Form::default);
-    let ignore_ingredients = use_signal(|| false);
-    let rezeptur_vollstaendig = use_signal(|| initial_form.read().rezeptur_vollstaendig);
-    let ingredients: Signal<Vec<Ingredient>> =
+    let mut url_params = use_signal(String::new);
+
+    use_effect(move || {
+        if let Some(saved_params) = restore_params_from_session_storage() {
+            url_params.set(saved_params);
+        }
+    });
+
+    let initial_form = use_memo(move || {
+        let params = url_params.read().clone();
+        if !params.is_empty() {
+            if let Some(form_data) = parse_form_from_saved_params(&params) {
+                return form_data;
+            }
+        }
+        Form::default()
+    });
+
+    let mut ignore_ingredients = use_signal(|| false);
+    let mut rezeptur_vollstaendig = use_signal(|| initial_form.read().rezeptur_vollstaendig);
+    let mut ingredients: Signal<Vec<Ingredient>> =
         use_signal(|| initial_form.read().ingredients.clone());
-    let product_title = use_signal(|| initial_form.read().product_title.clone());
-    let product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
-    let additional_info = use_signal(|| initial_form.read().additional_info.clone());
-    let storage_info = use_signal(|| initial_form.read().storage_info.clone());
-    let date_prefix = use_signal(|| initial_form.read().date_prefix.clone());
-    let date = use_signal(|| initial_form.read().date.clone());
-    let production_country = use_signal(|| initial_form.read().production_country.clone());
-    let producer_name = use_signal(|| initial_form.read().producer_name.clone());
-    let producer_address = use_signal(|| initial_form.read().producer_address.clone());
-    let producer_email = use_signal(|| initial_form.read().producer_email.clone());
-    let producer_website = use_signal(|| initial_form.read().producer_website.clone());
-    let producer_phone = use_signal(|| initial_form.read().producer_phone.clone());
-    let producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
-    let producer_city = use_signal(|| initial_form.read().producer_city.clone());
-    let certification_body = use_signal(|| initial_form.read().certification_body.clone());
-    let manual_total = use_signal(|| initial_form.read().manual_total);
-    let amount_type: Signal<AmountType> = use_signal(|| initial_form.read().amount_type.clone());
-    let weight_unit: Signal<String> = use_signal(|| initial_form.read().weight_unit.clone());
-    let volume_unit: Signal<String> = use_signal(|| initial_form.read().volume_unit.clone());
-    let amount: Signal<Amount> = use_signal(|| initial_form.read().amount);
-    let price: Signal<Price> = use_signal(|| initial_form.read().price);
+    let mut product_title = use_signal(|| initial_form.read().product_title.clone());
+    let mut product_subtitle = use_signal(|| initial_form.read().product_subtitle.clone());
+    let mut additional_info = use_signal(|| initial_form.read().additional_info.clone());
+    let mut storage_info = use_signal(|| initial_form.read().storage_info.clone());
+    let mut date_prefix = use_signal(|| initial_form.read().date_prefix.clone());
+    let mut date = use_signal(|| initial_form.read().date.clone());
+    let mut production_country = use_signal(|| initial_form.read().production_country.clone());
+    let mut producer_name = use_signal(|| initial_form.read().producer_name.clone());
+    let mut producer_address = use_signal(|| initial_form.read().producer_address.clone());
+    let mut producer_email = use_signal(|| initial_form.read().producer_email.clone());
+    let mut producer_website = use_signal(|| initial_form.read().producer_website.clone());
+    let mut producer_phone = use_signal(|| initial_form.read().producer_phone.clone());
+    let mut producer_zip = use_signal(|| initial_form.read().producer_zip.clone());
+    let mut producer_city = use_signal(|| initial_form.read().producer_city.clone());
+    let mut certification_body = use_signal(|| initial_form.read().certification_body.clone());
+    let mut manual_total = use_signal(|| initial_form.read().manual_total);
+    let mut amount_type: Signal<AmountType> = use_signal(|| initial_form.read().amount_type.clone());
+    let mut weight_unit: Signal<String> = use_signal(|| initial_form.read().weight_unit.clone());
+    let mut volume_unit: Signal<String> = use_signal(|| initial_form.read().volume_unit.clone());
+    let mut amount: Signal<Amount> = use_signal(|| initial_form.read().amount);
+    let mut price: Signal<Price> = use_signal(|| initial_form.read().price);
+
+    use_effect(move || {
+        let form_data = initial_form.read();
+        if !form_data.product_title.is_empty() || !form_data.product_subtitle.is_empty() {
+            ignore_ingredients.set(form_data.ignore_ingredients);
+            rezeptur_vollstaendig.set(form_data.rezeptur_vollstaendig);
+            ingredients.set(form_data.ingredients.clone());
+            product_title.set(form_data.product_title.clone());
+            product_subtitle.set(form_data.product_subtitle.clone());
+            additional_info.set(form_data.additional_info.clone());
+            storage_info.set(form_data.storage_info.clone());
+            date_prefix.set(form_data.date_prefix.clone());
+            date.set(form_data.date.clone());
+            production_country.set(form_data.production_country.clone());
+            producer_name.set(form_data.producer_name.clone());
+            producer_address.set(form_data.producer_address.clone());
+            producer_email.set(form_data.producer_email.clone());
+            producer_website.set(form_data.producer_website.clone());
+            producer_phone.set(form_data.producer_phone.clone());
+            producer_zip.set(form_data.producer_zip.clone());
+            producer_city.set(form_data.producer_city.clone());
+            certification_body.set(form_data.certification_body.clone());
+            manual_total.set(form_data.manual_total);
+            amount_type.set(form_data.amount_type.clone());
+            weight_unit.set(form_data.weight_unit.clone());
+            volume_unit.set(form_data.volume_unit.clone());
+            amount.set(form_data.amount);
+            price.set(form_data.price);
+        }
+    });
 
     let configuration = use_signal(|| Configuration::Bio);
 
