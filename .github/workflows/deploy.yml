@@ -52,24 +52,15 @@ jobs:
           # Build your application with dx
           dx build --release
 
-      - name: Create fallback pages for client-side routing
+      - name: Configure SPA routing for GitHub Pages
         run: |
           # Create the public directory structure
           PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
 
-          # Create directories for each route
-          mkdir -p "$PUBLIC_DIR/lebensmittelrecht"
-          mkdir -p "$PUBLIC_DIR/bio"
-          mkdir -p "$PUBLIC_DIR/knospe"
-          mkdir -p "$PUBLIC_DIR/impressum"
+          # Copy development-specific 404.html for SPA routing
+          cp "./public/404-dev.html" "$PUBLIC_DIR/404.html"
 
-          # Copy index.html to each route directory for fallback
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/lebensmittelrecht/index.html"
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/bio/index.html"
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/knospe/index.html"
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/impressum/index.html"
-
-          echo "Created fallback pages for all routes"
+          echo "Configured SPA routing with 404.html for development"
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

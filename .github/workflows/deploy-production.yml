@@ -54,23 +54,18 @@ jobs:
           # Build your application with dx with hidebio feature enabled
           dx build --release --features hidebio
 
-      - name: Create fallback pages for client-side routing
+      - name: Configure SPA routing for production
         run: |
           # Create the public directory structure
           PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
 
-          # Only create directory for Swiss route in production
-          mkdir -p "$PUBLIC_DIR/lebensmittelrecht"
-          mkdir -p "$PUBLIC_DIR/impressum"
-
-          # Copy index.html to each route directory for fallback
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/lebensmittelrecht/index.html"
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/impressum/index.html"
+          # Copy production-specific 404.html for SPA routing
+          cp "./public/404-prod.html" "$PUBLIC_DIR/404.html"
 
           # Copy CNAME file for custom domain configuration
           cp "./public/CNAME" "$PUBLIC_DIR/CNAME"
 
-          echo "Created fallback pages and CNAME for production routes"
+          echo "Configured SPA routing with 404.html and CNAME for production"
 
       - name: Deploy to Production GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
