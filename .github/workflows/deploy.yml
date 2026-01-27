@@ -56,19 +56,19 @@ jobs:
         run: |
           # Create the public directory structure
           PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
-          
+
           # Create directories for each route
           mkdir -p "$PUBLIC_DIR/lebensmittelrecht"
           mkdir -p "$PUBLIC_DIR/bio"
           mkdir -p "$PUBLIC_DIR/knospe"
           mkdir -p "$PUBLIC_DIR/impressum"
-          
+
           # Copy index.html to each route directory for fallback
           cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/lebensmittelrecht/index.html"
           cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/bio/index.html"
           cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/knospe/index.html"
           cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/impressum/index.html"
-          
+
           echo "Created fallback pages for all routes"
           
       - name: Deploy to GitHub Pages

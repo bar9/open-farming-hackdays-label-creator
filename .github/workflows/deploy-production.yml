@@ -70,10 +70,7 @@ jobs:
           # Copy CNAME file for custom domain configuration
           cp "./public/CNAME" "$PUBLIC_DIR/CNAME"
 
-          # Copy 404.html for better client-side routing fallback
-          cp "./public/404.html" "$PUBLIC_DIR/404.html"
-
-          echo "Created fallback pages, CNAME, and 404.html for production routes"
+          echo "Created fallback pages and CNAME for production routes"
 
       - name: Deploy to Production GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
