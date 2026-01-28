@@ -66,6 +66,9 @@ jobs:
           # Copy CNAME file for custom domain configuration
           cp "./public/CNAME" "$PUBLIC_DIR/CNAME"
 
+          # Remove robots.txt for production (allow indexing)
+          rm -f "$PUBLIC_DIR/robots.txt"
+
           echo "Configured SPA routing with 404.html and CNAME for production"
 
       - name: Deploy to Production GitHub Pages
