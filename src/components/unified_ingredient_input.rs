@@ -25,8 +25,9 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
     let mut is_dropdown_open = use_signal(|| false);
     let mut search_results = use_signal(Vec::<UnifiedIngredient>::new);
     let is_searching = use_signal(|| false);
-    let mut search_request_id = use_signal(|| 0u32); // Track search requests to prevent race conditions
+    let search_request_id = use_signal(|| 0u32); // Track search requests to prevent race conditions
     let mut search_error = use_signal(|| None::<String>); // Track search errors
+    let mut debounce_id = use_signal(|| 0u32); // Track debounce to cancel pending searches
 
     // Store reference to the input element for programmatic focus
     let mut input_element: Signal<Option<Rc<MountedData>>> = use_signal(|| None);
@@ -46,34 +47,46 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
         }
     });
 
-    // Handle input changes with search
+    // Handle input changes with debounced search (3 chars min, 200ms delay)
     let mut handle_input = move |value: String| {
         props.bound_value.set(value.clone());
 
         if value.trim().is_empty() {
             is_dropdown_open.set(false);
             search_results.set(Vec::new());
-            search_error.set(None); // Clear errors
+            search_error.set(None);
             return;
         }
 
-        if value.len() < 2 {
-            return; // Wait for at least 2 characters
+        if value.len() < 3 {
+            return; // Wait for at least 3 characters
         }
 
-        // Clear previous errors and increment request ID to track this search
+        // Clear previous errors and increment debounce ID to cancel pending searches
         search_error.set(None);
-        search_request_id.set(search_request_id() + 1);
-        let current_request_id = search_request_id();
+        debounce_id.set(debounce_id() + 1);
+        let current_debounce_id = debounce_id();
 
-        // Trigger search
         let mut search_results_clone = search_results;
         let mut is_searching_clone = is_searching;
         let mut is_dropdown_open_clone = is_dropdown_open;
-        let search_request_id_clone = search_request_id;
+        let mut search_request_id_clone = search_request_id;
+        let debounce_id_clone = debounce_id;
         let mut search_error_clone = search_error;
 
         spawn(async move {
+            // Debounce: wait 200ms before executing search
+            gloo::timers::future::TimeoutFuture::new(200).await;
+
+            // Check if this debounce is still current (not superseded by newer keystroke)
+            if current_debounce_id != debounce_id_clone() {
+                return;
+            }
+
+            // Now execute the actual search
+            search_request_id_clone.set(search_request_id_clone() + 1);
+            let current_request_id = search_request_id_clone();
+
             is_searching_clone.set(true);
 
             // Get current locale for API call
@@ -95,18 +108,15 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                             is_dropdown_open_clone.set(true);
                         }
                     }
-                    // Else: ignore outdated response
                 }
                 Err(e) => {
                     tracing::warn!("Failed to search unified ingredients: {}", e);
-                    // Only update if this is still the current request
                     if current_request_id == search_request_id_clone() {
                         search_results_clone.set(Vec::new());
                         search_error_clone.set(Some(format!("Search failed: {}", e)));
                     }
                 }
             }
-            // Only stop loading indicator if this is the current request
             if current_request_id == search_request_id_clone() {
                 is_searching_clone.set(false);
             }
