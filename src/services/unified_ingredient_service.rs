@@ -14,15 +14,15 @@ pub struct UnifiedIngredient {
     pub origin: Option<crate::model::Country>, // Country of origin for flag display
 
     // Binary flags with visual indicators
-    pub is_allergen: Option<bool>,          // 🚨 From local DB
-    pub is_agricultural: Option<bool>,       // 🌾 From local DB
-    pub is_meat: Option<bool>,              // 🥩 Derived from category
-    pub is_fish: Option<bool>,              // 🐟 Derived from category
-    pub is_dairy: Option<bool>,             // 🥛 Derived from category
-    pub is_egg: Option<bool>,               // 🥚 Derived from category
-    pub is_honey: Option<bool>,             // 🍯 Derived from category
-    pub is_plant: Option<bool>,             // 🌱 Derived from category
-    pub is_bio: Option<bool>,               // 🌿 From user input/saved
+    pub is_allergen: Option<bool>,          // From local DB
+    pub is_agricultural: Option<bool>,       // From local DB
+    pub is_meat: Option<bool>,              // Derived from category
+    pub is_fish: Option<bool>,              // Derived from category
+    pub is_dairy: Option<bool>,             // Derived from category
+    pub is_egg: Option<bool>,               // Derived from category
+    pub is_honey: Option<bool>,             // Derived from category
+    pub is_plant: Option<bool>,             // Derived from category
+    pub is_bio: Option<bool>,               // From user input/saved
 
     pub source: IngredientSource,           // Track data origin
 }

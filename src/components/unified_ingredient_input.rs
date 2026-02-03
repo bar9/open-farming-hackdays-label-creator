@@ -207,9 +207,9 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                 div {
                     class: "absolute right-3 top-1/2 transform -translate-y-1/2",
                     span {
-                        class: "text-error text-sm",
+                        class: "text-error text-sm font-bold",
                         title: "{error_msg}",
-                        "⚠️"
+                        "!"
                     }
                 }
             }
@@ -230,7 +230,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                         if !matching_saved.is_empty() {
                             rsx! {
                                 div { class: "px-3 py-2 text-sm font-semibold text-base-content/70 bg-base-200",
-                                    "💾 " {t!("label.saved_ingredients").to_string()}
+                                    {t!("label.saved_ingredients").to_string()}
                                 }
                                 for (saved_idx, saved) in matching_saved.iter().enumerate() {
                                     div {
@@ -260,7 +260,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                         div { class: "flex items-center gap-2",
                                             span { class: "font-medium", {saved.name.clone()} }
                                             if saved.is_allergen {
-                                                span { class: "text-red-500", "🚨" }
+                                                span { class: "text-red-500 font-bold text-xs", "A!" }
                                             }
                                         }
                                         span { class: "text-xs text-base-content/50",
@@ -300,11 +300,11 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
 
                     // Legend at the bottom
                     div { class: "px-3 py-2 text-xs text-base-content/50 bg-base-100 border-t border-base-300",
-                        "🚨" {t!("symbols.allergen_tooltip").to_string()} " • "
-                        "🥩" {t!("symbols.meat_tooltip").to_string()} " • "
-                        "🐟" {t!("symbols.fish_tooltip").to_string()} " • "
-                        "🥛" {t!("symbols.dairy_tooltip").to_string()} " • "
-                        "🌱" {t!("symbols.plant_tooltip").to_string()}
+                        span { class: "text-red-500 font-bold", "A!" } " " {t!("symbols.allergen_tooltip").to_string()} " | "
+                        span { class: "text-red-800 font-bold", "M" } " " {t!("symbols.meat_tooltip").to_string()} " | "
+                        span { class: "text-blue-600 font-bold", "F" } " " {t!("symbols.fish_tooltip").to_string()} " | "
+                        span { class: "text-blue-500 font-bold", "D" } " " {t!("symbols.dairy_tooltip").to_string()} " | "
+                        span { class: "text-green-600 font-bold", "P" } " " {t!("symbols.plant_tooltip").to_string()}
                     }
                 }
             }

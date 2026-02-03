@@ -22,16 +22,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_allergen) = ingredient.is_allergen {
                 if is_allergen {
                     span {
-                        class: "text-red-500",
+                        class: "text-red-500 font-bold text-xs",
                         title: t!("symbols.allergen_tooltip").to_string(),
-                        "🚨"
+                        "A!"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.allergen_unknown").to_string(),
-                    "🚨"
+                    "A!"
                 }
             }
 
@@ -39,16 +39,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_meat) = ingredient.is_meat {
                 if is_meat {
                     span {
-                        class: "text-red-800",
+                        class: "text-red-800 font-bold text-xs",
                         title: t!("symbols.meat_tooltip").to_string(),
-                        "🥩"
+                        "M"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.meat_unknown").to_string(),
-                    "🥩"
+                    "M"
                 }
             }
 
@@ -56,16 +56,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_fish) = ingredient.is_fish {
                 if is_fish {
                     span {
-                        class: "text-blue-600",
+                        class: "text-blue-600 font-bold text-xs",
                         title: t!("symbols.fish_tooltip").to_string(),
-                        "🐟"
+                        "F"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.fish_unknown").to_string(),
-                    "🐟"
+                    "F"
                 }
             }
 
@@ -73,16 +73,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_dairy) = ingredient.is_dairy {
                 if is_dairy {
                     span {
-                        class: "text-blue-500",
+                        class: "text-blue-500 font-bold text-xs",
                         title: t!("symbols.dairy_tooltip").to_string(),
-                        "🥛"
+                        "D"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.dairy_unknown").to_string(),
-                    "🥛"
+                    "D"
                 }
             }
 
@@ -90,16 +90,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_egg) = ingredient.is_egg {
                 if is_egg {
                     span {
-                        class: "text-yellow-600",
+                        class: "text-yellow-600 font-bold text-xs",
                         title: t!("symbols.egg_tooltip").to_string(),
-                        "🥚"
+                        "E"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.egg_unknown").to_string(),
-                    "🥚"
+                    "E"
                 }
             }
 
@@ -107,16 +107,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_honey) = ingredient.is_honey {
                 if is_honey {
                     span {
-                        class: "text-amber-600",
+                        class: "text-amber-600 font-bold text-xs",
                         title: t!("symbols.honey_tooltip").to_string(),
-                        "🍯"
+                        "H"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.honey_unknown").to_string(),
-                    "🍯"
+                    "H"
                 }
             }
 
@@ -124,16 +124,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_plant) = ingredient.is_plant {
                 if is_plant {
                     span {
-                        class: "text-green-600",
+                        class: "text-green-600 font-bold text-xs",
                         title: t!("symbols.plant_tooltip").to_string(),
-                        "🌱"
+                        "P"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.plant_unknown").to_string(),
-                    "🌱"
+                    "P"
                 }
             }
 
@@ -141,16 +141,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_agricultural) = ingredient.is_agricultural {
                 if is_agricultural {
                     span {
-                        class: "text-yellow-700",
+                        class: "text-yellow-700 font-bold text-xs",
                         title: t!("symbols.agricultural_tooltip").to_string(),
-                        "🌾"
+                        "Ag"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.agricultural_unknown").to_string(),
-                    "🌾"
+                    "Ag"
                 }
             }
 
@@ -158,16 +158,16 @@ pub fn IngredientSymbols(props: IngredientSymbolsProps) -> Element {
             if let Some(is_bio) = ingredient.is_bio {
                 if is_bio {
                     span {
-                        class: "text-green-700",
+                        class: "text-green-700 font-bold text-xs",
                         title: t!("symbols.bio_tooltip").to_string(),
-                        "🌿"
+                        "Bio"
                     }
                 }
             } else if props.show_unknown {
                 span {
-                    class: "text-gray-400 opacity-50",
+                    class: "text-gray-400 opacity-50 font-bold text-xs",
                     title: t!("symbols.bio_unknown").to_string(),
-                    "🌿"
+                    "Bio"
                 }
             }
         }
@@ -184,49 +184,49 @@ pub fn IngredientSymbolsCompact(ingredient: UnifiedIngredient) -> Element {
             // Only show confirmed positive flags in compact mode
             if ingredient.is_allergen == Some(true) {
                 span {
-                    class: "text-red-500",
+                    class: "text-red-500 font-bold text-xs",
                     title: t!("symbols.allergen_tooltip").to_string(),
-                    "🚨"
+                    "A!"
                 }
             }
 
             if ingredient.is_meat == Some(true) {
                 span {
-                    class: "text-red-800",
+                    class: "text-red-800 font-bold text-xs",
                     title: t!("symbols.meat_tooltip").to_string(),
-                    "🥩"
+                    "M"
                 }
             }
 
             if ingredient.is_fish == Some(true) {
                 span {
-                    class: "text-blue-600",
+                    class: "text-blue-600 font-bold text-xs",
                     title: t!("symbols.fish_tooltip").to_string(),
-                    "🐟"
+                    "F"
                 }
             }
 
             if ingredient.is_dairy == Some(true) {
                 span {
-                    class: "text-blue-500",
+                    class: "text-blue-500 font-bold text-xs",
                     title: t!("symbols.dairy_tooltip").to_string(),
-                    "🥛"
+                    "D"
                 }
             }
 
             if ingredient.is_plant == Some(true) {
                 span {
-                    class: "text-green-600",
+                    class: "text-green-600 font-bold text-xs",
                     title: t!("symbols.plant_tooltip").to_string(),
-                    "🌱"
+                    "P"
                 }
             }
 
             if ingredient.is_bio == Some(true) {
                 span {
-                    class: "text-green-700",
+                    class: "text-green-700 font-bold text-xs",
                     title: t!("symbols.bio_tooltip").to_string(),
-                    "🌿"
+                    "Bio"
                 }
             }
         }
