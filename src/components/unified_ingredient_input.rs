@@ -209,7 +209,6 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                     span {
                         class: "text-error text-sm font-bold",
                         title: "{error_msg}",
-                        "!"
                     }
                 }
             }
@@ -259,9 +258,6 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                         }},
                                         div { class: "flex items-center gap-2",
                                             span { class: "font-medium", {saved.name.clone()} }
-                                            if saved.is_allergen {
-                                                span { class: "text-red-500 font-bold text-xs", "A!" }
-                                            }
                                         }
                                         span { class: "text-xs text-base-content/50",
                                             {t!("label.saved_indicator").to_string()}
@@ -287,7 +283,6 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
 
                             div { class: "flex items-center gap-2",
                                 span { class: "font-medium", {ingredient.name.clone()} }
-                                IngredientSymbolsCompact { ingredient: ingredient.clone() }
                             }
 
                             if let Some(category) = &ingredient.category {
@@ -298,14 +293,6 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                         }
                     }
 
-                    // Legend at the bottom
-                    div { class: "px-3 py-2 text-xs text-base-content/50 bg-base-100 border-t border-base-300",
-                        span { class: "text-red-500 font-bold", "A!" } " " {t!("symbols.allergen_tooltip").to_string()} " | "
-                        span { class: "text-red-800 font-bold", "M" } " " {t!("symbols.meat_tooltip").to_string()} " | "
-                        span { class: "text-blue-600 font-bold", "F" } " " {t!("symbols.fish_tooltip").to_string()} " | "
-                        span { class: "text-blue-500 font-bold", "D" } " " {t!("symbols.dairy_tooltip").to_string()} " | "
-                        span { class: "text-green-600 font-bold", "P" } " " {t!("symbols.plant_tooltip").to_string()}
-                    }
                 }
             }
         }
