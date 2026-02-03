@@ -538,7 +538,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         }
         dialog { open: "{is_open}", class: "modal",
             div { class: "modal-box bg-base-100",
-                h3 { class: "font-bold text-lg", "{t!(\"label.zutatDetails\").to_string()}" }
+                h3 { class: "font-bold text-lg text-left",
+                    if props.genesis {
+                        "{t!(\"label.zutatDetails\").to_string()}"
+                    } else {
+                        "{t!(\"nav.bearbeiten\").to_string()}"
+                    }
+                }
                 FormField {
                     label: t!("label.zutatEingeben").to_string(),
                     UnifiedIngredientInput {
