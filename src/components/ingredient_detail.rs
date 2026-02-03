@@ -907,7 +907,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     let conditionals_context = use_context::<Conditionals>();
 
                     // Check if Knospe rules are active (always show origin field) or traditional conditional is set
+                    // Also always show in create mode (genesis) so users can set origin upfront
+                    let genesis = props.genesis;
                     let should_show_origin = use_memo(move || {
+                        if genesis {
+                            return true;
+                        }
+
                         let rules = props.rules.read();
                         let has_knospe = rules.iter().any(|rule|
                             *rule == RuleDef::Knospe_AlleZutatenHerkunft ||
