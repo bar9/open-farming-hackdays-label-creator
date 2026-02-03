@@ -77,6 +77,8 @@ pub struct SubIngredientsTableProps {
 }
 pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
     let mut name_to_add = use_signal(String::new);
+    // Store the selected ingredient from dropdown (if any) to preserve metadata
+    let mut selected_ingredient: Signal<Option<UnifiedIngredient>> = use_signal(|| None);
 
     let mut delete_callback = {
         let mut ingredients = props.ingredients;
@@ -115,10 +117,44 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         }
     };
 
-    let mut handle_unified_ingredient_select = {
+    // When user selects from dropdown, just populate the input field (don't add yet)
+    let handle_dropdown_select = {
+        let mut name_to_add = name_to_add;
+        let mut selected_ingredient = selected_ingredient;
+        move |unified_ingredient: UnifiedIngredient| {
+            name_to_add.set(unified_ingredient.name.clone());
+            selected_ingredient.set(Some(unified_ingredient));
+        }
+    };
+
+    // Actually add the ingredient (called by button click)
+    let mut add_ingredient = {
         let mut ingredients = props.ingredients;
         let mut name_to_add = name_to_add;
-        move |unified_ingredient: UnifiedIngredient| {
+        let mut selected_ingredient = selected_ingredient;
+        move || {
+            let value = name_to_add();
+            if value.trim().is_empty() {
+                return;
+            }
+
+            // Use the selected ingredient if available, otherwise create custom
+            let unified_ingredient = selected_ingredient().unwrap_or_else(|| UnifiedIngredient {
+                name: value.clone(),
+                category: None,
+                origin: None,
+                is_allergen: None,
+                is_agricultural: None,
+                is_meat: None,
+                is_fish: None,
+                is_dairy: None,
+                is_egg: None,
+                is_honey: None,
+                is_plant: None,
+                is_bio: None,
+                source: IngredientSource::Local,
+            });
+
             if let Some(mut ingredient) = ingredients.get_mut(props.index) {
                 let ingredient_name = unified_ingredient.name.clone();
 
@@ -163,6 +199,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 }
             }
             name_to_add.set(String::new());
+            selected_ingredient.set(None);
         }
     };
 
@@ -256,7 +293,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             div { class: "flex-1",
                 UnifiedIngredientInput {
                     bound_value: name_to_add,
-                    on_ingredient_select: handle_unified_ingredient_select.clone(),
+                    on_ingredient_select: handle_dropdown_select,
                     required: false,
                     placeholder: t!("placeholder.zutatName").to_string()
                 }
@@ -266,25 +303,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 r#type: "button",
                 disabled: name_to_add().trim().is_empty(),
                 onclick: move |_| {
-                    let value = name_to_add();
-                    if !value.trim().is_empty() {
-                        let custom_ingredient = UnifiedIngredient {
-                            name: value.clone(),
-                            category: None,
-                            origin: None,
-                            is_allergen: None,
-                            is_agricultural: None,
-                            is_meat: None,
-                            is_fish: None,
-                            is_dairy: None,
-                            is_egg: None,
-                            is_honey: None,
-                            is_plant: None,
-                            is_bio: None,
-                            source: IngredientSource::Local,
-                        };
-                        handle_unified_ingredient_select(custom_ingredient);
-                    }
+                    add_ingredient();
                 },
                 {t!("buttons.hinzufuegen").to_string()}
             }
