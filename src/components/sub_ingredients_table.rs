@@ -305,7 +305,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 onclick: move |_| {
                     add_ingredient();
                 },
-                {t!("buttons.hinzufuegen").to_string()}
+                {t!("nav.hinzufuegen").to_string()}
             }
         }
     }
