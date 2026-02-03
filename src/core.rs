@@ -669,7 +669,7 @@ impl OutputFormatter {
         } else if has_knospe_90_99_rule {
             // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
             if self.ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)) {
-                output = format!("{} (Schweiz)", output);
+                output = format!("{} (CH)", output);
             }
         } else if has_knospe_under90_rule {
             // Rule C: <90% Swiss agricultural ingredients - show origin based on specific ingredient criteria
@@ -683,8 +683,8 @@ impl OutputFormatter {
                         .filter(|o| !matches!(o, Country::NoOriginRequired))
                         .collect();
                     if !valid_origins.is_empty() {
-                        let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
-                        output = format!("{} ({})", output, country_names.join(", "));
+                        let country_codes: Vec<&str> = valid_origins.iter().map(|o| o.country_code()).collect();
+                        output = format!("{} ({})", output, country_codes.join(", "));
                     }
                 }
             }
@@ -696,11 +696,11 @@ impl OutputFormatter {
                         let mut beef_origin_parts = Vec::new();
 
                         if let Some(aufzucht_ort) = &self.ingredient.aufzucht_ort {
-                            beef_origin_parts.push(t!("birthplace", country = aufzucht_ort.display_name()).to_string());
+                            beef_origin_parts.push(t!("birthplace", country = aufzucht_ort.country_code()).to_string());
                         }
 
                         if let Some(schlachtungs_ort) = &self.ingredient.schlachtungs_ort {
-                            beef_origin_parts.push(t!("slaughtered_in", country = schlachtungs_ort.display_name()).to_string());
+                            beef_origin_parts.push(t!("slaughtered_in", country = schlachtungs_ort.country_code()).to_string());
                         }
 
                         if !beef_origin_parts.is_empty() {
@@ -714,7 +714,7 @@ impl OutputFormatter {
                 if let Some(category) = &self.ingredient.category {
                     if is_fish_category(category) {
                         if let Some(fangort) = &self.ingredient.fangort {
-                            output = format!("{} ({})", output, fangort.display_name());
+                            output = format!("{} ({})", output, fangort.country_code());
                         }
                     }
                 }
@@ -732,8 +732,8 @@ impl OutputFormatter {
                         .filter(|o| !matches!(o, Country::NoOriginRequired))
                         .collect();
                     if !valid_origins.is_empty() {
-                        let country_names: Vec<&str> = valid_origins.iter().map(|o| o.display_name()).collect();
-                        output = format!("{} ({})", output, country_names.join(", "));
+                        let country_codes: Vec<&str> = valid_origins.iter().map(|o| o.country_code()).collect();
+                        output = format!("{} ({})", output, country_codes.join(", "));
                     }
                 }
             }
