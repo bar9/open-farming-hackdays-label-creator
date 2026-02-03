@@ -115,8 +115,9 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
         }
     };
 
-    let handle_unified_ingredient_select = {
+    let mut handle_unified_ingredient_select = {
         let mut ingredients = props.ingredients;
+        let mut name_to_add = name_to_add;
         move |unified_ingredient: UnifiedIngredient| {
             if let Some(mut ingredient) = ingredients.get_mut(props.index) {
                 let ingredient_name = unified_ingredient.name.clone();
@@ -251,14 +252,41 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 }
             }
         }
-        div { class: "flex flex-row gap-4 items-center",
+        div { class: "flex flex-row gap-2 items-center",
             div { class: "flex-1",
                 UnifiedIngredientInput {
                     bound_value: name_to_add,
-                    on_ingredient_select: handle_unified_ingredient_select,
+                    on_ingredient_select: handle_unified_ingredient_select.clone(),
                     required: false,
                     placeholder: t!("placeholder.zutatName").to_string()
                 }
+            }
+            button {
+                class: "btn btn-primary",
+                r#type: "button",
+                disabled: name_to_add().trim().is_empty(),
+                onclick: move |_| {
+                    let value = name_to_add();
+                    if !value.trim().is_empty() {
+                        let custom_ingredient = UnifiedIngredient {
+                            name: value.clone(),
+                            category: None,
+                            origin: None,
+                            is_allergen: None,
+                            is_agricultural: None,
+                            is_meat: None,
+                            is_fish: None,
+                            is_dairy: None,
+                            is_egg: None,
+                            is_honey: None,
+                            is_plant: None,
+                            is_bio: None,
+                            source: IngredientSource::Local,
+                        };
+                        handle_unified_ingredient_select(custom_ingredient);
+                    }
+                },
+                {t!("buttons.hinzufuegen").to_string()}
             }
         }
     }
