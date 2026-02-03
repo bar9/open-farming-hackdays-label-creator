@@ -508,9 +508,13 @@ impl Ingredient {
                             } else {
                                 sub.name.clone()
                             };
-                            // Append origin if present
+                            // Append origin if present (skip NoOriginRequired)
                             if let Some(origin) = &sub.origin {
-                                format!("{} ({})", base_name, origin.display_name())
+                                if matches!(origin, Country::NoOriginRequired) {
+                                    base_name
+                                } else {
+                                    format!("{} ({})", base_name, origin.country_code())
+                                }
                             } else {
                                 base_name
                             }
