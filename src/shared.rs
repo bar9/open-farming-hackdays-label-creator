@@ -14,6 +14,11 @@ pub enum Configuration {
     Knospe,
 }
 
+/// Post-process HTML to open external links in a new tab.
+pub fn externalize_links(html: &str) -> String {
+    html.replace("<a href=\"http", "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"http")
+}
+
 pub fn restore_params_from_session_storage() -> Option<String> {
     if let Some(window) = web_sys::window() {
         if let Ok(Some(storage)) = window.session_storage() {

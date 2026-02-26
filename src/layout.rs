@@ -329,6 +329,7 @@ pub fn SplitLayout() -> Element {
                     a {
                         class: "link link-blue hover:link-primary",
                         href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
+                        target: "_blank",
                         {t!("app.release_notes").to_string()}
                     }
                 }

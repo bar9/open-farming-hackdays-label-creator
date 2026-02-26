@@ -1,4 +1,5 @@
 use crate::components::icons;
+use crate::shared::externalize_links;
 use dioxus::prelude::*;
 use markdown::{to_html_with_options, Options};
 use rust_i18n::t;
@@ -27,8 +28,8 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                     // class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md",
                     dialog { open: "{is_open}", class: "modal",
                     div { class: "modal-box max-h-[80vh] flex flex-col text-left",
-                        h3 { class: "font-bold text-lg text-left flex-shrink-0", dangerous_inner_html: to_html_with_options(&props.label, &Options::gfm()).unwrap() }
-                        div { class: "prose text-left overflow-y-auto flex-1 min-h-0 my-2", dangerous_inner_html: to_html_with_options(&props.help, &Options::gfm()).unwrap() }
+                        h3 { class: "font-bold text-lg text-left flex-shrink-0", dangerous_inner_html: externalize_links(&to_html_with_options(&props.label, &Options::gfm()).unwrap()) }
+                        div { class: "prose text-left overflow-y-auto flex-1 min-h-0 my-2", dangerous_inner_html: externalize_links(&to_html_with_options(&props.help, &Options::gfm()).unwrap()) }
                         div { class: "modal-action flex-shrink-0",
                             form { method: "dialog",
                                 button {
