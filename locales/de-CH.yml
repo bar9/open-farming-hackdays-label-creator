@@ -90,7 +90,7 @@ help:
     Sind Produktname und Sachbezeichnung identisch, dieses Feld leer lassen.
   sachbezeichnung: |
     Rechtlich vorgeschriebene Sachbezeichnung verwenden (Bsp. Fruchtaufstrich, Konfitüre, Sirup, Butterzopf).
-    Wenn nicht vorhanden verkehrsübliche (Bsp. Berliner, Tomatenketchup) oder beschreibende (Bsp. Fladenbrot) mit Weizenmehl Bezeichnung wählen.
+    Wenn nicht vorhanden verkehrsübliche (Bsp. Berliner, Tomatenketchup) oder beschreibende (Bsp. Fladenbrot mit Weizenmehl) Bezeichnung wählen.
   zutaten: |
     Zutat aus dem Dropdown auswählen. Wenn nicht vorhanden manuell im Textfeld eingeben. Zusammengesetzte Zutaten (Bsp. Geliermittel) als solches erfassen. Dazu Symbol hinter Zutat anklicken und die einzelnen Zutaten im Untermenü erfassen.
     Allergene werden optisch hervorgehoben, wenn aus dem Dropdown ausgewählt.
