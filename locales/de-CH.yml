@@ -340,6 +340,7 @@ validation:
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
   origin_required_knospe: Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
+  certification_body_format: "Die Zertifizierungsstelle muss das Format CH-BIO-xxx haben."
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
   beef_slaughter_location_required: Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.
   fish_catch_location_required: Fangort ist erforderlich für Fisch-Zutaten.
@@ -644,6 +645,9 @@ origin:
 
 bio_legend:
   aus_biologischer_landwirtschaft: aus biologischer Landwirtschaft
+  alle_landwirtschaftlichen: Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft
+  x_prozent_bio: "%{percentage}% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"
+  aus_umstellung: aus Umstellung auf biologische Landwirtschaft
 
 bio_labels:
   bio_knospe: Bio (Knospe)
@@ -655,6 +659,9 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."
   marketing_not_allowed: "Das Produkt darf NICHT als Bio-Produkt vermarktet werden, da nicht alle landwirtschaftlichen Zutaten bio-zertifiziert sind. Es dürfen nur einzelne Zutaten als biologisch gekennzeichnet werden."
+
+umstellbetrieb:
+  hinweis: "Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft"
 
 buttons:
   close: schliessen

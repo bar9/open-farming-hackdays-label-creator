@@ -62,8 +62,11 @@ pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String
         .map_err(|e| format!("Failed to send request: {}", e))?;
 
     if !response.ok() {
-        tracing::warn!("API returned non-OK status for '{}'", name);
-        return Ok(Vec::new());
+        return Err(format!(
+            "BLV API returned status {} for '{}'",
+            response.status(),
+            name
+        ));
     }
 
     // Parse as array directly since the API returns an array

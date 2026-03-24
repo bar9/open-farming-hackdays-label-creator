@@ -22,6 +22,7 @@ splash:
 
 label:
   produktname: Nome del prodotto
+  certification_body: Ente di certificazione bio
   sachbezeichnung: Denominazione specifica
   zutaten: Ingredienti
   datumseingabe: Conservazione
@@ -66,6 +67,7 @@ label:
   allergen_indicator: (Allergene)
   rezepturVollstaendig: Ricetta completamente inserita
   liv_anhang7_format: "100g di prodotto finito contengono %{grams}g"
+  verarbeitungsschritte: Fasi di lavorazione
 
 nav:
   linkKopieren: Copia link
@@ -92,6 +94,17 @@ preview:
   website: "Sito web: %{website}"
   preisPro: "Prezzo per %{amount}%{unit}"
   preisTotal: Prezzo totale
+  produktnameSachbezeichnung: Nome del prodotto / Denominazione specifica
+  zutatenliste: Elenco degli ingredienti
+  herstelleradresse: Indirizzo del produttore
+  preis: Prezzo
+
+units:
+  g: g
+  ml: ml
+  l: l
+  chf: CHF
+  chfPro: "CHF per "
 
 tooltips:
   manage_saved_ingredients: Gestisci ingredienti composti salvati
@@ -106,6 +119,7 @@ placeholders:
 placeholder:
   produktname: Sogno estivo
   sachbezeichnung: Confettura di lamponi
+  ingredient_name: Inserire ingrediente...
   zusatzinformationen: |
     vegano
     
@@ -224,6 +238,10 @@ help:
     Prezzo dell'unità di vendita
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
+  bio_transitional: Indica se questo ingrediente proviene da un'azienda in conversione
+  aufzucht_location: Luogo in cui ha trascorso la maggior parte della vita
+  certification_body_bio: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Bio)
+  certification_body_knospe: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Gemma)
   erlaubte_ausnahme_bio: |
     Secondo l'allegato 3 dell'ordinanza WBF sull'agricoltura biologica, alcuni ingredienti
     possono essere non biologici (ad es. alcuni additivi). Eccezione: gli ingredienti con
@@ -303,6 +321,7 @@ validation:
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
   origin_required_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Gemma).
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
+  certification_body_format: "L'ente di certificazione deve avere il formato CH-BIO-xxx."
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
   beef_slaughter_location_required: Il luogo di macellazione è richiesto per gli ingredienti di manzo.
   fish_catch_location_required: Il luogo di cattura è richiesto per gli ingredienti di pesce.
@@ -374,9 +393,16 @@ origin:
   switzerland_parentheses: "[Svizzera]"
   birthplace: "Luogo di nascita: %{country}"
   slaughtered_in: "Macellato in: %{country}"
+  add_country: Aggiungi paese
+  remove_country: Rimuovi paese
+  regions_header: Regioni
+  countries_header: Paesi
 
 bio_legend:
   aus_biologischer_landwirtschaft: da agricoltura biologica
+  alle_landwirtschaftlichen: Tutti gli ingredienti agricoli provengono da agricoltura biologica
+  x_prozent_bio: "%{percentage}% degli ingredienti agricoli provengono da produzione biologica"
+  aus_umstellung: in conversione all'agricoltura biologica
 
 bio_labels:
   bio_knospe: Bio (Gemma)
@@ -388,6 +414,9 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."
   marketing_not_allowed: "Il prodotto NON può essere commercializzato come prodotto biologico perché non tutti gli ingredienti agricoli sono certificati bio. Solo alcuni ingredienti possono essere contrassegnati come biologici."
+
+umstellbetrieb:
+  hinweis: "Prodotto nell'ambito della conversione all'agricoltura biologica"
 
 weight_units:
   mg: mg

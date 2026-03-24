@@ -8,7 +8,6 @@ const SAVED_INGREDIENTS_KEY: &str = "saved_composite_ingredients";
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SavedIngredient {
     pub ingredient: Ingredient,
-    pub timestamp: f64,
 }
 
 /// Get localStorage instance
@@ -30,13 +29,11 @@ pub fn save_composite_ingredient(ingredient: &Ingredient) -> Result<(), String> 
         // Update existing ingredient
         saved[index] = SavedIngredient {
             ingredient: ingredient.clone(),
-            timestamp: 0.0,  // Simple timestamp placeholder
         };
     } else {
         // Add new ingredient
         saved.push(SavedIngredient {
             ingredient: ingredient.clone(),
-            timestamp: 0.0,  // Simple timestamp placeholder
         });
     }
     
@@ -61,8 +58,13 @@ pub fn get_saved_ingredients() -> Vec<SavedIngredient> {
         _ => return vec![],
     };
     
-    match serde_json::from_str(&json) {
-        Ok(ingredients) => ingredients,
+    match serde_json::from_str::<Vec<SavedIngredient>>(&json) {
+        Ok(mut ingredients) => {
+            for saved in &mut ingredients {
+                saved.ingredient.migrate_sub_components();
+            }
+            ingredients
+        }
         Err(e) => {
             tracing::warn!("{}", t!("errors.parse_saved_ingredients_failed", error = e));
             vec![]
@@ -94,14 +96,5 @@ pub fn delete_saved_ingredient(name: &str) -> Result<(), String> {
         .set_item(SAVED_INGREDIENTS_KEY, &json)
         .map_err(|_| t!("errors.localstorage_save_failed").to_string())?;
     
-    Ok(())
-}
-
-/// Clear all saved ingredients
-pub fn clear_saved_ingredients() -> Result<(), String> {
-    let storage = get_storage().ok_or_else(|| t!("errors.localstorage_unavailable").to_string())?;
-    storage
-        .remove_item(SAVED_INGREDIENTS_KEY)
-        .map_err(|_| t!("errors.localstorage_clear_failed").to_string())?;
     Ok(())
 }

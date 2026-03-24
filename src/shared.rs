@@ -14,6 +14,28 @@ pub enum Configuration {
     Knospe,
 }
 
+impl Configuration {
+    pub fn theme_key(&self) -> &'static str {
+        match self {
+            Configuration::Conventional => "themes.swiss",
+            Configuration::Bio => "themes.bio",
+            Configuration::Knospe => "themes.knospe",
+        }
+    }
+
+    pub fn has_certification_body(&self) -> bool {
+        matches!(self, Configuration::Bio | Configuration::Knospe)
+    }
+
+    pub fn certification_body_help_key(&self) -> Option<&'static str> {
+        match self {
+            Configuration::Bio => Some("help.certification_body_bio"),
+            Configuration::Knospe => Some("help.certification_body_knospe"),
+            _ => None,
+        }
+    }
+}
+
 /// Post-process HTML to open external links in a new tab.
 pub fn externalize_links(html: &str) -> String {
     html.replace("<a href=\"http", "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"http")

@@ -350,7 +350,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                     FormField {
                         required: true,
                         label: t!("label.nettogewicht").to_string(),
-                        help: Some((t!("help.nettogewicht").to_string()).into()),
+                        help: Some(t!("help.nettogewicht").to_string()),
                         div {
                             class: "flex flex-row items-center gap-2",
                             input {
@@ -374,7 +374,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                         class: "relative",
                         FormField {
                             label: t!("label.abtropfgewicht").to_string(),
-                            help: Some((t!("help.abtropfgewicht").to_string()).into()),
+                            help: Some(t!("help.abtropfgewicht").to_string()),
                             div {
                                 class: "flex flex-row items-center gap-2",
                                 input {
@@ -412,7 +412,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                     FormField {
                         label: t!("label.gewicht").to_string(),
                         required: true,
-                        help: Some((t!("help.gewicht").to_string()).into()),
+                        help: Some(t!("help.gewicht").to_string()),
                         div {
                             class: "flex flex-row items-center gap-2",
                             input {
@@ -434,7 +434,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                     }
                     FormField {
                         label: t!("label.abtropfgewicht").to_string(),
-                        help: Some((t!("help.abtropfgewicht").to_string()).into()),
+                        help: Some(t!("help.abtropfgewicht").to_string()),
                         label { class: "btn btn-circle swap swap-rotate",
                             input {
                                 r#type: "checkbox",
@@ -457,7 +457,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
             } else {
                 FormField {
                     label: t!("label.volumen").to_string(),
-                    help: Some((t!("help.volumen").to_string()).into()),
+                    help: Some(t!("help.volumen").to_string()),
                     required: true,
                     div {
                         class: "flex flex-row items-center gap-2",
@@ -483,7 +483,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
         FieldGroup2{
             if is_einheitsgroesse() {
                 FormField {
-                    help: Some((t!("help.preisProEinheit").to_string()).into()),
+                    help: Some(t!("help.preisProEinheit").to_string()),
                     label: t!("label.preisProEinheit").to_string(),
                     div {
                         class: "flex flex-row items-center gap-2",
@@ -505,7 +505,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                 }
             } else {
                 FormField {
-                    help: Some((t!("help.preisProX", unit = get_base_factor_and_unit_string())).into()),
+                    help: Some(t!("help.preisProX", unit = get_base_factor_and_unit_string()).to_string()),
                     label: t!("label.preisProX").to_string(),
                     div {
                         class: "flex flex-row items-center gap-2",
@@ -527,7 +527,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                     }
                 }
                 FormField {
-                    help: Some((t!("help.preisTotal").to_string()).into()),
+                    help: Some(t!("help.preisTotal").to_string()),
                     label: t!("label.preisTotal").to_string(),
                     div{
                         class: "flex flex-row items-center gap-2",

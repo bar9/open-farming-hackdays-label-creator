@@ -48,12 +48,12 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     });
     let mut edit_unit = use_signal(|| original_ingredient.unit.clone());
     let mut edit_is_composite = use_signal(|| {
-        original_ingredient.sub_components.as_ref().is_some_and(|s| !s.is_empty())
+        original_ingredient.children.as_ref().is_some_and(|s| !s.is_empty())
     });
     let mut edit_is_namensgebend = use_signal(|| {
         original_ingredient.is_namensgebend.unwrap_or(false)
     });
-    let mut edit_sub_components = use_signal(|| original_ingredient.sub_components.clone());
+    let mut edit_children = use_signal(|| original_ingredient.children.clone());
     let mut edit_category = use_signal(|| original_ingredient.category.clone());
     let mut edit_origins = use_signal(|| original_ingredient.origins.clone());
     let mut edit_aufzucht_ort = use_signal(|| original_ingredient.aufzucht_ort.clone());
@@ -110,7 +110,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             unit: original_ingredient.unit.clone(),
             is_allergen: original_ingredient.is_allergen,
             is_namensgebend: original_ingredient.is_namensgebend,
-            sub_components: original_ingredient.sub_components.clone(),
+            sub_components: None,
+            children: original_ingredient.children.clone(),
             origins: original_ingredient.origins.clone(),
             is_agricultural: original_ingredient.is_agricultural,
             is_bio: original_ingredient.is_bio,
@@ -125,6 +126,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_knospe_details: original_ingredient.erlaubte_ausnahme_knospe_details.clone(),
             processing_steps: original_ingredient.processing_steps.clone(),
             aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
+            override_children: None,
         }]
     });
 
@@ -132,14 +134,14 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     use_effect(move || {
         let _ = edit_is_composite(); // Track this dependency
         if edit_is_composite() {
-            // Only copy sub_components if they actually exist, otherwise start fresh
-            // This prevents stale sub_components from a previous composite ingredient
+            // Only copy children if they actually exist, otherwise start fresh
+            // This prevents stale children from a previous composite ingredient
             // from appearing when creating a new composite ingredient
-            let current_sub_components = edit_sub_components();
-            let sub_components_to_use = if current_sub_components.as_ref().is_some_and(|s| !s.is_empty()) {
-                current_sub_components
+            let current_children = edit_children();
+            let children_to_use = if current_children.as_ref().is_some_and(|s| !s.is_empty()) {
+                current_children
             } else {
-                None  // Start with empty sub_components for new composite ingredients
+                None  // Start with empty children for new composite ingredients
             };
 
             // Initialize wrapper with current edit state
@@ -149,7 +151,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 unit: edit_unit(),
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: sub_components_to_use,
+                sub_components: None,
+                children: children_to_use,
                 origins: edit_origins(),
                 is_agricultural: lookup_agricultural(&edit_name()),
                 is_bio: Some(edit_is_bio()),
@@ -164,21 +167,22 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
                 processing_steps: edit_processing_steps(),
                 aus_umstellbetrieb: None,
+                override_children: None,
             };
         } else {
-            // Clear wrapper_ingredients sub-components when toggling off composite mode
-            wrapper_ingredients.write()[0].sub_components = None;
+            // Clear wrapper_ingredients children when toggling off composite mode
+            wrapper_ingredients.write()[0].children = None;
         }
     });
     
     // Track changes from SubIngredientsTable back to edit state
     // Only monitor wrapper_ingredients changes
     use_effect(move || {
-        if let Some(wrapper_sub) = wrapper_ingredients.read().first().and_then(|i| i.sub_components.as_ref()) {
+        if let Some(wrapper_children) = wrapper_ingredients.read().first().and_then(|i| i.children.as_ref()) {
             // Only update if actually different
-            let current_edit_sub = edit_sub_components();
-            if current_edit_sub.as_ref() != Some(wrapper_sub) {
-                edit_sub_components.set(Some(wrapper_sub.clone()));
+            let current_edit_children = edit_children();
+            if current_edit_children.as_ref() != Some(wrapper_children) {
+                edit_children.set(Some(wrapper_children.clone()));
             }
         }
     });
@@ -231,7 +235,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
         if let Some(saved) = saved_ingredients.iter().find(|i| i.name == new_name) {
             // Load saved ingredient data
             edit_is_composite.set(true);
-            edit_sub_components.set(saved.sub_components.clone());
+            edit_children.set(saved.children.clone());
             is_allergen_custom.set(saved.is_allergen);
             edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
             if let Some(category) = &saved.category {
@@ -260,15 +264,16 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
 
     
     let handle_save_to_storage = move |_| {
-        // Only save composite ingredients with sub-components
-        if edit_is_composite() && edit_sub_components().is_some() {
+        // Only save composite ingredients with children
+        if edit_is_composite() && edit_children().is_some() {
             let ingredient_to_save = Ingredient {
                 name: edit_name(),
                 amount: 100.0,  // Save with standard amount
                 unit: edit_unit(),
                 is_allergen: is_allergen_custom(),
                 is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: edit_sub_components(),
+                sub_components: None,
+                children: edit_children(),
                 origins: edit_origins(),
                 is_agricultural: lookup_agricultural(&edit_name()),
                 is_bio: Some(edit_is_bio()),
@@ -283,6 +288,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
                 processing_steps: edit_processing_steps(),
                 aus_umstellbetrieb: None,
+                override_children: None,
             };
 
             match save_composite_ingredient(&ingredient_to_save) {
@@ -332,7 +338,8 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             unit: edit_unit(),
             is_allergen: allergen_status,
             is_namensgebend: Some(edit_is_namensgebend()),
-            sub_components: edit_sub_components(),
+            sub_components: None,
+            children: edit_children(),
             origins: edit_origins(),
             is_agricultural: lookup_agricultural(&edit_name()),
             is_bio: Some(edit_is_bio()),
@@ -347,17 +354,18 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
             processing_steps: edit_processing_steps(),
             aus_umstellbetrieb: None,
+            override_children: None,
         };
 
         if props.genesis {
             // Check if ingredient with same name and properties already exists (only for non-composite)
-            if new_ingredient.sub_components.is_none() || new_ingredient.sub_components.as_ref().unwrap().is_empty() {
+            if new_ingredient.children.is_none() || new_ingredient.children.as_ref().unwrap().is_empty() {
                 let mut existing_ingredients = props.ingredients.write();
                 if let Some(existing_index) = existing_ingredients.iter().position(|ing| {
-                    ing.name == new_ingredient.name 
+                    ing.name == new_ingredient.name
                     && ing.is_allergen == new_ingredient.is_allergen
                     && ing.is_namensgebend == new_ingredient.is_namensgebend
-                    && (ing.sub_components.is_none() || ing.sub_components.as_ref().unwrap().is_empty())
+                    && (ing.children.is_none() || ing.children.as_ref().unwrap().is_empty())
                 }) {
                     // Merge amounts instead of adding duplicate
                     existing_ingredients[existing_index].amount += new_ingredient.amount;
@@ -378,7 +386,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
             edit_unit.set(AmountUnit::default());
             edit_is_composite.set(false);
             edit_is_namensgebend.set(false);
-            edit_sub_components.set(None);
+            edit_children.set(None);
             is_allergen_custom.set(false);
             edit_category.set(None);
             edit_bio_ch.set(false);
@@ -391,6 +399,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 is_allergen: false,
                 is_namensgebend: None,
                 sub_components: None,
+                children: None,
                 origins: None,
                 is_agricultural: false,
                 is_bio: None,
@@ -405,6 +414,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 erlaubte_ausnahme_knospe_details: None,
                 processing_steps: None,
                 aus_umstellbetrieb: None,
+                override_children: None,
             };
         } else {
             // Update existing ingredient
@@ -455,7 +465,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_unit.set(AmountUnit::default());
                         edit_is_composite.set(false);
                         edit_is_namensgebend.set(false);
-                        edit_sub_components.set(None);
+                        edit_children.set(None);
                         is_allergen_custom.set(false);
                         is_custom_ingredient.set(true);
                         edit_category.set(None);
@@ -474,6 +484,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             is_allergen: false,
                             is_namensgebend: None,
                             sub_components: None,
+                            children: None,
                             origins: None,
                             is_agricultural: false,
                             is_bio: None,
@@ -488,6 +499,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             erlaubte_ausnahme_knospe_details: None,
                             processing_steps: None,
                 aus_umstellbetrieb: None,
+                override_children: None,
                         };
                     }
                     is_open.toggle();
@@ -509,12 +521,12 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         edit_amount.set(Some(orig.amount));
                         edit_unit.set(orig.unit.clone());
                         edit_is_composite.set(
-                            orig.sub_components.as_ref().is_some_and(|s| !s.is_empty())
+                            orig.children.as_ref().is_some_and(|s| !s.is_empty())
                         );
                         edit_is_namensgebend.set(
                             orig.is_namensgebend.unwrap_or(false)
                         );
-                        edit_sub_components.set(orig.sub_components.clone());
+                        edit_children.set(orig.children.clone());
                         is_allergen_custom.set(orig.is_allergen);
                         is_custom_ingredient.set(
                             !food_db().iter().any(|(name, _)| name == &orig.name)
@@ -559,7 +571,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 br {}
                 FormField {
                     label: format!("{} (g)", t!("label.menge").to_string()),
-                    help: Some((t!("help.menge").to_string()).into()),
+                    help: Some(t!("help.menge").to_string()),
                     ValidationDisplay {
                         paths: vec![
                             format!("ingredients[{}][amount]", index)
@@ -617,7 +629,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     if is_custom_ingredient() {
                         // Custom ingredient - show checkbox
                         FormField {
-                            help: Some((t!("help.allergenManual").to_string()).into()),
+                            help: Some(t!("help.allergenManual").to_string()),
                             label: t!("label.allergen").to_string(),
                             inline_checkbox: true,
                             CheckboxInput {
@@ -639,7 +651,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
 
                 FormField {
                     label: t!("label.zusammengesetzteZutat").to_string(),
-                    help: Some((t!("help.zusammengesetzteZutaten").to_string()).into()),
+                    help: Some(t!("help.zusammengesetzteZutaten").to_string()),
                     inline_checkbox: true,
                     CheckboxInput {
                         bound_value: edit_is_composite
@@ -655,7 +667,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                 ConditionalDisplay {
                     path: "namensgebende_zutat".to_string(),
                     FormField {
-                        help: Some((t!("help.namensgebendeZutaten").to_string()).into()),
+                        help: Some(t!("help.namensgebendeZutaten").to_string()),
                         label: t!("label.namensgebendeZutat").to_string(),
                         inline_checkbox: true,
                         CheckboxInput {
@@ -693,7 +705,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             // Knospe configuration: Show both Bio (Knospe) and BioCH with mutual exclusion
                             rsx! {
                                 FormField {
-                                    help: Some((t!("help.bio_knospe").to_string()).into()),
+                                    help: Some(t!("help.bio_knospe").to_string()),
                                     label: t!("bio_labels.bio_knospe").to_string(),
                                     inline_checkbox: true,
                                     input {
@@ -708,7 +720,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                 }
                                 br {}
                                 FormField {
-                                    help: Some((t!("help.bio_ch").to_string()).into()),
+                                    help: Some(t!("help.bio_ch").to_string()),
                                     label: t!("bio_labels.bio_ch").to_string(),
                                     inline_checkbox: true,
                                     input {
@@ -727,7 +739,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     div { class: "border-t border-base-300 pt-2 mt-2",
                                         // Erlaubte nicht-biologische Zutat (Bio-V)
                                         FormField {
-                                            help: Some((t!("help.erlaubte_ausnahme_bio").to_string()).into()),
+                                            help: Some(t!("help.erlaubte_ausnahme_bio").to_string()),
                                             label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
                                             inline_checkbox: true,
                                             input {
@@ -753,7 +765,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                         br {}
                                         // Erlaubte nicht-Knospe Zutat
                                         FormField {
-                                            help: Some((t!("help.erlaubte_ausnahme_knospe").to_string()).into()),
+                                            help: Some(t!("help.erlaubte_ausnahme_knospe").to_string()),
                                             label: t!("bio_labels.erlaubte_ausnahme_knospe").to_string(),
                                             inline_checkbox: true,
                                             input {
@@ -783,7 +795,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             // Bio configuration: Show only BioCH with mutual exclusion to Umstellbetrieb
                             rsx! {
                                 FormField {
-                                    help: Some((t!("help.bio_ch").to_string()).into()),
+                                    help: Some(t!("help.bio_ch").to_string()),
                                     label: t!("bio_labels.bio_ch").to_string(),
                                     inline_checkbox: true,
                                     input {
@@ -801,7 +813,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                     br {}
                                     div { class: "border-t border-base-300 pt-2 mt-2",
                                         FormField {
-                                            help: Some((t!("help.erlaubte_ausnahme_bio").to_string()).into()),
+                                            help: Some(t!("help.erlaubte_ausnahme_bio").to_string()),
                                             label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
                                             inline_checkbox: true,
                                             input {
@@ -863,7 +875,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             br {}
                             FormField {
                                 label: t!("label.verarbeitungsschritte").to_string(),
-                                help: Some((t!("help.verarbeitungsschritte").to_string()).into()),
+                                help: Some(t!("help.verarbeitungsschritte").to_string()),
                                 div { class: "flex flex-col gap-2",
                                     for step in available_steps.read().iter() {
                                         label { class: "flex items-center gap-2 cursor-pointer",
@@ -872,7 +884,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                                                 class: "checkbox checkbox-accent checkbox-sm",
                                                 checked: edit_processing_steps()
                                                     .as_ref()
-                                                    .map_or(false, |s| s.contains(&step.step_de)),
+                                                    .is_some_and(|s| s.contains(&step.step_de)),
                                                 onchange: {
                                                     let step_name = step.step_de.clone();
                                                     move |evt: dioxus::prelude::Event<dioxus::prelude::FormData>| {
@@ -934,7 +946,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         rsx! {
                             FormField {
                                 label: t!("origin.herkunft").to_string(),
-                                help: Some((t!("help.herkunft_liv_art_16").to_string()).into()),
+                                help: Some(t!("help.herkunft_liv_art_16").to_string()),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][origin]", index)
@@ -974,7 +986,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                         rsx! {
                             FormField {
                                 label: t!("origin.aufzucht").to_string(),
-                                help: Some((t!("help.aufzucht_location").to_string()).into()),
+                                help: Some(t!("help.aufzucht_location").to_string()),
                                 ValidationDisplay {
                                     paths: vec![
                                         format!("ingredients[{}][aufzucht_ort]", index)
@@ -1057,16 +1069,13 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             edit_name.set(orig.name.clone());
                             edit_amount.set(Some(orig.amount));
                             edit_is_composite.set(
-                                !orig.sub_components
-                                    .clone()
-                                    .unwrap_or_default()
-                                    .is_empty()
+                                orig.children.as_ref().is_some_and(|c| !c.is_empty())
                             );
                             edit_is_namensgebend.set(
                                 orig.is_namensgebend
                                     .unwrap_or(false)
                             );
-                            edit_sub_components.set(orig.sub_components.clone());
+                            edit_children.set(orig.children.clone());
                             is_allergen_custom.set(orig.is_allergen);
                             is_custom_ingredient.set(
                                 !food_db().iter().any(|(name, _)| name == &orig.name)
@@ -1082,7 +1091,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     }
                     
                     // Show "Merken" button only for composite ingredients
-                    if edit_is_composite() && edit_sub_components().is_some() {
+                    if edit_is_composite() && edit_children().is_some() {
                         button {
                             class: "btn btn-info",
                             onclick: handle_save_to_storage,
@@ -1115,10 +1124,10 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     edit_name.set(orig.name.clone());
                     edit_amount.set(Some(orig.amount));
                     edit_is_composite.set(
-                        orig.sub_components.as_ref().is_some_and(|s| !s.is_empty())
+                        orig.children.as_ref().is_some_and(|s| !s.is_empty())
                     );
                     edit_is_namensgebend.set(orig.is_namensgebend.unwrap_or(false));
-                    edit_sub_components.set(orig.sub_components.clone());
+                    edit_children.set(orig.children.clone());
                     is_allergen_custom.set(orig.is_allergen);
                     is_custom_ingredient.set(
                         !food_db().iter().any(|(name, _)| name == &orig.name)

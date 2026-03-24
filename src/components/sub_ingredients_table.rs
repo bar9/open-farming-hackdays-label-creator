@@ -1,5 +1,5 @@
 use crate::components::*;
-use crate::core::{Ingredient, SubIngredient};
+use crate::core::Ingredient;
 use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{UnifiedIngredient, IngredientSource};
@@ -7,35 +7,36 @@ use crate::services::{UnifiedIngredient, IngredientSource};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
-/// Convert a SubIngredient to UnifiedIngredient for display purposes
-fn subingredient_to_unified(sub_ingredient: &SubIngredient) -> UnifiedIngredient {
+/// Convert a child Ingredient to UnifiedIngredient for display purposes
+fn child_ingredient_to_unified(child: &Ingredient) -> UnifiedIngredient {
     // Try to derive category information from ingredient name patterns
-    let ingredient_name = &sub_ingredient.name;
-    let name_lower = ingredient_name.to_lowercase();
+    let name_lower = child.name.to_lowercase();
 
     // Basic category derivation based on common ingredient names
-    // This is a heuristic approach since SubIngredient doesn't store category
     let (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant) = derive_category_flags_from_name(&name_lower);
 
     UnifiedIngredient {
-        name: sub_ingredient.name.clone(),
-        category: None, // Sub-ingredients don't store category, but we derive flags below
-        origin: None, // Sub-ingredients don't have origin info
-        is_allergen: Some(sub_ingredient.is_allergen),
-        is_agricultural: Some(lookup_agricultural(&sub_ingredient.name)),
+        name: child.name.clone(),
+        category: child.category.clone(),
+        origin: None,
+        is_allergen: Some(child.is_allergen),
+        is_agricultural: Some(child.is_agricultural),
         is_meat,
         is_fish,
         is_dairy,
         is_egg,
         is_honey,
         is_plant,
-        is_bio: None,
-        source: IngredientSource::Local, // Sub-ingredients are typically local
+        is_bio: child.is_bio,
+        source: IngredientSource::Local,
     }
 }
 
+/// Category flags: (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant)
+type CategoryFlags = (Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>);
+
 /// Derive category flags from ingredient name using heuristic matching
-fn derive_category_flags_from_name(name_lower: &str) -> (Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>) {
+fn derive_category_flags_from_name(name_lower: &str) -> CategoryFlags {
     let is_meat = if name_lower.contains("fleisch") || name_lower.contains("rind") ||
                      name_lower.contains("schwein") || name_lower.contains("lamm") ||
                      name_lower.contains("wurst") || name_lower.contains("speck") {
@@ -76,28 +77,28 @@ pub struct SubIngredientsTableProps {
     index: usize,
 }
 pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
-    let mut name_to_add = use_signal(String::new);
+    let name_to_add = use_signal(String::new);
     // Store the selected ingredient from dropdown (if any) to preserve metadata
-    let mut selected_ingredient: Signal<Option<UnifiedIngredient>> = use_signal(|| None);
+    let selected_ingredient: Signal<Option<UnifiedIngredient>> = use_signal(|| None);
 
     let mut delete_callback = {
         let mut ingredients = props.ingredients;
-        move |index: usize, sub_index: usize| {
+        move |index: usize, child_index: usize| {
             if let Some(mut ingredient) = ingredients.get_mut(index) {
-                if let Some(sub_components) = &mut ingredient.sub_components {
-                    sub_components.remove(sub_index);
+                if let Some(children) = &mut ingredient.children {
+                    children.remove(child_index);
                 }
             }
         }
     };
-    
+
     let mut toggle_allergen_callback = {
         let mut ingredients = props.ingredients;
-        move |index: usize, sub_index: usize, is_allergen: bool| {
+        move |index: usize, child_index: usize, is_allergen: bool| {
             if let Some(mut ingredient) = ingredients.get_mut(index) {
-                if let Some(sub_components) = &mut ingredient.sub_components {
-                    if let Some(sub_ingredient) = sub_components.get_mut(sub_index) {
-                        sub_ingredient.is_allergen = is_allergen;
+                if let Some(children) = &mut ingredient.children {
+                    if let Some(child) = children.get_mut(child_index) {
+                        child.is_allergen = is_allergen;
                     }
                 }
             }
@@ -106,11 +107,11 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
 
     let mut update_origin_callback = {
         let mut ingredients = props.ingredients;
-        move |index: usize, sub_index: usize, origin: Option<Country>| {
+        move |index: usize, child_index: usize, origin: Option<Country>| {
             if let Some(mut ingredient) = ingredients.get_mut(index) {
-                if let Some(sub_components) = &mut ingredient.sub_components {
-                    if let Some(sub_ingredient) = sub_components.get_mut(sub_index) {
-                        sub_ingredient.origin = origin;
+                if let Some(children) = &mut ingredient.children {
+                    if let Some(child) = children.get_mut(child_index) {
+                        child.origins = origin.map(|o| vec![o]);
                     }
                 }
             }
@@ -163,16 +164,16 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                 let is_saved_composite = saved_ingredients.iter().any(|i| i.name == ingredient_name);
 
                 if is_saved_composite {
-                    // If it's a saved composite ingredient, expand its sub-components
+                    // If it's a saved composite ingredient, expand its children
                     if let Some(saved) = saved_ingredients.iter().find(|i| i.name == ingredient_name) {
-                        if let Some(saved_subs) = &saved.sub_components {
-                            // Add all sub-components from the saved ingredient
-                            if let Some(sub_components) = &mut ingredient.sub_components {
-                                for sub in saved_subs {
-                                    sub_components.push(sub.clone());
+                        if let Some(saved_children) = &saved.children {
+                            // Add all children from the saved ingredient
+                            if let Some(children) = &mut ingredient.children {
+                                for child in saved_children {
+                                    children.push(child.clone());
                                 }
                             } else {
-                                ingredient.sub_components = Some(saved_subs.clone());
+                                ingredient.children = Some(saved_children.clone());
                             }
                         }
                     }
@@ -180,21 +181,17 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                     // Extract allergen status from unified ingredient, falling back to lookup
                     let allergen_status = unified_ingredient.is_allergen.unwrap_or_else(|| lookup_allergen(&ingredient_name));
 
-                    if let Some(sub_components) = &mut ingredient.sub_components {
-                        sub_components.push(SubIngredient {
-                            name: ingredient_name,
-                            is_allergen: allergen_status,
-                            origin: None,
-                        });
+                    let new_child = Ingredient {
+                        name: ingredient_name.clone(),
+                        is_allergen: allergen_status,
+                        is_agricultural: lookup_agricultural(&ingredient_name),
+                        ..Default::default()
+                    };
+
+                    if let Some(children) = &mut ingredient.children {
+                        children.push(new_child);
                     } else {
-                        let sub_components = vec![
-                            SubIngredient {
-                                name: ingredient_name,
-                                is_allergen: allergen_status,
-                                origin: None,
-                            }
-                        ];
-                        ingredient.sub_components = Some(sub_components);
+                        ingredient.children = Some(vec![new_child]);
                     }
                 }
             }
@@ -212,26 +209,26 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                     th { "" }
                     th { "" }
                 }
-                if let Some(sub_components) = props.ingredients.clone().get(props.index).and_then(|ingredient| ingredient.sub_components.clone()) {
-                    for (key, ingr) in sub_components.iter().enumerate() {
-                        tr { key: "{key}-{ingr.name}",
+                if let Some(children) = props.ingredients.clone().get(props.index).and_then(|ingredient| ingredient.children.clone()) {
+                    for (key, child) in children.iter().enumerate() {
+                        tr { key: "{key}-{child.name}",
                             td {
                                 class: "flex items-center gap-2",
                                 div {
-                                    if ingr.is_allergen {
-                                        span { class: "font-bold", "{ingr.name}" }
+                                    if child.is_allergen {
+                                        span { class: "font-bold", "{child.name}" }
                                     } else {
-                                        "{ingr.name}"
+                                        "{child.name}"
                                     }
                                 }
                                 // Show ingredient symbols
                                 IngredientSymbolsCompact {
-                                    ingredient: subingredient_to_unified(ingr)
+                                    ingredient: child_ingredient_to_unified(child)
                                 }
                             }
                             td {
                                 {
-                                    let current_origin = ingr.origin.clone();
+                                    let current_origin = child.origins.as_ref().and_then(|o| o.first().cloned());
                                     rsx! {
                                         CountrySelect {
                                             value: current_origin,
@@ -247,7 +244,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                             td {
                                 // Show allergen status
                                 {
-                                    let is_custom = !food_db().iter().any(|(name, _)| name == &ingr.name);
+                                    let is_custom = !food_db().iter().any(|(name, _)| name == &child.name);
                                     if is_custom {
                                         rsx! {
                                             // Custom ingredient - show checkbox
@@ -255,7 +252,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                                 input {
                                                     class: "checkbox",
                                                     r#type: "checkbox",
-                                                    checked: "{ingr.is_allergen}",
+                                                    checked: "{child.is_allergen}",
                                                     oninput: move |evt| {
                                                         toggle_allergen_callback(props.index, key, evt.data.checked());
                                                     },
@@ -265,7 +262,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                                 }
                                             }
                                         }
-                                    } else if ingr.is_allergen {
+                                    } else if child.is_allergen {
                                         rsx! {
                                             // Database allergen - show text only
                                             span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }

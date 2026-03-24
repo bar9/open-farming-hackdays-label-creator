@@ -285,6 +285,50 @@ fn knospe_under_90_validation_meat_always_requires_origin() {
 }
 
 #[test]
+fn knospe_under_90_validation_fish_over_10_percent() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 850.0).origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Lachs", 150.0)
+                .category("Fisch")
+                .build()
+        )
+        .build();
+    let output = calculator.execute(input);
+
+    // Should have validation error for fish >10%
+    let fish_messages = output.validation_messages.get("ingredients[1][origin]");
+    assert!(fish_messages.is_some());
+    let messages = fish_messages.unwrap();
+    assert!(messages.iter().any(|msg| msg.contains("Eier/Honig/Fisch >10%")));
+}
+
+#[test]
+fn knospe_under_90_validation_insects_always_requires_origin() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 970.0).origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Grillen", 30.0)
+                .category("Insekten")
+                .build()
+        )
+        .build();
+    let output = calculator.execute(input);
+
+    // Should have validation error for insects even at low percentage
+    let insect_messages = output.validation_messages.get("ingredients[1][origin]");
+    assert!(insect_messages.is_some());
+    let messages = insect_messages.unwrap();
+    assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
+}
+
+#[test]
 fn knospe_under_90_validation_plant_over_50_percent() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);

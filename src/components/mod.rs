@@ -36,7 +36,6 @@ pub mod icons;
 mod ingredient_detail;
 mod ingredients_table;
 mod label_preview;
-mod navbar;
 mod separator_line;
 mod sub_ingredients_table;
 mod text_input;

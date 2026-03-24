@@ -85,14 +85,14 @@ pub fn SavedIngredientsManager() -> Element {
                                             "{saved.ingredient.name}"
                                         }
                                         td {
-                                            if let Some(subs) = &saved.ingredient.sub_components {
+                                            if let Some(children) = &saved.ingredient.children {
                                                 div { class: "text-sm",
-                                                    for sub in subs {
+                                                    for child in children {
                                                         span {
-                                                            class: if sub.is_allergen { "font-bold" } else { "" },
-                                                            "{sub.name}"
+                                                            class: if child.is_allergen { "font-bold" } else { "" },
+                                                            "{child.name}"
                                                         }
-                                                        if sub != subs.last().unwrap() {
+                                                        if child != children.last().unwrap() {
                                                             ", "
                                                         }
                                                     }

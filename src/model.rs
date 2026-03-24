@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Serialize, Deserialize, Clone, Debug)]
 pub enum Country {
     CH,
     EU,
@@ -1076,5 +1076,6 @@ pub fn lookup_agricultural(name: &str) -> bool {
             return entry.2; // Return agricultural status
         }
     }
+    tracing::warn!("Ingredient '{}' not found in food_db, defaulting to agricultural=true", name);
     true // Default to agricultural if not found
 }

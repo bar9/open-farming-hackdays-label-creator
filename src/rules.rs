@@ -3,9 +3,8 @@ use strum_macros::EnumIter;
 
 /// Types of rules that can be applied in the label generation process
 #[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
 pub enum RuleType {
-    /// Rules that control input form elements and data transformation
-    Input,
     /// Rules that validate form data and generate validation messages
     Validation,
     /// Rules that control how data is formatted on the output label
@@ -15,6 +14,7 @@ pub enum RuleType {
 }
 
 /// Trait for rules that can be applied during label generation
+#[allow(dead_code)]
 pub trait Rule {
     /// Returns the dependencies this rule requires to function correctly
     fn deps(&self) -> Vec<Self>
@@ -35,13 +35,6 @@ pub trait Rule {
 #[derive(Clone, Debug, EnumIter)]
 #[allow(non_camel_case_types)]
 pub enum RuleDef {
-    /// Display percentage for all ingredients on labels (debugging/testing rule)
-    AllPercentages,
-    /// Display percentage only for ingredients starting with "M" (testing rule)
-    PercentagesStartsWithM,
-    /// Display weight in grams for all ingredients (testing rule)
-    AllGram,
-
     // Swiss regulation compliance rules
     /// AP1.1: Validates that all ingredient amounts are greater than 0
     AP1_1_ZutatMengeValidierung,
@@ -77,6 +70,10 @@ pub enum RuleDef {
     Bio_Knospe_ZertifizierungsstellePflicht,
     /// Bio-V: Shows "Bio" in Sachbezeichnung when 100% Bio-CH certified
     Bio_ShowBioSachbezeichnung,
+    /// Bio-V: >= 95% bio_ch — suppress individual * marking, use "Alle landwirtschaftlichen" legend
+    Bio_AllAgriAreBio,
+    /// Bio-V: > 0% and < 95% bio_ch — individual * + percentage legend
+    Bio_PartialBioMarking,
 }
 
 impl RuleDef {
@@ -98,9 +95,6 @@ impl Rule for RuleDef {
 
     fn get_type(&self) -> RuleType {
         match self {
-            RuleDef::AllPercentages => RuleType::Output,
-            RuleDef::PercentagesStartsWithM => RuleType::Output,
-            RuleDef::AllGram => RuleType::Output,
             RuleDef::AP1_1_ZutatMengeValidierung => RuleType::Validation,
             RuleDef::AP1_2_ProzentOutputNamensgebend => RuleType::Output,
             RuleDef::AP1_3_EingabeNamensgebendeZutat => RuleType::Conditional,
@@ -118,6 +112,8 @@ impl Rule for RuleDef {
             RuleDef::Knospe_ShowBioSuisseLogo => RuleType::Conditional,
             RuleDef::Bio_Knospe_ZertifizierungsstellePflicht => RuleType::Validation,
             RuleDef::Bio_ShowBioSachbezeichnung => RuleType::Conditional,
+            RuleDef::Bio_AllAgriAreBio => RuleType::Output,
+            RuleDef::Bio_PartialBioMarking => RuleType::Output,
         }
     }
 
@@ -133,9 +129,6 @@ impl Rule for RuleDef {
 
     fn get_description(&self) -> &'static str {
         match self {
-            RuleDef::AllPercentages => "Zeige Prozentangaben für alle Zutaten auf dem Etikett",
-            RuleDef::PercentagesStartsWithM => "Zeige Prozentangaben nur für Zutaten, die mit 'M' beginnen",
-            RuleDef::AllGram => "Zeige Gewichtsangaben in Gramm für alle Zutaten",
             RuleDef::AP1_1_ZutatMengeValidierung => "Validiert, dass alle Zutatenmengen grösser als 0 sind",
             RuleDef::AP1_2_ProzentOutputNamensgebend => "Zeigt Prozentangabe für namensgebende Zutaten auf dem Etikett",
             RuleDef::AP1_3_EingabeNamensgebendeZutat => "Ermöglicht die Eingabe von namensgebenden Zutaten in der Benutzeroberfläche",
@@ -153,6 +146,8 @@ impl Rule for RuleDef {
             RuleDef::Knospe_ShowBioSuisseLogo => "Zeigt Bio Suisse Logo basierend auf Schweizer Zutaten-Prozentsatz",
             RuleDef::Bio_Knospe_ZertifizierungsstellePflicht => "Erfordert die Angabe der Bio-Zertifizierungsstelle für Bio und Knospe Produkte",
             RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn 100% Bio-CH zertifiziert",
+            RuleDef::Bio_AllAgriAreBio => "Bio-V: Alle landwirtschaftlichen Zutaten sind bio — kein individueller * Stern",
+            RuleDef::Bio_PartialBioMarking => "Bio-V: Teilweise bio — individueller * Stern und Prozentangabe in Legende",
         }
     }
 }
@@ -240,6 +235,7 @@ impl RuleRegistry {
         self.rules_by_config.get(config)
     }
 
+    #[allow(dead_code)]
     pub fn get_rules_by_type(&self, config: &Configuration, rule_type: RuleType) -> Vec<RuleDef> {
         self.get_rules_for_config(config)
             .map(|rules| {
@@ -252,14 +248,17 @@ impl RuleRegistry {
             .unwrap_or_default()
     }
 
+    #[allow(dead_code)]
     pub fn get_rule_description(&self, rule: &RuleDef) -> &'static str {
         rule.get_description()
     }
 
+    #[allow(dead_code)]
     pub fn get_rule_specs_url(&self, rule: &RuleDef) -> Option<&'static str> {
         rule.get_specs_url()
     }
 
+    #[allow(dead_code)]
     pub fn validate_dependencies(&self, rules: &[RuleDef]) -> Result<(), String> {
         for rule in rules {
             let deps = rule.deps();

@@ -408,6 +408,7 @@ pub fn SplitLayout() -> Element {
     }
 }
 
+#[allow(deprecated)]
 #[component]
 pub fn FullLayout() -> Element {
     use_context_provider(|| Signal::new(CopyLinkContext::default()));

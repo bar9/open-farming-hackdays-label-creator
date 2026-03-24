@@ -42,7 +42,7 @@ blv_id,blv_name_de,blv_name_en,blv_name_fr,blv_parent_id,blv_type,biosuisse_haup
 6624,Fette und Öle,Fats and oils,Graisses et huiles,,top_level,Pflanzliche Öle  und pflanzliche Fette,Öle und Fette zum Braten und Backen sowie zur Weiterverarbeitung,Huiles et graisses végétales,"Huiles et graisses végétales pour rôtissage, boulangerie et transformation ultérieure"
 6623,Fette,Fats,Graisses,6624,subcategory,Pflanzliche Öle  und pflanzliche Fette,Öle und Fette zum Braten und Backen sowie zur Weiterverarbeitung,Huiles et graisses végétales,"Huiles et graisses végétales pour rôtissage, boulangerie et transformation ultérieure"
 6670,Mayonnaisen,Mayonnaise,Mayonnaises,6624,subcategory,Pflanzliche Öle  und pflanzliche Fette,Margarine,Huiles et graisses végétales,Margarines
-6671,Meeresfische,Sea fish,Poissons de mer,6625,subcategory,Pflanzliche Öle  und pflanzliche Fette,Mayonnaise,Huiles et graisses végétales,Mayonnaises
+6671,Meeresfische,Sea fish,Poissons de mer,6625,subcategory,,,,
 6687,Salatsaucen,Salad dressings,Sauces à salade,6624,subcategory,Pflanzliche Öle  und pflanzliche Fette,Salatsauce,Huiles et graisses végétales,Sauces de salade
 6691,Saucen,Sauces,Sauces,6726,subcategory,Pflanzliche Öle  und pflanzliche Fette,Salatsauce,Huiles et graisses végétales,Sauces de salade
 6612,Bier,Beer,Bière,6608,subcategory,Alkoholika und Essig,Bier,Boissons alcoolisées et vinaigre,Bière

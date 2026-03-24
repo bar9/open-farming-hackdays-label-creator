@@ -125,7 +125,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 
                         FormField {
                             label: "{t!(\"label.manuellesTotal\").to_string()}",
-                            help: Some((t!("help.manuellesTotal").to_string()).into()),
+                            help: Some(t!("help.manuellesTotal").to_string()),
                             input {
                                 r#type: "number",
                                 placeholder: t!("label.manuellesTotal").to_string().as_ref(),

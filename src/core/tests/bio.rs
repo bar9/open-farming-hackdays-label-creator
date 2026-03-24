@@ -95,7 +95,7 @@ fn bio_ch_100_percent_via_full_bio_config() {
     let calculator = calculator_for(Configuration::Bio);
     let input = InputBuilder::new()
         .vollstaendig()
-        .certification_body("Bio Inspecta")
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().origin(Country::CH).build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().origin(Country::CH).build())
         .build();
@@ -369,7 +369,7 @@ fn certification_body_valid() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
     let input = InputBuilder::new()
-        .certification_body("Bio Inspecta")
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).build())
         .build();
     let output = calculator.execute(input);
@@ -392,4 +392,256 @@ fn certification_body_empty_string_invalid() {
     let messages = output.validation_messages.get("certification_body");
     assert!(messages.is_some());
     assert!(!messages.unwrap().is_empty());
+}
+
+#[test]
+fn certification_body_invalid_format() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
+    let input = InputBuilder::new()
+        .certification_body("BIO-123")
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).build())
+        .build();
+    let output = calculator.execute(input);
+
+    // Invalid format (doesn't start with CH-BIO-) → validation error
+    let messages = output.validation_messages.get("certification_body");
+    assert!(messages.is_some());
+    assert!(messages.unwrap().iter().any(|m| m.contains("CH-BIO-xxx")));
+}
+
+// =============================================================================
+// Group F — Bio-CH 95% Threshold + Umstellbetrieb Exclusion
+// =============================================================================
+
+#[test]
+fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 50.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // 95% bio_ch >= 95% threshold → suffix allowed
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+}
+
+#[test]
+fn bio_ch_94_percent_sets_marketing_not_allowed() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 940.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 60.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // 94% < 95% → no suffix, marketing not allowed
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+#[test]
+fn bio_ch_umstellbetrieb_excluded_from_percentage() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // Umstellbetrieb ingredient excluded: only 600/1000 agricultural = 60% bio_ch → not allowed
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+#[test]
+fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio_ch().umstellbetrieb().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // 100% bio_ch but Weizenmehl is umstellbetrieb → effective 900/1000 = 90% < 95%
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+// =============================================================================
+// Group G — Bio Marking Modes (AllBio / PartialBio / NoBio)
+// =============================================================================
+
+#[test]
+fn bio_all_agricultural_bio_no_asterisk() {
+    // >= 95% bio_ch with Bio_ShowBioSachbezeichnung: no * on ingredients, "Alle landwirtschaftlichen" legend
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 40.0).build())
+        .build();
+    let output = calculator.execute(input);
+
+    // No asterisk on individual ingredients
+    assert!(!output.label.contains("Hafer*"), "AllBio mode should suppress individual * marking");
+    // "Alle landwirtschaftlichen" legend present
+    assert!(output.label.contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"));
+}
+
+#[test]
+fn bio_partial_bio_has_asterisks_and_percentage() {
+    // 60% bio_ch: * on bio ingredients, "60% der landwirtschaftlichen..." legend
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
+        .build();
+    let output = calculator.execute(input);
+
+    // Asterisk on bio ingredient
+    assert!(output.label.contains("Hafer*"), "PartialBio mode should add * on bio ingredients");
+    assert!(!output.label.contains("Weizenmehl*"), "Non-bio ingredient should not have *");
+    // Percentage legend
+    assert!(output.label.contains("60% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"));
+}
+
+#[test]
+fn bio_no_bio_no_legend() {
+    // 0% bio_ch: no legend at all
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(!output.label.contains("biologischer"), "No bio ingredients → no bio legend");
+    assert!(!output.label.contains("*"), "No bio ingredients → no asterisks");
+}
+
+#[test]
+fn knospe_mode_asterisk_unchanged() {
+    // Bio_Knospe_EingabeIstBio without Bio_ShowBioSachbezeichnung → simple * (Knospe mode)
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(output.label.contains("Hafer*"), "Knospe mode should add simple *");
+    assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Knospe mode should have simple legend");
+    // Should NOT have the new Bio-specific legends
+    assert!(!output.label.contains("Alle landwirtschaftlichen"));
+    assert!(!output.label.contains("der landwirtschaftlichen Zutaten stammen"));
+}
+
+// =============================================================================
+// Group H — Umstellbetrieb Full Integration
+// =============================================================================
+
+#[test]
+fn umstellbetrieb_gets_double_asterisk() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(output.label.contains("Weizenmehl**"), "Umstellbetrieb should get **");
+    assert!(output.label.contains("Hafer*"), "Regular bio should get *");
+    // ** should not be followed by another * (i.e., no ***)
+    assert!(!output.label.contains("***"));
+}
+
+#[test]
+fn umstellbetrieb_legend_appended() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).umstellbetrieb().build())
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"));
+}
+
+#[test]
+fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
+    // Single agricultural ingredient + umstellbetrieb → keep suffix + hinweis
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio_ch().umstellbetrieb().build())
+        .ingredient(IngredientBuilder::new("Salz", 50.0).agricultural(false).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // Monoprodukt: only one agricultural leaf (Hafer), Salz is non-agricultural
+    // Umstellbetrieb keeps sachbezeichnung_suffix but adds hinweis
+    assert_eq!(c.get("umstellbetrieb_hinweis"), Some(&true));
+}
+
+#[test]
+fn composite_umstellbetrieb_removes_sachbezeichnung() {
+    // Multiple agricultural ingredients + umstellbetrieb → remove suffix
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 500.0).bio_ch().umstellbetrieb().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // Composite with umstellbetrieb: no sachbezeichnung_suffix
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+#[test]
+fn monoprodukt_detection_single_agricultural() {
+    // 1 agricultural + 1 non-agricultural → mono
+    let ingredients = vec![
+        IngredientBuilder::new_agri("Hafer", 900.0).build(),
+        IngredientBuilder::new("Salz", 100.0).agricultural(false).build(),
+    ];
+    assert!(is_mono_product(&ingredients));
+}
+
+#[test]
+fn monoprodukt_detection_multiple_agricultural() {
+    // 2 agricultural → not mono
+    let ingredients = vec![
+        IngredientBuilder::new_agri("Hafer", 500.0).build(),
+        IngredientBuilder::new_agri("Weizenmehl", 500.0).build(),
+    ];
+    assert!(!is_mono_product(&ingredients));
 }

@@ -36,11 +36,9 @@ fn golden_erdbeer_fruchtaufstrich() {
         .build();
 
     let output = calculator.execute(input);
-    // NOTE: double spaces before "(CH)" and trailing spaces are a known formatting
-    // quirk from AP2_1_ZusammegesetztOutput + default sub_components: Some(vec![]).
     assert_eq!(
         output.label,
-        "Erdbeere vom Hof 66%  (CH), Zucker  (CH), Geliermittel: Pektin , Säuerungsmittel: Zitronensäure "
+        "Erdbeere vom Hof 66% (CH), Zucker (CH), Geliermittel: Pektin, Säuerungsmittel: Zitronensäure"
     );
 }
 
@@ -51,7 +49,7 @@ fn golden_erdbeer_fruchtaufstrich() {
 /// Bouillonpaste (Salz (CH), Sojasauce, Maltodextrin auf Weizenbasis, Karotte,
 /// Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz, Gewürze
 ///
-/// 450g product. Bouillonpaste is a composite ingredient with 9 sub-components.
+/// 450g product. Bouillonpaste is a composite ingredient with 9 children.
 #[test]
 fn golden_joghurt_salatsauce() {
     let calculator = calculator_for(Configuration::Conventional);
@@ -73,16 +71,16 @@ fn golden_joghurt_salatsauce() {
         .ingredient(IngredientBuilder::new("Zitronensaft", 10.0).build())
         .ingredient(
             IngredientBuilder::new("Bouillonpaste", 9.0)
-                .sub_components(vec![
-                    SubIngredient { name: "Salz".to_string(), is_allergen: false, origin: Some(Country::CH) },
-                    SubIngredient { name: "Sojasauce".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Maltodextrin auf Weizenbasis".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Karotte".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Knollensellerie".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Lauch".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Rapsöl".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Gewürz".to_string(), is_allergen: false, origin: None },
-                    SubIngredient { name: "Petersilie".to_string(), is_allergen: false, origin: None },
+                .children(vec![
+                    IngredientBuilder::new("Salz", 0.0).origin(Country::CH).build(),
+                    IngredientBuilder::new("Sojasauce", 0.0).build(),
+                    IngredientBuilder::new("Maltodextrin auf Weizenbasis", 0.0).build(),
+                    IngredientBuilder::new("Karotte", 0.0).build(),
+                    IngredientBuilder::new("Knollensellerie", 0.0).build(),
+                    IngredientBuilder::new("Lauch", 0.0).build(),
+                    IngredientBuilder::new("Rapsöl", 0.0).build(),
+                    IngredientBuilder::new("Gewürz", 0.0).build(),
+                    IngredientBuilder::new("Petersilie", 0.0).build(),
                 ])
                 .build(),
         )
@@ -92,10 +90,9 @@ fn golden_joghurt_salatsauce() {
         .build();
 
     let output = calculator.execute(input);
-    // NOTE: double spaces before "(CH)" and trailing spaces are a known formatting quirk.
     // Gewürze (9.5g) sorts before Bouillonpaste (9.0g) by weight.
     assert_eq!(
         output.label,
-        "Joghurt nature 63%  (CH), Rapsöl  (CH), Wasser , Blütenhonig , Senf , Zitronensaft , Gewürze , Bouillonpaste  (Salz (CH), Sojasauce, Maltodextrin auf Weizenbasis, Karotte, Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz "
+        "Joghurt nature 63% (CH), Rapsöl (CH), Wasser, Blütenhonig, Senf, Zitronensaft, Gewürze, Bouillonpaste (Salz (CH), Sojasauce, Maltodextrin auf Weizenbasis, Karotte, Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz"
     );
 }

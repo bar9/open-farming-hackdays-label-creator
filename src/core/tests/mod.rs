@@ -49,7 +49,11 @@ impl IngredientBuilder {
     pub fn agricultural(mut self, val: bool) -> Self { self.0.is_agricultural = val; self }
     pub fn bio(mut self) -> Self { self.0.is_bio = Some(true); self }
     pub fn bio_ch(mut self) -> Self { self.0.bio_ch = Some(true); self }
+    pub fn umstellbetrieb(mut self) -> Self { self.0.aus_umstellbetrieb = Some(true); self }
     pub fn sub_components(mut self, subs: Vec<SubIngredient>) -> Self { self.0.sub_components = Some(subs); self }
+    pub fn children(mut self, kids: Vec<Ingredient>) -> Self { self.0.children = Some(kids); self }
+    pub fn processing_steps(mut self, steps: Vec<&str>) -> Self { self.0.processing_steps = Some(steps.iter().map(|s| s.to_string()).collect()); self }
+    pub fn override_children(mut self) -> Self { self.0.override_children = Some(true); self }
     pub fn build(self) -> Ingredient { self.0 }
 }
 
