@@ -279,6 +279,10 @@ shorten_url_button: Link kürzen
 shortening: Wird gekürzt...
 close: Schliessen
 
+disclaimer:
+  text: "Declarino.ch übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, Aktualität und Vollständigkeit der Informationen. Jegliche Haftungsansprüche werden ausgeschlossen."
+  button_tooltip: "Bitte akzeptieren Sie den Haftungsausschluss"
+
 messages:
   ingredient_deleted: "'%{name}' wurde gelöscht"
   error_deleting: "Fehler beim Löschen: %{error}"
