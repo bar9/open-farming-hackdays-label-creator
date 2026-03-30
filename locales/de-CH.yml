@@ -52,6 +52,7 @@ label:
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
   allergen: Allergen
+  keinAllergen: Kein Allergen
   manuellesTotal: Gewogenes Endgewicht (optional)
   mengenart: Volumen oder Gewicht
   einheit: Einheit

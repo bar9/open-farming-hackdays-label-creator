@@ -53,6 +53,7 @@ label:
   zutatEingeben: Ingrédient (saisir ou sélectionner)
   namensgebend: Caractéristique
   allergen: Allergène
+  keinAllergen: Pas d'allergène
   manuellesTotal: Poids final pesé (optionnel)
   mengenart: Volume ou poids
   einheit: Unité

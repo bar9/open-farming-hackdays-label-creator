@@ -3,7 +3,7 @@ use crate::core::{Ingredient, AmountUnit};
 use crate::model::{food_db, lookup_allergen, lookup_agricultural};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
-use crate::shared::{Conditionals, Validations};
+use crate::shared::Validations;
 use crate::persistence::{save_composite_ingredient, get_saved_ingredients_list};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -440,7 +440,7 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
     };
 
 
-    let herkunft_path = format!("herkunft_benoetigt_{}", index);
+
 
     // Check for validation errors for this ingredient
     let validations_context = use_context::<Validations>();
@@ -643,6 +643,15 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                             label: t!("label.allergen").to_string(),
                             div { class: "py-2",
                                 span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
+                            }
+                        }
+                        br {}
+                    } else {
+                        // Database non-allergen - show readonly indicator
+                        FormField {
+                            label: t!("label.allergen").to_string(),
+                            div { class: "py-2 text-base-content/50",
+                                span { {t!("label.keinAllergen").to_string()} }
                             }
                         }
                         br {}
@@ -914,54 +923,19 @@ pub fn IngredientDetail(mut props: IngredientDetailProps) -> Element {
                     }
                 }
                 br {}
-                {
-                    // Get context access outside the memo to avoid hook-in-hook violation
-                    let conditionals_context = use_context::<Conditionals>();
-
-                    // Check if Knospe rules are active (always show origin field) or traditional conditional is set
-                    // Also always show in create mode (genesis) so users can set origin upfront
-                    let genesis = props.genesis;
-                    let should_show_origin = use_memo(move || {
-                        if genesis {
-                            return true;
-                        }
-
-                        let rules = props.rules.read();
-                        let has_knospe = rules.iter().any(|rule|
-                            *rule == RuleDef::Knospe_AlleZutatenHerkunft ||
-                            *rule == RuleDef::Knospe_100_Percent_CH_NoOrigin ||
-                            *rule == RuleDef::Knospe_90_99_Percent_CH_ShowOrigin
-                        );
-
-                        if has_knospe {
-                            true
-                        } else {
-                            // Fall back to traditional conditional check
-                            let conditionals = conditionals_context.0.read();
-                            *conditionals.get(&herkunft_path).unwrap_or(&false)
-                        }
-                    });
-
-                    if should_show_origin() {
-                        rsx! {
-                            FormField {
-                                label: t!("origin.herkunft").to_string(),
-                                help: Some(t!("help.herkunft_liv_art_16").to_string()),
-                                ValidationDisplay {
-                                    paths: vec![
-                                        format!("ingredients[{}][origin]", index)
-                                    ],
-                                    MultiCountrySelect {
-                                        values: edit_origins.read().clone(),
-                                        onchange: move |countries| {
-                                            edit_origins.set(countries);
-                                        }
-                                    }
-                                }
+                FormField {
+                    label: t!("origin.herkunft").to_string(),
+                    help: Some(t!("help.herkunft_liv_art_16").to_string()),
+                    ValidationDisplay {
+                        paths: vec![
+                            format!("ingredients[{}][origin]", index)
+                        ],
+                        MultiCountrySelect {
+                            values: edit_origins.read().clone(),
+                            onchange: move |countries| {
+                                edit_origins.set(countries);
                             }
                         }
-                    } else {
-                        rsx! {}
                     }
                 }
                 br {}
