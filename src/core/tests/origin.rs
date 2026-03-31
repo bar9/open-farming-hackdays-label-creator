@@ -280,3 +280,31 @@ fn meat_detection_processed_meat_products() {
     // Should display origin on label
     assert!(label.contains("Rohwurst (CH)"));
 }
+
+#[test]
+fn single_non_ch_non_eu_country_displays_on_label() {
+    // L3: Individual countries like AT, FR, AL should display in the ingredients list
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+
+    let test_cases = vec![
+        (Country::AT, "AT"),
+        (Country::FR, "FR"),
+        (Country::AL, "AL"),
+        (Country::DO, "DO"),
+    ];
+
+    for (country, expected_code) in test_cases {
+        let input = InputBuilder::new()
+            .ingredient(IngredientBuilder::new("Mehl", 800.0).origin(country).build())
+            .ingredient(IngredientBuilder::new("Salz", 200.0).build())
+            .total(1000.0)
+            .build();
+        let output = calculator.execute(input);
+        assert!(
+            output.label.contains(&format!("Mehl ({})", expected_code)),
+            "Expected 'Mehl ({})' in label, got: {}",
+            expected_code, output.label
+        );
+    }
+}

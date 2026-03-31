@@ -39,7 +39,7 @@ fn bio_ch_partial_sets_marketing_not_allowed() {
 }
 
 #[test]
-fn bio_ch_zero_percent_no_conditionals() {
+fn bio_ch_zero_percent_shows_warning() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
@@ -51,7 +51,8 @@ fn bio_ch_zero_percent_no_conditionals() {
 
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
     assert_eq!(c.get("bio_marketing_allowed"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), None);
+    // B8: Warning must appear even when no ingredient is bio
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
 }
 
 #[test]
@@ -86,7 +87,8 @@ fn bio_ch_vs_is_bio_are_independent() {
     // is_bio does not count as bio_ch, so bio_ch percentage is 0%
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
     assert_eq!(c.get("bio_marketing_allowed"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), None);
+    // B8: Warning shown because bio_ch percentage is 0%
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
 }
 
 #[test]

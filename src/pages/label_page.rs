@@ -259,6 +259,13 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         theme_context.write().theme = t!(configuration().theme_key()).to_string();
     });
 
+    // Reset rezeptur_vollstaendig when ingredients or total change
+    use_effect(move || {
+        let _ = ingredients();
+        let _ = manual_total();
+        rezeptur_vollstaendig.set(false);
+    });
+
     let rules: Memo<Vec<RuleDef>> = use_memo(move || {
         let registry = RuleRegistry::new();
         registry.get_rules_for_config(&configuration())
@@ -447,14 +454,14 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                                 required: true,
                                 help: Some(t!("help.name").to_string()),
                                 label: t!("label.name").to_string(),
-                                TextInput { required: true, bound_value: producer_name, placeholder: t!("placeholder.name").to_string() }
+                                TextareaInput { bound_value: producer_name, placeholder: t!("placeholder.name").to_string(), rows: "2" }
                             }
-                            div { class: "grid grid-cols-3 gap-4",
+                            div { class: "grid grid-cols-1 md:grid-cols-3 gap-4",
                                 FormField {
-                                    required: true,
+                                    required: false,
                                     help: Some(t!("help.adresse").to_string()),
-                                    label: t!("label.adresse").to_string(),
-                                    TextInput { required: true, bound_value: producer_address, placeholder: t!("placeholder.adresse").to_string()}
+                                    label: t!("label.strasse").to_string(),
+                                    TextInput { required: false, bound_value: producer_address, placeholder: t!("placeholder.adresse").to_string()}
                                 }
                                 FormField {
                                     required: true,
@@ -485,7 +492,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                         if has_cert {
                             SeparatorLine {}
                             FormField {
-                                label: "{t!(\"label.certification_body\").to_string()} *",
+                                label: t!("label.certification_body").to_string(),
                                 required: true,
                                 help: configuration().certification_body_help_key().map(|k| t!(k).to_string()),
                                 CertificationBodySelect {

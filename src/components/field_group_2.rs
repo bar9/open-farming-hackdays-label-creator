@@ -7,7 +7,7 @@ pub struct FieldGroup2Props {
 pub fn FieldGroup2(props: FieldGroup2Props) -> Element {
     rsx! {
         div {
-            class: "grid grid-cols-2 gap-4 ",
+            class: "grid grid-cols-1 md:grid-cols-2 gap-4 ",
             {props.children}
         }
     }

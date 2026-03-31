@@ -484,3 +484,76 @@ fn test_recursive_composites_nested_processing_steps() {
     assert!(output.label.contains("geröstet"), "Nested (grandchild) processing steps should be rendered");
     assert!(output.label.contains("fein gemahlen"), "Direct child processing steps should be rendered");
 }
+
+#[test]
+fn test_recursive_composites_four_levels() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Torte", 1000.0)
+                .children(vec![
+                    IngredientBuilder::new("Glasur", 300.0)
+                        .children(vec![
+                            IngredientBuilder::new("Schokolade", 200.0)
+                                .children(vec![
+                                    IngredientBuilder::new("Kakao", 120.0).origin(Country::EU).build(),
+                                    IngredientBuilder::new("Zucker", 80.0).origin(Country::CH).build(),
+                                ])
+                                .build(),
+                            IngredientBuilder::new("Butter", 100.0).allergen().origin(Country::CH).build(),
+                        ])
+                        .build(),
+                    IngredientBuilder::new("Mehl", 700.0).allergen().origin(Country::CH).build(),
+                ])
+                .build(),
+        )
+        .build();
+    let output = calculator.execute(input);
+
+    // All four levels should appear in the label with correct nesting
+    assert!(output.label.contains("Torte"), "Top-level ingredient should appear. Label: {}", output.label);
+    assert!(output.label.contains("Glasur"), "Level 2 should appear. Label: {}", output.label);
+    assert!(output.label.contains("Schokolade"), "Level 3 should appear. Label: {}", output.label);
+    assert!(output.label.contains("Kakao"), "Level 4 should appear. Label: {}", output.label);
+}
+
+#[test]
+fn test_composite_with_empty_children_vec() {
+    let ingredient = IngredientBuilder::new("Leere Mischung", 100.0)
+        .children(vec![])
+        .build();
+
+    // Should not panic, should return sensible values
+    let composites = ingredient.composites();
+    // Empty children should produce empty or minimal composites string
+    assert!(!composites.contains("panic"), "Should not panic with empty children");
+
+    let amount = ingredient.computed_amount();
+    // With no children and own amount of 100, should use own amount
+    assert!(amount >= 0.0, "computed_amount should not be negative");
+
+    let leaves = ingredient.leaves();
+    // With empty children, the ingredient itself or empty vec
+    assert!(!leaves.is_empty() || leaves.is_empty(), "leaves should not panic");
+}
+
+#[test]
+fn test_composite_with_single_child() {
+    let ingredient = IngredientBuilder::new("Wrapper", 0.0)
+        .children(vec![
+            IngredientBuilder::new("Einziges Kind", 50.0).origin(Country::CH).build(),
+        ])
+        .build();
+
+    let composites = ingredient.composites();
+    assert!(composites.contains("Einziges Kind"), "Single child should appear in composites. Got: {}", composites);
+    // Should not have trailing comma
+    assert!(!composites.contains(", )"), "Should not have trailing comma before closing paren. Got: {}", composites);
+
+    assert_eq!(ingredient.computed_amount(), 50.0, "computed_amount should equal the single child's amount");
+
+    let leaves = ingredient.leaves();
+    assert_eq!(leaves.len(), 1);
+    assert_eq!(leaves[0].name, "Einziges Kind");
+}

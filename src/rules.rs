@@ -74,6 +74,8 @@ pub enum RuleDef {
     Bio_AllAgriAreBio,
     /// Bio-V: > 0% and < 95% bio_ch — individual * + percentage legend
     Bio_PartialBioMarking,
+    /// L11/B15: Marks ingredients from certified wild collection with ° when >10% of total weight
+    Wildsammlung_Ueber10Prozent,
 }
 
 impl RuleDef {
@@ -114,6 +116,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_ShowBioSachbezeichnung => RuleType::Conditional,
             RuleDef::Bio_AllAgriAreBio => RuleType::Output,
             RuleDef::Bio_PartialBioMarking => RuleType::Output,
+            RuleDef::Wildsammlung_Ueber10Prozent => RuleType::Output,
         }
     }
 
@@ -148,6 +151,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn 100% Bio-CH zertifiziert",
             RuleDef::Bio_AllAgriAreBio => "Bio-V: Alle landwirtschaftlichen Zutaten sind bio — kein individueller * Stern",
             RuleDef::Bio_PartialBioMarking => "Bio-V: Teilweise bio — individueller * Stern und Prozentangabe in Legende",
+            RuleDef::Wildsammlung_Ueber10Prozent => "L11/B15: Kennzeichnung mit ° für Zutaten aus zertifizierter Wildsammlung wenn >10% Anteil",
         }
     }
 }
@@ -227,6 +231,7 @@ impl RuleRegistry {
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Knospe_ShowBioSuisseLogo,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
+                RuleDef::Wildsammlung_Ueber10Prozent,
             ],
         );
     }

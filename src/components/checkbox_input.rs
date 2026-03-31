@@ -19,7 +19,7 @@ pub fn CheckboxInput(mut props: CheckboxInputProps) -> Element {
     });
     rsx! {
         input {
-            class: "checkbox {invalid_class}",
+            class: "checkbox checkbox-accent {invalid_class}",
             r#type: "checkbox",
             required: "{props.required}",
             checked: "{props.bound_value}",

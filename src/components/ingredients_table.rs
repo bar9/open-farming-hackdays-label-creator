@@ -1,4 +1,5 @@
-use crate::components::ingredient_detail::IngredientDetail;
+use crate::components::miller_modal::{MillerModal, GenesisModal};
+use crate::components::ingredient_path::IngredientPath;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::rules::RuleDef;
@@ -10,7 +11,6 @@ use std::collections::HashMap;
 
 /// Convert an Ingredient to UnifiedIngredient for display purposes
 fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
-    // Calculate category flags if we have a category
     let (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant) = if let Some(ref category) = ingredient.category {
         (
             Some(is_meat_category(category)),
@@ -27,7 +27,6 @@ fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
     UnifiedIngredient {
         name: ingredient.name.clone(),
         category: ingredient.category.clone(),
-        // Take first origin for display (UnifiedIngredient uses single origin for flag display)
         origin: ingredient.origins.as_ref().and_then(|o| o.first().cloned()),
         is_allergen: Some(ingredient.is_allergen),
         is_agricultural: Some(ingredient.is_agricultural),
@@ -38,7 +37,7 @@ fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
         is_honey,
         is_plant,
         is_bio: ingredient.is_bio,
-        source: IngredientSource::Local, // Most ingredients come from local data
+        source: IngredientSource::Local,
     }
 }
 
@@ -51,9 +50,8 @@ pub struct IngredientsTableProps {
     rezeptur_vollstaendig: Signal<bool>,
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
-    let delete_callback = |index, mut list: Signal<Vec<Ingredient>>| list.remove(index);
-    // let name_to_add = use_signal(|| String::new());
-    // let amount_to_add = use_signal(|| 0);
+    let editing_path: Signal<IngredientPath> = use_signal(Vec::new);
+
     let total_amount = use_memo(move || {
         props
             .ingredients
@@ -62,56 +60,18 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             .map(|x: &Ingredient| x.amount)
             .sum::<f64>()
     });
+
     rsx! {
         div { class: "flex flex-col gap-4",
-            for (key , ingr) in props.ingredients.read().iter().enumerate() {
-                // ValidationDisplay {
-                //     paths: vec![format!("ingredients[{}][amount]", key)],
-                div { class: "grid gap-4 grid-cols-3 odd:bg-gray-100 even:bg-white items-center", key: "{key}",
-                    div {
-                        class: "flex items-center gap-2",
-                        div {
-                            class: "flex items-center gap-1",
-                            // Show country flags if origins are set
-                            if let Some(origins) = &ingr.origins {
-                                for origin in origins.iter() {
-                                    span { class: "text-lg", "{origin.flag_emoji()}" }
-                                }
-                            }
-                            div {
-                                if ingr.is_allergen {
-                                    span { class: "font-bold", "{ingr.composite_name()}" }
-                                } else {
-                                    "{ingr.composite_name()}"
-                                }
-                                if ingr.is_namensgebend.unwrap_or(false) {" ({t!(\"label.namensgebend\").to_string()})"}
-                            }
-                        }
-                        // Show ingredient symbols
-                        IngredientSymbolsCompact {
-                            ingredient: ingredient_to_unified(ingr)
-                        }
-                    }
-                    div {
-                        class: "text-right",
-                        "{ingr.amount} " {t!(ingr.unit.translation_key()).to_string()}
-                    }
-                    div {
-                        class: "text-right",
-                        div {
-                            class: "join",
-                            IngredientDetail {ingredients: props.ingredients, index: key, rules: props.rules}
-                            button {
-                                class: "btn btn-outline join-item",
-                                dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
-                                onclick: move |_| {
-                                    delete_callback(key, props.ingredients);
-                                },
-                            }
-                        }
-                    }
-                }
-            },
+            // Recursive tree rendering
+            {render_ingredient_tree(
+                &props.ingredients.read(),
+                &[],
+                0,
+                &editing_path,
+                props.ingredients,
+            )}
+
             if props.ingredients.len() > 0 {
                 ConditionalDisplay {
                     path: "manuelles_total".to_string(),
@@ -141,69 +101,36 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                             }
                         }
 
-                        div {
-
-                        }
+                        div {}
                     }
                 }
-                // Checkbox to mark recipe as complete - enables validation
-                div { class: "form-control mt-4",
-                    label { class: "label cursor-pointer justify-start gap-2",
-                        input {
-                            r#type: "checkbox",
-                            class: "checkbox checkbox-primary",
-                            checked: (props.rezeptur_vollstaendig)(),
-                            onchange: move |evt| {
-                                props.rezeptur_vollstaendig.set(evt.checked());
-                            }
-                        }
-                        span { class: "label-text", "{t!(\"label.rezepturVollstaendig\").to_string()}" }
+                // Button to trigger recipe validation
+                div { class: "mt-4",
+                    button {
+                        class: if (props.rezeptur_vollstaendig)() { "btn btn-disabled" } else { "btn btn-accent" },
+                        disabled: (props.rezeptur_vollstaendig)(),
+                        onclick: move |_| {
+                            props.rezeptur_vollstaendig.set(true);
+                        },
+                        "{t!(\"label.rezepturVollstaendig\").to_string()}"
                     }
                 }
             }
         }
         div { class: "grid grid-cols-3 gap-4 items-center border-top",
-            // input {
-            //     list: "ingredients",
-            //     r#type: "flex",
-            //     placeholder: t!("placeholder.zutatName").to_string().as_ref(),
-            //     class: "input input-bordered bg-white input-accent w-full",
-            //     oninput: move |evt| name_to_add.set(evt.data.value()),
-            //     value: "{name_to_add}",
-            //     datalist { id: "ingredients",
-            //         for item in food_db().clone() {
-            //             option { value: "{item.0}" }
-            //         }
-            //     }
-            // }
-            // div {
-            //     class: "flex flex-row gap-4 items-center text-right",
-            //     input {
-            //         r#type: "number",
-            //         placeholder: t!("placeholder.menge").to_string().as_ref(),
-            //         class: "input input-bordered bg-white input-accent w-full",
-            //         oninput: move |evt| {
-            //             if let Ok(amount) = evt.data.value().parse::<i32>() {
-            //                 amount_to_add.set(amount);
-            //             }
-            //         },
-            //         value: "{amount_to_add}",
-            //     }
-            //     "g"
-            // }
-            IngredientDetail {
+            GenesisModal {
                 ingredients: props.ingredients,
-                index: 0,
-                genesis: true,
                 rules: props.rules
-            } //index is ignored
-            div {} // Empty cell for category column
-            div {} // Empty cell for amount column
-            // button {
-            //     class: "btn btn-accent",
-            //     onclick: move |_evt| { },
-            //     "{t!(\"nav.hinzufuegen\").to_string()}"
-            // }
+            }
+            div {}
+            div {}
+        }
+
+        // Miller Columns modal for editing
+        MillerModal {
+            ingredients: props.ingredients,
+            editing_path: editing_path,
+            rules: props.rules,
         }
 
         // Show validation messages for all ingredients
@@ -211,5 +138,112 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             paths: (0..props.ingredients.read().len()).map(|i| format!("ingredients[{}][origin]", i)).collect::<Vec<_>>(),
             div {}
         }
+    }
+}
+
+/// Recursively render the ingredient tree with indentation.
+fn render_ingredient_tree(
+    ingredients: &[Ingredient],
+    path_prefix: &[usize],
+    depth: usize,
+    editing_path: &Signal<IngredientPath>,
+    root_ingredients: Signal<Vec<Ingredient>>,
+) -> Element {
+    let elements: Vec<Element> = ingredients.iter().enumerate()
+        .map(|(i, ingr)| {
+            let full_path: IngredientPath = {
+                let mut p = path_prefix.to_vec();
+                p.push(i);
+                p
+            };
+            let edit_path = full_path.clone();
+            let mut editing_path_signal = *editing_path;
+            let ingr = ingr.clone();
+            let name = ingr.name.clone();
+            let is_allergen = ingr.is_allergen;
+            let is_namensgebend = ingr.is_namensgebend.unwrap_or(false);
+            let computed_origins = ingr.computed_origins();
+            let computed_amount = ingr.computed_amount();
+            let unit_key = ingr.unit.translation_key().to_string();
+            let unified = ingredient_to_unified(&ingr);
+            let children = ingr.children.clone();
+            let children_for_recurse = children.clone();
+            let full_path_for_children = full_path.clone();
+
+            rsx! {
+                div {
+                    class: if depth.is_multiple_of(2) { "grid gap-4 grid-cols-3 bg-gray-100 items-center" } else { "grid gap-4 grid-cols-3 bg-white items-center" },
+                    style: "padding-left: {depth as f32 * 1.5}rem;",
+                    key: "{i}-{name}",
+                    div {
+                        class: "flex items-center gap-2",
+                        div {
+                            class: "flex items-center gap-1",
+                            if let Some(origins) = &computed_origins {
+                                for origin in origins.iter() {
+                                    span { class: "text-lg", "{origin.flag_emoji()}" }
+                                }
+                            }
+                            div {
+                                if is_allergen {
+                                    span { class: "font-bold", "{name}" }
+                                } else {
+                                    "{name}"
+                                }
+                                if is_namensgebend { " ({t!(\"label.namensgebend\").to_string()})" }
+                            }
+                        }
+                        IngredientSymbolsCompact {
+                            ingredient: unified
+                        }
+                    }
+                    div {
+                        class: "text-right",
+                        "{computed_amount} " {t!(&unit_key).to_string()}
+                    }
+                    div {
+                        class: "text-right",
+                        div {
+                            class: "join",
+                            button {
+                                class: "btn join-item btn-outline",
+                                onclick: move |_| {
+                                    editing_path_signal.set(edit_path.clone());
+                                },
+                                icons::ListDetail {}
+                            }
+                            if depth == 0 {
+                                button {
+                                    class: "btn btn-outline join-item",
+                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                    onclick: {
+                                        let mut root_ingredients = root_ingredients;
+                                        move |_| {
+                                            root_ingredients.write().remove(i);
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                    }
+                }
+                // Render children recursively (always expanded)
+                if let Some(ref children) = children_for_recurse {
+                    if !children.is_empty() {
+                        {render_ingredient_tree(
+                            children,
+                            &full_path_for_children,
+                            depth + 1,
+                            &editing_path_signal,
+                            root_ingredients,
+                        )}
+                    }
+                }
+            }
+        })
+        .collect();
+
+    rsx! {
+        {elements.into_iter()}
     }
 }

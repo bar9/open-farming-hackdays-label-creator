@@ -1,80 +1,16 @@
 use crate::components::*;
 use crate::core::Ingredient;
-use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
+use crate::model::{lookup_allergen, lookup_agricultural};
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{UnifiedIngredient, IngredientSource};
-// Category service not directly imported since we use heuristic name-based derivation
 use dioxus::prelude::*;
 use rust_i18n::t;
-
-/// Convert a child Ingredient to UnifiedIngredient for display purposes
-fn child_ingredient_to_unified(child: &Ingredient) -> UnifiedIngredient {
-    // Try to derive category information from ingredient name patterns
-    let name_lower = child.name.to_lowercase();
-
-    // Basic category derivation based on common ingredient names
-    let (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant) = derive_category_flags_from_name(&name_lower);
-
-    UnifiedIngredient {
-        name: child.name.clone(),
-        category: child.category.clone(),
-        origin: None,
-        is_allergen: Some(child.is_allergen),
-        is_agricultural: Some(child.is_agricultural),
-        is_meat,
-        is_fish,
-        is_dairy,
-        is_egg,
-        is_honey,
-        is_plant,
-        is_bio: child.is_bio,
-        source: IngredientSource::Local,
-    }
-}
-
-/// Category flags: (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant)
-type CategoryFlags = (Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>, Option<bool>);
-
-/// Derive category flags from ingredient name using heuristic matching
-fn derive_category_flags_from_name(name_lower: &str) -> CategoryFlags {
-    let is_meat = if name_lower.contains("fleisch") || name_lower.contains("rind") ||
-                     name_lower.contains("schwein") || name_lower.contains("lamm") ||
-                     name_lower.contains("wurst") || name_lower.contains("speck") {
-        Some(true)
-    } else { None };
-
-    let is_fish = if name_lower.contains("fisch") || name_lower.contains("lachs") ||
-                     name_lower.contains("thun") || name_lower.contains("forelle") {
-        Some(true)
-    } else { None };
-
-    let is_dairy = if name_lower.contains("milch") || name_lower.contains("käse") ||
-                      name_lower.contains("butter") || name_lower.contains("sahne") ||
-                      name_lower.contains("joghurt") || name_lower.contains("quark") {
-        Some(true)
-    } else { None };
-
-    let is_egg = if name_lower.contains("ei") && !name_lower.contains("wein") && !name_lower.contains("reis") {
-        Some(true)
-    } else { None };
-
-    let is_honey = if name_lower.contains("honig") {
-        Some(true)
-    } else { None };
-
-    let is_plant = if name_lower.contains("gemüse") || name_lower.contains("obst") ||
-                      name_lower.contains("getreide") || name_lower.contains("weizen") ||
-                      name_lower.contains("reis") || name_lower.contains("kartoffel") {
-        Some(true)
-    } else { None };
-
-    (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant)
-}
 
 #[derive(Props, Clone, PartialEq)]
 pub struct SubIngredientsTableProps {
     ingredients: Signal<Vec<Ingredient>>,
     index: usize,
+    on_edit_child: EventHandler<usize>,
 }
 pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
     let name_to_add = use_signal(String::new);
@@ -87,32 +23,6 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             if let Some(mut ingredient) = ingredients.get_mut(index) {
                 if let Some(children) = &mut ingredient.children {
                     children.remove(child_index);
-                }
-            }
-        }
-    };
-
-    let mut toggle_allergen_callback = {
-        let mut ingredients = props.ingredients;
-        move |index: usize, child_index: usize, is_allergen: bool| {
-            if let Some(mut ingredient) = ingredients.get_mut(index) {
-                if let Some(children) = &mut ingredient.children {
-                    if let Some(child) = children.get_mut(child_index) {
-                        child.is_allergen = is_allergen;
-                    }
-                }
-            }
-        }
-    };
-
-    let mut update_origin_callback = {
-        let mut ingredients = props.ingredients;
-        move |index: usize, child_index: usize, origin: Option<Country>| {
-            if let Some(mut ingredient) = ingredients.get_mut(index) {
-                if let Some(children) = &mut ingredient.children {
-                    if let Some(child) = children.get_mut(child_index) {
-                        child.origins = origin.map(|o| vec![o]);
-                    }
                 }
             }
         }
@@ -205,7 +115,6 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             table { class: "table border-solid",
                 tr {
                     th { "{t!(\"label.zutat\").to_string()}" }
-                    th { "{t!(\"origin.herkunft\").to_string()}" }
                     th { "" }
                     th { "" }
                 }
@@ -221,60 +130,21 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                         "{child.name}"
                                     }
                                 }
-                                // Show ingredient symbols
-                                IngredientSymbolsCompact {
-                                    ingredient: child_ingredient_to_unified(child)
-                                }
                             }
                             td {
-                                {
-                                    let current_origin = child.origins.as_ref().and_then(|o| o.first().cloned());
-                                    rsx! {
-                                        CountrySelect {
-                                            value: current_origin,
-                                            onchange: move |origin: Option<Country>| {
-                                                update_origin_callback(props.index, key, origin);
-                                            },
-                                            class: "select select-bordered select-sm w-full max-w-xs",
-                                            include_all_countries: true
-                                        }
-                                    }
-                                }
-                            }
-                            td {
-                                // Show allergen status
-                                {
-                                    let is_custom = !food_db().iter().any(|(name, _)| name == &child.name);
-                                    if is_custom {
-                                        rsx! {
-                                            // Custom ingredient - show checkbox
-                                            label { class: "label cursor-pointer",
-                                                input {
-                                                    class: "checkbox",
-                                                    r#type: "checkbox",
-                                                    checked: "{child.is_allergen}",
-                                                    oninput: move |evt| {
-                                                        toggle_allergen_callback(props.index, key, evt.data.checked());
-                                                    },
-                                                }
-                                                span { class: "label-text ml-2",
-                                                    {t!("label.allergen").to_string()}
-                                                }
-                                            }
-                                        }
-                                    } else if child.is_allergen {
-                                        rsx! {
-                                            // Database allergen - show text only
-                                            span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
-                                        }
-                                    } else {
-                                        rsx! {}
-                                    }
+                                button {
+                                    class: "btn btn-square btn-sm btn-ghost",
+                                    title: t!("nav.bearbeiten").to_string(),
+                                    onclick: {
+                                        let on_edit = props.on_edit_child;
+                                        move |_| on_edit.call(key)
+                                    },
+                                    icons::ListDetail {}
                                 }
                             }
                             td {
                                 button {
-                                    class: "btn btn-square",
+                                    class: "btn btn-square btn-sm",
                                     dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
                                     onclick: move |_| {
                                         delete_callback(props.index, key);

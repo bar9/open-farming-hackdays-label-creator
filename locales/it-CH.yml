@@ -32,6 +32,7 @@ label:
   nettogewicht: Peso netto
   abtropfgewicht: Peso sgocciolato
   adresse: Indirizzo
+  strasse: Via / Numero civico
   name: Azienda / Nome
   plz: CAP
   ort: Località
@@ -45,6 +46,7 @@ label:
   mindestensHaltbar: Da consumarsi preferibilmente entro
   zuVerbrauchen: Da consumare entro
   zutatDetails: Dettagli dell'ingrediente
+  unterzutatBearbeiten: Modifica sotto-ingrediente
   zutat: Ingrediente
   menge: Quantità
   namensgebendeZutat: Ingrediente caratterizzante
@@ -66,7 +68,7 @@ label:
   actions: Azioni
   saved_indicator: (Salvato)
   allergen_indicator: (Allergene)
-  rezepturVollstaendig: Ricetta completamente inserita
+  rezepturVollstaendig: "Ricetta completa \u2014 verificare"
   liv_anhang7_format: "100g di prodotto finito contengono %{grams}g"
   verarbeitungsschritte: Fasi di lavorazione
 
@@ -77,8 +79,9 @@ nav:
   schliessen: Chiudi
   verhaeltnisseBeibehalten: Mantenere le proporzioni
   anpassen: Adattare
-  hinzufuegen: Aggiungere
+  hinzufuegen: Aggiungi ingrediente
   speichern: Salvare
+  speichernUndNaechste: Salva e prossimo ingrediente
   bearbeiten: Modifica
   saved_ingredients: Ingredienti salvati
 
@@ -240,6 +243,10 @@ help:
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
   bio_transitional: Indica se questo ingrediente proviene da un'azienda in conversione
+  aus_umstellbetrieb: Ingrediente da un'azienda in conversione all'agricoltura biologica. Contrassegnato con ** sull'etichetta.
+  wildsammlung: Ingrediente da raccolta selvatica certificata. Contrassegnato con ° sull'etichetta se >10% del totale.
+  nicht_landwirtschaftlich: "Ingrediente non agricolo (es. acqua, sale, colture, certi additivi). Non considerato nei calcoli bio."
+  andere: Ingrediente né certificato bio né non agricolo.
   aufzucht_location: Luogo in cui ha trascorso la maggior parte della vita
   certification_body_bio: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Bio)
   certification_body_knospe: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Gemma)
@@ -408,6 +415,7 @@ bio_legend:
   alle_landwirtschaftlichen: Tutti gli ingredienti agricoli provengono da agricoltura biologica
   x_prozent_bio: "%{percentage}% degli ingredienti agricoli provengono da produzione biologica"
   aus_umstellung: in conversione all'agricoltura biologica
+  aus_wildsammlung: da raccolta selvatica certificata
 
 bio_labels:
   bio_knospe: Bio (Gemma)
@@ -415,10 +423,17 @@ bio_labels:
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
   erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...
+  aus_umstellbetrieb: Da azienda in conversione
+  wildsammlung: Da raccolta selvatica certificata
+  nicht_landwirtschaftlich: Non agricolo
+  andere: Altro
 
 bio_hints:
   marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."
   marketing_not_allowed: "Il prodotto NON può essere commercializzato come prodotto biologico perché non tutti gli ingredienti agricoli sono certificati bio. Solo alcuni ingredienti possono essere contrassegnati come biologici."
+  alternative_marking: "Nota: Oltre alla marcatura *, sono ammesse anche le seguenti varianti: «Tutti gli ingredienti agricoli provengono dall'agricoltura biologica» oppure il prefisso «Bio-» davanti ai singoli ingredienti."
+  knospe_marketing_allowed: "Il prodotto soddisfa i requisiti Gemma e può essere commercializzato con il logo Bio Suisse Gemma."
+  knospe_marketing_not_allowed: "Il prodotto NON soddisfa i requisiti Gemma perché non tutti gli ingredienti agricoli sono certificati Gemma. Il logo Gemma non può essere utilizzato."
 
 umstellbetrieb:
   hinweis: "Prodotto nell'ambito della conversione all'agricoltura biologica"

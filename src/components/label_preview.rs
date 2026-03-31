@@ -382,10 +382,24 @@ pub fn LabelPreview(
                     div { class: "mt-2 p-2 bg-success/10 text-success text-xs rounded",
                         {t!("bio_hints.marketing_allowed").to_string()}
                     }
+                    div { class: "mt-2 p-2 bg-info/10 text-info text-xs rounded",
+                        {t!("bio_hints.alternative_marking").to_string()}
+                    }
                 }
                 if conditionals.0().get("bio_marketing_not_allowed").unwrap_or(&false) == &true {
                     div { class: "mt-2 p-2 bg-warning/10 text-warning text-xs rounded",
                         {t!("bio_hints.marketing_not_allowed").to_string()}
+                    }
+                }
+                // Knospe Marketing Hints
+                if conditionals.0().get("knospe_marketing_allowed").unwrap_or(&false) == &true {
+                    div { class: "mt-2 p-2 bg-success/10 text-success text-xs rounded",
+                        {t!("bio_hints.knospe_marketing_allowed").to_string()}
+                    }
+                }
+                if conditionals.0().get("knospe_marketing_not_allowed").unwrap_or(&false) == &true {
+                    div { class: "mt-2 p-2 bg-warning/10 text-warning text-xs rounded",
+                        {t!("bio_hints.knospe_marketing_not_allowed").to_string()}
                     }
                 }
                 }

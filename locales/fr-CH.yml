@@ -33,6 +33,7 @@ label:
   nettogewicht: Poids net
   abtropfgewicht: Poids égoutté
   adresse: Adresse
+  strasse: Rue / Numéro
   name: Entreprise / Nom
   plz: NPA
   ort: Localité
@@ -46,6 +47,7 @@ label:
   mindestensHaltbar: À consommer de préférence avant
   zuVerbrauchen: À consommer jusqu'au
   zutatDetails: Détails de l'ingrédient
+  unterzutatBearbeiten: Modifier le sous-ingrédient
   zutat: Ingrédient
   menge: Quantité
   namensgebendeZutat: Ingrédient caractéristique
@@ -67,7 +69,7 @@ label:
   actions: Actions
   saved_indicator: (Enregistré)
   allergen_indicator: (Allergène)
-  rezepturVollstaendig: Recette complètement saisie
+  rezepturVollstaendig: "Recette complète \u2014 vérifier"
   liv_anhang7_format: "100g de produit fini contiennent %{grams}g"
   verarbeitungsschritte: Procédés de transformation
 
@@ -78,8 +80,9 @@ nav:
   schliessen: Fermer
   verhaeltnisseBeibehalten: Conserver les proportions
   anpassen: Adapter
-  hinzufuegen: Ajouter
+  hinzufuegen: Ajouter un ingrédient
   speichern: Sauvegarder
+  speichernUndNaechste: Sauvegarder et ingrédient suivant
   bearbeiten: Modifier
   saved_ingredients: Ingrédients enregistrés
 
@@ -247,6 +250,10 @@ help:
   bio_knospe: Indique si cet ingrédient est certifié selon les normes Bio Suisse Bourgeon
   bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
   bio_transitional: Indique si cet ingrédient provient d'une exploitation en reconversion
+  aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
+  wildsammlung: Ingrédient issu de cueillette sauvage certifiée. Marqué ° sur l'étiquette si >10% du total.
+  nicht_landwirtschaftlich: "Ingrédient non agricole (p.ex. eau, sel, cultures, certains additifs). Non pris en compte dans les calculs bio."
+  andere: Ingrédient ni certifié bio ni non agricole.
   aufzucht_location: Lieu où l'animal a vécu la majeure partie de sa vie
   certification_body_bio: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bio)
   certification_body_knospe: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bourgeon)
@@ -415,6 +422,7 @@ bio_legend:
   alle_landwirtschaftlichen: Tous les ingrédients agricoles sont issus de l'agriculture biologique
   x_prozent_bio: "%{percentage}% des ingrédients agricoles sont issus de la production biologique"
   aus_umstellung: en conversion vers l'agriculture biologique
+  aus_wildsammlung: issu de cueillette sauvage certifiée
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)
@@ -422,10 +430,17 @@ bio_labels:
   erlaubte_ausnahme_bio: Ingrédient non-biologique autorisé
   erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
   erlaubte_ausnahme_details_placeholder: Saisir la justification / référence...
+  aus_umstellbetrieb: En conversion
+  wildsammlung: Issu de cueillette sauvage certifiée
+  nicht_landwirtschaftlich: Non agricole
+  andere: Autre
 
 bio_hints:
   marketing_allowed: "Le produit peut être commercialisé comme produit bio. Bio peut figurer dans la dénomination, le nom de fantaisie ou librement sur l'emballage."
   marketing_not_allowed: "Le produit ne peut PAS être commercialisé comme produit bio car tous les ingrédients agricoles ne sont pas certifiés bio. Seuls certains ingrédients peuvent être désignés comme biologiques."
+  alternative_marking: "Remarque : En plus du marquage *, les variantes suivantes sont également autorisées : «Tous les ingrédients agricoles proviennent de l'agriculture biologique» ou le préfixe «Bio-» devant chaque ingrédient."
+  knospe_marketing_allowed: "Le produit remplit les exigences Bourgeon et peut être commercialisé avec le logo Bio Suisse Bourgeon."
+  knospe_marketing_not_allowed: "Le produit ne remplit PAS les exigences Bourgeon car tous les ingrédients agricoles ne sont pas certifiés Bourgeon. Le logo Bourgeon ne peut pas être utilisé."
 
 umstellbetrieb:
   hinweis: "Produit dans le cadre de la conversion à l'agriculture biologique"

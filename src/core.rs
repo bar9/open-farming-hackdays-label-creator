@@ -761,6 +761,18 @@ impl OutputFormatter {
             output = format!("{}*", output);
         }
 
+        // Wildsammlung °-marking when ingredient >10%
+        let wildsammlung_step = "aus zertifizierter Wildsammlung";
+        let has_wildsammlung_rule = self.RuleDefs.contains(&RuleDef::Wildsammlung_Ueber10Prozent);
+        let has_wildsammlung_step = self.ingredient.processing_steps.as_ref()
+            .is_some_and(|s| s.iter().any(|step| step == wildsammlung_step));
+        let show_wildsammlung_marker = has_wildsammlung_rule && has_wildsammlung_step
+            && calculate_ingredient_percentage(self.ingredient.amount, self.total_amount) > 10.0;
+
+        if show_wildsammlung_marker {
+            output = format!("{}°", output);
+        }
+
         if self
             .RuleDefs.contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
         {
@@ -791,9 +803,14 @@ impl OutputFormatter {
             output = format! {"{}{}", output, self.ingredient.composites()};
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
+        // When Wildsammlung °-marker is active, exclude it from the regular processing steps
         if let Some(steps) = &self.ingredient.processing_steps {
-            if !steps.is_empty() {
-                let steps_text = steps.iter().map(|s| html_escape(s)).collect::<Vec<_>>().join(", ");
+            let filtered: Vec<_> = steps.iter()
+                .filter(|s| !(show_wildsammlung_marker && s.as_str() == wildsammlung_step))
+                .map(|s| html_escape(s))
+                .collect();
+            if !filtered.is_empty() {
+                let steps_text = filtered.join(", ");
                 output = format!("{}, {}", output, steps_text);
             }
         }
@@ -809,8 +826,8 @@ impl OutputFormatter {
             // Rule A: 100% Swiss agricultural ingredients - no origin display
             // Do nothing, origin already not displayed by default
         } else if has_knospe_90_99_rule {
-            // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
-            if self.ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) {
+            // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss agricultural ingredients only
+            if self.ingredient.is_agricultural && self.ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) {
                 output = format!("{} (CH)", output);
             }
         } else if has_knospe_under90_rule {
@@ -1086,9 +1103,11 @@ impl Calculator {
                     // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
                     conditionals.insert(String::from("bio_suisse_no_cross"), true);
                 }
+                conditionals.insert(String::from("knospe_marketing_allowed"), true);
             } else {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
+                conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
             }
         }
 
@@ -1099,7 +1118,7 @@ impl Calculator {
             if pct >= 95.0 {
                 conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
                 conditionals.insert(String::from("bio_marketing_allowed"), true);
-            } else if pct > 0.0 {
+            } else {
                 conditionals.insert(String::from("bio_marketing_not_allowed"), true);
             }
             // Umstellbetrieb handling for Bio Sachbezeichnung
@@ -1219,6 +1238,14 @@ impl Calculator {
             .filter(|i| i.is_agricultural())
             .count();
 
+        // Check for Wildsammlung legend (before sorted_ingredients is consumed)
+        let has_wildsammlung_marker = output_rules.contains(&RuleDef::Wildsammlung_Ueber10Prozent)
+            && sorted_ingredients.iter().any(|ing| {
+                let pct = calculate_ingredient_percentage(ing.amount, total_amount);
+                pct > 10.0 && ing.processing_steps.as_ref()
+                    .is_some_and(|s| s.iter().any(|step| step == "aus zertifizierter Wildsammlung"))
+            });
+
         // Generiere Zutatenliste
         let ingredients_label = sorted_ingredients
             .into_iter()
@@ -1245,6 +1272,11 @@ impl Calculator {
         // Append Umstellbetrieb legend if any umstellbetrieb ingredients present
         if has_umstellbetrieb {
             label = format!("{}<br>** {}", label, t!("bio_legend.aus_umstellung"));
+        }
+
+        // Append Wildsammlung legend if any ingredient got the ° marker
+        if has_wildsammlung_marker {
+            label = format!("{}<br>° {}", label, t!("bio_legend.aus_wildsammlung"));
         }
 
         Output {
@@ -1300,34 +1332,31 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
         return true;
     }
 
-    // Swiss ingredients with at least 10% share
-    if ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) && percentage >= 10.0 {
-        return true;
-    }
-
-    // Plant ingredients with more than 50% share
+    // Category-based rules (only apply when ingredient has a recognized category)
     if let Some(category) = &ingredient.category {
+        // Plant ingredients with more than 50% share
         if is_plant_category(category) && percentage > 50.0 {
             return true;
         }
-    }
 
-    // Eggs/Honey/Fish/Other aquacultures with more than 10% share
-    if let Some(category) = &ingredient.category {
+        // Eggs/Honey/Fish/Other aquacultures with more than 10% share
         if (is_egg_category(category) ||
             is_honey_category(category) ||
             is_fish_category(category)) && percentage > 10.0 {
             return true;
         }
-    }
 
-    // Milk/Dairy/Meat/Insects always show origin (question in requirements:
-    // "gilt das auch bei solchen Zutaten, oder nur wenn das ganze Produkt zB ein Milchprodukt ist?"
-    // I'm interpreting this as: these ingredient types always need origin)
-    if let Some(category) = &ingredient.category {
+        // Milk/Dairy/Meat/Insects always show origin
         if is_dairy_category(category) ||
            is_meat_category(category) ||
            is_insect_category(category) {
+            return true;
+        }
+
+        // Swiss agricultural ingredients with a recognized category and >=10% share
+        if ingredient.is_agricultural() &&
+           ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) &&
+           percentage >= 10.0 {
             return true;
         }
     }
@@ -1469,13 +1498,13 @@ fn validate_knospe_under90_origin(
                     t!("validation.knospe_egg_honey_fish_origin_required").to_string()
                 } else if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category) {
                     t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
-                } else if percentage >= 10.0 {
+                } else if ingredient.is_agricultural() &&
+                          ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) &&
+                          percentage >= 10.0 {
                     t!("validation.knospe_over_10_percent_origin_required").to_string()
                 } else {
                     t!("validation.knospe_general_origin_required").to_string()
                 }
-            } else if percentage >= 10.0 {
-                t!("validation.knospe_over_10_percent_origin_required").to_string()
             } else {
                 t!("validation.knospe_general_origin_required").to_string()
             };
