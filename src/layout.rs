@@ -24,10 +24,16 @@ impl Default for ThemeContext {
     }
 }
 
+#[derive(Clone, Default)]
+pub struct DisclaimerContext {
+    pub accepted: bool,
+}
+
 #[component]
 pub fn SplitLayout() -> Element {
     let copy_link_context = use_context::<Signal<CopyLinkContext>>();
     let theme_context = use_context::<Signal<ThemeContext>>();
+    let disclaimer_context = use_context::<Signal<DisclaimerContext>>();
     let current_route = use_route::<Route>();
     let mut show_link_modal = use_signal(|| false);
     let mut show_warning = use_signal(|| false);
@@ -203,15 +209,22 @@ pub fn SplitLayout() -> Element {
                         class: "flex gap-4 items-center",
                         {
                             let context = copy_link_context.read();
+                            let disclaimer_accepted = disclaimer_context.read().accepted;
                             if let Some(_query_string) = &context.query_string {
                                 rsx! {
-                                    button {
-                                        class: "btn btn-info btn-sm",
-                                        onclick: move |_| {
-                                            show_link_modal.set(true);
-                                        },
-                                        icons::Clipboard {}
-                                        "{t!(\"nav.linkKopieren\").to_string()}"
+                                    div {
+                                        class: if !disclaimer_accepted { "tooltip tooltip-bottom" } else { "" },
+                                        "data-tip": if !disclaimer_accepted { t!("disclaimer.button_tooltip").to_string() } else { String::new() },
+                                        button {
+                                            class: format!("btn btn-info btn-sm {}", if !disclaimer_accepted { "btn-disabled" } else { "" }),
+                                            onclick: move |_| {
+                                                if disclaimer_context.read().accepted {
+                                                    show_link_modal.set(true);
+                                                }
+                                            },
+                                            icons::Clipboard {}
+                                            "{t!(\"nav.linkKopieren\").to_string()}"
+                                        }
                                     }
                                 }
                             } else {
@@ -413,6 +426,7 @@ pub fn SplitLayout() -> Element {
 pub fn FullLayout() -> Element {
     use_context_provider(|| Signal::new(CopyLinkContext::default()));
     use_context_provider(|| Signal::new(ThemeContext::default()));
+    use_context_provider(|| Signal::new(DisclaimerContext::default()));
 
     rsx! {
         document::Stylesheet {

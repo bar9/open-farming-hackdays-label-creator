@@ -1,5 +1,6 @@
 use crate::components::{Amount, AmountType, Price};
 use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross};
+use crate::layout::DisclaimerContext;
 use crate::shared::Conditionals;
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
@@ -106,9 +107,12 @@ pub fn LabelPreview(
     });
 
     let conditionals = use_context::<Conditionals>();
+    let mut disclaimer_context = use_context::<Signal<DisclaimerContext>>();
+    let disclaimer_accepted = use_memo(move || disclaimer_context.read().accepted);
 
     rsx! {
         div { class: "p-8 flex flex-col bg-base-200",
+            if disclaimer_accepted() {
             div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative",
                 // Bio Suisse logo display
                 if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
@@ -384,6 +388,22 @@ pub fn LabelPreview(
                         {t!("bio_hints.marketing_not_allowed").to_string()}
                     }
                 }
+                }
+            }
+            } // end if disclaimer_accepted
+            div { class: "mx-4 mt-4 p-4 bg-warning/10 border border-warning/30 rounded-lg",
+                label { class: "flex items-start gap-3 cursor-pointer",
+                    input {
+                        class: "checkbox checkbox-warning mt-1",
+                        r#type: "checkbox",
+                        checked: disclaimer_accepted(),
+                        oninput: move |evt: FormEvent| {
+                            disclaimer_context.write().accepted = evt.checked();
+                        },
+                    }
+                    span { class: "text-sm",
+                        {t!("disclaimer.text").to_string()}
+                    }
                 }
             }
         }
