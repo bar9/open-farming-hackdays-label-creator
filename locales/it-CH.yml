@@ -22,6 +22,7 @@ splash:
 
 label:
   produktname: Nome del prodotto
+  certification_body: Ente di certificazione bio
   sachbezeichnung: Denominazione specifica
   zutaten: Ingredienti
   datumseingabe: Conservazione
@@ -31,6 +32,7 @@ label:
   nettogewicht: Peso netto
   abtropfgewicht: Peso sgocciolato
   adresse: Indirizzo
+  strasse: Via / Numero civico
   name: Azienda / Nome
   plz: CAP
   ort: Località
@@ -44,13 +46,16 @@ label:
   mindestensHaltbar: Da consumarsi preferibilmente entro
   zuVerbrauchen: Da consumare entro
   zutatDetails: Dettagli dell'ingrediente
+  unterzutatBearbeiten: Modifica sotto-ingrediente
   zutat: Ingrediente
   menge: Quantità
   namensgebendeZutat: Ingrediente caratterizzante
   zusammengesetzteZutat: Ingrediente composto
+  computedValues: Proprietà degli ingredienti secondari
   zutatEingeben: Ingrediente (inserire o selezionare)
   namensgebend: Caratterizzante
   allergen: Allergene
+  keinAllergen: Nessun allergene
   manuellesTotal: Peso finale pesato (opzionale)
   mengenart: Volume o peso
   einheit: Unità
@@ -64,8 +69,9 @@ label:
   actions: Azioni
   saved_indicator: (Salvato)
   allergen_indicator: (Allergene)
-  rezepturVollstaendig: Ricetta completamente inserita
+  rezepturVollstaendig: "Ricetta completa \u2014 verificare"
   liv_anhang7_format: "100g di prodotto finito contengono %{grams}g"
+  verarbeitungsschritte: Fasi di lavorazione
 
 nav:
   linkKopieren: Copia link
@@ -74,8 +80,9 @@ nav:
   schliessen: Chiudi
   verhaeltnisseBeibehalten: Mantenere le proporzioni
   anpassen: Adattare
-  hinzufuegen: Aggiungere
+  hinzufuegen: Aggiungi ingrediente
   speichern: Salvare
+  speichernUndNaechste: Salva e prossimo ingrediente
   bearbeiten: Modifica
   saved_ingredients: Ingredienti salvati
 
@@ -92,6 +99,17 @@ preview:
   website: "Sito web: %{website}"
   preisPro: "Prezzo per %{amount}%{unit}"
   preisTotal: Prezzo totale
+  produktnameSachbezeichnung: Nome del prodotto / Denominazione specifica
+  zutatenliste: Elenco degli ingredienti
+  herstelleradresse: Indirizzo del produttore
+  preis: Prezzo
+
+units:
+  g: g
+  ml: ml
+  l: l
+  chf: CHF
+  chfPro: "CHF per "
 
 tooltips:
   manage_saved_ingredients: Gestisci ingredienti composti salvati
@@ -106,6 +124,7 @@ placeholders:
 placeholder:
   produktname: Sogno estivo
   sachbezeichnung: Confettura di lamponi
+  ingredient_name: Inserire ingrediente...
   zusatzinformationen: |
     vegano
     
@@ -224,6 +243,14 @@ help:
     Prezzo dell'unità di vendita
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
+  bio_transitional: Indica se questo ingrediente proviene da un'azienda in conversione
+  aus_umstellbetrieb: Ingrediente da un'azienda in conversione all'agricoltura biologica. Contrassegnato con ** sull'etichetta.
+  wildsammlung: Ingrediente da raccolta selvatica certificata. Contrassegnato con ° sull'etichetta se >10% del totale.
+  nicht_landwirtschaftlich: "Ingrediente non agricolo (es. acqua, sale, colture, certi additivi). Non considerato nei calcoli bio."
+  andere: Ingrediente né certificato bio né non agricolo.
+  aufzucht_location: Luogo in cui ha trascorso la maggior parte della vita
+  certification_body_bio: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Bio)
+  certification_body_knospe: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Gemma)
   erlaubte_ausnahme_bio: |
     Secondo l'allegato 3 dell'ordinanza WBF sull'agricoltura biologica, alcuni ingredienti
     possono essere non biologici (ad es. alcuni additivi). Eccezione: gli ingredienti con
@@ -243,7 +270,7 @@ shortening: Accorciamento...
 close: Chiudi
 
 disclaimer:
-  text: "Declarino.ch non si assume alcuna responsabilità in merito all'accuratezza, all'attualità e alla completezza delle informazioni fornite. È esclusa qualsiasi pretesa di risarcimento."
+  text: "Declarino.ch vi assiste nella creazione di etichette. L'applicazione facilita il processo fornendo una struttura e segnalando le eccezioni nonché i testi di legge o le direttive utili. La responsabilità per la creazione delle etichette spetta tuttavia a voi – Declarino.ch funge unicamente da strumento di supporto.\n\nSi prega di notare che Declarino.ch non si assume alcuna garanzia in merito all'accuratezza, all'attualità e alla completezza delle informazioni fornite. È esclusa qualsiasi pretesa di risarcimento."
   button_tooltip: "Si prega di accettare la clausola di esclusione della responsabilità"
 
 messages:
@@ -307,6 +334,7 @@ validation:
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
   origin_required_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Gemma).
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
+  certification_body_format: "L'ente di certificazione deve avere il formato CH-BIO-xxx."
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
   beef_slaughter_location_required: Il luogo di macellazione è richiesto per gli ingredienti di manzo.
   fish_catch_location_required: Il luogo di cattura è richiesto per gli ingredienti di pesce.
@@ -378,9 +406,17 @@ origin:
   switzerland_parentheses: "[Svizzera]"
   birthplace: "Luogo di nascita: %{country}"
   slaughtered_in: "Macellato in: %{country}"
+  add_country: Aggiungi paese
+  remove_country: Rimuovi paese
+  regions_header: Regioni
+  countries_header: Paesi
 
 bio_legend:
   aus_biologischer_landwirtschaft: da agricoltura biologica
+  alle_landwirtschaftlichen: Tutti gli ingredienti agricoli provengono da agricoltura biologica
+  x_prozent_bio: "%{percentage}% degli ingredienti agricoli provengono da produzione biologica"
+  aus_umstellung: in conversione all'agricoltura biologica
+  aus_wildsammlung: da raccolta selvatica certificata
 
 bio_labels:
   bio_knospe: Bio (Gemma)
@@ -388,10 +424,20 @@ bio_labels:
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
   erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...
+  aus_umstellbetrieb: Da azienda in conversione
+  wildsammlung: Da raccolta selvatica certificata
+  nicht_landwirtschaftlich: Non agricolo
+  andere: Altro
 
 bio_hints:
   marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."
   marketing_not_allowed: "Il prodotto NON può essere commercializzato come prodotto biologico perché non tutti gli ingredienti agricoli sono certificati bio. Solo alcuni ingredienti possono essere contrassegnati come biologici."
+  alternative_marking: "Nota: Oltre alla marcatura *, sono ammesse anche le seguenti varianti: «Tutti gli ingredienti agricoli provengono dall'agricoltura biologica» oppure il prefisso «Bio-» davanti ai singoli ingredienti."
+  knospe_marketing_allowed: "Il prodotto soddisfa i requisiti Gemma e può essere commercializzato con il logo Bio Suisse Gemma."
+  knospe_marketing_not_allowed: "Il prodotto NON soddisfa i requisiti Gemma perché non tutti gli ingredienti agricoli sono certificati Gemma. Il logo Gemma non può essere utilizzato."
+
+umstellbetrieb:
+  hinweis: "Prodotto nell'ambito della conversione all'agricoltura biologica"
 
 weight_units:
   mg: mg

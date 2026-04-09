@@ -1,4 +1,3 @@
-use crate::components::*;
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{search_unified, UnifiedIngredient};
 use dioxus::prelude::*;

@@ -28,6 +28,7 @@ pub struct UnifiedIngredient {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum IngredientSource {
     Local,           // From food_db.csv only
     BLV,            // From BLV API only

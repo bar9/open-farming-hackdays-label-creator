@@ -1,5 +1,5 @@
-/// Centralized service for handling food category determination and derived flags
-/// This service consolidates all category-based logic that was previously duplicated
+//! Centralized service for handling food category determination and derived flags.
+//! This service consolidates all category-based logic that was previously duplicated.
 
 /// Check if a category represents fish
 pub fn is_fish_category(category: &str) -> bool {
@@ -219,50 +219,6 @@ pub fn is_plant_category(category: &str) -> bool {
     category_lower.contains("plant")
 }
 
-/// Get a summary of all category flags for a given category string
-/// This is useful for debugging and understanding category classification
-pub fn get_category_flags(category: &str) -> CategoryFlags {
-    CategoryFlags {
-        is_meat: is_meat_category(category),
-        is_fish: is_fish_category(category),
-        is_beef: is_beef_category(category),
-        is_egg: is_egg_category(category),
-        is_honey: is_honey_category(category),
-        is_dairy: is_dairy_category(category),
-        is_insect: is_insect_category(category),
-        is_plant: is_plant_category(category),
-    }
-}
-
-/// Structure representing all category flags for an ingredient
-#[derive(Debug, Clone, PartialEq)]
-pub struct CategoryFlags {
-    pub is_meat: bool,
-    pub is_fish: bool,
-    pub is_beef: bool,
-    pub is_egg: bool,
-    pub is_honey: bool,
-    pub is_dairy: bool,
-    pub is_insect: bool,
-    pub is_plant: bool,
-}
-
-impl CategoryFlags {
-    /// Get a human-readable summary of which categories apply
-    pub fn summary(&self) -> Vec<&'static str> {
-        let mut summary = Vec::new();
-        if self.is_meat { summary.push("Fleisch"); }
-        if self.is_fish { summary.push("Fisch"); }
-        if self.is_beef { summary.push("Rindfleisch"); }
-        if self.is_egg { summary.push("Ei"); }
-        if self.is_honey { summary.push("Honig"); }
-        if self.is_dairy { summary.push("Milchprodukt"); }
-        if self.is_insect { summary.push("Insekt"); }
-        if self.is_plant { summary.push("Pflanzlich"); }
-        summary
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -306,16 +262,4 @@ mod tests {
         assert!(!is_plant_category("Milch"));
     }
 
-    #[test]
-    fn test_category_flags() {
-        let flags = get_category_flags("Rind");
-        assert!(flags.is_meat);
-        assert!(flags.is_beef);
-        assert!(!flags.is_fish);
-        assert!(!flags.is_plant);
-
-        let summary = flags.summary();
-        assert!(summary.contains(&"Fleisch"));
-        assert!(summary.contains(&"Rindfleisch"));
-    }
 }

@@ -18,7 +18,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
     } else {
         rsx! {
             button {
-                class: "btn btn-xs ml-2 bg-transparent border-none inline-block",
+                class: "btn btn-xs ml-2 bg-transparent border-none inline-block text-info opacity-40",
                 onkeydown: move |evt| if evt.key() == Key::Escape {is_open.set(false); },
                 onclick: move |_| is_open.toggle(),
                 icons::Info{}
@@ -29,7 +29,7 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
                     dialog { open: "{is_open}", class: "modal",
                     div { class: "modal-box max-h-[80vh] flex flex-col text-left",
                         h3 { class: "font-bold text-lg text-left flex-shrink-0", dangerous_inner_html: externalize_links(&to_html_with_options(&props.label, &Options::gfm()).unwrap()) }
-                        div { class: "prose text-left overflow-y-auto flex-1 min-h-0 my-2", dangerous_inner_html: externalize_links(&to_html_with_options(&props.help, &Options::gfm()).unwrap()) }
+                        div { class: "prose text-left overflow-y-auto flex-1 min-h-0 my-2", style: "overflow-wrap: break-word; word-break: break-word;", dangerous_inner_html: externalize_links(&to_html_with_options(&props.help, &Options::gfm()).unwrap()) }
                         div { class: "modal-action flex-shrink-0",
                             form { method: "dialog",
                                 button {

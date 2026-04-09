@@ -1,75 +1,109 @@
-# open-farming-hackdays-label-creator
-Lebensmittel Label Creator für Manufakturen und Direktvermarkter (Schweiz)
+# Declarino - Swiss Food Label Creator
 
-Challenge: https://hack.farming.opendata.ch/project/111
+A web application for creating food labels compliant with Swiss food labeling law (Lebensmittelrecht), built with Dioxus (Rust/WASM). Designed for small manufacturers and direct marketers in Switzerland.
 
-Produktionsumgebung: https://www.declarino.ch
-Testumgebung / Prototype: https://bar9.github.io/open-farming-hackdays-label-creator/
+**Production:** https://www.declarino.ch
 
+**Staging:** https://bar9.github.io/open-farming-hackdays-label-creator/
+
+**Origin:** [Open Farming Hackdays Challenge #111](https://hack.farming.opendata.ch/project/111)
+
+## Features
+
+- Three label types: Swiss food law (Lebensmittelrecht), Bio certification, Knospe (Bio Suisse)
+- Real-time label preview as you fill in the form
+- Ingredient management with allergen detection and bold marking
+- Composite ingredients with sub-components
+- Country of origin rules (>50%, meat >20%, beef/fish specifics, Knospe tiers)
+- Bio certification tracking with Bio Suisse logo logic
+- Shareable labels via URL query parameters
+- Multilingual: German (de-CH), French (fr-CH), Italian (it-CH)
+- No backend -- all data stays in the browser (URL params + localStorage)
 
 ## Prerequisites
 
-* install rust platform
-* install node platform
+- **Rust** with wasm target: `rustup target add wasm32-unknown-unknown`
+- **Dioxus CLI** v0.7: `cargo install dioxus-cli`
+- **Node.js** + npm (for Tailwind CSS + daisyUI)
 
-Install latest dioxus-cli from git (because of https://github.com/DioxusLabs/dioxus/issues/2285)
-```bash
-cargo install --git https://github.com/DioxusLabs/dioxus.git dioxus-cli
-```
-
+## Setup
 
 ```bash
-cargo install cargo-make
+make setup    # Install npm dependencies
 ```
+
+## Development
 
 ```bash
-rustup target add wasm32-unknown-unknown
+make dev      # Start Dioxus dev server with hot-reload
 ```
+
+Open http://localhost:8080/open-farming-hackdays-label-creator
+
+## Build
 
 ```bash
-npm install
+make build              # Development build (all pages)
+make build-production   # Production build (Bio/Knospe shown as "Coming Soon")
 ```
 
-## Local Development
+The `hidebio` feature flag controls Bio/Knospe page visibility. Production deploys to declarino.ch with this flag enabled.
+
+## Checks
 
 ```bash
-cargo make dev
+make check       # Run all: cargo check → clippy → dx build
+make check-rust  # Type checking only
+make lint        # Clippy with -D warnings
+make test        # Unit tests
 ```
-and open `http://localhost:8080/open-farming-hackdays-label-creator` (without a trailing slash!)
 
-## Build Options
+## Project Structure
 
-This project supports feature flags to control which pages are included in the build:
-
-### Development Build (All Pages)
-```bash
-dx build
 ```
-Includes all pages: Swiss food law (Lebensmittelrecht), Bio, and Knospe certification pages.
-
-### Production Build (Swiss Only)
-```bash
-dx build --features hidebio
+src/
+  main.rs              # Entry point, locale init
+  core.rs              # Calculator, OutputFormatter, percentage logic, tests
+  rules.rs             # RuleDef enum, Rule trait, RuleRegistry
+  model.rs             # Country, Allergen, data enums
+  routes.rs            # Router (4 routes, cfg-gated Bio/Knospe)
+  layout.rs            # SplitLayout (label editor) + FullLayout
+  shared.rs            # Configuration enum, Validations/Conditionals contexts
+  category_service.rs  # Ingredient category detection
+  pages/
+    swiss.rs           # Swiss food law page
+    bio.rs             # Bio certification page
+    knospe.rs          # Knospe (Bio Suisse) page
+    splash_screen.rs   # Landing page
+    impressum.rs       # Legal info
+  components/          # 29 reusable UI components
+  services/            # Business logic services
+locales/               # i18n YAML files (de-CH, fr-CH, it-CH)
+requirements/          # Architecture documentation
 ```
-Includes only the Swiss food law (Lebensmittelrecht) page. Bio and Knospe certification pages are disabled and shown as "Coming Soon".
 
-## Eingabefelder und Feldtypen
+## Tech Stack
 
-1. Sachbezeichnung / “Name des Produkts" (Textfeld)
-2. Zutatenliste → muss mit “Zutaten:” auf der Etikette anfangen
-    1. Mengenangabe → Absteigend nach Gewicht stortiert → (Textfeld)
-    2. Produktauswahl über API (Schnittstelle) → vordefinierte Liste (Datalist, Textfeld)
-    3. Herkunft? (Textfeld)
-    4. Allergene herausarbeiten → in 1. Version via “Checkbox” Feld resp. vordefinierte Liste, Ausgabe auf Etikette fett markiert
-    5. Typenbezeichnung (Was ist es? “Säuerungsmittel: E303”)
-3. Datumangabe → Selektion aus Tag, Monat Jahr (somit wäre Warenlos Angabe hinfällig) | “Zu verbrauchen bis” + “min. haltbar bis” (Info mit genaueren Angaben)
-4. Zusatzinformationen → Textfeld (Info: Haftungsausschlüsse, Kann Spuren von Nüssen enthalten, Gebrauchsanleitung etc..)
-5. (Nährwerte → in Version 1 nicht benötigt, kann/soll später über API gelöst werden)
-6. Aufbewahrungshinweise (Textfeld)
-7. (Warenlos / Chargennummer) → evtl. händische Eingabe → wird in Version 1 noch nicht benötigt da Datumsangabe mit Tag / Monat / Jahr angegeben wird
-8. Nettogewicht (inkl. Einheit → Gewicht oder Volumen) → Zahl + Einheit per Radio Button
-9. Abtropfmenge (Info mit genaueren Angaben)
-10. Produktionsland (vorselektiert Schweiz → keine Gültigkeit für Ausland!)
-11. Produktionsadresse (Bsp. Hans Muster AG, Teststrasse 1, CH-4000)
-12. Preis inkl. MwSt. → 2 Felder, 1x pro 100g, 1x für Totalpreis (Info: kann auch auf Regal angeschrieben werden)
-13. Zertifizierungsstelle → vordefinierte Auswahlliste (per API)
+| Layer | Technology |
+|-------|-----------|
+| Framework | Dioxus 0.7 (Rust, WASM) |
+| Styling | Tailwind CSS v4 + daisyUI |
+| Build | Dioxus CLI (`dx`) + Cargo |
+| Task runner | GNU Make |
+| i18n | rust-i18n (YAML) |
+| CI/CD | GitHub Actions → GitHub Pages |
+
+## Deployment
+
+Both workflows trigger on push to `main`:
+
+- **Staging** (`deploy.yml`): Builds all pages, deploys to `bar9.github.io/open-farming-hackdays-label-creator/`
+- **Production** (`deploy-production.yml`): Builds with `--features hidebio`, deploys to `bar9/declarino` repo → declarino.ch
+
+## Architecture Docs
+
+- [Development Loop](requirements/DEVELOPMENT_LOOP.md)
+- [Dioxus Patterns](requirements/DIOXUS.md)
+- [UI Patterns](requirements/PATTERNS.md)
+- [Rules System](requirements/RULES.md)
+- [Three Instances Architecture](requirements/THREE_INSTANCES.md)

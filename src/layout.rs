@@ -421,11 +421,20 @@ pub fn SplitLayout() -> Element {
     }
 }
 
+#[allow(deprecated)]
 #[component]
 pub fn FullLayout() -> Element {
     use_context_provider(|| Signal::new(CopyLinkContext::default()));
     use_context_provider(|| Signal::new(ThemeContext::default()));
-    use_context_provider(|| Signal::new(DisclaimerContext::default()));
+    // Restore disclaimer acceptance from localStorage
+    let disclaimer_accepted = window()
+        .and_then(|w| w.local_storage().ok())
+        .flatten()
+        .and_then(|storage| storage.get_item("disclaimer_accepted").ok())
+        .flatten()
+        .map(|v| v == "true")
+        .unwrap_or(false);
+    use_context_provider(|| Signal::new(DisclaimerContext { accepted: disclaimer_accepted }));
 
     rsx! {
         document::Stylesheet {

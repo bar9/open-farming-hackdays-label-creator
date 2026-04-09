@@ -19,7 +19,7 @@ pub fn MultiCountrySelect(props: MultiCountrySelectProps) -> Element {
     // Handler to add a new country
     let add_country = {
         let values = values.clone();
-        let onchange = props.onchange.clone();
+        let onchange = props.onchange;
         move |country_str: String| {
             let country = match country_str.as_str() {
                 "" => None,
@@ -136,7 +136,7 @@ pub fn MultiCountrySelect(props: MultiCountrySelectProps) -> Element {
                         {
                             let country_clone = country.clone();
                             let values_for_remove = props.values.clone().unwrap_or_default();
-                            let onchange_for_remove = props.onchange.clone();
+                            let onchange_for_remove = props.onchange;
                             rsx! {
                                 span {
                                     key: "{idx}",
@@ -147,7 +147,7 @@ pub fn MultiCountrySelect(props: MultiCountrySelectProps) -> Element {
                                         r#type: "button",
                                         title: "{t!(\"origin.remove_country\").to_string()}",
                                         onclick: move |_| {
-                                            let mut new_values: Vec<Country> = values_for_remove
+                                            let new_values: Vec<Country> = values_for_remove
                                                 .iter()
                                                 .filter(|c| *c != &country_clone)
                                                 .cloned()

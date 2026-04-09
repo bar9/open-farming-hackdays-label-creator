@@ -1,10 +1,11 @@
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
-use crate::rules::{RuleDef, Rule};
+#[allow(unused_imports)]
+use crate::rules::{Rule, RuleDef};
 use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
 use rust_i18n::t;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::PartialEq;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::mem;
 
 /// Custom deserializer for origins field that handles backwards compatibility.
@@ -200,7 +201,7 @@ pub struct Input {
 impl Input {
     pub fn scale(&mut self, factor: f64) {
         for ingredient in self.ingredients.iter_mut() {
-            ingredient.amount *= factor;
+            ingredient.scale_recursive(factor);
         }
     }
 }
@@ -218,8 +219,10 @@ pub struct Calculator {
     pub(crate) rule_defs: Vec<RuleDef>,
 }
 
-fn calculate_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) -> f64 {
-    let total_agricultural_amount: f64 = ingredients
+fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .map(|ingredient| ingredient.amount)
@@ -229,18 +232,20 @@ fn calculate_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) -> f64
         return 0.0;
     }
 
-    let swiss_agricultural_amount: f64 = ingredients
+    let swiss_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)))
+        .filter(|ingredient| ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)))
         .map(|ingredient| ingredient.amount)
         .sum();
 
     (swiss_agricultural_amount / total_agricultural_amount) * 100.0
 }
 
-fn calculate_bio_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) -> f64 {
-    let total_bio_agricultural_amount: f64 = ingredients
+fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total_bio_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
@@ -251,19 +256,21 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &Vec<Ingredient>) ->
         return 0.0;
     }
 
-    let swiss_bio_agricultural_amount: f64 = ingredients
+    let swiss_bio_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
-        .filter(|ingredient| ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)))
+        .filter(|ingredient| ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)))
         .map(|ingredient| ingredient.amount)
         .sum();
 
     (swiss_bio_agricultural_amount / total_bio_agricultural_amount) * 100.0
 }
 
-fn calculate_knospe_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
-    let total_agricultural_amount: f64 = ingredients
+fn calculate_knospe_certified_percentage(ingredients: &[Ingredient]) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .map(|ingredient| ingredient.amount)
@@ -273,7 +280,7 @@ fn calculate_knospe_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
         return 100.0; // No agricultural ingredients means 100% compliance (only water/salt)
     }
 
-    let knospe_certified_amount: f64 = ingredients
+    let knospe_certified_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
@@ -283,8 +290,10 @@ fn calculate_knospe_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
     (knospe_certified_amount / total_agricultural_amount) * 100.0
 }
 
-fn calculate_bio_ch_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
-    let total_agricultural_amount: f64 = ingredients
+fn calculate_bio_ch_certified_percentage(ingredients: &[Ingredient]) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .map(|ingredient| ingredient.amount)
@@ -294,14 +303,30 @@ fn calculate_bio_ch_certified_percentage(ingredients: &Vec<Ingredient>) -> f64 {
         return 100.0;
     }
 
-    let bio_ch_certified_amount: f64 = ingredients
+    let bio_ch_certified_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
         .filter(|ingredient| ingredient.bio_ch.unwrap_or(false))
+        .filter(|ingredient| !ingredient.aus_umstellbetrieb.unwrap_or(false))
         .map(|ingredient| ingredient.amount)
         .sum();
 
     (bio_ch_certified_amount / total_agricultural_amount) * 100.0
+}
+
+/// Determines if a product is a Monoprodukt (single agricultural ingredient)
+fn is_mono_product(ingredients: &[Ingredient]) -> bool {
+    ingredients.iter()
+        .flat_map(|i| i.leaves())
+        .filter(|i| i.is_agricultural())
+        .count() == 1
+}
+
+/// Check if any leaf ingredient has aus_umstellbetrieb set
+fn has_umstellbetrieb_ingredients(ingredients: &[Ingredient]) -> bool {
+    ingredients.iter()
+        .flat_map(|i| i.leaves())
+        .any(|i| i.aus_umstellbetrieb.unwrap_or(false))
 }
 
 /// Calculate the percentage of an ingredient relative to the total amount
@@ -399,7 +424,10 @@ pub struct Ingredient {
     pub amount: f64,
     #[serde(default)]
     pub unit: AmountUnit,
+    #[serde(default, skip_serializing)]
     pub sub_components: Option<Vec<SubIngredient>>,
+    #[serde(default)]
+    pub children: Option<Vec<Ingredient>>,
     pub is_namensgebend: Option<bool>,
     /// Multiple origin countries (LIV Art. 16 Abs. 2)
     /// Backwards compatible: deserializes both single Country and Vec<Country>
@@ -423,6 +451,10 @@ pub struct Ingredient {
     /// Backwards compatibility field for old URLs
     #[serde(default)]
     pub aus_umstellbetrieb: Option<bool>,
+    /// When true, this node's own fields are authoritative even if children exist.
+    /// When false/None (default), values are computed from children.
+    #[serde(default)]
+    pub override_children: Option<bool>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -454,6 +486,7 @@ impl Ingredient {
             amount,
             unit: AmountUnit::default(),
             sub_components: None,
+            children: None,
             is_namensgebend: None,
             origins: None,
             is_bio: None,
@@ -468,6 +501,7 @@ impl Ingredient {
             erlaubte_ausnahme_knospe_details: None,
             processing_steps: None,
             aus_umstellbetrieb: None,
+            override_children: None,
         }
     }
 
@@ -478,47 +512,13 @@ impl Ingredient {
     pub fn composite_name(&self) -> String {
         let mut name = String::new();
         name.push_str(&self.name);
-        if let Some(subs) = &self.sub_components {
-            if !subs.is_empty() {
+        if let Some(children) = &self.children {
+            if !children.is_empty() {
                 name.push_str(" (");
                 name.push_str(
-                    &subs
+                    &children
                         .iter()
-                        .map(|sub| sub.name.clone())
-                        .collect::<Vec<String>>()
-                        .join(", "),
-                );
-                name.push_str(" )");
-            }
-        }
-        name
-    }
-
-    pub fn composites(&self) -> String {
-        let mut name = String::new();
-        if let Some(subs) = &self.sub_components {
-            if !subs.is_empty() {
-                name.push_str(" (");
-                name.push_str(
-                    &subs
-                        .iter()
-                        .map(|sub| {
-                            let base_name = if sub.is_allergen {
-                                format!("<b>{}</b>", sub.name)
-                            } else {
-                                sub.name.clone()
-                            };
-                            // Append origin if present (skip NoOriginRequired)
-                            if let Some(origin) = &sub.origin {
-                                if matches!(origin, Country::NoOriginRequired) {
-                                    base_name
-                                } else {
-                                    format!("{} ({})", base_name, origin.country_code())
-                                }
-                            } else {
-                                base_name
-                            }
-                        })
+                        .map(|child| child.composite_name())
                         .collect::<Vec<String>>()
                         .join(", "),
                 );
@@ -526,6 +526,183 @@ impl Ingredient {
             }
         }
         name
+    }
+
+    pub fn composites(&self) -> String {
+        self.composites_with_rules(&[], 0.0, 0)
+    }
+
+    pub fn composites_with_rules(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize) -> String {
+        let mut output = String::new();
+        if let Some(children) = &self.children {
+            if !children.is_empty() {
+                let has_bio_input_rule = rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
+                    || rules.contains(&RuleDef::Bio_PartialBioMarking);
+                let suppress_asterisk = rules.contains(&RuleDef::Bio_AllAgriAreBio);
+
+                output.push_str(" (");
+                output.push_str(
+                    &children
+                        .iter()
+                        .map(|child| {
+                            let escaped_name = html_escape(&child.name);
+                            let mut base_name = if child.is_allergen {
+                                format!("<b>{}</b>", escaped_name)
+                            } else {
+                                escaped_name
+                            };
+                            // Bio/Umstellbetrieb markers on children
+                            if has_bio_input_rule {
+                                let is_umstellbetrieb = child.aus_umstellbetrieb.unwrap_or(false);
+                                let is_bio = child.computed_bio_status().unwrap_or(false)
+                                    || child.computed_bio_ch_status().unwrap_or(false);
+                                if is_umstellbetrieb {
+                                    base_name = format!("{}**", base_name);
+                                } else if is_bio && !suppress_asterisk {
+                                    base_name = format!("{}*", base_name);
+                                }
+                            }
+                            // Recurse into children's children
+                            base_name.push_str(&child.composites_with_rules(rules, total_amount, agricultural_ingredient_count));
+                            // Add processing steps
+                            if let Some(steps) = &child.processing_steps {
+                                if !steps.is_empty() {
+                                    let steps_text = steps.iter().map(|s| html_escape(s)).collect::<Vec<_>>().join(", ");
+                                    base_name = format!("{}, {}", base_name, steps_text);
+                                }
+                            }
+                            // Append origin: when rules are active, respect Knospe rules;
+                            // when no rules (basic composites display), always show origins.
+                            if rules.is_empty() {
+                                if let Some(origin_str) = format_valid_origins(&child.origins) {
+                                    base_name = format!("{} {}", base_name, origin_str);
+                                }
+                            } else if let Some(origin_str) = format_origin_for_knospe_rules(child, rules, total_amount, agricultural_ingredient_count) {
+                                base_name = format!("{} {}", base_name, origin_str);
+                            }
+                            base_name
+                        })
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                );
+                output.push(')');
+            }
+        }
+        output
+    }
+
+    /// Migrate old sub_components to new children field (for v1 backwards compatibility)
+    pub fn migrate_sub_components(&mut self) {
+        if let Some(subs) = self.sub_components.take() {
+            if !subs.is_empty() && self.children.is_none() {
+                self.children = Some(subs.into_iter().map(|sub| Ingredient {
+                    name: sub.name,
+                    is_allergen: sub.is_allergen,
+                    origins: sub.origin.map(|o| vec![o]),
+                    ..Default::default()
+                }).collect());
+            }
+        }
+    }
+
+    /// Recursively scale amounts by a factor
+    pub fn scale_recursive(&mut self, factor: f64) {
+        self.amount *= factor;
+        if let Some(children) = &mut self.children {
+            for child in children {
+                child.scale_recursive(factor);
+            }
+        }
+    }
+
+    /// Is this node a leaf (no children, override active, or children are qualitative-only)?
+    /// Qualitative-only children (all amounts zero) means the parent is the authoritative
+    /// source for calculations, while children are display-only (for the composites label).
+    fn is_leaf(&self) -> bool {
+        self.override_children.unwrap_or(false)
+            || self.children.as_ref().is_none_or(|c| {
+                c.is_empty() || c.iter().all(|child| child.amount == 0.0)
+            })
+    }
+
+    /// Effective amount: own value if leaf/override, sum of children otherwise
+    pub fn computed_amount(&self) -> f64 {
+        if self.is_leaf() {
+            self.amount
+        } else {
+            self.children.as_ref().unwrap()
+                .iter().map(|c| c.computed_amount()).sum()
+        }
+    }
+
+    /// Effective unit: own unit if leaf/override; otherwise Milliliter if any
+    /// child rolls up to Milliliter, else Gram. Mixing g and ml children is
+    /// rare, but a single ml child should pull the parent display to ml so
+    /// the form shows e.g. "Vinaigrette 110 ml" not "110 g".
+    pub fn computed_unit(&self) -> AmountUnit {
+        if self.is_leaf() {
+            self.unit.clone()
+        } else if self.children.as_ref().unwrap()
+            .iter()
+            .any(|c| c.computed_unit() == AmountUnit::Milliliter)
+        {
+            AmountUnit::Milliliter
+        } else {
+            AmountUnit::Gram
+        }
+    }
+
+    /// Effective bio status: own if leaf/override, all-children-bio otherwise
+    pub fn computed_bio_status(&self) -> Option<bool> {
+        if self.is_leaf() {
+            self.is_bio
+        } else {
+            let children = self.children.as_ref().unwrap();
+            if children.iter().any(|c| c.computed_bio_status().is_some()) {
+                Some(children.iter().all(|c| c.computed_bio_status().unwrap_or(false)))
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Effective bio_ch status: same logic as bio
+    pub fn computed_bio_ch_status(&self) -> Option<bool> {
+        if self.is_leaf() {
+            self.bio_ch
+        } else {
+            let children = self.children.as_ref().unwrap();
+            if children.iter().any(|c| c.computed_bio_ch_status().is_some()) {
+                Some(children.iter().all(|c| c.computed_bio_ch_status().unwrap_or(false)))
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Effective origins: own if leaf/override, union of children's otherwise
+    pub fn computed_origins(&self) -> Option<Vec<Country>> {
+        if self.is_leaf() {
+            self.origins.clone()
+        } else {
+            let all: HashSet<Country> = self.children.as_ref().unwrap()
+                .iter()
+                .filter_map(|c| c.computed_origins())
+                .flatten()
+                .collect();
+            if all.is_empty() { None } else { Some(all.into_iter().collect()) }
+        }
+    }
+
+    /// Collect leaf-level ingredients for percentage calculations.
+    /// If override is set, treat this node as a leaf.
+    pub fn leaves(&self) -> Vec<&Ingredient> {
+        if self.is_leaf() {
+            vec![self]
+        } else {
+            self.children.as_ref().unwrap()
+                .iter().flat_map(|c| c.leaves()).collect()
+        }
     }
 }
 
@@ -536,7 +713,8 @@ impl Default for Ingredient {
             is_allergen: false,
             amount: 0.,
             unit: AmountUnit::default(),
-            sub_components: Some(vec![]),
+            sub_components: None,
+            children: None,
             is_namensgebend: None,
             origins: None,
             is_agricultural: true,
@@ -552,6 +730,7 @@ impl Default for Ingredient {
             erlaubte_ausnahme_knospe_details: None,
             processing_steps: None,
             aus_umstellbetrieb: None,
+            override_children: None,
         }
     }
 }
@@ -563,10 +742,20 @@ pub struct SubIngredient {
     pub origin: Option<Country>,
 }
 
+/// HTML-escape a string to prevent XSS when rendered via dangerous_inner_html.
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
+}
+
 struct OutputFormatter {
     ingredient: Ingredient,
     RuleDefs: Vec<RuleDef>,
     total_amount: f64,
+    agricultural_ingredient_count: usize,
 }
 
 impl PartialEq for RuleDef {
@@ -576,58 +765,60 @@ impl PartialEq for RuleDef {
 }
 
 impl OutputFormatter {
-    pub fn from(ingredient: Ingredient, total_amount: f64, RuleDefs: Vec<RuleDef>) -> Self {
+    pub fn from(ingredient: Ingredient, total_amount: f64, RuleDefs: Vec<RuleDef>, agricultural_ingredient_count: usize) -> Self {
         Self {
             ingredient,
             total_amount,
             RuleDefs,
+            agricultural_ingredient_count,
         }
     }
 
     pub fn format(&self) -> String {
+        let escaped_name = html_escape(&self.ingredient.name);
         let mut output = match self.ingredient.is_allergen {
-            true => format! {"<b>{}</b>", self.ingredient.name},
-            false => self.ingredient.name.clone(),
+            true => format!("<b>{}</b>", escaped_name),
+            false => escaped_name,
         };
 
-        // Bio-Stern (*) oder Umstellbetrieb-Stern (**) hinzufügen
-        // Nur wenn Bio/Knospe-Regeln aktiv sind
-        if self.RuleDefs.contains(&RuleDef::Bio_Knospe_EingabeIstBio) {
-            if self.ingredient.is_bio == Some(true) || self.ingredient.bio_ch == Some(true) {
-                output = format!("{}*", output);
-            }
+        // Umstellbetrieb-Stern (**) vor Bio-Stern (*) prüfen
+        // Lowest-level-only: suppress bio marker on composite parents when bio status
+        // was computed from children (not explicitly set). Children show their own markers.
+        let is_umstellbetrieb = self.ingredient.aus_umstellbetrieb.unwrap_or(false);
+        let has_children = self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty());
+        let bio_inherited_from_children = has_children
+            && self.ingredient.is_bio.is_none()
+            && self.ingredient.bio_ch.is_none();
+        let is_bio_ingredient = self.ingredient.computed_bio_status().unwrap_or(false)
+            || self.ingredient.computed_bio_ch_status().unwrap_or(false);
+        let has_bio_input_rule = self.RuleDefs.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
+            || self.RuleDefs.contains(&RuleDef::Bio_PartialBioMarking);
+        let suppress_asterisk = self.RuleDefs.contains(&RuleDef::Bio_AllAgriAreBio);
+
+        if has_bio_input_rule && is_umstellbetrieb {
+            // Umstellbetrieb ingredients get ** instead of *
+            output = format!("{}**", output);
+        } else if has_bio_input_rule && is_bio_ingredient && !suppress_asterisk && !bio_inherited_from_children {
+            output = format!("{}*", output);
         }
 
-        if self.RuleDefs.contains(&RuleDef::AllPercentages) {
-            let percentage = self.ingredient.amount / self.total_amount * 100.;
-            output = format!(
-                "{} {}",
-                output,
-                format_percentage(percentage)
-            )
+        // Wildsammlung °-marking when ingredient >10%
+        let wildsammlung_step = "aus zertifizierter Wildsammlung";
+        let has_wildsammlung_rule = self.RuleDefs.contains(&RuleDef::Wildsammlung_Ueber10Prozent);
+        let has_wildsammlung_step = self.ingredient.processing_steps.as_ref()
+            .is_some_and(|s| s.iter().any(|step| step == wildsammlung_step));
+        let show_wildsammlung_marker = has_wildsammlung_rule && has_wildsammlung_step
+            && calculate_ingredient_percentage(self.ingredient.computed_amount(), self.total_amount) > 10.0;
+
+        if show_wildsammlung_marker {
+            output = format!("{}°", output);
         }
-        if self
-            .RuleDefs.contains(&RuleDef::PercentagesStartsWithM)
-            && self.ingredient.name.starts_with("M")
-        {
-            let percentage = self.ingredient.amount / self.total_amount * 100.;
-            output = format!(
-                "{} {}",
-                output,
-                format_percentage(percentage)
-            )
-        }
-        // if self.RuleDefs.iter().find(|x| **x == RuleDef::MaxDetails).is_some() {
-        //     output = format!{"{:?}", self.ingredient}
-        // }
-        if self.RuleDefs.contains(&RuleDef::AllGram) {
-            output = format! {"{} {}g", self.ingredient.name, self.ingredient.amount};
-        }
+
         if self
             .RuleDefs.contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
         {
             if let Some(true) = self.ingredient.is_namensgebend {
-                let percentage = self.ingredient.amount / self.total_amount * 100.;
+                let percentage = self.ingredient.computed_amount() / self.total_amount * 100.;
 
                 // LIV Anhang 7: Bei >100% alternatives Format verwenden
                 if percentage > 100.0 {
@@ -648,14 +839,19 @@ impl OutputFormatter {
         }
         if self
             .RuleDefs.contains(&RuleDef::AP2_1_ZusammegesetztOutput)
-            && self.ingredient.sub_components.is_some()
+            && self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty())
         {
-            output = format! {"{} {}", output, self.ingredient.composites()};
+            output = format! {"{}{}", output, self.ingredient.composites_with_rules(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count)};
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
+        // When Wildsammlung °-marker is active, exclude it from the regular processing steps
         if let Some(steps) = &self.ingredient.processing_steps {
-            if !steps.is_empty() {
-                let steps_text = steps.join(", ");
+            let filtered: Vec<_> = steps.iter()
+                .filter(|s| !(show_wildsammlung_marker && s.as_str() == wildsammlung_step))
+                .map(|s| html_escape(s))
+                .collect();
+            if !filtered.is_empty() {
+                let steps_text = filtered.join(", ");
                 output = format!("{}, {}", output, steps_text);
             }
         }
@@ -667,78 +863,53 @@ impl OutputFormatter {
         let has_knospe_under90_rule = self
             .RuleDefs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
-        if has_knospe_100_rule {
-            // Rule A: 100% Swiss agricultural ingredients - no origin display
-            // Do nothing, origin already not displayed by default
-        } else if has_knospe_90_99_rule {
-            // Rule B: 90-99.99% Swiss agricultural ingredients - show origin for Swiss ingredients only
-            if self.ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)) {
-                output = format!("{} (CH)", output);
-            }
-        } else if has_knospe_under90_rule {
-            // Rule C: <90% Swiss agricultural ingredients - show origin based on specific ingredient criteria
-            let percentage = calculate_ingredient_percentage(self.ingredient.amount, self.total_amount);
-            let is_mono_product = self.total_amount == self.ingredient.amount; // Simple check for single ingredient
-
-            if should_show_origin_knospe_under90(&self.ingredient, percentage, self.total_amount, is_mono_product) {
-                if let Some(origins) = &self.ingredient.origins {
-                    let valid_origins: Vec<&Country> = origins
-                        .iter()
-                        .filter(|o| !matches!(o, Country::NoOriginRequired))
-                        .collect();
-                    if !valid_origins.is_empty() {
-                        let country_codes: Vec<&str> = valid_origins.iter().map(|o| o.country_code()).collect();
-                        output = format!("{} ({})", output, country_codes.join(", "));
-                    }
-                }
+        if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
+            // Knospe origin rules — shared with composite children
+            if let Some(origin_str) = format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount, self.agricultural_ingredient_count) {
+                output = format!("{} {}", output, origin_str);
             }
         } else {
-            // Check for beef-specific origin display first
+            // Check for beef-specific origin display first.
+            // When beef details are rendered, they replace the standard
+            // herkunft display so we don't print "(Geburtsort: CH, …) (CH)".
+            let mut beef_details_rendered = false;
             if self.RuleDefs.contains(&RuleDef::AP7_4_RindfleischHerkunftDetails) {
                 if let Some(category) = &self.ingredient.category {
                     if is_beef_category(category) {
                         let mut beef_origin_parts = Vec::new();
 
                         if let Some(aufzucht_ort) = &self.ingredient.aufzucht_ort {
-                            beef_origin_parts.push(t!("birthplace", country = aufzucht_ort.country_code()).to_string());
+                            beef_origin_parts.push(t!("origin.birthplace", country = aufzucht_ort.country_code()).to_string());
                         }
 
                         if let Some(schlachtungs_ort) = &self.ingredient.schlachtungs_ort {
-                            beef_origin_parts.push(t!("slaughtered_in", country = schlachtungs_ort.country_code()).to_string());
+                            beef_origin_parts.push(t!("origin.slaughtered_in", country = schlachtungs_ort.country_code()).to_string());
                         }
 
                         if !beef_origin_parts.is_empty() {
                             output = format!("{} ({})", output, beef_origin_parts.join(", "));
+                            beef_details_rendered = true;
                         }
                     }
                 }
             }
             // Check for fish-specific origin display
+            let mut fish_details_rendered = false;
             if self.RuleDefs.contains(&RuleDef::AP7_5_FischFangort) {
                 if let Some(category) = &self.ingredient.category {
                     if is_fish_category(category) {
                         if let Some(fangort) = &self.ingredient.fangort {
                             output = format!("{} ({})", output, fangort.country_code());
+                            fish_details_rendered = true;
                         }
                     }
                 }
             }
-            // Add country of origin display for traditional herkunft rules (only if no Knospe rules apply)
-            if self
-                .RuleDefs
-                .iter()
-                .any(|x| *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent || *x == RuleDef::AP7_3_HerkunftFleischUeber20Prozent || *x == RuleDef::Knospe_AlleZutatenHerkunft)
-            {
-                if let Some(origins) = &self.ingredient.origins {
-                    // Filter out "NoOriginRequired" and join multiple origins
-                    let valid_origins: Vec<&Country> = origins
-                        .iter()
-                        .filter(|o| !matches!(o, Country::NoOriginRequired))
-                        .collect();
-                    if !valid_origins.is_empty() {
-                        let country_codes: Vec<&str> = valid_origins.iter().map(|o| o.country_code()).collect();
-                        output = format!("{} ({})", output, country_codes.join(", "));
-                    }
+            // Add country of origin display for traditional herkunft rules
+            // (skipped when beef/fish details already rendered the origin).
+            if !beef_details_rendered && !fish_details_rendered {
+                if let Some(origin_str) = format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount, self.agricultural_ingredient_count) {
+                    output = format!("{} {}", output, origin_str);
                 }
             }
         }
@@ -770,11 +941,6 @@ impl Calculator {
             .collect()
     }
 
-    pub fn validate_rule_dependencies(&self) -> Result<(), String> {
-        use crate::rules::RuleRegistry;
-        let registry = RuleRegistry::new();
-        registry.validate_dependencies(&self.rule_defs)
-    }
     pub fn execute(&self, input: Input) -> Output {
         // Debug logging: Show active rules
         self.log_active_rules();
@@ -783,7 +949,7 @@ impl Calculator {
         let mut conditionals = HashMap::new();
 
         // Calculate total amount first (needed for validations)
-        let mut total_amount = input.ingredients.iter().map(|x| x.amount).sum();
+        let mut total_amount = input.ingredients.iter().map(|x| x.computed_amount()).sum();
         if self
             .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
         {
@@ -865,7 +1031,7 @@ impl Calculator {
         web_sys::console::log_1(&format!("🎛️ Conditional elements: {} enabled", conditionals.len()).into());
 
         let mut sorted_ingredients = input.ingredients.clone();
-        sorted_ingredients.sort_by(|y, x| x.amount.partial_cmp(&y.amount).unwrap());
+        sorted_ingredients.sort_by(|y, x| x.computed_amount().partial_cmp(&y.computed_amount()).unwrap());
 
         if self
             .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
@@ -953,23 +1119,41 @@ impl Calculator {
                     // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
                     conditionals.insert(String::from("bio_suisse_no_cross"), true);
                 }
+                conditionals.insert(String::from("knospe_marketing_allowed"), true);
             } else {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
+                conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
             }
         }
 
-        // Bio-V/CH Bio: Add "Bio" to Sachbezeichnung when 100% Bio-CH certified
-        if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
-            let bio_ch_percentage = calculate_bio_ch_certified_percentage(&input.ingredients);
+        // Bio-V/CH Bio: Add "Bio" to Sachbezeichnung when >= 95% Bio-CH certified
+        let bio_ch_percentage = if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
+            let pct = calculate_bio_ch_certified_percentage(&input.ingredients);
 
-            if bio_ch_percentage >= 100.0 {
+            if pct >= 95.0 {
                 conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
                 conditionals.insert(String::from("bio_marketing_allowed"), true);
-            } else if bio_ch_percentage > 0.0 {
+            } else {
                 conditionals.insert(String::from("bio_marketing_not_allowed"), true);
             }
-        }
+            // Umstellbetrieb handling for Bio Sachbezeichnung
+            if has_umstellbetrieb_ingredients(&input.ingredients) {
+                if is_mono_product(&input.ingredients) {
+                    // Monoprodukt with umstellbetrieb: keep suffix, add hinweis
+                    conditionals.insert(String::from("umstellbetrieb_hinweis"), true);
+                } else {
+                    // Composite with umstellbetrieb: remove suffix, block marketing
+                    conditionals.remove("bio_sachbezeichnung_suffix");
+                    conditionals.remove("bio_marketing_allowed");
+                    conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+                }
+            }
+
+            pct
+        } else {
+            0.0
+        };
 
         let has_meat_rule = self
             .rule_defs.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent);
@@ -1034,6 +1218,15 @@ impl Calculator {
             output_rules.push(knospe_rule);
         }
 
+        // Inject Bio marking mode rules (only for Bio config with Bio_ShowBioSachbezeichnung)
+        if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
+            if bio_ch_percentage >= 95.0 {
+                output_rules.push(RuleDef::Bio_AllAgriAreBio);
+            } else if bio_ch_percentage > 0.0 {
+                output_rules.push(RuleDef::Bio_PartialBioMarking);
+            }
+        }
+
         // Final summary logging
         #[cfg(target_arch = "wasm32")]
         {
@@ -1045,25 +1238,60 @@ impl Calculator {
         }
 
         // Prüfe ob Bio-Zutaten oder Umstellbetrieb vorhanden sind (für Legende)
-        let has_bio_rules = output_rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
-        let has_bio_ingredients = has_bio_rules && sorted_ingredients.iter().any(|ing|
-            ing.is_bio == Some(true) || ing.bio_ch == Some(true)
-        );
+        let has_bio_rules = output_rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
+            || output_rules.contains(&RuleDef::Bio_AllAgriAreBio)
+            || output_rules.contains(&RuleDef::Bio_PartialBioMarking);
+        let has_bio_ingredients = has_bio_rules && sorted_ingredients.iter()
+            .flat_map(|ing| ing.leaves())
+            .any(|ing| ing.is_bio == Some(true) || ing.bio_ch == Some(true));
+        let has_umstellbetrieb = has_bio_rules && has_umstellbetrieb_ingredients(&sorted_ingredients);
+
+        // Count agricultural ingredients for Monoprodukt detection in OutputFormatter
+        let agricultural_ingredient_count = sorted_ingredients.iter()
+            .flat_map(|i| i.leaves())
+            .filter(|i| i.is_agricultural())
+            .count();
+
+        // Check for Wildsammlung legend (before sorted_ingredients is consumed)
+        let has_wildsammlung_marker = output_rules.contains(&RuleDef::Wildsammlung_Ueber10Prozent)
+            && sorted_ingredients.iter().any(|ing| {
+                let pct = calculate_ingredient_percentage(ing.computed_amount(), total_amount);
+                pct > 10.0 && ing.processing_steps.as_ref()
+                    .is_some_and(|s| s.iter().any(|step| step == "aus zertifizierter Wildsammlung"))
+            });
 
         // Generiere Zutatenliste
         let ingredients_label = sorted_ingredients
             .into_iter()
-            .map(|item| OutputFormatter::from(item, total_amount, output_rules.clone()))
+            .map(|item| OutputFormatter::from(item, total_amount, output_rules.clone(), agricultural_ingredient_count))
             .map(|fmt| fmt.format())
             .collect::<Vec<_>>()
             .join(", ");
 
-        // Legende anhängen wenn Bio-Zutaten vorhanden
-        let label = if has_bio_ingredients {
+        // Legende anhängen basierend auf Bio-Modus
+        let mut label = if output_rules.contains(&RuleDef::Bio_AllAgriAreBio) && has_bio_ingredients {
+            // AllBio mode: no asterisks, "Alle landwirtschaftlichen..." legend
+            format!("{}<br><br>{}", ingredients_label, t!("bio_legend.alle_landwirtschaftlichen"))
+        } else if output_rules.contains(&RuleDef::Bio_PartialBioMarking) && has_bio_ingredients {
+            // PartialBio mode: asterisks on bio ingredients, percentage legend
+            let rounded = bio_ch_percentage.round() as u32;
+            format!("{}<br><br>* {}", ingredients_label, t!("bio_legend.x_prozent_bio", percentage = rounded))
+        } else if has_bio_ingredients {
+            // Knospe fallback: simple * legend
             format!("{}<br><br>* {}", ingredients_label, t!("bio_legend.aus_biologischer_landwirtschaft"))
         } else {
             ingredients_label
         };
+
+        // Append Umstellbetrieb legend if any umstellbetrieb ingredients present
+        if has_umstellbetrieb {
+            label = format!("{}<br>** {}", label, t!("bio_legend.aus_umstellung"));
+        }
+
+        // Append Wildsammlung legend if any ingredient got the ° marker
+        if has_wildsammlung_marker {
+            label = format!("{}<br>° {}", label, t!("bio_legend.aus_wildsammlung"));
+        }
 
         Output {
             success: true,
@@ -1075,7 +1303,7 @@ impl Calculator {
     }
 }
 
-fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut HashMap<String, Vec<String>>) {
+fn validate_amount(ingredients: &[Ingredient], validation_messages: &mut HashMap<String, Vec<String>>) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.amount <= 0. {
             validation_messages.entry(format!("ingredients[{}][amount]", i))
@@ -1086,13 +1314,13 @@ fn validate_amount(ingredients: &Vec<Ingredient>, validation_messages: &mut Hash
 }
 
 fn validate_origin(
-    ingredients: &Vec<Ingredient>,
+    ingredients: &[Ingredient],
     total_amount: f64,
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
-        let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+        let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
         if percentage > 50.0 && !has_origin {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
@@ -1104,6 +1332,65 @@ fn validate_origin(
 // Functions are already imported above, no need to re-export
 
 // Use centralized category service functions
+
+/// Format origin display string for an ingredient according to active Knospe rules.
+/// Returns None if origin should not be displayed, Some("(CH)") etc. if it should.
+/// Used by both OutputFormatter::format() and composites_with_rules() for consistency.
+fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize) -> Option<String> {
+    let has_knospe_100_rule = rules.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
+    let has_knospe_90_99_rule = rules.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+    let has_knospe_under90_rule = rules.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
+
+    if has_knospe_100_rule {
+        // Rule A: 100% Swiss agricultural ingredients — no origin display
+        None
+    } else if has_knospe_90_99_rule {
+        // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
+        if ingredient.is_agricultural && ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) {
+            Some("(CH)".to_string())
+        } else {
+            None
+        }
+    } else if has_knospe_under90_rule {
+        // Rule C: <90% Swiss — show origin based on specific ingredient criteria
+        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        let is_mono_product = agricultural_ingredient_count == 1;
+
+        if should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product) {
+            format_valid_origins(&ingredient.origins)
+        } else {
+            None
+        }
+    } else {
+        // No Knospe rules — show origins if traditional herkunft rules apply
+        let has_herkunft_rule = rules.iter().any(|x|
+            *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent
+            || *x == RuleDef::AP7_3_HerkunftFleischUeber20Prozent
+            || *x == RuleDef::Knospe_AlleZutatenHerkunft
+        );
+        if has_herkunft_rule {
+            format_valid_origins(&ingredient.origins)
+        } else {
+            None
+        }
+    }
+}
+
+/// Format valid origins (filtering out NoOriginRequired) into a parenthetical string.
+fn format_valid_origins(origins: &Option<Vec<Country>>) -> Option<String> {
+    origins.as_ref().and_then(|origins| {
+        let valid: Vec<&str> = origins
+            .iter()
+            .filter(|o| !matches!(o, Country::NoOriginRequired))
+            .map(|o| o.country_code())
+            .collect();
+        if valid.is_empty() {
+            None
+        } else {
+            Some(format!("({})", valid.join(", ")))
+        }
+    })
+}
 
 /// Determines if an ingredient should show origin for Knospe <90% CH rules
 /// Based on specific Knospe criteria for ingredient types and percentages
@@ -1118,43 +1405,41 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
         return true;
     }
 
-    // Swiss ingredients with at least 10% share
-    if ingredient.origins.as_ref().map_or(false, |o| o.contains(&Country::CH)) && percentage >= 10.0 {
-        return true;
-    }
-
-    // Plant ingredients with more than 50% share
+    // Category-based rules (only apply when ingredient has a recognized category)
     if let Some(category) = &ingredient.category {
+        // Plant ingredients with more than 50% share
         if is_plant_category(category) && percentage > 50.0 {
             return true;
         }
-    }
 
-    // Eggs/Honey/Fish/Other aquacultures with more than 10% share
-    if let Some(category) = &ingredient.category {
+        // Eggs/Honey/Fish/Other aquacultures with more than 10% share
         if (is_egg_category(category) ||
             is_honey_category(category) ||
             is_fish_category(category)) && percentage > 10.0 {
             return true;
         }
-    }
 
-    // Milk/Dairy/Meat/Insects always show origin (question in requirements:
-    // "gilt das auch bei solchen Zutaten, oder nur wenn das ganze Produkt zB ein Milchprodukt ist?"
-    // I'm interpreting this as: these ingredient types always need origin)
-    if let Some(category) = &ingredient.category {
+        // Milk/Dairy/Meat/Insects always show origin
         if is_dairy_category(category) ||
            is_meat_category(category) ||
            is_insect_category(category) {
             return true;
         }
+
+    }
+
+    // Swiss agricultural ingredients with >=10% share (regardless of category)
+    if ingredient.is_agricultural() &&
+       ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) &&
+       percentage >= 10.0 {
+        return true;
     }
 
     false
 }
 
 fn validate_meat_origin(
-    ingredients: &Vec<Ingredient>,
+    ingredients: &[Ingredient],
     total_amount: f64,
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
@@ -1163,7 +1448,7 @@ fn validate_meat_origin(
         if percentage > 20.0 {
             // Check if this ingredient is meat-based using the category
             if let Some(category) = &ingredient.category {
-                let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+                let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
                 if is_meat_category(category) && !has_origin {
                     validation_messages.entry(format!("ingredients[{}][origin]", i))
                         .or_default()
@@ -1175,11 +1460,11 @@ fn validate_meat_origin(
 }
 
 fn validate_all_ingredients_origin(
-    ingredients: &Vec<Ingredient>,
+    ingredients: &[Ingredient],
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+        let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
         if !has_origin {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
@@ -1192,15 +1477,29 @@ fn validate_certification_body(
     certification_body: &Option<String>,
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
-    if certification_body.is_none() || certification_body.as_ref().map_or(true, |s| s.is_empty()) {
-        validation_messages.entry("certification_body".to_string())
-            .or_default()
-            .push(t!("validation.certification_body_required").to_string());
+    match certification_body {
+        None => {
+            validation_messages.entry("certification_body".to_string())
+                .or_default()
+                .push(t!("validation.certification_body_required").to_string());
+        }
+        Some(s) if s.is_empty() => {
+            validation_messages.entry("certification_body".to_string())
+                .or_default()
+                .push(t!("validation.certification_body_required").to_string());
+        }
+        Some(s) => {
+            if !s.starts_with("CH-BIO-") {
+                validation_messages.entry("certification_body".to_string())
+                    .or_default()
+                    .push(t!("validation.certification_body_format").to_string());
+            }
+        }
     }
 }
 
 fn validate_beef_origin_details(
-    ingredients: &Vec<Ingredient>,
+    ingredients: &[Ingredient],
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
@@ -1226,7 +1525,7 @@ fn validate_beef_origin_details(
 }
 
 fn validate_fish_catch_location(
-    ingredients: &Vec<Ingredient>,
+    ingredients: &[Ingredient],
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
@@ -1245,16 +1544,21 @@ fn validate_fish_catch_location(
 }
 
 fn validate_knospe_under90_origin(
-    ingredients: &Vec<Ingredient>,
+    ingredients: &[Ingredient],
     total_amount: f64,
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
+    let agricultural_count = ingredients.iter()
+        .flat_map(|i| i.leaves())
+        .filter(|i| i.is_agricultural())
+        .count();
+
     for (i, ingredient) in ingredients.iter().enumerate() {
         let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
-        let is_mono_product = total_amount == ingredient.amount; // Simple check for single ingredient
+        let is_mono_product = agricultural_count == 1;
 
         let requires_origin = should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product);
-        let has_origin = ingredient.origins.as_ref().map_or(false, |v| !v.is_empty());
+        let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
 
         if requires_origin && !has_origin {
             let reason = if is_mono_product {
@@ -1268,13 +1572,13 @@ fn validate_knospe_under90_origin(
                     t!("validation.knospe_egg_honey_fish_origin_required").to_string()
                 } else if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category) {
                     t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
-                } else if percentage >= 10.0 {
+                } else if ingredient.is_agricultural() &&
+                          ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) &&
+                          percentage >= 10.0 {
                     t!("validation.knospe_over_10_percent_origin_required").to_string()
                 } else {
                     t!("validation.knospe_general_origin_required").to_string()
                 }
-            } else if percentage >= 10.0 {
-                t!("validation.knospe_over_10_percent_origin_required").to_string()
             } else {
                 t!("validation.knospe_general_origin_required").to_string()
             };
@@ -1286,1802 +1590,6 @@ fn validate_knospe_under90_origin(
     }
 }
 
+
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use rust_i18n::i18n;
-
-    // Initialize i18n for tests at module level
-    i18n!();
-
-    fn setup_simple_calculator() -> Calculator {
-        // Set locale for tests
-        rust_i18n::set_locale("de-CH");
-        let rule_defs = vec![];
-        Calculator { rule_defs }
-    }
-
-    #[test]
-    fn simple_run_of_process() {
-        let calculator = setup_simple_calculator();
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![],
-            ..Default::default()
-        };
-
-        let output = calculator.execute(input);
-        assert!(output.success);
-    }
-
-    #[test]
-    fn single_ingredient_visible_on_label() {
-        let calculator = setup_simple_calculator();
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Hafer".to_string(),
-                is_allergen: false,
-                amount: 42.,
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Hafer"));
-    }
-
-    #[test]
-    fn multiple_ingredients_comma_separated_on_label() {
-        let calculator = setup_simple_calculator();
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    is_allergen: false,
-                    amount: 42.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    is_allergen: false,
-                    amount: 42.,
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Hafer, Zucker"));
-    }
-
-    #[test]
-    fn ingredients_ordered_by_weight_on_label() {
-        let calculator = setup_simple_calculator();
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    is_allergen: false,
-                    amount: 300.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    is_allergen: false,
-                    amount: 700.,
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Zucker, Hafer"));
-    }
-
-    #[test]
-    fn allergenes_printed_bold_on_label() {
-        let calculator = setup_simple_calculator();
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Weizenmehl".to_string(),
-                is_allergen: true,
-                amount: 300.,
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("<b>Weizenmehl</b>"));
-    }
-
-    #[test]
-    fn scaled_recipe_invariant_on_label() {
-        let calculator = setup_simple_calculator();
-        let input1 = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    is_allergen: false,
-                    amount: 300.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    is_allergen: false,
-                    amount: 700.,
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let mut input2 = input1.clone();
-        input2.scale(2.);
-        let output = calculator.execute(input1);
-        let scaled_output = calculator.execute(input2);
-
-        assert_eq!(output.label, scaled_output.label);
-        assert_ne!(output.total_amount, scaled_output.total_amount);
-    }
-
-    #[test]
-    fn percentage_on_label_depending_on_setting() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AllPercentages]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    is_allergen: false,
-                    amount: 300.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    is_allergen: false,
-                    amount: 700.,
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Hafer 30%"));
-        assert!(label.contains("Zucker 70%"));
-    }
-
-    #[test]
-    fn percentage_on_label_depending_on_setting_2() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::PercentagesStartsWithM]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    is_allergen: false,
-                    amount: 300.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Milch".to_string(),
-                    is_allergen: true,
-                    amount: 700.,
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("<b>Milch</b> 70%, Hafer"));
-    }
-
-    #[test]
-    fn amount_lt_zero_invalid() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![Ingredient {
-                name: "Hafer".to_string(),
-                is_allergen: false,
-                amount: 0.0,
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-        assert!(validation_messages.get("ingredients[0][amount]").is_some());
-        let amount_messages = validation_messages.get("ingredients[0][amount]").unwrap();
-        assert!(!amount_messages.is_empty());
-        assert!(amount_messages.iter().any(|m| m == "Die Menge muss grösser als 0 sein."));
-    }
-
-    #[test]
-    fn amount_gt_zero_valid() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Hafer".to_string(),
-                is_allergen: false,
-                amount: 32.,
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-        assert!(validation_messages.get("ingredients[0][amount]").map_or(true, |v| v.is_empty()));
-    }
-
-    #[test]
-    fn ap1_2_namensgebend() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP1_2_ProzentOutputNamensgebend]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    is_allergen: false,
-                    amount: 300.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Milch".to_string(),
-                    is_allergen: true,
-                    amount: 700.,
-                    is_namensgebend: Some(true),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("<b>Milch</b> 70%, Hafer"));
-    }
-
-    #[test]
-    fn ap1_3_eingabe_namensgebende_zutat() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP1_3_EingabeNamensgebendeZutat]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        assert!(conditionals.get("namensgebende_zutat").is_some());
-        assert_eq!(true, *conditionals.get("namensgebende_zutat").unwrap());
-    }
-
-    #[test]
-    fn ap1_4_manuelle_eingabe_total() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP1_4_ManuelleEingabeTotal]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        assert!(conditionals.get("manuelles_total").is_some());
-        assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
-    }
-
-    #[test]
-    fn ap1_4_manualTotalChangesPercent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP1_2_ProzentOutputNamensgebend,
-            RuleDef::AP1_4_ManuelleEingabeTotal,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                is_allergen: true,
-                amount: 700.,
-                is_namensgebend: Some(true),
-                ..Default::default()
-            }],
-            total: Some(350.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        assert!(conditionals.get("manuelles_total").is_some());
-        assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
-    }
-
-    #[test]
-    fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                amount: 700.,
-                ..Default::default()
-            }],
-            total: Some(350.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        assert!(conditionals
-            .get("herkunft_benoetigt_ueber_50_prozent")
-            .is_some());
-        assert_eq!(
-            true,
-            *conditionals
-                .get("herkunft_benoetigt_ueber_50_prozent")
-                .unwrap()
-        );
-    }
-
-    #[test]
-    fn validation_missing_origin_for_ingredient_over_50_percent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                amount: 700.,
-                origins: None, // Missing origin
-                ..Default::default()
-            }],
-            total: Some(350.), // This makes Milch 200% of total
-        };
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-        assert!(validation_messages.get("ingredients[0][origin]").is_some());
-        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
-        assert!(!origin_messages.is_empty());
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten über 50%."));
-    }
-
-    #[test]
-    fn country_display_on_label_for_ingredients_with_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 600.,
-                    origins: Some(vec![Country::CH]),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 200.,
-                    origins: Some(vec![Country::EU]),
-                    ..Default::default()
-                },
-            ],
-            total: Some(800.),
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Milch (Schweiz)"));
-        assert!(label.contains("Zucker (EU)"));
-    }
-
-    #[test]
-    fn no_country_display_when_origin_not_set() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![Ingredient {
-                name: "Milch".to_string(),
-                amount: 700.,
-                origins: None, // No origin set
-                ..Default::default()
-            }],
-            total: Some(350.),
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-        assert!(label.contains("Milch"));
-        assert!(!label.contains("(Schweiz)"));
-        assert!(!label.contains("(EU)"));
-    }
-
-    #[test]
-    fn meat_ingredient_over_20_percent_requires_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_3_HerkunftFleischUeber20Prozent
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hackfleisch".to_string(),
-                    amount: 250., // 25% of 1000 - meat over 20%
-                    category: Some("Fleisch".to_string()),
-                    origins: Some(vec![Country::CH]),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Nudeln".to_string(),
-                    amount: 750., // 75% but not meat
-                    category: Some("Getreide".to_string()),
-                    origins: Some(vec![Country::EU]),
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        let label = output.label;
-
-        // Meat ingredient should show origin field even though <50%
-        assert!(conditionals.get("herkunft_benoetigt_0").is_some());
-        // Non-meat ingredient should show origin field (>50% rule also active)
-        assert!(conditionals.get("herkunft_benoetigt_1").is_some());
-
-        // Both ingredients should display country on label
-        assert!(label.contains("Hackfleisch (Schweiz)"));
-        assert!(label.contains("Nudeln (EU)"));
-    }
-
-    #[test]
-    fn meat_rule_only_shows_origin_for_meat_ingredients() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hackfleisch".to_string(),
-                    amount: 250., // 25% of 1000 - meat over 20%
-                    category: Some("Fleisch".to_string()),
-                    origins: Some(vec![Country::CH]),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Nudeln".to_string(),
-                    amount: 750., // 75% but not meat
-                    category: Some("Getreide".to_string()),
-                    origins: Some(vec![Country::EU]),
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        let label = output.label;
-
-        // Meat ingredient should show origin field
-        assert!(conditionals.get("herkunft_benoetigt_0").is_some());
-        // Non-meat ingredient should NOT show origin field with only meat rule
-        assert!(conditionals.get("herkunft_benoetigt_1").is_none());
-
-        // The current origin display logic shows origin for all ingredients if any origin rule is active
-        // This is a limitation of the current design but the functionality still works correctly
-        // The meat ingredient shows origin on the label
-        assert!(label.contains("Hackfleisch (Schweiz)"));
-        // The non-meat ingredient also shows origin due to current display logic design
-        // but its conditional field is correctly NOT set (so UI won't show origin input field)
-        assert!(label.contains("Nudeln (EU)"));
-    }
-
-    #[test]
-    fn meat_ingredient_under_20_percent_no_origin_required() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Speck".to_string(),
-                    amount: 150., // 15% of 1000 - meat under 20%
-                    category: Some("Fleisch".to_string()),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Pasta".to_string(),
-                    amount: 850., // 85% - over 50%
-                    category: Some("Getreide".to_string()),
-                    origins: Some(vec![Country::IT]),
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-
-        // Meat ingredient under 20% should NOT show origin field
-        assert!(conditionals.get("herkunft_benoetigt_0").is_none());
-        // Non-meat ingredient should NOT show origin field (only meat rule active)
-        assert!(conditionals.get("herkunft_benoetigt_1").is_none());
-    }
-
-    #[test]
-    fn validation_missing_origin_for_meat_ingredient_over_20_percent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 300., // 30% of 1000 - meat over 20% but no origin set
-                    category: Some("Fleisch".to_string()),
-                    // No origin set - should trigger validation error
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Gemüse".to_string(),
-                    amount: 700.,
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-
-        // Should have validation error for missing origin on meat ingredient
-        assert!(validation_messages.get("ingredients[0][origin]").is_some());
-        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
-        assert!(!origin_messages.is_empty());
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
-    }
-
-    #[test]
-    fn meat_detection_comprehensive_categories() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
-
-        // Test the specific categories mentioned by the user
-        let test_cases = vec![
-            ("Salami", "Rohwurstware", true),
-            ("Schinken", "Schwein", true),
-            ("Bratwurst", "Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel", true),
-            ("Weizen", "Getreide", false), // Non-meat control case
-        ];
-
-        for (ingredient_name, category, should_require_origin) in test_cases {
-            let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-                ingredients: vec![
-                    Ingredient {
-                        name: ingredient_name.to_string(),
-                        amount: 300., // 30% - over 20% threshold
-                        category: Some(category.to_string()),
-                        // No origin set to test validation
-                        ..Default::default()
-                    },
-                    Ingredient {
-                        name: "Filler".to_string(),
-                        amount: 700.,
-                        ..Default::default()
-                    },
-                ],
-                total: Some(1000.),
-            };
-
-            let output = calculator.execute(input);
-            let validation_messages = output.validation_messages;
-            let conditionals = output.conditional_elements;
-
-            if should_require_origin {
-                // Should have validation error for missing origin
-                let origin_messages = validation_messages.get("ingredients[0][origin]");
-                assert!(
-                    origin_messages.map_or(false, |v| !v.is_empty()),
-                    "Expected validation error for {} with category '{}'",
-                    ingredient_name, category
-                );
-                // Should show origin field
-                assert!(
-                    conditionals.get("herkunft_benoetigt_0").is_some(),
-                    "Expected origin field for {} with category '{}'",
-                    ingredient_name, category
-                );
-            } else {
-                // Should NOT have validation error
-                let origin_messages = validation_messages.get("ingredients[0][origin]");
-                assert!(
-                    origin_messages.map_or(true, |v| v.is_empty()),
-                    "Unexpected validation error for {} with category '{}'",
-                    ingredient_name, category
-                );
-                // Should NOT show origin field
-                assert!(
-                    conditionals.get("herkunft_benoetigt_0").is_none(),
-                    "Unexpected origin field for {} with category '{}'",
-                    ingredient_name, category
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn meat_detection_processed_meat_products() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
-
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rohwurst".to_string(),
-                    amount: 250., // 25% - over 20% threshold
-                    category: Some("Rohwurstware".to_string()),
-                    origins: Some(vec![Country::CH]),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Other".to_string(),
-                    amount: 750.,
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-        let label = output.label;
-
-        // Should recognize "Rohwurstware" as meat and show origin field
-        assert!(conditionals.get("herkunft_benoetigt_0").is_some());
-        // Should display origin on label
-        assert!(label.contains("Rohwurst (Schweiz)"));
-    }
-
-    #[test]
-    fn bio_knospe_alle_zutaten_herkunft_conditional() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 300.,
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 200.,
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let conditionals = output.conditional_elements;
-
-        // All ingredients should require herkunft
-        assert_eq!(conditionals.get("herkunft_benoetigt_0"), Some(&true));
-        assert_eq!(conditionals.get("herkunft_benoetigt_1"), Some(&true));
-        assert_eq!(conditionals.get("herkunft_benoetigt_ueber_50_prozent"), Some(&true));
-    }
-
-    #[test]
-    fn bio_knospe_validation_missing_origin_for_all_ingredients() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 300.,
-                    origins: Some(vec![Country::CH]), // Has origin
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 200.,
-                    origins: None, // Missing origin
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for the ingredient without origin
-        let ingredient_1_messages = output.validation_messages.get("ingredients[1][origin]");
-        assert!(ingredient_1_messages
-                   .map_or(false, |v| v.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).")));
-        // Should NOT have validation error for the ingredient with origin
-        assert!(output.validation_messages.get("ingredients[0][origin]").map_or(true, |v| v.is_empty()));
-    }
-
-    #[test]
-    fn bio_knospe_country_display_on_label_for_all_ingredients() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 300.,
-                    origins: Some(vec![Country::CH]),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 200.,
-                    origins: Some(vec![Country::EU]),
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // All ingredients should display country on label
-        assert!(label.contains("Milch (Schweiz)"));
-        assert!(label.contains("Zucker (EU)"));
-    }
-
-    #[test]
-    fn bio_knospe_validation_all_ingredients_missing_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 300.,
-                    origins: None, // Missing origin
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 200.,
-                    origins: None, // Missing origin
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation errors for all ingredients
-        let origin_messages_0 = output.validation_messages.get("ingredients[0][origin]").unwrap();
-        let origin_messages_1 = output.validation_messages.get("ingredients[1][origin]").unwrap();
-        assert!(origin_messages_0.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung)."));
-        assert!(origin_messages_1.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung)."));
-    }
-
-    #[test]
-    fn multiple_validation_errors_on_single_ingredient() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP1_1_ZutatMengeValidierung, // Amount validation
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent, // >50% origin
-            RuleDef::AP7_3_HerkunftFleischUeber20Prozent, // >20% meat origin
-            RuleDef::AP7_4_RindfleischHerkunftDetails, // Beef details
-        ]);
-
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 600.0, // Valid amount, >50% of total
-                    category: Some("Rind".to_string()),
-                    origins: None, // Missing origin - triggers AP7_1 (>50%) and AP7_3 (>20% meat)
-                    aufzucht_ort: None, // Missing - triggers AP7_4
-                    schlachtungs_ort: None, // Missing - triggers AP7_4
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Invalid Ingredient".to_string(),
-                    amount: 0.0, // Invalid amount - triggers AP1_1
-                    category: None,
-                    origins: None,
-                    ..Default::default()
-                }
-            ],
-            total: Some(1000.0), // Rindfleisch is 60% of total
-        };
-
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-
-        // Verify beef validation errors are present for ingredient 0
-        assert!(validation_messages.contains_key("ingredients[0][origin]"));
-        assert!(validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
-        assert!(validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
-
-        // Verify amount validation error for ingredient 1
-        assert!(validation_messages.contains_key("ingredients[1][amount]"));
-
-        // Verify the messages are correct
-        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
-        let aufzucht_messages = validation_messages.get("ingredients[0][aufzucht_ort]").unwrap();
-        let schlachtungs_messages = validation_messages.get("ingredients[0][schlachtungs_ort]").unwrap();
-        let amount_messages = validation_messages.get("ingredients[1][amount]").unwrap();
-
-        // Should contain multiple origin messages for different rules
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten über 50%."));
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
-        assert!(aufzucht_messages.iter().any(|m| m == "Aufzuchtort ist erforderlich für Rindfleisch-Zutaten."));
-        assert!(schlachtungs_messages.iter().any(|m| m == "Schlachtungsort ist erforderlich für Rindfleisch-Zutaten."));
-        assert!(amount_messages.iter().any(|m| m == "Die Menge muss grösser als 0 sein."));
-
-        // Count total messages across all fields
-        let total_messages: usize = validation_messages.values().map(|v| v.len()).sum();
-        println!("Multiple validation errors successfully captured: {} fields with {} total messages", validation_messages.len(), total_messages);
-    }
-
-    #[test]
-    fn stacked_validation_messages_demo() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent, // >50% origin
-            RuleDef::AP7_3_HerkunftFleischUeber20Prozent, // >20% meat origin
-        ]);
-
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 600.0, // 60% of total - triggers both rules
-                    category: Some("Rind".to_string()),
-                    origins: None, // Missing origin - triggers both rules
-                    ..Default::default()
-                }
-            ],
-            total: Some(1000.0),
-        };
-
-        let output = calculator.execute(input);
-        let validation_messages = output.validation_messages;
-
-        // Verify that BOTH validation messages are present for the same field
-        let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
-
-        println!("Origin validation messages for beef ingredient at 60%:");
-        for msg in origin_messages {
-            println!("  - {}", msg);
-        }
-
-        // Both rules should have added their messages
-        assert_eq!(origin_messages.len(), 2, "Should have exactly 2 validation messages for origin field");
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten über 50%."));
-        assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
-
-        println!("✅ Successfully demonstrated stacked validation messages!");
-    }
-
-    #[test]
-    fn country_flag_emoji_test() {
-        use crate::model::Country;
-
-        // Test some key country flags
-        assert_eq!(Country::CH.flag_emoji(), "🇨🇭");
-        assert_eq!(Country::DE.flag_emoji(), "🇩🇪");
-        assert_eq!(Country::FR.flag_emoji(), "🇫🇷");
-        assert_eq!(Country::IT.flag_emoji(), "🇮🇹");
-        assert_eq!(Country::EU.flag_emoji(), "🇪🇺");
-        assert_eq!(Country::NoOriginRequired.flag_emoji(), "");
-
-        println!("✅ Country flag emojis working correctly!");
-        println!("🇨🇭 Switzerland, 🇩🇪 Germany, 🇫🇷 France, 🇮🇹 Italy, 🇪🇺 EU");
-    }
-
-    #[test]
-    fn bio_knospe_no_validation_errors_when_all_have_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 300.,
-                    origins: Some(vec![Country::CH]),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 200.,
-                    origins: Some(vec![Country::EU]),
-                    ..Default::default()
-                },
-            ],
-            total: Some(1000.),
-        };
-        let output = calculator.execute(input);
-
-        // Should have no validation errors
-        assert!(output.validation_messages.is_empty());
-    }
-
-    #[test]
-    fn knospe_100_percent_ch_no_origin_display() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::Knospe_100_Percent_CH_NoOrigin,
-            RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 600.,
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Weizenmehl".to_string(),
-                    amount: 400.,
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Weizenmehl"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // With 100% Swiss agricultural ingredients, no origin should be displayed
-        assert!(!label.contains("(Schweiz)"));
-        assert!(!label.contains("(CH)"));
-        assert!(label.contains("Hafer, Weizenmehl"));
-    }
-
-    #[test]
-    fn knospe_90_99_percent_ch_show_origin_for_swiss() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::Knospe_100_Percent_CH_NoOrigin,
-            RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 500.,
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Weizenmehl".to_string(),
-                    amount: 400.,
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Weizenmehl"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Olivenöl".to_string(),
-                    amount: 100.,
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Olivenöl"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // With 90% Swiss agricultural ingredients, only Swiss ingredients should show origin
-        assert!(label.contains("Hafer (Schweiz)"));
-        assert!(label.contains("Weizenmehl (Schweiz)"));
-        assert!(!label.contains("Olivenöl (EU)"));
-        assert!(label.contains("Olivenöl"));
-    }
-
-    #[test]
-    fn knospe_under_90_percent_ch_no_special_rules() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::Knospe_100_Percent_CH_NoOrigin,
-            RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 400.,
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Olivenöl".to_string(),
-                    amount: 600.,
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Olivenöl"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // With less than 90% Swiss agricultural ingredients, no special Knospe rules apply
-        assert!(!label.contains("(Schweiz)"));
-        assert!(!label.contains("(EU)"));
-        assert!(label.contains("Olivenöl, Hafer"));
-    }
-
-    #[test]
-    fn knospe_under_90_percent_ch_namensgebende_always_shows_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 400.,
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Olivenöl".to_string(),
-                    amount: 600.,
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Olivenöl"),
-                    is_namensgebend: Some(true), // This ingredient is name-giving and should show origin
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // With <90% Swiss agricultural ingredients and name-giving ingredient,
-        // the name-giving ingredient should show its origin
-        assert!(label.contains("(EU)")); // Olivenöl should show origin (name-giving)
-        assert!(label.contains("(Schweiz)")); // Hafer also shows origin (Swiss ingredient >=10%)
-        assert!(label.contains("Olivenöl (EU), Hafer (Schweiz)")); // Both should show origin
-    }
-
-    #[test]
-    fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_origin() {
-        // This test demonstrates that name-giving ingredients show origin even with low percentage
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
-        ]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 900., // 90% - Swiss, high percentage
-                    origins: Some(vec![Country::CH]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Vanilla".to_string(),
-                    amount: 100., // 10% - EU, low percentage but name-giving
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Vanilla"),
-                    is_namensgebend: Some(true), // This ingredient is name-giving and should show origin
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // With <90% Swiss agricultural ingredients:
-        // - Hafer should show origin (Swiss ingredient >=10%)
-        // - Vanilla should show origin even though it's only 10% (name-giving ingredient)
-        assert!(label.contains("(Schweiz)")); // Hafer shows origin (Swiss >=10%)
-        assert!(label.contains("(EU)")); // Vanilla shows origin (name-giving)
-        assert!(label.contains("Hafer (Schweiz), Vanilla (EU)")); // Ordered by weight
-    }
-
-    #[test]
-    fn calculate_swiss_agricultural_percentage_100_percent() {
-        let ingredients = vec![
-            Ingredient {
-                name: "Hafer".to_string(),
-                amount: 600.,
-                origins: Some(vec![Country::CH]),
-                is_agricultural: lookup_agricultural("Hafer"),
-                ..Default::default()
-            },
-            Ingredient {
-                name: "Weizenmehl".to_string(),
-                amount: 400.,
-                origins: Some(vec![Country::CH]),
-                is_agricultural: lookup_agricultural("Weizenmehl"),
-                ..Default::default()
-            },
-        ];
-
-        let percentage = calculate_swiss_agricultural_percentage(&ingredients);
-        assert_eq!(percentage, 100.0);
-    }
-
-    #[test]
-    fn calculate_swiss_agricultural_percentage_90_percent() {
-        let ingredients = vec![
-            Ingredient {
-                name: "Hafer".to_string(),
-                amount: 500.,
-                origins: Some(vec![Country::CH]),
-                is_agricultural: lookup_agricultural("Hafer"),
-                ..Default::default()
-            },
-            Ingredient {
-                name: "Weizenmehl".to_string(),
-                amount: 400.,
-                origins: Some(vec![Country::CH]),
-                is_agricultural: lookup_agricultural("Weizenmehl"),
-                ..Default::default()
-            },
-            Ingredient {
-                name: "Olivenöl".to_string(),
-                amount: 100.,
-                origins: Some(vec![Country::EU]),
-                is_agricultural: lookup_agricultural("Olivenöl"),
-                ..Default::default()
-            },
-        ];
-
-        let percentage = calculate_swiss_agricultural_percentage(&ingredients);
-        assert_eq!(percentage, 90.0);
-    }
-
-    #[test]
-    fn calculate_swiss_agricultural_percentage_with_non_agricultural() {
-        let ingredients = vec![
-            Ingredient {
-                name: "Hafer".to_string(),
-                amount: 500.,
-                origins: Some(vec![Country::CH]),
-                is_agricultural: lookup_agricultural("Hafer"),
-                ..Default::default()
-            },
-            Ingredient {
-                name: "Salz".to_string(),
-                amount: 500.,
-                origins: Some(vec![Country::EU]),
-                is_agricultural: lookup_agricultural("Salz"),  // Should be false from database
-                ..Default::default()
-            },
-        ];
-
-        let percentage = calculate_swiss_agricultural_percentage(&ingredients);
-        // Only Hafer is agricultural (500g Swiss), Salz is non-agricultural (ignored in calculation)
-        // Swiss agricultural: 500g, Total agricultural: 500g -> 100%
-        assert_eq!(percentage, 100.0);
-    }
-
-    #[test]
-    fn test_agricultural_lookup() {
-        // Test agricultural ingredients
-        assert_eq!(lookup_agricultural("Hafer"), true);
-        assert_eq!(lookup_agricultural("Weizenmehl"), true);
-        assert_eq!(lookup_agricultural("Olivenöl"), true);
-        assert_eq!(lookup_agricultural("Milch"), true);
-
-        // Test non-agricultural ingredients
-        assert_eq!(lookup_agricultural("Salz"), false);
-        assert_eq!(lookup_agricultural("Wasser"), false);
-
-        // Test unknown ingredient (should default to true)
-        assert_eq!(lookup_agricultural("UnknownIngredient"), true);
-    }
-
-    #[test]
-    fn knospe_under_90_validation_eggs_over_10_percent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 850.,
-                    origins: Some(vec![Country::EU]), // 85% non-Swiss agricultural
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Eier".to_string(),
-                    amount: 150., // 15% > 10% threshold
-                    category: Some("Eier".to_string()),
-                    origins: None, // Missing origin - should trigger validation
-                    is_agricultural: lookup_agricultural("Eier"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for eggs >10%
-        let egg_messages = output.validation_messages.get("ingredients[1][origin]");
-        assert!(egg_messages.is_some());
-        let messages = egg_messages.unwrap();
-        assert!(messages.iter().any(|msg| msg.contains("Eier/Honig/Fisch >10%")));
-    }
-
-    #[test]
-    fn knospe_under_90_validation_honey_over_10_percent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 850.,
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Honig".to_string(),
-                    amount: 150., // 15% > 10% threshold
-                    category: Some("Honig".to_string()),
-                    origins: None, // Missing origin
-                    is_agricultural: lookup_agricultural("Honig"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for honey >10%
-        let honey_messages = output.validation_messages.get("ingredients[1][origin]");
-        assert!(honey_messages.is_some());
-        let messages = honey_messages.unwrap();
-        assert!(messages.iter().any(|msg| msg.contains("Eier/Honig/Fisch >10%")));
-    }
-
-    #[test]
-    fn knospe_under_90_validation_dairy_always_requires_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 950., // 95% - making dairy only 5%
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Milch".to_string(),
-                    amount: 50., // Only 5% but should still require origin (dairy rule)
-                    category: Some("Milch".to_string()),
-                    origins: None, // Missing origin
-                    is_agricultural: lookup_agricultural("Milch"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for dairy even at low percentage
-        let milk_messages = output.validation_messages.get("ingredients[1][origin]");
-        assert!(milk_messages.is_some());
-        let messages = milk_messages.unwrap();
-        assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
-    }
-
-    #[test]
-    fn knospe_under_90_validation_meat_always_requires_origin() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Hafer".to_string(),
-                    amount: 970.,
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Hafer"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Fleisch".to_string(),
-                    amount: 30., // Only 3% but should still require origin (meat rule)
-                    category: Some("Fleisch".to_string()),
-                    origins: None, // Missing origin
-                    is_agricultural: lookup_agricultural("Fleisch"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for meat even at low percentage
-        let meat_messages = output.validation_messages.get("ingredients[1][origin]");
-        assert!(meat_messages.is_some());
-        let messages = meat_messages.unwrap();
-        assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
-    }
-
-    #[test]
-    fn knospe_under_90_validation_plant_over_50_percent() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Weizen".to_string(),
-                    amount: 600., // 60% > 50% threshold
-                    category: Some("Getreide".to_string()),
-                    origins: None, // Missing origin
-                    is_agricultural: lookup_agricultural("Weizen"),
-                    ..Default::default()
-                },
-                Ingredient {
-                    name: "Zucker".to_string(),
-                    amount: 400.,
-                    origins: Some(vec![Country::EU]),
-                    is_agricultural: lookup_agricultural("Zucker"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for plant ingredient >50%
-        let wheat_messages = output.validation_messages.get("ingredients[0][origin]");
-        assert!(wheat_messages.is_some());
-        let messages = wheat_messages.unwrap();
-        assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für pflanzliche Zutaten >50% (Knospe <90% CH Regel)."));
-    }
-
-    #[test]
-    fn knospe_under_90_validation_monoproduct() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Olivenöl".to_string(),
-                    amount: 1000., // 100% - monoproduct
-                    origins: None, // Missing origin
-                    is_agricultural: lookup_agricultural("Olivenöl"),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-
-        // Should have validation error for monoproduct
-        let oil_messages = output.validation_messages.get("ingredients[0][origin]");
-        assert!(oil_messages.is_some());
-        let messages = oil_messages.unwrap();
-        assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel)."));
-    }
-
-    #[test]
-    fn beef_origin_display_shows_geburtsort() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::AP7_4_RindfleischHerkunftDetails]);
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 500.,
-                    category: Some("Rind".to_string()),
-                    aufzucht_ort: Some(Country::FR),
-                    schlachtungs_ort: Some(Country::DE),
-                    ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        let output = calculator.execute(input);
-        let label = output.label;
-
-        // In test environment, i18n returns key names instead of translations
-        // This is expected behavior - the important thing is that the right keys are being used
-        assert!(label.contains("birthplace"));
-        assert!(label.contains("slaughtered_in"));
-        assert!(!label.contains("Aufgezogen in"));
-    }
-
-    #[test]
-    fn test_beef_with_swiss_conventional_rules() {
-        // Test with the full Swiss/Conventional rule set (same as real app)
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP1_1_ZutatMengeValidierung,
-            RuleDef::AP1_2_ProzentOutputNamensgebend,
-            RuleDef::AP1_3_EingabeNamensgebendeZutat,
-            RuleDef::AP1_4_ManuelleEingabeTotal,
-            RuleDef::AP2_1_ZusammegesetztOutput,
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
-            RuleDef::AP7_4_RindfleischHerkunftDetails,
-        ]);
-
-        // Test with beef ingredient having both fields filled (simulating real usage)
-        let input_with_beef = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: false,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 300.0,
-                    category: Some("Rind".to_string()),
-                    aufzucht_ort: Some(Country::FR),
-                    schlachtungs_ort: Some(Country::DE),
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output = calculator.execute(input_with_beef);
-
-        // Should have no validation errors
-        assert!(!output.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
-        assert!(!output.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
-
-        // Should display beef-specific origin format in label (not traditional origin)
-        // In test environment, i18n returns key names
-        assert!(output.label.contains("birthplace"));
-        assert!(output.label.contains("slaughtered_in"));
-        assert!(output.label.contains("(birthplace, slaughtered_in)"));
-        // The actual output might have extra spaces due to other formatting logic
-
-        // Should NOT contain traditional origin format since beef rule takes precedence
-        assert!(!output.label.contains("(Frankreich)"));
-        assert!(!output.label.contains("(Deutschland)"));
-    }
-
-    #[test]
-    fn test_beef_origin_validation_and_display() {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP7_4_RindfleischHerkunftDetails,
-        ]);
-
-        // Test with beef ingredient missing both aufzucht_ort and schlachtungs_ort
-        let input = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 300.0,
-                    category: Some("Rind".to_string()),
-                    aufzucht_ort: None, // Missing - should trigger validation error
-                    schlachtungs_ort: None, // Missing - should trigger validation error
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output = calculator.execute(input);
-
-        // Should have validation errors for both fields
-        assert!(output.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
-        assert!(output.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
-        let aufzucht_messages = output.validation_messages.get("ingredients[0][aufzucht_ort]").unwrap();
-        let schlachtungs_messages = output.validation_messages.get("ingredients[0][schlachtungs_ort]").unwrap();
-        assert!(aufzucht_messages.iter().any(|m| m == "Aufzuchtort ist erforderlich für Rindfleisch-Zutaten."));
-        assert!(schlachtungs_messages.iter().any(|m| m == "Schlachtungsort ist erforderlich für Rindfleisch-Zutaten."));
-
-        // Test with beef ingredient having both fields filled
-        let input_with_beef_origins = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Rindfleisch".to_string(),
-                    amount: 300.0,
-                    category: Some("Rind".to_string()),
-                    aufzucht_ort: Some(Country::FR),
-                    schlachtungs_ort: Some(Country::DE),
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output_with_origins = calculator.execute(input_with_beef_origins);
-
-        // Should have no validation errors
-        assert!(!output_with_origins.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
-        assert!(!output_with_origins.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
-
-        // Should display beef-specific origin format in label (using translation keys in test env)
-        assert!(output_with_origins.label.contains("birthplace"));
-        assert!(output_with_origins.label.contains("slaughtered_in"));
-        assert!(output_with_origins.label.contains("Rindfleisch (birthplace, slaughtered_in)"));
-
-        // Test with non-beef ingredient - should not require beef fields
-        let input_non_beef = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Schweinefleisch".to_string(),
-                    amount: 300.0,
-                    category: Some("Schwein".to_string()),
-                    aufzucht_ort: None,
-                    schlachtungs_ort: None,
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output_non_beef = calculator.execute(input_non_beef);
-
-        // Should not have validation errors for beef fields since it's not beef
-        assert!(!output_non_beef.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
-        assert!(!output_non_beef.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
-    }
-
-    #[test]
-    fn test_fish_functionality() {
-        // Test with the full Swiss/Conventional rule set (same as real app)
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![
-            RuleDef::AP1_1_ZutatMengeValidierung,
-            RuleDef::AP1_2_ProzentOutputNamensgebend,
-            RuleDef::AP1_3_EingabeNamensgebendeZutat,
-            RuleDef::AP1_4_ManuelleEingabeTotal,
-            RuleDef::AP2_1_ZusammegesetztOutput,
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-            RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
-            RuleDef::AP7_4_RindfleischHerkunftDetails,
-            RuleDef::AP7_5_FischFangort,
-        ]);
-
-        // Test with fish ingredient missing fangort
-        let input_missing_fangort = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Lachs".to_string(),
-                    amount: 200.0,
-                    category: Some("Meeresfische".to_string()),
-                    fangort: None, // Missing - should trigger validation error
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output_missing = calculator.execute(input_missing_fangort);
-
-        // Should have validation error for fangort
-        assert!(output_missing.validation_messages.contains_key("ingredients[0][fangort]"));
-        let fangort_messages = output_missing.validation_messages.get("ingredients[0][fangort]").unwrap();
-        assert!(fangort_messages.iter().any(|m| m == "Fangort ist erforderlich für Fisch-Zutaten."));
-
-        // Test with fish ingredient having fangort filled
-        let input_with_fangort = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Lachs".to_string(),
-                    amount: 200.0,
-                    category: Some("Meeresfische".to_string()),
-                    fangort: Some(Country::CH),
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output_with_fangort = calculator.execute(input_with_fangort);
-
-        // Should have no validation errors
-        assert!(!output_with_fangort.validation_messages.contains_key("ingredients[0][fangort]"));
-
-        // Should display fish origin in label
-        println!("Fish label output: {}", output_with_fangort.label);
-        assert!(output_with_fangort.label.contains("(Schweiz)"));
-        // The actual output might have extra spaces due to other formatting logic
-
-        // Test with non-fish ingredient - should not require fangort
-        let input_non_fish = Input {
-            certification_body: None,
-            rezeptur_vollstaendig: true,
-            ingredients: vec![
-                Ingredient {
-                    name: "Weizen".to_string(),
-                    amount: 300.0,
-                    category: Some("Getreide".to_string()),
-                    fangort: None,
-                    ..Default::default()
-                }
-            ],
-            total: None,
-        };
-
-        let output_non_fish = calculator.execute(input_non_fish);
-
-        // Should not have validation errors for fangort since it's not fish
-        assert!(!output_non_fish.validation_messages.contains_key("ingredients[0][fangort]"));
-    }
-
-    #[test]
-    fn test_is_fish_category() {
-        // Test official BLV API fish categories
-        assert_eq!(is_fish_category("Fisch"), true);
-        assert_eq!(is_fish_category("Meeresfische"), true);
-        assert_eq!(is_fish_category("Süsswasserfische"), true);
-        assert_eq!(is_fish_category("Meeresfrüchte, Krusten- und Schalentiere"), true);
-
-        // Test generic fish terms
-        assert_eq!(is_fish_category("Lachs"), true);
-        assert_eq!(is_fish_category("Thunfisch"), true);
-        assert_eq!(is_fish_category("Forelle"), true);
-
-        // Test English terms
-        assert_eq!(is_fish_category("fish"), true);
-        assert_eq!(is_fish_category("salmon"), true);
-        assert_eq!(is_fish_category("seafood"), true);
-
-        // Test case insensitive matching
-        assert_eq!(is_fish_category("FISCH"), true);
-        assert_eq!(is_fish_category("meeresfische"), true);
-
-        // Test non-fish categories
-        assert_eq!(is_fish_category("Rind"), false);
-        assert_eq!(is_fish_category("Getreide"), false);
-        assert_eq!(is_fish_category("Milchprodukte"), false);
-        assert_eq!(is_fish_category("Gemüse"), false);
-    }
-
-    #[test]
-    fn test_is_beef_category() {
-        // Test beef categories
-        assert_eq!(is_beef_category("Rind"), true);
-        assert_eq!(is_beef_category("Rindfleisch"), true);
-        assert_eq!(is_beef_category("RIND"), true);
-        assert_eq!(is_beef_category("beef"), true);
-        assert_eq!(is_beef_category("Kalb; Rind; Schwein"), true);
-
-        // Test non-beef categories
-        assert_eq!(is_beef_category("Schwein"), false);
-        assert_eq!(is_beef_category("Geflügel"), false);
-        assert_eq!(is_beef_category("Lamm, Schaf"), false);
-        assert_eq!(is_beef_category("Brühwurstware"), false);
-        assert_eq!(is_beef_category("Getreide"), false);
-    }
-
-    #[test]
-    fn test_is_meat_category_with_api_categories() {
-        // Test official BLV API categories for meat
-        assert_eq!(is_meat_category("Fleisch und Innereien"), true);
-        assert_eq!(is_meat_category("Rind"), true);
-        assert_eq!(is_meat_category("Schwein"), true);
-        assert_eq!(is_meat_category("Kalb"), true);
-        assert_eq!(is_meat_category("Geflügel"), true);
-        assert_eq!(is_meat_category("Lamm, Schaf"), true);
-        assert_eq!(is_meat_category("Wild"), true);
-
-        // Test processed meat categories
-        assert_eq!(is_meat_category("Brühwurstware"), true);
-        assert_eq!(is_meat_category("Kochwurstware"), true);
-
-        // Test combined categories (semicolon-separated)
-        assert_eq!(is_meat_category("Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"), true);
-        assert_eq!(is_meat_category("Kalb; Rind; Schwein; Geflügel"), true);
-        assert_eq!(is_meat_category("Kalb; Lamm, Schaf; Schwein"), true);
-
-        // Test non-meat categories
-        assert_eq!(is_meat_category("Getreide"), false);
-        assert_eq!(is_meat_category("Milchprodukte"), false);
-        assert_eq!(is_meat_category("Gemüse"), false);
-        assert_eq!(is_meat_category("Früchte"), false);
-        assert_eq!(is_meat_category("Gewürze"), false);
-
-        // Test case insensitive matching
-        assert_eq!(is_meat_category("RIND"), true);
-        assert_eq!(is_meat_category("schwein"), true);
-        assert_eq!(is_meat_category("Fleisch Und Innereien"), true);
-
-        // Test fallback terms
-        assert_eq!(is_meat_category("Hackfleisch"), true);
-        assert_eq!(is_meat_category("Bratwurst"), true);
-        assert_eq!(is_meat_category("meat"), true);
-        assert_eq!(is_meat_category("beef"), true);
-    }
-}
+mod tests;

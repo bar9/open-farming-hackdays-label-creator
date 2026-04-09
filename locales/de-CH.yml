@@ -32,6 +32,7 @@ label:
   saved_ingredients: Gespeicherte Zutaten
   abtropfgewicht: Abtropfgewicht
   adresse: Adresse
+  strasse: Strasse / Hausnummer
   name: Firma / Name
   plz: PLZ
   ort: Ort
@@ -45,13 +46,16 @@ label:
   mindestensHaltbar: Mindestens haltbar bis
   zuVerbrauchen: Zu verbrauchen bis
   zutatDetails: Details
+  unterzutatBearbeiten: Unterzutat bearbeiten
   zutat: Zutat
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
+  computedValues: Eigenschaften der Unterzutaten
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
   allergen: Allergen
+  keinAllergen: Kein Allergen
   manuellesTotal: Gewogenes Endgewicht (optional)
   mengenart: Volumen oder Gewicht
   einheit: Einheit
@@ -65,7 +69,7 @@ label:
   actions: Aktionen
   saved_indicator: (Gespeichert)
   allergen_indicator: (Allergen)
-  rezepturVollstaendig: Rezeptur vollständig eingegeben
+  rezepturVollstaendig: "Rezeptur vollständig \u2014 überprüfen"
   liv_anhang7_format: "100g Enderzeugnis enthalten %{grams}g"
   verarbeitungsschritte: Verarbeitungsschritte
 
@@ -76,8 +80,9 @@ nav:
   schliessen: Schliessen
   verhaeltnisseBeibehalten: Verhältnisse beibehalten
   anpassen: Anpassen
-  hinzufuegen: Hinzufügen
+  hinzufuegen: Zutat hinzufügen
   speichern: Speichern
+  speichernUndNaechste: Speichern und nächste Zutat
   bearbeiten: Bearbeiten
   saved_ingredients: Gespeicherte Zutaten
 
@@ -190,6 +195,10 @@ help:
   bio_knospe: Gibt an, ob diese Zutat nach Bio Suisse Knospe-Standards zertifiziert ist
   bio_ch: Gibt an, ob diese Zutat nach Schweizer Bio-Verordnung (aber nicht Knospe) zertifiziert ist
   bio_transitional: Gibt an, ob diese Zutat aus einem Umstellbetrieb stammt
+  aus_umstellbetrieb: Zutat stammt aus einem Betrieb, der auf biologische Landwirtschaft umstellt. Wird auf dem Etikett mit ** gekennzeichnet.
+  wildsammlung: Zutat stammt aus zertifizierter Wildsammlung. Wird auf dem Etikett mit ° gekennzeichnet wenn >10% Anteil.
+  nicht_landwirtschaftlich: "Nicht-landwirtschaftliche Zutat (z.B. Wasser, Salz, Kulturen, gewisse Zusatzstoffe). Wird bei Bio-Berechnungen nicht berücksichtigt."
+  andere: Zutat ist weder bio-zertifiziert noch nicht-landwirtschaftlich.
   aufzucht_location: Ort, wo es die meiste Zeit gelebt hat
   certification_body_bio: Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Bio-Zertifizierung)
   certification_body_knospe: Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Knospe-Zertifizierung)
@@ -280,7 +289,7 @@ shortening: Wird gekürzt...
 close: Schliessen
 
 disclaimer:
-  text: "Declarino.ch übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, Aktualität und Vollständigkeit der Informationen. Jegliche Haftungsansprüche werden ausgeschlossen."
+  text: "Declarino.ch unterstützt Sie beim Erstellen von Etiketten. Die Anwendung erleichtert den Prozess, indem sie Struktur gibt und auf Ausnahmen sowie nützliche Gesetzestexte oder Richtlinien verweist. Die Verantwortung für die Erstellung der Etiketten liegt jedoch bei Ihnen – Declarino.ch dient lediglich als Hilfsmittel.\n\nBitte beachten Sie, dass Declarino.ch keinerlei Gewähr hinsichtlich Richtigkeit, Aktualität und Vollständigkeit der bereitgestellten Informationen übernimmt. Jegliche Haftungsansprüche werden ausgeschlossen."
   button_tooltip: "Bitte akzeptieren Sie den Haftungsausschluss"
 
 messages:
@@ -344,6 +353,7 @@ validation:
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
   origin_required_knospe: Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
+  certification_body_format: "Die Zertifizierungsstelle muss das Format CH-BIO-xxx haben."
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
   beef_slaughter_location_required: Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.
   fish_catch_location_required: Fangort ist erforderlich für Fisch-Zutaten.
@@ -648,6 +658,10 @@ origin:
 
 bio_legend:
   aus_biologischer_landwirtschaft: aus biologischer Landwirtschaft
+  alle_landwirtschaftlichen: Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft
+  x_prozent_bio: "%{percentage}% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"
+  aus_umstellung: aus Umstellung auf biologische Landwirtschaft
+  aus_wildsammlung: aus zertifizierter Wildsammlung
 
 bio_labels:
   bio_knospe: Bio (Knospe)
@@ -655,10 +669,20 @@ bio_labels:
   erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat
   erlaubte_ausnahme_details_placeholder: Begründung / Referenz eingeben...
+  aus_umstellbetrieb: Aus Umstellbetrieb
+  wildsammlung: Aus zertifizierter Wildsammlung
+  nicht_landwirtschaftlich: Nicht-landwirtschaftlich
+  andere: Andere
 
 bio_hints:
   marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."
   marketing_not_allowed: "Das Produkt darf NICHT als Bio-Produkt vermarktet werden, da nicht alle landwirtschaftlichen Zutaten bio-zertifiziert sind. Es dürfen nur einzelne Zutaten als biologisch gekennzeichnet werden."
+  alternative_marking: "Hinweis: Neben der *-Kennzeichnung sind auch folgende Varianten zulässig: «Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft» oder der Präfix «Bio-» vor den einzelnen Zutaten."
+  knospe_marketing_allowed: "Das Produkt erfüllt die Knospe-Anforderungen und darf mit dem Bio Suisse Knospe-Logo vermarktet werden."
+  knospe_marketing_not_allowed: "Das Produkt erfüllt die Knospe-Anforderungen NICHT, da nicht alle landwirtschaftlichen Zutaten Knospe-zertifiziert sind. Das Knospe-Logo darf nicht verwendet werden."
+
+umstellbetrieb:
+  hinweis: "Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft"
 
 buttons:
   close: schliessen

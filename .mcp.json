@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "daisyui": {
+      "type": "http",
+      "url": "https://gitmcp.io/saadeghi/daisyui"
+    }
+  }
+}
