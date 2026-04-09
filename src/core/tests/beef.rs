@@ -16,10 +16,10 @@ fn beef_origin_display_shows_geburtsort() {
     let output = calculator.execute(input);
     let label = output.label;
 
-    // In test environment, i18n returns key names instead of translations
-    // This is expected behavior - the important thing is that the right keys are being used
-    assert!(label.contains("birthplace"));
-    assert!(label.contains("slaughtered_in"));
+    // The keys live under origin.birthplace / origin.slaughtered_in in the
+    // YAML; the German locale interpolates the country code into the message.
+    assert!(label.contains("Geburtsort: FR"), "label was: {label}");
+    assert!(label.contains("Geschlachtet in: DE"), "label was: {label}");
     assert!(!label.contains("Aufgezogen in"));
 }
 
@@ -45,10 +45,7 @@ fn test_beef_with_swiss_conventional_rules() {
     assert!(!output.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
 
     // Should display beef-specific origin format in label (not traditional origin)
-    // In test environment, i18n returns key names
-    assert!(output.label.contains("birthplace"));
-    assert!(output.label.contains("slaughtered_in"));
-    assert!(output.label.contains("(birthplace, slaughtered_in)"));
+    assert!(output.label.contains("(Geburtsort: FR, Geschlachtet in: DE)"));
 
     // Should NOT contain traditional origin format since beef rule takes precedence
     assert!(!output.label.contains("(Frankreich)"));
@@ -100,10 +97,8 @@ fn test_beef_origin_validation_and_display() {
     assert!(!output_with_origins.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
     assert!(!output_with_origins.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
 
-    // Should display beef-specific origin format in label (using translation keys in test env)
-    assert!(output_with_origins.label.contains("birthplace"));
-    assert!(output_with_origins.label.contains("slaughtered_in"));
-    assert!(output_with_origins.label.contains("Rindfleisch (birthplace, slaughtered_in)"));
+    // Should display beef-specific origin format in label
+    assert!(output_with_origins.label.contains("Rindfleisch (Geburtsort: FR, Geschlachtet in: DE)"));
 
     // Test with non-beef ingredient - should not require beef fields
     let input_non_beef = InputBuilder::new()
@@ -120,4 +115,35 @@ fn test_beef_origin_validation_and_display() {
     // Should not have validation errors for beef fields since it's not beef
     assert!(!output_non_beef.validation_messages.contains_key("ingredients[0][aufzucht_ort]"));
     assert!(!output_non_beef.validation_messages.contains_key("ingredients[0][schlachtungs_ort]"));
+}
+
+#[test]
+fn beef_with_origin_does_not_double_render_country() {
+    // Regression: when AP7_4 beef details are rendered, the standard
+    // herkunft display must not append a redundant "(CH)" — otherwise the
+    // label reads "Rindfleisch (Geburtsort: CH, Geschlachtet in: CH) (CH)".
+    let calculator = calculator_for(crate::shared::Configuration::Conventional);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new("Rindfleisch", 600.0)
+                .category("Rind")
+                .origin(Country::CH)
+                .aufzucht(Country::CH)
+                .schlachtung(Country::CH)
+                .build()
+        )
+        .ingredient(
+            IngredientBuilder::new("Salz", 5.0).build()
+        )
+        .build();
+
+    let output = calculator.execute(input);
+    let label = &output.label;
+
+    assert!(label.contains("Rindfleisch (Geburtsort: CH, Geschlachtet in: CH)"),
+        "expected beef details on Rindfleisch. label was: {label}");
+    // The standard origin must NOT also be appended.
+    assert!(!label.contains("Geschlachtet in: CH) (CH)"),
+        "standard origin must not be appended after beef details. label was: {label}");
 }

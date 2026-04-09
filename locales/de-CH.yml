@@ -51,7 +51,7 @@ label:
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
-  computedValues: Berechnete Werte
+  computedValues: Eigenschaften der Unterzutaten
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
   allergen: Allergen
@@ -289,7 +289,7 @@ shortening: Wird gekürzt...
 close: Schliessen
 
 disclaimer:
-  text: "Declarino.ch übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, Aktualität und Vollständigkeit der Informationen. Jegliche Haftungsansprüche werden ausgeschlossen."
+  text: "Declarino.ch unterstützt Sie beim Erstellen von Etiketten. Die Anwendung erleichtert den Prozess, indem sie Struktur gibt und auf Ausnahmen sowie nützliche Gesetzestexte oder Richtlinien verweist. Die Verantwortung für die Erstellung der Etiketten liegt jedoch bei Ihnen – Declarino.ch dient lediglich als Hilfsmittel.\n\nBitte beachten Sie, dass Declarino.ch keinerlei Gewähr hinsichtlich Richtigkeit, Aktualität und Vollständigkeit der bereitgestellten Informationen übernimmt. Jegliche Haftungsansprüche werden ausgeschlossen."
   button_tooltip: "Bitte akzeptieren Sie den Haftungsausschluss"
 
 messages:

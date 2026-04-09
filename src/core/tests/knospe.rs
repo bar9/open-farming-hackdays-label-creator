@@ -169,9 +169,9 @@ fn knospe_under_90_percent_ch_namensgebende_always_shows_origin() {
 
     // Name-giving ingredient should show its origin
     assert!(label.contains("(EU)")); // Olivenöl should show origin (name-giving)
-    // Hafer (Swiss, no category) does NOT show origin under refined rules
-    assert!(!label.contains("(CH)")); // Hafer without category doesn't trigger origin display
-    assert!(label.contains("Olivenöl (EU), Hafer"));
+    // Hafer (Swiss, 40% ≥10%) shows origin under Swiss agricultural ≥10% rule
+    assert!(label.contains("(CH)")); // Hafer shows origin (Swiss ≥10%)
+    assert!(label.contains("Olivenöl (EU), Hafer (CH)"));
 }
 
 #[test]
@@ -190,9 +190,9 @@ fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_orig
 
     // Vanilla should show origin (name-giving ingredient) even at only 10%
     assert!(label.contains("(EU)")); // Vanilla shows origin (name-giving)
-    // Hafer (Swiss, no category) does NOT show origin under refined rules
-    assert!(!label.contains("(CH)")); // Hafer without category doesn't trigger origin display
-    assert!(label.contains("Hafer, Vanilla (EU)")); // Ordered by weight
+    // Hafer (Swiss, 90% ≥10%) shows origin under Swiss agricultural ≥10% rule
+    assert!(label.contains("(CH)")); // Hafer shows origin (Swiss ≥10%)
+    assert!(label.contains("Hafer (CH), Vanilla (EU)")); // Ordered by weight
 }
 
 #[test]

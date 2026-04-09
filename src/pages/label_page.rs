@@ -63,7 +63,10 @@ pub struct Form {
     pub rezeptur_vollstaendig: bool,
 }
 
-fn default_version() -> u8 { 2 }
+// URLs without an explicit `v` field were produced before the version field
+// was introduced (commit 85411ee). They use the legacy `sub_components` shape
+// and must be migrated, so we treat a missing `v` as v=1.
+fn default_version() -> u8 { 1 }
 
 fn default_weight_unit() -> String {
     t!("weight_units.g").to_string()

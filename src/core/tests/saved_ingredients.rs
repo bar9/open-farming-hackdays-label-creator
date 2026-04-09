@@ -103,6 +103,121 @@ fn test_serde_qs_legacy_single_origin() {
     assert_eq!(wrapper.ingredients[0].origins, Some(vec![Country::CH]));
 }
 
+// --- Form-level legacy URL migration ---
+//
+// These tests cover what happens when the user opens a shared link that was
+// produced before the data structure refactoring (commit 85411ee). Such URLs
+// use the old `sub_components` field instead of `children`, and the oldest of
+// them have no `v` (version) field at all. The runtime migration lives in
+// `parse_form_from_saved_params` in src/pages/label_page.rs, which is wasm-only
+// because it calls js_sys; here we exercise the same `serde_qs` + migration
+// codepath against a minimal stand-in for the Form struct.
+
+#[derive(serde::Deserialize, Debug)]
+struct LegacyFormStub {
+    #[serde(default = "default_legacy_version")]
+    v: u8,
+    #[serde(default)]
+    ingredients: Vec<Ingredient>,
+}
+
+/// Mirrors `default_version()` in src/pages/label_page.rs. Must stay at 1 so
+/// URLs missing `v` are treated as legacy and pulled through migration.
+fn default_legacy_version() -> u8 { 1 }
+
+/// Mirrors the migration in label_page.rs::parse_form_from_saved_params.
+fn migrate_legacy_form(form: &mut LegacyFormStub) {
+    if form.v < 2 {
+        for ing in &mut form.ingredients {
+            ing.migrate_sub_components();
+        }
+        form.v = 2;
+    }
+}
+
+#[test]
+fn legacy_url_with_v1_and_sub_components_migrates_to_children() {
+    // A shared link from when v=1 was the format: explicit v=1, sub_components
+    // populated, no `children` field. Migration should turn sub_components
+    // into children.
+    let qs = "v=1\
+        &ingredients[0][name]=Bouillonpaste\
+        &ingredients[0][is_allergen]=false\
+        &ingredients[0][amount]=9\
+        &ingredients[0][is_agricultural]=true\
+        &ingredients[0][sub_components][0][name]=Salz\
+        &ingredients[0][sub_components][0][is_allergen]=false\
+        &ingredients[0][sub_components][0][origin]=CH\
+        &ingredients[0][sub_components][1][name]=Sojasauce\
+        &ingredients[0][sub_components][1][is_allergen]=true";
+
+    let mut form: LegacyFormStub = serde_qs::from_str(qs).expect("deserialize legacy v=1 url");
+    assert_eq!(form.v, 1);
+    migrate_legacy_form(&mut form);
+
+    assert_eq!(form.v, 2);
+    let parent = &form.ingredients[0];
+    assert!(parent.sub_components.is_none(), "sub_components should be drained");
+    let children = parent.children.as_ref().expect("children should be populated");
+    assert_eq!(children.len(), 2);
+    assert_eq!(children[0].name, "Salz");
+    assert_eq!(children[0].origins, Some(vec![Country::CH]));
+    assert!(children[1].is_allergen);
+    assert_eq!(children[1].name, "Sojasauce");
+}
+
+#[test]
+fn legacy_url_without_v_field_still_migrates_sub_components() {
+    // The pre-85411ee Form had no `v` field at all. With default_version()
+    // returning 1, a missing `v` deserializes as v=1 and migration runs.
+    let qs = "ingredients[0][name]=Bouillonpaste\
+        &ingredients[0][is_allergen]=false\
+        &ingredients[0][amount]=9\
+        &ingredients[0][is_agricultural]=true\
+        &ingredients[0][sub_components][0][name]=Salz\
+        &ingredients[0][sub_components][0][is_allergen]=false\
+        &ingredients[0][sub_components][0][origin]=CH";
+
+    let mut form: LegacyFormStub = serde_qs::from_str(qs).expect("deserialize legacy v-less url");
+    assert_eq!(form.v, 1, "missing v must default to 1 so legacy URLs migrate");
+
+    migrate_legacy_form(&mut form);
+
+    assert_eq!(form.v, 2);
+    let parent = &form.ingredients[0];
+    assert!(parent.sub_components.is_none(), "sub_components should be drained after migration");
+    let children = parent.children.as_ref().expect("children should be populated after migration");
+    assert_eq!(children.len(), 1);
+    assert_eq!(children[0].name, "Salz");
+    assert_eq!(children[0].origins, Some(vec![Country::CH]));
+}
+
+#[test]
+fn current_url_with_explicit_v2_does_not_double_migrate() {
+    // Sanity check: current-format URLs (v=2, children populated, no
+    // sub_components) must pass through migration unchanged.
+    let qs = "v=2\
+        &ingredients[0][name]=Bouillonpaste\
+        &ingredients[0][is_allergen]=false\
+        &ingredients[0][amount]=9\
+        &ingredients[0][is_agricultural]=true\
+        &ingredients[0][children][0][name]=Salz\
+        &ingredients[0][children][0][is_allergen]=false\
+        &ingredients[0][children][0][amount]=5\
+        &ingredients[0][children][0][origins][0]=CH";
+
+    let mut form: LegacyFormStub = serde_qs::from_str(qs).expect("deserialize v=2 url");
+    assert_eq!(form.v, 2);
+
+    let pre_children = form.ingredients[0].children.clone();
+    migrate_legacy_form(&mut form);
+
+    let parent = &form.ingredients[0];
+    assert!(parent.sub_components.is_none());
+    assert_eq!(parent.children, pre_children, "v=2 children must not be touched");
+    assert_eq!(parent.children.as_ref().unwrap()[0].origins, Some(vec![Country::CH]));
+}
+
 // --- Saved ingredient JSON roundtrip tests ---
 
 #[test]

@@ -647,3 +647,225 @@ fn monoprodukt_detection_multiple_agricultural() {
     ];
     assert!(!is_mono_product(&ingredients));
 }
+
+// =============================================================================
+// Group I — Composite Ingredients: Bio & Umstellbetrieb Marking
+// =============================================================================
+
+#[test]
+fn composite_child_umstellbetrieb_gets_double_asterisk_on_label() {
+    // A composite ingredient with an umstellbetrieb child should show ** on that child
+    let calculator = calculator_for(Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
+        .ingredient(
+            IngredientBuilder::new_agri("Müeslimischung", 100.0)
+                .bio()
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new_agri("Hafer", 60.0)
+                        .bio()
+                        .origin(Country::CH)
+                        .build(),
+                    IngredientBuilder::new_agri("Dinkel", 40.0)
+                        .bio()
+                        .umstellbetrieb()
+                        .origin(Country::CH)
+                        .build(),
+                ])
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    // Parent gets * (computed bio from children)
+    assert!(output.label.contains("Müeslimischung*"), "Parent should get bio asterisk. Label: {}", output.label);
+    // Hafer child gets * (bio)
+    assert!(output.label.contains("Hafer*"), "Bio child should get *. Label: {}", output.label);
+    // Dinkel child gets ** (umstellbetrieb)
+    assert!(output.label.contains("Dinkel**"), "Umstellbetrieb child should get **. Label: {}", output.label);
+    // No *** anywhere
+    assert!(!output.label.contains("***"), "Should not have ***. Label: {}", output.label);
+}
+
+#[test]
+fn composite_child_umstellbetrieb_triggers_legend() {
+    // Umstellbetrieb on a child inside a composite should trigger the ** legend
+    let calculator = calculator_for(Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
+        .ingredient(
+            IngredientBuilder::new_agri("Getreidemischung", 80.0)
+                .bio()
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new_agri("Weizen", 50.0)
+                        .bio()
+                        .origin(Country::CH)
+                        .build(),
+                    IngredientBuilder::new_agri("Roggen", 30.0)
+                        .bio()
+                        .umstellbetrieb()
+                        .origin(Country::CH)
+                        .build(),
+                ])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Zucker", 20.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"),
+        "Umstellbetrieb legend should appear for composite child. Label: {}", output.label);
+}
+
+#[test]
+fn composite_children_bio_markers_in_knospe_context() {
+    // All bio children inside a composite should get * in a Knospe context
+    let calculator = calculator_for(Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
+        .ingredient(
+            IngredientBuilder::new_agri("Schokolade", 50.0)
+                .bio()
+                .origin(Country::EU)
+                .children(vec![
+                    IngredientBuilder::new_agri("Zucker", 25.0)
+                        .bio()
+                        .origin(Country::EU)
+                        .build(),
+                    IngredientBuilder::new_agri("Kakaobutter", 25.0)
+                        .bio()
+                        .origin(Country::EU)
+                        .build(),
+                ])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Butter", 50.0)
+                .bio()
+                .origin(Country::CH)
+                .category("Butter")
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    // Children inside composite get bio asterisk
+    assert!(output.label.contains("Zucker*"), "Bio child Zucker should get *. Label: {}", output.label);
+    assert!(output.label.contains("Kakaobutter*"), "Bio child Kakaobutter should get *. Label: {}", output.label);
+    // Parent composite has explicit is_bio=true, so it also gets *
+    assert!(output.label.contains("Schokolade*"), "Bio parent with explicit is_bio should get *. Label: {}", output.label);
+}
+
+#[test]
+fn composite_parent_no_asterisk_when_bio_inherited_from_children() {
+    // When parent has no explicit is_bio/bio_ch, bio status is computed from children.
+    // Lowest-level-only rule: parent should NOT get *, only children.
+    let calculator = calculator_for(Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
+        .ingredient(
+            IngredientBuilder::new_agri("Schokolade", 50.0)
+                .origin(Country::EU)
+                .children(vec![
+                    IngredientBuilder::new_agri("Zucker", 25.0)
+                        .bio()
+                        .origin(Country::EU)
+                        .build(),
+                    IngredientBuilder::new_agri("Kakaobutter", 25.0)
+                        .bio()
+                        .origin(Country::EU)
+                        .build(),
+                ])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Butter", 50.0)
+                .bio()
+                .origin(Country::CH)
+                .category("Butter")
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    // Children should get bio asterisk
+    assert!(output.label.contains("Zucker*"), "Bio child Zucker should get *. Label: {}", output.label);
+    assert!(output.label.contains("Kakaobutter*"), "Bio child Kakaobutter should get *. Label: {}", output.label);
+    // Parent should NOT get * because bio was inherited from children (lowest-level-only)
+    assert!(!output.label.contains("Schokolade*"), "Parent with inherited bio should NOT get *. Label: {}", output.label);
+    assert!(output.label.contains("Schokolade"), "Parent name should still appear. Label: {}", output.label);
+}
+
+#[test]
+fn composite_mixed_bio_and_nonbio_children() {
+    // Composite with mix of bio and non-bio children: only bio children get *
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio, RuleDef::AP2_1_ZusammegesetztOutput]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new_agri("Gewürzmischung", 100.0)
+                .children(vec![
+                    IngredientBuilder::new_agri("Pfeffer", 60.0)
+                        .bio()
+                        .build(),
+                    IngredientBuilder::new("Salz", 40.0)
+                        .agricultural(false)
+                        .build(),
+                ])
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    // Pfeffer is bio → gets *
+    assert!(output.label.contains("Pfeffer*"), "Bio child should get *. Label: {}", output.label);
+    // Salz is not bio → no *
+    assert!(!output.label.contains("Salz*"), "Non-bio child should not get *. Label: {}", output.label);
+}
+
+#[test]
+fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
+    // Umstellbetrieb children inside composites should be excluded from bio_ch % calculation
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new_agri("Müesli", 1000.0)
+                .children(vec![
+                    IngredientBuilder::new_agri("Hafer", 600.0)
+                        .bio_ch()
+                        .origin(Country::CH)
+                        .build(),
+                    IngredientBuilder::new_agri("Dinkel", 400.0)
+                        .bio_ch()
+                        .umstellbetrieb()
+                        .origin(Country::CH)
+                        .build(),
+                ])
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // 600/1000 = 60% bio_ch (umstellbetrieb excluded) → below 95% threshold
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None,
+        "Umstellbetrieb child should be excluded from bio_ch %. Conditionals: {:?}", c);
+}

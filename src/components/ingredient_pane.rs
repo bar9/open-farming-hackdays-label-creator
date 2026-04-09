@@ -304,6 +304,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 if edit_amount.peek().is_none_or(|a| (a - ca).abs() > 0.001) {
                     edit_amount.set(Some(ca));
                 }
+                let cu = ing.computed_unit();
+                if *edit_unit.peek() != cu { edit_unit.set(cu); }
                 let cb = ing.computed_bio_status().unwrap_or(false);
                 if *edit_is_bio.peek() != cb { edit_is_bio.set(cb); }
                 let cbc = ing.computed_bio_ch_status().unwrap_or(false);
@@ -809,16 +811,16 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             }
                         }
                     }
-                    // Bio
+                    // Bio Knospe
                     div { class: "flex justify-between",
-                        span { class: "text-base-content/60", "Bio" }
+                        span { class: "text-base-content/60", {t!("bio_labels.bio_knospe").to_string()} }
                         span {
                             if edit_is_bio() { "✓" } else { "✗" }
                         }
                     }
-                    // Bio CH
+                    // Bio
                     div { class: "flex justify-between",
-                        span { class: "text-base-content/60", "Bio CH" }
+                        span { class: "text-base-content/60", {t!("bio_labels.bio_ch").to_string()} }
                         span {
                             if edit_bio_ch() { "✓" } else { "✗" }
                         }

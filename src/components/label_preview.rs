@@ -412,11 +412,17 @@ pub fn LabelPreview(
                         r#type: "checkbox",
                         checked: disclaimer_accepted(),
                         oninput: move |evt: FormEvent| {
-                            disclaimer_context.write().accepted = evt.checked();
+                            let checked = evt.checked();
+                            disclaimer_context.write().accepted = checked;
+                            if let Some(window) = web_sys::window() {
+                                if let Ok(Some(storage)) = window.local_storage() {
+                                    let _ = storage.set_item("disclaimer_accepted", if checked { "true" } else { "false" });
+                                }
+                            }
                         },
                     }
                     span { class: "text-sm",
-                        {t!("disclaimer.text").to_string()}
+                        {t!("disclaimer.text").to_string().nl2br()}
                     }
                 }
             }

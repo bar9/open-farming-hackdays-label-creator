@@ -57,7 +57,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             .ingredients
             .read()
             .iter()
-            .map(|x: &Ingredient| x.amount)
+            .map(|x: &Ingredient| x.computed_amount())
             .sum::<f64>()
     });
 
@@ -164,7 +164,7 @@ fn render_ingredient_tree(
             let is_namensgebend = ingr.is_namensgebend.unwrap_or(false);
             let computed_origins = ingr.computed_origins();
             let computed_amount = ingr.computed_amount();
-            let unit_key = ingr.unit.translation_key().to_string();
+            let unit_key = ingr.computed_unit().translation_key().to_string();
             let unified = ingredient_to_unified(&ingr);
             let children = ingr.children.clone();
             let children_for_recurse = children.clone();

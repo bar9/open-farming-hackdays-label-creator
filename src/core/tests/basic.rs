@@ -557,3 +557,72 @@ fn test_composite_with_single_child() {
     assert_eq!(leaves.len(), 1);
     assert_eq!(leaves[0].name, "Einziges Kind");
 }
+
+#[test]
+fn computed_unit_bubbles_milliliter_from_any_child() {
+    // Leaf in g → g
+    let leaf_g = Ingredient { name: "Mehl".into(), amount: 100.0, unit: AmountUnit::Gram, ..Default::default() };
+    assert_eq!(leaf_g.computed_unit(), AmountUnit::Gram);
+
+    // Leaf in ml → ml
+    let leaf_ml = Ingredient { name: "Öl".into(), amount: 50.0, unit: AmountUnit::Milliliter, ..Default::default() };
+    assert_eq!(leaf_ml.computed_unit(), AmountUnit::Milliliter);
+
+    // Composite, all children in g → g
+    let dough = Ingredient {
+        name: "Teig".into(),
+        amount: 0.0,
+        unit: AmountUnit::Gram,
+        children: Some(vec![
+            Ingredient { name: "Mehl".into(), amount: 100.0, unit: AmountUnit::Gram, ..Default::default() },
+            Ingredient { name: "Zucker".into(), amount: 30.0, unit: AmountUnit::Gram, ..Default::default() },
+        ]),
+        ..Default::default()
+    };
+    assert_eq!(dough.computed_unit(), AmountUnit::Gram);
+
+    // Composite with one ml child → ml
+    let vinaigrette = Ingredient {
+        name: "Vinaigrette".into(),
+        amount: 0.0,
+        unit: AmountUnit::Gram, // stored unit is stale; computed should be ml
+        children: Some(vec![
+            Ingredient { name: "Senf".into(), amount: 10.0, unit: AmountUnit::Gram, ..Default::default() },
+            Ingredient { name: "Öl".into(), amount: 100.0, unit: AmountUnit::Milliliter, ..Default::default() },
+        ]),
+        ..Default::default()
+    };
+    assert_eq!(vinaigrette.computed_unit(), AmountUnit::Milliliter);
+
+    // Nested: grandchild in ml should bubble up two levels.
+    // The intermediate wrapper carries a non-zero stored amount as it would
+    // after the auto-sync ran in the live UI.
+    let outer = Ingredient {
+        name: "Sauce mit Wrapper".into(),
+        amount: 51.0,
+        children: Some(vec![Ingredient {
+            name: "Inner".into(),
+            amount: 51.0,
+            children: Some(vec![
+                Ingredient { name: "Wasser".into(), amount: 50.0, unit: AmountUnit::Milliliter, ..Default::default() },
+                Ingredient { name: "Salz".into(), amount: 1.0, unit: AmountUnit::Gram, ..Default::default() },
+            ]),
+            ..Default::default()
+        }]),
+        ..Default::default()
+    };
+    assert_eq!(outer.computed_unit(), AmountUnit::Milliliter);
+
+    // override_children = true → use own unit, ignore children
+    let override_g = Ingredient {
+        name: "Override".into(),
+        amount: 200.0,
+        unit: AmountUnit::Gram,
+        override_children: Some(true),
+        children: Some(vec![
+            Ingredient { name: "Öl".into(), amount: 100.0, unit: AmountUnit::Milliliter, ..Default::default() },
+        ]),
+        ..Default::default()
+    };
+    assert_eq!(override_g.computed_unit(), AmountUnit::Gram);
+}

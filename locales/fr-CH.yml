@@ -52,7 +52,7 @@ label:
   menge: Quantité
   namensgebendeZutat: Ingrédient caractéristique
   zusammengesetzteZutat: Ingrédient composé
-  computedValues: Valeurs calculées
+  computedValues: Propriétés des sous-ingrédients
   zutatEingeben: Ingrédient (saisir ou sélectionner)
   namensgebend: Caractéristique
   allergen: Allergène
@@ -277,7 +277,7 @@ shortening: Raccourcissement...
 close: Fermer
 
 disclaimer:
-  text: "Declarino.ch décline toute responsabilité quant à l'exactitude, l'actualité et l'exhaustivité des informations fournies. Toute responsabilité est exclue."
+  text: "Declarino.ch vous aide à créer des étiquettes. L'application facilite le processus en offrant une structure et en signalant les exceptions ainsi que les textes de loi ou directives utiles. La responsabilité de la création des étiquettes vous incombe toutefois – Declarino.ch ne sert que d'outil d'aide.\n\nVeuillez noter que Declarino.ch décline toute garantie quant à l'exactitude, l'actualité et l'exhaustivité des informations fournies. Toute responsabilité est exclue."
   button_tooltip: "Veuillez accepter la clause de non-responsabilité"
 
 messages:

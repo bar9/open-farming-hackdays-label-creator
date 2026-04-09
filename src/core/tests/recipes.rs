@@ -129,9 +129,8 @@ fn recipe_schoggi_cookie_bk() {
     // Zucker: Nein
     assert!(!output.label.contains("Zucker* (PE)"), "Zucker should NOT show origin. Label: {}", output.label);
     assert!(output.label.contains("Zucker*"), "Zucker should have bio asterisk. Label: {}", output.label);
-    // Weizenmehl: Nein
-    assert!(!output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should NOT show origin. Label: {}", output.label);
-    assert!(output.label.contains("Weizenmehl*"), "Weizenmehl should have bio asterisk. Label: {}", output.label);
+    // Weizenmehl: Ja (>10% Swiss agricultural)
+    assert!(output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}", output.label);
     // Schokoladewürfel: Nein
     assert!(!output.label.contains("Schokoladewürfel* (EU)"), "Schokoladewürfel should NOT show origin. Label: {}", output.label);
     // Orangenschale: Nein
@@ -210,14 +209,14 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
     // Origin display per Excel:
     // Butter: Ja → show (CH)
     assert!(output.label.contains("Butter* (CH)"), "Butter should show origin (CH). Label: {}", output.label);
-    // Sub-ingredient Vollmilchpulver: Ja (shown inside composite parentheses)
-    assert!(output.label.contains("Vollmilchpulver (CH)"), "Vollmilchpulver should show origin (CH) inside composite. Label: {}", output.label);
-    // Zucker: Nein
-    assert!(!output.label.contains("Zucker* (CH)"), "Zucker should NOT show origin. Label: {}", output.label);
-    // Weizenmehl: Nein
-    assert!(!output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should NOT show origin. Label: {}", output.label);
-    // Eier: Nein (9% < 10%, eggs only trigger at >10%)
-    assert!(!output.label.contains("Eier* (CH)"), "Eier should NOT show origin (9% < 10%). Label: {}", output.label);
+    // Sub-ingredient Vollmilchpulver: Nein (4.6% < 10% Swiss threshold, Knospe Under90% rules apply to composites too)
+    assert!(!output.label.contains("Vollmilchpulver* (CH)"), "Vollmilchpulver should NOT show origin (4.6%% < 10%% threshold). Label: {}", output.label);
+    // Zucker: Ja (18% Swiss agricultural, >10%)
+    assert!(output.label.contains("Zucker* (CH)"), "Zucker should show origin (CH) because >10%% Swiss. Label: {}", output.label);
+    // Weizenmehl: Ja (33.5% Swiss agricultural, >10%)
+    assert!(output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}", output.label);
+    // Eier: Nein (9% < 10%)
+    assert!(!output.label.contains("Eier* (CH)"), "Eier should NOT show origin (9%% < 10%%). Label: {}", output.label);
     // Schokoladewürfel: Nein
     assert!(!output.label.contains("Milchschokoladewürfel* (EU)"), "Milchschokoladewürfel should NOT show origin. Label: {}", output.label);
     // Salz: Nein
@@ -302,7 +301,7 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
     // Schokoladewürfel: Nein (EU, not Swiss)
     assert!(!output.label.contains("Milchschokoladewürfel* (EU)"), "Milchschokoladewürfel should NOT show origin. Label: {}", output.label);
     // Sub-ingredient Vollmilchpulver: Ja* (shown inside composite)
-    assert!(output.label.contains("Vollmilchpulver (CH)"), "Vollmilchpulver should show origin inside composite. Label: {}", output.label);
+    assert!(output.label.contains("Vollmilchpulver* (CH)"), "Vollmilchpulver should show origin inside composite. Label: {}", output.label);
     // Salz: Nein (non-agricultural, should NOT show origin even though CH)
     assert!(!output.label.contains("Salz (CH)"), "Salz should NOT show origin (non-agricultural). Label: {}", output.label);
 
