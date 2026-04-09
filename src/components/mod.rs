@@ -52,4 +52,4 @@ mod ingredient_symbols;
 mod unified_ingredient_input;
 pub mod ingredient_path;
 pub mod ingredient_pane;
-pub mod miller_modal;
+pub mod card_stack;

@@ -51,6 +51,7 @@ label:
   menge: Quantità
   namensgebendeZutat: Ingrediente caratterizzante
   zusammengesetzteZutat: Ingrediente composto
+  computedValues: Valori calcolati
   zutatEingeben: Ingrediente (inserire o selezionare)
   namensgebend: Caratterizzante
   allergen: Allergene

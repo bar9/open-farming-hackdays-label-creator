@@ -1,4 +1,4 @@
-use crate::components::miller_modal::{MillerModal, GenesisModal};
+use crate::components::card_stack::{CardStack, GenesisModal};
 use crate::components::ingredient_path::IngredientPath;
 use crate::components::*;
 use crate::core::Ingredient;
@@ -126,8 +126,8 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             div {}
         }
 
-        // Miller Columns modal for editing
-        MillerModal {
+        // Stacking card modal for editing
+        CardStack {
             ingredients: props.ingredients,
             editing_path: editing_path,
             rules: props.rules,

@@ -50,6 +50,10 @@ pub struct IngredientPaneProps {
     /// Signal to trigger focus on the name input when it becomes true.
     #[props(default = None)]
     pub focus_trigger: Option<Signal<bool>>,
+    /// Depth in the ingredient tree (0 = top-level). Controls visibility of
+    /// "merken" and "anteilsmässig übertragen" buttons (shown only at depth 0).
+    #[props(default = 0)]
+    pub depth: usize,
 }
 
 pub fn IngredientPane(props: IngredientPaneProps) -> Element {
@@ -283,33 +287,43 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         });
     }
 
-    // Computed-value sync: when disabled (parent in two-pane mode),
-    // update edit signals from ingredient's computed values so the left pane
-    // reactively reflects aggregated child data (weight sum, bio AND, origins union).
+    // Computed-value sync: when composite (has children), update edit signals
+    // from the ingredient's computed values so the parent reflects aggregated
+    // child data (weight sum, bio AND, origins union, allergen any).
+    // Computed-value sync: when the ingredients signal changes and we're composite,
+    // update edit signals from computed values. Uses peek() for edit signals so this
+    // effect only re-runs when `ingredients` or `edit_is_composite` change — NOT when
+    // edit signals change (which would fight with SubIngredientsTable additions).
     {
         let ingredients = props.ingredients;
         let pane_index = props.index;
         use_effect(move || {
-            if !disabled_sig() { return; }
+            if !edit_is_composite() { return; }
             if let Some(ing) = ingredients.read().get(pane_index) {
                 let ca = ing.computed_amount();
-                if edit_amount().is_none_or(|a| (a - ca).abs() > 0.001) {
+                if edit_amount.peek().is_none_or(|a| (a - ca).abs() > 0.001) {
                     edit_amount.set(Some(ca));
                 }
                 let cb = ing.computed_bio_status().unwrap_or(false);
-                if edit_is_bio() != cb { edit_is_bio.set(cb); }
+                if *edit_is_bio.peek() != cb { edit_is_bio.set(cb); }
                 let cbc = ing.computed_bio_ch_status().unwrap_or(false);
-                if edit_bio_ch() != cbc { edit_bio_ch.set(cbc); }
+                if *edit_bio_ch.peek() != cbc { edit_bio_ch.set(cbc); }
                 let co = ing.computed_origins();
-                if edit_origins() != co { edit_origins.set(co); }
+                if *edit_origins.peek() != co { edit_origins.set(co); }
                 let ch = ing.children.clone();
-                if edit_children() != ch { edit_children.set(ch); }
+                if *edit_children.peek() != ch { edit_children.set(ch); }
+                // Allergen: true if any child is allergen
+                let any_allergen = ing.children.as_ref()
+                    .is_some_and(|children| children.iter().any(|c| c.is_allergen));
+                if *is_allergen_custom.peek() != any_allergen { is_allergen_custom.set(any_allergen); }
             }
         });
     }
 
-    // Reverse sync: when the real ingredients signal changes (e.g. right pane saved a child),
-    // update wrapper_ingredients so the left pane's SubIngredientsTable reflects the change.
+    // Reverse sync: when the real ingredients signal changes (e.g. child card saved),
+    // update wrapper_ingredients so SubIngredientsTable reflects the change.
+    // Use peek() for wrapper to avoid subscribing — otherwise wrapper-originated changes
+    // (like delete) would trigger this effect before auto-sync propagates, undoing the delete.
     {
         let ingredients = props.ingredients;
         let pane_index = props.index;
@@ -317,7 +331,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             let real_children = ingredients.read()
                 .get(pane_index)
                 .and_then(|i| i.children.clone());
-            let wrapper_children = wrapper_ingredients.read()
+            let wrapper_children = wrapper_ingredients.peek()
                 .first()
                 .and_then(|i| i.children.clone());
             if real_children != wrapper_children {
@@ -434,9 +448,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     };
 
     let build_ingredient = move || -> Option<Ingredient> {
-        let amount = match edit_amount() {
-            Some(amt) if amt > 0.0 => amt,
-            _ => return None,
+        let amount = if edit_is_composite() {
+            // Composite: amount is computed from children; require at least one child with weight
+            let children = edit_children();
+            let has_weighted_child = children.as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0));
+            if !has_weighted_child { return None; }
+            edit_amount().unwrap_or(0.0)
+        } else if props.is_sub_ingredient {
+            // Sub-ingredients: allow amount 0 (qualitative ingredients)
+            edit_amount().unwrap_or(0.0)
+        } else {
+            match edit_amount() {
+                Some(amt) if amt > 0.0 => amt,
+                _ => return None,
+            }
         };
 
         let in_database = food_db().iter().any(|(name, _)| name == &edit_name());
@@ -653,123 +678,72 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     focus_when_true: Some(focus_signal)
                 }
             }
-            br {}
-            FormField {
-                label: format!("{} (g)", t!("label.menge").to_string()),
-                help: Some(t!("help.menge").to_string()),
-                ValidationDisplay {
-                    paths: vec![
-                        format!("ingredients[{}][amount]", validation_index)
-                    ],
-                    div { class: "flex gap-2",
-                        input {
-                            r#type: "number",
-                            placeholder: t!("placeholders.amount_in_grams").to_string(),
-                            class: "input input-accent flex-1",
-                            min: "0",
-                            step: "any",
-                            oninput: move |evt| {
-                                let value = evt.data.value();
-                                if value.is_empty() {
-                                    edit_amount.set(None);
-                                } else if let Ok(amount) = value.parse::<f64>() {
-                                    edit_amount.set(Some(amount));
-                                }
-                            },
-                            value: edit_amount().map_or(String::new(), |v| v.to_string()),
-                        }
-                        select {
-                            class: "select select-accent w-20",
-                            value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
-                            onchange: move |evt| {
-                                let value = evt.data.value();
-                                if value == "ml" {
-                                    edit_unit.set(AmountUnit::Milliliter);
-                                } else {
-                                    edit_unit.set(AmountUnit::Gram);
-                                }
-                            },
-                            option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
-                            option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
-                        }
-                    }
-                }
-                if !props.is_genesis && amount_has_changed() {
-                    div { class: "text-sm text-info mt-2",
-                        if let Some(amt) = edit_amount() {
-                            {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_ingredient.amount.to_string(), after = amt.to_string()).to_string()}
-                        } else {
-                            {t!("messages.please_enter_amount").to_string()}
-                        }
-                    }
-                }
-            }
 
+            // Composite toggle — right after name, as daisyUI toggle
             br {}
-            br {}
-
-            // Allergen status
-            if !edit_name().is_empty() && !edit_is_composite() {
-                if is_custom_ingredient() {
-                    FormField {
-                        help: Some(t!("help.allergenManual").to_string()),
-                        label: t!("label.allergen").to_string(),
-                        inline_checkbox: true,
-                        CheckboxInput {
-                            bound_value: is_allergen_custom
-                        }
-                    }
-                    br {}
-                } else if is_allergen_custom() {
-                    FormField {
-                        label: t!("label.allergen").to_string(),
-                        div { class: "py-2",
-                            span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
-                        }
-                    }
-                    br {}
-                } else {
-                    FormField {
-                        label: t!("label.allergen").to_string(),
-                        div { class: "py-2 text-base-content/50",
-                            span { {t!("label.keinAllergen").to_string()} }
-                        }
-                    }
-                    br {}
-                }
-            }
-
             FormField {
                 label: t!("label.zusammengesetzteZutat").to_string(),
                 help: Some(t!("help.zusammengesetzteZutaten").to_string()),
                 inline_checkbox: true,
                 input {
-                    class: "checkbox checkbox-accent",
+                    class: "toggle toggle-accent",
                     r#type: "checkbox",
                     checked: edit_is_composite(),
                     oninput: move |evt| {
                         let is_composite = evt.data.checked();
-                        if !is_composite {
-                            // Flatten derived attributes from children before clearing
+                        if is_composite {
+                            // Enabling composite: clear attribute fields (will be computed from children)
+                            edit_amount.set(None);
+                            edit_unit.set(AmountUnit::default());
+                            edit_origins.set(None);
+                            edit_is_bio.set(false);
+                            edit_bio_ch.set(false);
+                            is_allergen_custom.set(false);
+                            edit_aufzucht_ort.set(None);
+                            edit_schlachtungs_ort.set(None);
+                            edit_fangort.set(None);
+                            edit_erlaubte_ausnahme_bio.set(false);
+                            edit_erlaubte_ausnahme_bio_details.set(String::new());
+                            edit_erlaubte_ausnahme_knospe.set(false);
+                            edit_erlaubte_ausnahme_knospe_details.set(String::new());
+                            edit_processing_steps.set(None);
+                            edit_aus_umstellbetrieb.set(false);
+                            edit_nicht_landwirtschaftlich.set(false);
+                        } else {
+                            // Disabling composite: transfer computed/bubbled values to own fields
                             if let Some(children) = edit_children() {
                                 if !children.is_empty() {
-                                    // Compute union of children's origins
-                                    let all_origins: std::collections::HashSet<crate::model::Country> = children.iter()
-                                        .filter_map(|c| c.computed_origins())
-                                        .flatten()
-                                        .collect();
-                                    if !all_origins.is_empty() {
-                                        edit_origins.set(Some(all_origins.into_iter().collect()));
+                                    let tmp = Ingredient {
+                                        name: edit_name(),
+                                        children: Some(children.clone()),
+                                        ..Default::default()
+                                    };
+                                    edit_amount.set(Some(tmp.computed_amount()));
+                                    if let Some(origins) = tmp.computed_origins() {
+                                        edit_origins.set(Some(origins));
                                     }
+                                    if let Some(bio) = tmp.computed_bio_status() {
+                                        edit_is_bio.set(bio);
+                                    }
+                                    if let Some(bio_ch) = tmp.computed_bio_ch_status() {
+                                        edit_bio_ch.set(bio_ch);
+                                    }
+                                    let any_allergen = children.iter().any(|c| c.is_allergen);
+                                    is_allergen_custom.set(any_allergen);
                                 }
                             }
+                            // Remove children
+                            edit_children.set(None);
                         }
                         edit_is_composite.set(is_composite);
                         props.on_composite_changed.call(is_composite);
                     }
                 }
             }
+
             if edit_is_composite() {
+                // === COMPOSITE MODE: children list + read-only computed summary ===
+                br {}
                 SubIngredientsTable {
                     ingredients: wrapper_ingredients,
                     index: 0,
@@ -778,24 +752,177 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         let mut ingredients = props.ingredients;
                         let pane_index = props.index;
                         move |child_index: usize| {
-                            // Flush children to the real ingredients signal synchronously
-                            // so the right pane can find them immediately.
+                            // Flush full ingredient state to the real signal so
+                            // NestedCard and computed-value sync see current data.
                             let live_children = wrapper_ingredients.read()
                                 .first()
                                 .and_then(|i| i.children.clone());
                             if let Some(mut ing) = ingredients.get_mut(pane_index) {
+                                ing.name = edit_name();
+                                ing.amount = edit_amount().unwrap_or(0.0);
+                                ing.unit = edit_unit();
+                                ing.is_allergen = is_allergen_custom();
+                                ing.is_namensgebend = Some(edit_is_namensgebend());
                                 ing.children = live_children;
+                                ing.origins = edit_origins();
+                                ing.is_bio = Some(edit_is_bio());
+                                ing.bio_ch = Some(edit_bio_ch());
+                                ing.category = edit_category();
                             }
-                            // Now extend the editing path to open the right pane
                             if let Some(mut ep) = editing_path {
                                 let mut new_path = ep.read().clone();
+                                // If path is empty (genesis mode), seed with the pane index
+                                // so NestedCard can find the parent ingredient.
+                                if new_path.is_empty() {
+                                    new_path.push(pane_index);
+                                }
                                 new_path.push(child_index);
                                 ep.set(new_path);
                             }
                         }
                     }
                 }
+
+                // Read-only computed summary as key/value pairs
+                br {}
+                div { class: "bg-base-200 rounded-lg p-3 space-y-1 text-sm",
+                    div { class: "font-semibold mb-2", {t!("label.computedValues").to_string()} }
+                    // Amount
+                    div { class: "flex justify-between",
+                        span { class: "text-base-content/60", {t!("label.menge").to_string()} }
+                        span {
+                            if let Some(amt) = edit_amount().filter(|a| *a > 0.0) {
+                                "{amt} {t!(edit_unit().translation_key()).to_string()}"
+                            } else {
+                                "—"
+                            }
+                        }
+                    }
+                    // Allergen
+                    div { class: "flex justify-between",
+                        span { class: "text-base-content/60", {t!("label.allergen").to_string()} }
+                        span {
+                            if is_allergen_custom() {
+                                span { class: "font-bold", {t!("label.allergen").to_string()} }
+                            } else {
+                                {t!("label.keinAllergen").to_string()}
+                            }
+                        }
+                    }
+                    // Bio
+                    div { class: "flex justify-between",
+                        span { class: "text-base-content/60", "Bio" }
+                        span {
+                            if edit_is_bio() { "✓" } else { "✗" }
+                        }
+                    }
+                    // Bio CH
+                    div { class: "flex justify-between",
+                        span { class: "text-base-content/60", "Bio CH" }
+                        span {
+                            if edit_bio_ch() { "✓" } else { "✗" }
+                        }
+                    }
+                    // Origins
+                    if let Some(origins) = edit_origins() {
+                        div { class: "flex justify-between",
+                            span { class: "text-base-content/60", {t!("origin.herkunft").to_string()} }
+                            div { class: "flex gap-1 flex-wrap justify-end",
+                                for origin in origins.iter() {
+                                    span { class: "badge badge-sm badge-outline", "{origin.flag_emoji()} {origin.country_code()}" }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // === LEAF MODE: editable form fields ===
+                br {}
+                FormField {
+                    label: format!("{} (g)", t!("label.menge").to_string()),
+                    help: Some(t!("help.menge").to_string()),
+                    ValidationDisplay {
+                        paths: vec![
+                            format!("ingredients[{}][amount]", validation_index)
+                        ],
+                        div { class: "flex gap-2",
+                            input {
+                                r#type: "number",
+                                placeholder: t!("placeholders.amount_in_grams").to_string(),
+                                class: "input input-accent flex-1",
+                                min: "0",
+                                step: "any",
+                                oninput: move |evt| {
+                                    let value = evt.data.value();
+                                    if value.is_empty() {
+                                        edit_amount.set(None);
+                                    } else if let Ok(amount) = value.parse::<f64>() {
+                                        edit_amount.set(Some(amount));
+                                    }
+                                },
+                                value: edit_amount().map_or(String::new(), |v| v.to_string()),
+                            }
+                            select {
+                                class: "select select-accent w-20",
+                                value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
+                                onchange: move |evt| {
+                                    let value = evt.data.value();
+                                    if value == "ml" {
+                                        edit_unit.set(AmountUnit::Milliliter);
+                                    } else {
+                                        edit_unit.set(AmountUnit::Gram);
+                                    }
+                                },
+                                option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
+                                option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
+                            }
+                        }
+                    }
+                    if props.depth == 0 && !props.is_genesis && amount_has_changed() {
+                        div { class: "text-sm text-info mt-2",
+                            if let Some(amt) = edit_amount() {
+                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_ingredient.amount.to_string(), after = amt.to_string()).to_string()}
+                            } else {
+                                {t!("messages.please_enter_amount").to_string()}
+                            }
+                        }
+                    }
+                }
+
+                br {}
+
+                // Allergen status
+                if !edit_name().is_empty() {
+                    if is_custom_ingredient() {
+                        FormField {
+                            help: Some(t!("help.allergenManual").to_string()),
+                            label: t!("label.allergen").to_string(),
+                            inline_checkbox: true,
+                            CheckboxInput {
+                                bound_value: is_allergen_custom
+                            }
+                        }
+                        br {}
+                    } else if is_allergen_custom() {
+                        FormField {
+                            label: t!("label.allergen").to_string(),
+                            div { class: "py-2",
+                                span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
+                            }
+                        }
+                        br {}
+                    } else {
+                        FormField {
+                            label: t!("label.allergen").to_string(),
+                            div { class: "py-2 text-base-content/50",
+                                span { {t!("label.keinAllergen").to_string()} }
+                            }
+                        }
+                        br {}
+                    }
+                }
             }
+
             br {}
             ConditionalDisplay {
                 path: "namensgebende_zutat".to_string(),
@@ -815,6 +942,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 }
             }
 
+            // Bio, origins, beef, fish fields — only shown in leaf mode
+            if !edit_is_composite() {
             br {}
             {
                 // Bio rule check
@@ -1262,6 +1391,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     rsx! {}
                 }
             }
+            } // end if !edit_is_composite() for bio/origins/beef/fish
             div { class: "modal-action",
                 button {
                     class: "btn",
@@ -1272,8 +1402,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     {t!("nav.schliessen").to_string()},
                 }
 
-                // "Merken" button for composite ingredients
-                if edit_is_composite() && edit_children().is_some() {
+                // "Merken" button for composite ingredients (top-level only)
+                if props.depth == 0 && edit_is_composite() && edit_children().is_some() {
                     button {
                         class: "btn btn-info",
                         onclick: handle_save_to_storage,
@@ -1282,19 +1412,29 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 }
 
-                button {
-                    class: "btn btn-primary",
-                    onclick: move |_| handle_save(false),
-                    {t!("nav.speichern").to_string()},
-                }
-                if props.is_genesis && !edit_is_composite() {
+                // Show save button:
+                // - Sub-ingredient: name non-empty (amount 0 ok for qualitative)
+                // - Top-level leaf: name non-empty + amount > 0
+                // - Composite: name non-empty + at least one child with weight
+                if !edit_name().is_empty() && (
+                    props.is_sub_ingredient
+                    || (!edit_is_composite() && edit_amount().is_some_and(|a| a > 0.0))
+                    || (edit_is_composite() && edit_children().as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0)))
+                ) {
                     button {
-                        class: "btn btn-secondary",
-                        onclick: move |_| handle_save_and_next(),
-                        {t!("nav.speichernUndNaechste").to_string()}
+                        class: "btn btn-primary",
+                        onclick: move |_| handle_save(false),
+                        {t!("nav.speichern").to_string()},
+                    }
+                    if props.is_genesis && !edit_is_composite() {
+                        button {
+                            class: "btn btn-secondary",
+                            onclick: move |_| handle_save_and_next(),
+                            {t!("nav.speichernUndNaechste").to_string()}
+                        }
                     }
                 }
-                if !props.is_genesis && amount_has_changed() {
+                if props.depth == 0 && !props.is_genesis && !edit_is_composite() && amount_has_changed() {
                     button {
                         class: "btn btn-secondary",
                         onclick: move |_| handle_save(true),

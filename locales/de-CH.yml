@@ -51,6 +51,7 @@ label:
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
+  computedValues: Berechnete Werte
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
   allergen: Allergen
