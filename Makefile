@@ -15,13 +15,13 @@ build:
 build-production:
 	dx build --release --features hidebio
 
-check-rust:
+check-rust: css
 	cargo check
 
-lint:
+lint: css
 	cargo clippy -- -D warnings
 
-test:
+test: css
 	cargo test
 
 check: check-rust lint build
