@@ -435,6 +435,8 @@ bio_labels:
   wildsammlung: Issu de cueillette sauvage certifiée
   nicht_landwirtschaftlich: Non agricole
   andere: Autre
+  knospe_icon_ch: Certifié Bourgeon (origine suisse)
+  knospe_icon_no_cross: Certifié Bourgeon (origine étrangère)
 
 bio_hints:
   marketing_allowed: "Le produit peut être commercialisé comme produit bio. Bio peut figurer dans la dénomination, le nom de fantaisie ou librement sur l'emballage."

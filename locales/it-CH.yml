@@ -428,6 +428,8 @@ bio_labels:
   wildsammlung: Da raccolta selvatica certificata
   nicht_landwirtschaftlich: Non agricolo
   andere: Altro
+  knospe_icon_ch: Certificato Gemma (origine svizzera)
+  knospe_icon_no_cross: Certificato Gemma (origine estera)
 
 bio_hints:
   marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."

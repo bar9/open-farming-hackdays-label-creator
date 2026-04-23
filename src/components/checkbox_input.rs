@@ -6,6 +6,8 @@ pub struct CheckboxInputProps {
     bound_value: Signal<bool>,
     #[props(default = false)]
     required: bool,
+    #[props(default = false)]
+    disabled: bool,
 }
 #[component]
 pub fn CheckboxInput(mut props: CheckboxInputProps) -> Element {
@@ -22,8 +24,13 @@ pub fn CheckboxInput(mut props: CheckboxInputProps) -> Element {
             class: "checkbox checkbox-accent {invalid_class}",
             r#type: "checkbox",
             required: "{props.required}",
+            disabled: props.disabled,
             checked: "{props.bound_value}",
-            oninput: move |evt| props.bound_value.set(evt.data.checked()),
+            oninput: move |evt| {
+                if !props.disabled {
+                    props.bound_value.set(evt.data.checked());
+                }
+            },
             onblur: move |_evt| is_pristine.set(false)
         }
     }

@@ -61,7 +61,17 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             .sum::<f64>()
     });
 
+    let show_knospe_icon = props.rules.read().contains(&RuleDef::Knospe_ShowBioSuisseLogo);
+
     rsx! {
+        div { class: "grid grid-cols-3 gap-4 items-center border-top",
+            GenesisModal {
+                ingredients: props.ingredients,
+                rules: props.rules
+            }
+            div {}
+            div {}
+        }
         div { class: "flex flex-col gap-4",
             // Recursive tree rendering
             {render_ingredient_tree(
@@ -70,6 +80,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 0,
                 &editing_path,
                 props.ingredients,
+                show_knospe_icon,
             )}
 
             if props.ingredients.len() > 0 {
@@ -80,7 +91,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                         div {{t!("label.total").to_string()}}
                         div {
                             class: "text-right",
-                            "{total_amount} " {t!("units.g").to_string()}
+                            "{total_amount:.1} " {t!("units.g").to_string()}
                         }
 
                         FormField {
@@ -104,26 +115,20 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                         div {}
                     }
                 }
-                // Button to trigger recipe validation
-                div { class: "mt-4",
-                    button {
-                        class: if (props.rezeptur_vollstaendig)() { "btn btn-disabled" } else { "btn btn-accent" },
-                        disabled: (props.rezeptur_vollstaendig)(),
-                        onclick: move |_| {
-                            props.rezeptur_vollstaendig.set(true);
-                        },
-                        "{t!(\"label.rezepturVollstaendig\").to_string()}"
-                    }
-                }
             }
         }
-        div { class: "grid grid-cols-3 gap-4 items-center border-top",
-            GenesisModal {
-                ingredients: props.ingredients,
-                rules: props.rules
+        if props.ingredients.len() > 0 {
+            // Button to trigger recipe validation
+            div { class: "mt-4",
+                button {
+                    class: if (props.rezeptur_vollstaendig)() { "btn btn-disabled" } else { "btn btn-accent" },
+                    disabled: (props.rezeptur_vollstaendig)(),
+                    onclick: move |_| {
+                        props.rezeptur_vollstaendig.set(true);
+                    },
+                    "{t!(\"label.rezepturVollstaendig\").to_string()}"
+                }
             }
-            div {}
-            div {}
         }
 
         // Stacking card modal for editing
@@ -148,7 +153,10 @@ fn render_ingredient_tree(
     depth: usize,
     editing_path: &Signal<IngredientPath>,
     root_ingredients: Signal<Vec<Ingredient>>,
+    show_knospe_icon: bool,
 ) -> Element {
+    use crate::model::Country;
+
     let elements: Vec<Element> = ingredients.iter().enumerate()
         .map(|(i, ingr)| {
             let full_path: IngredientPath = {
@@ -170,6 +178,14 @@ fn render_ingredient_tree(
             let children_for_recurse = children.clone();
             let full_path_for_children = full_path.clone();
 
+            let knospe_variant: Option<bool> = if show_knospe_icon && ingr.computed_bio_status().unwrap_or(false) {
+                computed_origins.as_ref()
+                    .filter(|o| !o.is_empty())
+                    .map(|o| o.contains(&Country::CH))
+            } else {
+                None
+            };
+
             rsx! {
                 div {
                     class: if depth.is_multiple_of(2) { "grid gap-4 grid-cols-3 bg-gray-100 items-center" } else { "grid gap-4 grid-cols-3 bg-white items-center" },
@@ -183,6 +199,11 @@ fn render_ingredient_tree(
                                 for origin in origins.iter() {
                                     span { class: "text-lg", "{origin.flag_emoji()}" }
                                 }
+                            }
+                            match knospe_variant {
+                                Some(true) => rsx! { icons::KnospeCompactCh {} },
+                                Some(false) => rsx! { icons::KnospeCompactNoCross {} },
+                                None => rsx! {},
                             }
                             div {
                                 if is_allergen {
@@ -199,7 +220,7 @@ fn render_ingredient_tree(
                     }
                     div {
                         class: "text-right",
-                        "{computed_amount} " {t!(&unit_key).to_string()}
+                        "{computed_amount:.1} " {t!(&unit_key).to_string()}
                     }
                     div {
                         class: "text-right",
@@ -236,6 +257,7 @@ fn render_ingredient_tree(
                             depth + 1,
                             &editing_path_signal,
                             root_ingredients,
+                            show_knospe_icon,
                         )}
                     }
                 }

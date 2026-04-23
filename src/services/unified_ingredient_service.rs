@@ -217,10 +217,3 @@ fn calculate_category_flags(category: &str) -> CategoryFlags {
         is_plant: Some(is_plant_category(category)),
     }
 }
-
-/// Check if an ingredient name has already been used in the unified results
-fn _already_merged(blv_item: &FoodItem, unified: &[UnifiedIngredient]) -> bool {
-    unified.iter().any(|unified_item| {
-        unified_item.name.to_lowercase() == blv_item.food_name.to_lowercase()
-    })
-}

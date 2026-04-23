@@ -673,6 +673,8 @@ bio_labels:
   wildsammlung: Aus zertifizierter Wildsammlung
   nicht_landwirtschaftlich: Nicht-landwirtschaftlich
   andere: Andere
+  knospe_icon_ch: Knospe-zertifiziert (Schweizer Herkunft)
+  knospe_icon_no_cross: Knospe-zertifiziert (ausländische Herkunft)
 
 bio_hints:
   marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."

@@ -188,29 +188,23 @@ fn TopLevelCard(props: TopLevelCardProps) -> Element {
                 current.push(child_index);
                 editing_path.set(current);
             },
-            on_save: move |(new_ingredient, scale_all): (Ingredient, bool)| {
-                if scale_all {
-                    let original_amount = ingredients.read().get(index).map(|i| i.amount).unwrap_or(0.0);
-                    if original_amount > 0.0 {
-                        let factor = new_ingredient.amount / original_amount;
-                        // Scale edited ingredient's children recursively
-                        let mut scaled_ingredient = new_ingredient.clone();
-                        if let Some(children) = &mut scaled_ingredient.children {
-                            for child in children.iter_mut() {
-                                child.scale_recursive(factor);
-                            }
+            on_save: move |(new_ingredient, scale_all, factor): (Ingredient, bool, f64)| {
+                if scale_all && factor > 0.0 && (factor - 1.0).abs() > 0.0001 {
+                    // Scale edited ingredient's children recursively so their sum matches the new amount
+                    let mut scaled_ingredient = new_ingredient.clone();
+                    if let Some(children) = &mut scaled_ingredient.children {
+                        for child in children.iter_mut() {
+                            child.scale_recursive(factor);
                         }
-                        // Scale all sibling ingredients recursively
-                        let mut all = ingredients.write();
-                        for (i, ingredient) in all.iter_mut().enumerate() {
-                            if i == index {
-                                *ingredient = scaled_ingredient.clone();
-                            } else {
-                                ingredient.scale_recursive(factor);
-                            }
+                    }
+                    // Scale all sibling ingredients recursively
+                    let mut all = ingredients.write();
+                    for (i, ingredient) in all.iter_mut().enumerate() {
+                        if i == index {
+                            *ingredient = scaled_ingredient.clone();
+                        } else {
+                            ingredient.scale_recursive(factor);
                         }
-                    } else {
-                        ingredients.write()[index] = new_ingredient;
                     }
                 } else {
                     ingredients.write()[index] = new_ingredient;
@@ -311,7 +305,7 @@ fn NestedCard(props: NestedCardProps) -> Element {
             on_save: {
                 let path = path_for_save;
                 let mut ingredients = props.root_ingredients;
-                move |(new_ingredient, _scale_all): (Ingredient, bool)| {
+                move |(new_ingredient, _scale_all, _factor): (Ingredient, bool, f64)| {
                     ingredient_path::set_at_path(
                         &mut ingredients.write(),
                         &path,
@@ -455,13 +449,13 @@ pub fn GenesisModal(props: GenesisModalProps) -> Element {
                                     },
                                     on_save: {
                                         let mut genesis_save = genesis_save;
-                                        move |(new_ingredient, _scale_all): (Ingredient, bool)| {
+                                        move |(new_ingredient, _scale_all, _factor): (Ingredient, bool, f64)| {
                                             genesis_save(new_ingredient, true);
                                         }
                                     },
                                     on_save_and_next: {
                                         let mut genesis_save = genesis_save;
-                                        move |(new_ingredient, _scale_all): (Ingredient, bool)| {
+                                        move |(new_ingredient, _scale_all, _factor): (Ingredient, bool, f64)| {
                                             genesis_save(new_ingredient, false);
                                         }
                                     },

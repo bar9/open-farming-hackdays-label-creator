@@ -1088,42 +1088,47 @@ impl Calculator {
             }
         }
 
-        // Handle Bio Suisse logo display for Knospe configuration
+        // Handle Bio Suisse logo display for Knospe configuration.
         if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
-            self.log_rule_processing(&RuleDef::Knospe_ShowBioSuisseLogo, "OUTPUT", Some("Determining Bio Suisse logo display based on Knospe certification"));
-
-            // First check if ALL agricultural ingredients are Knospe-certified (required for any logo)
-            let knospe_percentage = calculate_knospe_certified_percentage(&input.ingredients);
-
-            #[cfg(target_arch = "wasm32")]
-            web_sys::console::log_1(&format!("🌾 Knospe certified percentage: {:.1}%", knospe_percentage).into());
-
-            // Only show a Knospe logo if 100% of agricultural ingredients are Knospe-certified
-            if knospe_percentage >= 100.0 {
-                // Now determine which logo variant based on Swiss percentage
-                // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
-                let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
-                let swiss_percentage = if has_bio_rule {
-                    calculate_bio_swiss_agricultural_percentage(&input.ingredients)
-                } else {
-                    calculate_swiss_agricultural_percentage(&input.ingredients)
-                };
-
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("🇨🇭 Swiss percentage of Knospe ingredients: {:.1}%", swiss_percentage).into());
-
-                if swiss_percentage >= 90.0 {
-                    // Knospe with Swiss cross (>= 90% Swiss)
-                    conditionals.insert(String::from("bio_suisse_regular"), true);
-                } else {
-                    // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
-                    conditionals.insert(String::from("bio_suisse_no_cross"), true);
-                }
-                conditionals.insert(String::from("knospe_marketing_allowed"), true);
-            } else {
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
+            if input.ingredients.is_empty() {
+                // No recipe yet: show the "not allowed" text as a default, no logo.
                 conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
+            } else {
+                self.log_rule_processing(&RuleDef::Knospe_ShowBioSuisseLogo, "OUTPUT", Some("Determining Bio Suisse logo display based on Knospe certification"));
+
+                // First check if ALL agricultural ingredients are Knospe-certified (required for any logo)
+                let knospe_percentage = calculate_knospe_certified_percentage(&input.ingredients);
+
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("🌾 Knospe certified percentage: {:.1}%", knospe_percentage).into());
+
+                // Only show a Knospe logo if 100% of agricultural ingredients are Knospe-certified
+                if knospe_percentage >= 100.0 {
+                    // Now determine which logo variant based on Swiss percentage
+                    // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
+                    let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
+                    let swiss_percentage = if has_bio_rule {
+                        calculate_bio_swiss_agricultural_percentage(&input.ingredients)
+                    } else {
+                        calculate_swiss_agricultural_percentage(&input.ingredients)
+                    };
+
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("🇨🇭 Swiss percentage of Knospe ingredients: {:.1}%", swiss_percentage).into());
+
+                    if swiss_percentage >= 90.0 {
+                        // Knospe with Swiss cross (>= 90% Swiss)
+                        conditionals.insert(String::from("bio_suisse_regular"), true);
+                    } else {
+                        // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
+                        conditionals.insert(String::from("bio_suisse_no_cross"), true);
+                    }
+                    conditionals.insert(String::from("knospe_marketing_allowed"), true);
+                } else {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
+                    conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
+                }
             }
         }
 
@@ -1237,13 +1242,17 @@ impl Calculator {
             web_sys::console::log_1(&format!("⚖️ Total amount: {}g", total_amount).into());
         }
 
-        // Prüfe ob Bio-Zutaten oder Umstellbetrieb vorhanden sind (für Legende)
+        // Prüfe ob Bio-Zutaten oder Umstellbetrieb vorhanden sind (für Legende).
+        // `has_bio_ingredients` zählt nur Zutaten, die ein einfaches `*` bekommen —
+        // d.h. bio, aber nicht aus Umstellbetrieb (die kriegen stattdessen `**`).
+        // So erscheint die `*`-Legendenzeile nicht, wenn nur `**`-Einträge existieren.
         let has_bio_rules = output_rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
             || output_rules.contains(&RuleDef::Bio_AllAgriAreBio)
             || output_rules.contains(&RuleDef::Bio_PartialBioMarking);
         let has_bio_ingredients = has_bio_rules && sorted_ingredients.iter()
             .flat_map(|ing| ing.leaves())
-            .any(|ing| ing.is_bio == Some(true) || ing.bio_ch == Some(true));
+            .any(|ing| (ing.is_bio == Some(true) || ing.bio_ch == Some(true))
+                && !ing.aus_umstellbetrieb.unwrap_or(false));
         let has_umstellbetrieb = has_bio_rules && has_umstellbetrieb_ingredients(&sorted_ingredients);
 
         // Count agricultural ingredients for Monoprodukt detection in OutputFormatter

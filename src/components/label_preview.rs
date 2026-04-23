@@ -71,7 +71,7 @@ pub fn LabelPreview(
             .into_iter()
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>()
-            .join(", ")
+            .join("\n")
     });
 
     let get_unit = use_memo(move || {
@@ -242,7 +242,7 @@ pub fn LabelPreview(
                     if !address_combined.read().is_empty() {
                         span {
                             class: "text-sm",
-                            "{address_combined}"
+                            {address_combined.read().nl2br()}
                         }
                     } else {
                         span {class: "badge badge-warning", {t!("preview.herstelleradresse").to_string()} }
@@ -405,10 +405,10 @@ pub fn LabelPreview(
                 }
             }
             } // end if disclaimer_accepted
-            div { class: "mx-4 mt-4 p-4 bg-warning/10 border border-warning/30 rounded-lg",
+            div { class: "mx-4 mt-4 p-4 bg-base-200 border border-base-300 rounded-lg",
                 label { class: "flex items-start gap-3 cursor-pointer",
                     input {
-                        class: "checkbox checkbox-warning mt-1",
+                        class: "checkbox mt-1",
                         r#type: "checkbox",
                         checked: disclaimer_accepted(),
                         oninput: move |evt: FormEvent| {

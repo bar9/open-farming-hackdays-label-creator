@@ -31,8 +31,9 @@ pub struct IngredientPaneProps {
     /// bypassing the on_edit_child callback chain.
     #[props(default = None)]
     pub editing_path: Option<Signal<IngredientPath>>,
-    /// Called when user saves the ingredient.
-    pub on_save: EventHandler<(Ingredient, bool)>,
+    /// Called when user saves the ingredient. Payload: (new_ingredient, scale_all, factor)
+    /// where `factor` is `new_amount / original_amount` (1.0 if unchanged or not applicable).
+    pub on_save: EventHandler<(Ingredient, bool, f64)>,
     /// Called when user cancels / closes.
     pub on_close: EventHandler<()>,
     /// Called when the composite checkbox changes. `false` means children were removed.
@@ -46,7 +47,7 @@ pub struct IngredientPaneProps {
     pub is_sub_ingredient: bool,
     /// Called when user saves and wants to add the next ingredient (genesis only).
     #[props(default)]
-    pub on_save_and_next: EventHandler<(Ingredient, bool)>,
+    pub on_save_and_next: EventHandler<(Ingredient, bool, f64)>,
     /// Signal to trigger focus on the name input when it becomes true.
     #[props(default = None)]
     pub focus_trigger: Option<Signal<bool>>,
@@ -115,22 +116,26 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     });
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
 
+    // Captured once at mount. Not reactive to `ingredients` changes so the
+    // auto-save effect below can't overwrite it with the user's new value.
+    let original_amount = use_signal(|| original_ingredient.computed_amount());
+
     let amount_has_changed = use_memo(move || {
         if props.is_genesis {
             false
         } else if let Some(current_amount) = edit_amount() {
-            let original_amount = original_ingredient.amount;
-            (original_amount - current_amount).abs() > 0.01
+            (original_amount() - current_amount).abs() > 0.01
         } else {
             false
         }
     });
 
     let scaling_factor = use_memo(move || {
-        if props.is_genesis || original_ingredient.amount == 0.0 {
+        let orig = original_amount();
+        if props.is_genesis || orig == 0.0 {
             1.0
         } else if let Some(current_amount) = edit_amount() {
-            current_amount / original_ingredient.amount
+            current_amount / orig
         } else {
             1.0
         }
@@ -501,7 +506,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let mut handle_save = move |scale_all: bool| {
         if let Some(new_ingredient) = build_ingredient() {
-            props.on_save.call((new_ingredient, scale_all));
+            props.on_save.call((new_ingredient, scale_all, scaling_factor()));
 
             if props.is_genesis {
                 // Reset local state for next creation
@@ -554,7 +559,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let mut handle_save_and_next = move || {
         if let Some(new_ingredient) = build_ingredient() {
-            props.on_save_and_next.call((new_ingredient, false));
+            props.on_save_and_next.call((new_ingredient, false, 1.0));
 
             // Reset local state for next creation (same as handle_save genesis reset)
             edit_name.set(String::new());
@@ -883,7 +888,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     if props.depth == 0 && !props.is_genesis && amount_has_changed() {
                         div { class: "text-sm text-info mt-2",
                             if let Some(amt) = edit_amount() {
-                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_ingredient.amount.to_string(), after = amt.to_string()).to_string()}
+                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_amount().to_string(), after = amt.to_string()).to_string()}
                             } else {
                                 {t!("messages.please_enter_amount").to_string()}
                             }
@@ -895,33 +900,16 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
                 // Allergen status
                 if !edit_name().is_empty() {
-                    if is_custom_ingredient() {
-                        FormField {
-                            help: Some(t!("help.allergenManual").to_string()),
-                            label: t!("label.allergen").to_string(),
-                            inline_checkbox: true,
-                            CheckboxInput {
-                                bound_value: is_allergen_custom
-                            }
+                    FormField {
+                        help: if is_custom_ingredient() { Some(t!("help.allergenManual").to_string()) } else { None },
+                        label: t!("label.allergen").to_string(),
+                        inline_checkbox: true,
+                        CheckboxInput {
+                            bound_value: is_allergen_custom,
+                            disabled: !is_custom_ingredient(),
                         }
-                        br {}
-                    } else if is_allergen_custom() {
-                        FormField {
-                            label: t!("label.allergen").to_string(),
-                            div { class: "py-2",
-                                span { class: "font-bold", "({t!(\"label.allergen\").to_string()})" }
-                            }
-                        }
-                        br {}
-                    } else {
-                        FormField {
-                            label: t!("label.allergen").to_string(),
-                            div { class: "py-2 text-base-content/50",
-                                span { {t!("label.keinAllergen").to_string()} }
-                            }
-                        }
-                        br {}
                     }
+                    br {}
                 }
             }
 

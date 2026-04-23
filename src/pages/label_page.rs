@@ -191,7 +191,10 @@ pub fn LabelPage(configuration: Configuration) -> Element {
 
     use_effect(move || {
         let form_data = initial_form.read();
-        if !form_data.product_title.is_empty() || !form_data.product_subtitle.is_empty() {
+        // Sync when params were restored from the URL. Using the presence of raw
+        // params (rather than a specific field like product_title) so URLs that
+        // only carry ingredient data still populate the form.
+        if !url_params.read().is_empty() {
             ignore_ingredients.set(form_data.ignore_ingredients);
             rezeptur_vollstaendig.set(form_data.rezeptur_vollstaendig);
             ingredients.set(form_data.ingredients.clone());
@@ -385,12 +388,14 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                             }
                         }
                         SeparatorLine {}
-                        FormField {
-                            label: t!("label.ignore_ingredients").to_string(),
-                            help: Some(t!("help.ignore_ingredients").to_string()),
-                            inline_checkbox: true,
-                            CheckboxInput {
-                                bound_value: ignore_ingredients
+                        if ingredients.read().is_empty() || ignore_ingredients() {
+                            FormField {
+                                label: t!("label.ignore_ingredients").to_string(),
+                                help: Some(t!("help.ignore_ingredients").to_string()),
+                                inline_checkbox: true,
+                                CheckboxInput {
+                                    bound_value: ignore_ingredients
+                                }
                             }
                         }
                         if !ignore_ingredients() {
