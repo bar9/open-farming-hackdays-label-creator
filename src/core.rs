@@ -426,34 +426,39 @@ pub struct Ingredient {
     pub unit: AmountUnit,
     #[serde(default, skip_serializing)]
     pub sub_components: Option<Vec<SubIngredient>>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub children: Option<Vec<Ingredient>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub is_namensgebend: Option<bool>,
-    /// Multiple origin countries (LIV Art. 16 Abs. 2)
-    /// Backwards compatible: deserializes both single Country and Vec<Country>
-    #[serde(default, deserialize_with = "deserialize_origins", alias = "origin")]
+    #[serde(default, deserialize_with = "deserialize_origins", alias = "origin", skip_serializing_if = "Option::is_none")]
     pub origins: Option<Vec<Country>>,
     #[serde(default = "default_is_agricultural")]
     pub is_agricultural: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub is_bio: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub category: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aufzucht_ort: Option<Country>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub schlachtungs_ort: Option<Country>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fangort: Option<Country>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub bio_ch: Option<bool>,
-    // Erlaubte Ausnahmen für nicht-bio/nicht-knospe Zutaten
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub erlaubte_ausnahme_bio: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub erlaubte_ausnahme_bio_details: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub erlaubte_ausnahme_knospe: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub erlaubte_ausnahme_knospe_details: Option<String>,
-    /// Ausgewählte Verarbeitungsschritte (Bio Suisse)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub processing_steps: Option<Vec<String>>,
-    /// Backwards compatibility field for old URLs
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aus_umstellbetrieb: Option<bool>,
-    /// When true, this node's own fields are authoritative even if children exist.
-    /// When false/None (default), values are computed from children.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub override_children: Option<bool>,
 }
 

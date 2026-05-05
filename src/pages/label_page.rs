@@ -6,8 +6,19 @@ use crate::shared::{restore_params_from_session_storage, Conditionals, Configura
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
-use serde_qs::from_str as from_query_string;
-use serde_qs::to_string as to_query_string;
+fn qs_config() -> serde_qs::Config {
+    serde_qs::Config::new().max_depth(20)
+}
+
+fn from_query_string<'de, T: serde::de::Deserialize<'de>>(
+    s: &'de str,
+) -> Result<T, serde_qs::Error> {
+    qs_config().deserialize_str(s)
+}
+
+fn to_query_string<T: serde::Serialize>(value: &T) -> Result<String, serde_qs::Error> {
+    qs_config().serialize_string(value)
+}
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
@@ -47,7 +58,7 @@ pub struct Form {
     pub producer_city: String,
     #[serde(default)]
     pub certification_body: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub manual_total: Option<f64>,
     #[serde(default)]
     pub amount_type: AmountType,

@@ -329,8 +329,8 @@ fn test_serde_qs_roundtrip_with_children() {
         ],
     };
 
-    let serialized = serde_qs::to_string(&wrapper).expect("serialize");
-    let deserialized: QsWrapper = serde_qs::from_str(&serialized).expect("deserialize");
+    let serialized = qs_to_string(&wrapper).expect("serialize");
+    let deserialized: QsWrapper = qs_from_str(&serialized).expect("deserialize");
 
     assert_eq!(deserialized.ingredients.len(), 1);
     assert_eq!(deserialized.ingredients[0].name, "Bouillon");
@@ -360,8 +360,8 @@ fn test_serde_qs_roundtrip_three_levels() {
         ],
     };
 
-    let serialized = serde_qs::to_string(&wrapper).expect("serialize");
-    let deserialized: QsWrapper = serde_qs::from_str(&serialized).expect("deserialize");
+    let serialized = qs_to_string(&wrapper).expect("serialize");
+    let deserialized: QsWrapper = qs_from_str(&serialized).expect("deserialize");
 
     assert_eq!(deserialized.ingredients[0].name, "Teig");
     let level1 = deserialized.ingredients[0].children.as_ref().unwrap();
@@ -390,8 +390,8 @@ fn test_v1_migration_roundtrip() {
 
     // Serialize as v2 and deserialize back
     let wrapper = QsWrapper { ingredients: vec![ingredient] };
-    let serialized = serde_qs::to_string(&wrapper).expect("serialize");
-    let deserialized: QsWrapper = serde_qs::from_str(&serialized).expect("deserialize");
+    let serialized = qs_to_string(&wrapper).expect("serialize");
+    let deserialized: QsWrapper = qs_from_str(&serialized).expect("deserialize");
 
     // sub_components should not appear (skip_serializing), children should be preserved
     assert!(deserialized.ingredients[0].sub_components.is_none());
@@ -425,7 +425,7 @@ fn test_url_length_deep_nesting() {
         ],
     };
 
-    let serialized = serde_qs::to_string(&wrapper).expect("serialize");
+    let serialized = qs_to_string(&wrapper).expect("serialize");
     // Browser URL bars typically handle up to ~2000-8000 characters
     assert!(
         serialized.len() < 4000,

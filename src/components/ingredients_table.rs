@@ -99,7 +99,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                             help: Some(t!("help.manuellesTotal").to_string()),
                             input {
                                 r#type: "number",
-                                placeholder: t!("label.manuellesTotal").to_string().as_ref(),
+                                placeholder: t!("label.manuellesTotal").to_string(),
                                 class: "input input-accent w-full",
                                 min: "0",
                                 onchange: move |evt| {

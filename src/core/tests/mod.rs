@@ -14,6 +14,23 @@ pub(super) fn calculator_for(config: crate::shared::Configuration) -> Calculator
     Calculator::from_registry_config(config)
 }
 
+#[allow(dead_code)]
+pub(super) fn qs_config() -> serde_qs::Config {
+    serde_qs::Config::new().max_depth(20)
+}
+
+#[allow(dead_code)]
+pub(super) fn qs_to_string<T: serde::Serialize>(value: &T) -> Result<String, serde_qs::Error> {
+    qs_config().serialize_string(value)
+}
+
+#[allow(dead_code)]
+pub(super) fn qs_from_str<'de, T: serde::de::Deserialize<'de>>(
+    s: &'de str,
+) -> Result<T, serde_qs::Error> {
+    qs_config().deserialize_str(s)
+}
+
 // --- IngredientBuilder ---
 
 pub(super) struct IngredientBuilder(Ingredient);

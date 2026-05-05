@@ -99,7 +99,7 @@ fn test_serde_qs_legacy_single_origin() {
     #[derive(serde::Deserialize)]
     struct QsWrapper { ingredients: Vec<Ingredient> }
 
-    let wrapper: QsWrapper = serde_qs::from_str(qs).expect("deserialize legacy qs origin");
+    let wrapper: QsWrapper = qs_from_str(qs).expect("deserialize legacy qs origin");
     assert_eq!(wrapper.ingredients[0].origins, Some(vec![Country::CH]));
 }
 
@@ -151,7 +151,7 @@ fn legacy_url_with_v1_and_sub_components_migrates_to_children() {
         &ingredients[0][sub_components][1][name]=Sojasauce\
         &ingredients[0][sub_components][1][is_allergen]=true";
 
-    let mut form: LegacyFormStub = serde_qs::from_str(qs).expect("deserialize legacy v=1 url");
+    let mut form: LegacyFormStub = qs_from_str(qs).expect("deserialize legacy v=1 url");
     assert_eq!(form.v, 1);
     migrate_legacy_form(&mut form);
 
@@ -178,7 +178,7 @@ fn legacy_url_without_v_field_still_migrates_sub_components() {
         &ingredients[0][sub_components][0][is_allergen]=false\
         &ingredients[0][sub_components][0][origin]=CH";
 
-    let mut form: LegacyFormStub = serde_qs::from_str(qs).expect("deserialize legacy v-less url");
+    let mut form: LegacyFormStub = qs_from_str(qs).expect("deserialize legacy v-less url");
     assert_eq!(form.v, 1, "missing v must default to 1 so legacy URLs migrate");
 
     migrate_legacy_form(&mut form);
@@ -206,7 +206,7 @@ fn current_url_with_explicit_v2_does_not_double_migrate() {
         &ingredients[0][children][0][amount]=5\
         &ingredients[0][children][0][origins][0]=CH";
 
-    let mut form: LegacyFormStub = serde_qs::from_str(qs).expect("deserialize v=2 url");
+    let mut form: LegacyFormStub = qs_from_str(qs).expect("deserialize v=2 url");
     assert_eq!(form.v, 2);
 
     let pre_children = form.ingredients[0].children.clone();
