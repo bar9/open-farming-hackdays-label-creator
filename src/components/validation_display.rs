@@ -24,19 +24,19 @@ pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
         div {
             class: "flex flex-col",
             div {
-                class: if !relevant_validation_entries().is_empty() { "border border-red-500 rounded-md" } else { "" },
+                class: if !relevant_validation_entries().is_empty() { "border border-error rounded-md" } else { "" },
                 {props.children}
             }
             if !relevant_validation_entries().is_empty() {
                 div {
-                    class: "bg-red-50 border border-red-200 rounded-md p-3 mt-2",
+                    class: "bg-error/30 border border-error/40 rounded-md p-3 mt-2",
                     for (index, (_path, msg)) in relevant_validation_entries().iter().enumerate() {
                         div {
-                            class: if index > 0 { "mt-2 pt-2 border-t border-red-200" } else { "" },
+                            class: if index > 0 { "mt-2 pt-2 border-t border-error/40" } else { "" },
                             div {
-                                class: "flex items-start gap-2 text-red-700 text-sm",
+                                class: "flex items-start gap-2 text-base-content text-sm",
                                 div {
-                                    class: "flex-shrink-0 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5",
+                                    class: "flex-shrink-0 w-5 h-5 bg-error text-error-content rounded-full flex items-center justify-center text-xs font-bold mt-0.5",
                                     "!"
                                 }
                                 div {

@@ -110,6 +110,15 @@ pub fn LabelPreview(
     let mut disclaimer_context = use_context::<Signal<DisclaimerContext>>();
     let disclaimer_accepted = use_memo(move || disclaimer_context.read().accepted);
 
+    use_effect(move || {
+        let accepted = disclaimer_accepted();
+        if let Some(window) = web_sys::window() {
+            if let Ok(Some(storage)) = window.local_storage() {
+                let _ = storage.set_item("disclaimer_accepted", if accepted { "true" } else { "false" });
+            }
+        }
+    });
+
     rsx! {
         div { class: "p-8 flex flex-col bg-base-200",
             if disclaimer_accepted() {
@@ -379,50 +388,50 @@ pub fn LabelPreview(
 
                 // Bio Marketing Hints
                 if conditionals.0().get("bio_marketing_allowed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-success/10 text-success text-xs rounded",
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.marketing_allowed").to_string()}
                     }
-                    div { class: "mt-2 p-2 bg-info/10 text-info text-xs rounded",
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.alternative_marking").to_string()}
                     }
                 }
                 if conditionals.0().get("bio_marketing_not_allowed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-warning/10 text-warning text-xs rounded",
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.marketing_not_allowed").to_string()}
                     }
                 }
                 // Knospe Marketing Hints
                 if conditionals.0().get("knospe_marketing_allowed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-success/10 text-success text-xs rounded",
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.knospe_marketing_allowed").to_string()}
                     }
                 }
                 if conditionals.0().get("knospe_marketing_not_allowed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-warning/10 text-warning text-xs rounded",
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.knospe_marketing_not_allowed").to_string()}
                     }
                 }
                 }
             }
             } // end if disclaimer_accepted
-            div { class: "mx-4 mt-4 p-4 bg-base-200 border border-base-300 rounded-lg",
-                label { class: "flex items-start gap-3 cursor-pointer",
-                    input {
-                        class: "checkbox mt-1",
-                        r#type: "checkbox",
-                        checked: disclaimer_accepted(),
-                        oninput: move |evt: FormEvent| {
-                            let checked = evt.checked();
-                            disclaimer_context.write().accepted = checked;
-                            if let Some(window) = web_sys::window() {
-                                if let Ok(Some(storage)) = window.local_storage() {
-                                    let _ = storage.set_item("disclaimer_accepted", if checked { "true" } else { "false" });
-                                }
+            {
+                let disclaimer_bg = if disclaimer_accepted() { "bg-success/30" } else { "bg-base-200" };
+                let disclaimer_text_class = if disclaimer_accepted() { "text-sm line-clamp-2" } else { "text-sm" };
+                rsx! {
+                    div { class: "mx-4 mt-4 p-4 {disclaimer_bg} border border-base-300 rounded-lg",
+                        label { class: "flex items-start gap-3 cursor-pointer",
+                            input {
+                                class: "checkbox mt-1",
+                                r#type: "checkbox",
+                                checked: disclaimer_accepted(),
+                                oninput: move |evt: FormEvent| {
+                                    disclaimer_context.write().accepted = evt.checked();
+                                },
                             }
-                        },
-                    }
-                    span { class: "text-sm",
-                        {t!("disclaimer.text").to_string().nl2br()}
+                            span { class: "{disclaimer_text_class}",
+                                {t!("disclaimer.text").to_string().nl2br()}
+                            }
+                        }
                     }
                 }
             }

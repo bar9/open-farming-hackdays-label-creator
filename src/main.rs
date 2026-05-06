@@ -15,7 +15,6 @@ mod api;
 mod category_service;
 mod components;
 pub mod core;
-mod form;
 mod model;
 mod nl2br;
 mod persistence;

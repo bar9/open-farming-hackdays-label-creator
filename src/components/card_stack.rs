@@ -44,11 +44,10 @@ pub fn CardStack(props: CardStackProps) -> Element {
         dialog { open: is_open, class: "modal",
             div {
                 class: "modal-box bg-base-100 max-w-2xl w-full p-0",
-                style: "overflow: visible; min-height: 80vh; max-height: 90vh;",
+                style: "overflow: visible; height: 95vh;",
                 div {
-                    class: "relative w-full",
-                    // Reserve space: active card height + title bars for all background cards
-                    style: "min-height: 80vh;",
+                    class: "relative w-full h-full",
+                    // Absolute children rely on this parent having explicit height.
                     for depth in 0..depth_count {
                         StackCard {
                             key: "{depth}",
@@ -408,10 +407,9 @@ pub fn GenesisModal(props: GenesisModalProps) -> Element {
         dialog { open: "{is_open}", class: "modal",
             div {
                 class: "modal-box bg-base-100 max-w-2xl w-full p-0",
-                style: "overflow: visible; min-height: 80vh; max-height: 90vh;",
+                style: "overflow: visible; height: 95vh;",
                 div {
-                    class: "relative w-full",
-                    style: "min-height: 80vh;",
+                    class: "relative w-full h-full",
 
                     // Background title bar (only when editing a child)
                     if is_editing_child {

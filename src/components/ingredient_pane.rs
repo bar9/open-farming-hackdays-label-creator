@@ -1382,7 +1382,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 }
             }
             } // end if !edit_is_composite() for bio/origins/beef/fish
-            div { class: "modal-action",
+            div { class: "modal-action sticky bottom-0 bg-base-100 -mx-4 px-4 pt-3 pb-2 border-t border-base-300 mt-0",
                 button {
                     class: "btn",
                     onclick: move |_| {
