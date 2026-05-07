@@ -365,3 +365,48 @@ fn knospe_under_90_validation_monoproduct() {
     let messages = oil_messages.unwrap();
     assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel)."));
 }
+
+#[test]
+fn knospe_composite_parent_origin_only_on_lowest_level() {
+    // Composite parent (CH, allergen, not bio) with two bio agricultural
+    // children (CH allergen + IT). Origin and allergen bolding belong to
+    // the lowest level only; the foreign IT origin must be declared under
+    // the Under-90 rule (49.3% Swiss).
+    let mut calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .certification_body("bio.inspecta")
+        .ingredient(
+            IngredientBuilder::new_agri("Mehrkornmischung", 675.0)
+                .allergen()
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new_agri("Weizen", 333.0)
+                        .allergen()
+                        .origin(Country::CH)
+                        .bio()
+                        .build(),
+                    IngredientBuilder::new_agri("Mais", 342.0)
+                        .origin(Country::IT)
+                        .bio()
+                        .build(),
+                ])
+                .build(),
+        )
+        .build();
+    let output = calculator.execute(input);
+    let label = output.label;
+
+    // Parent: no allergen bold, no (CH) origin
+    assert!(!label.contains("<b>Mehrkornmischung</b>"), "parent must not be bolded, got: {}", label);
+    assert!(!label.contains("Mehrkornmischung* (CH)"), "parent must not show origin, got: {}", label);
+    assert!(!label.contains("Mehrkornmischung (CH)"), "parent must not show origin, got: {}", label);
+    // Child Weizen: bold + (CH) — allergen, Swiss, >=10% of total
+    assert!(label.contains("<b>Weizen</b>* (CH)"), "child Weizen must show bold + (CH), got: {}", label);
+    // Child Mais: bio asterisk only — foreign agri without category falls below
+    // the Excel "show origin" thresholds under Knospe <90% CH rule.
+    assert!(label.contains("Mais*"), "child Mais must have bio asterisk, got: {}", label);
+    assert!(!label.contains("Mais* (IT)"), "child Mais must NOT show (IT) per Excel rules, got: {}", label);
+    // Bio legend should appear (children are bio)
+    assert!(label.contains("aus biologischer Landwirtschaft"), "bio legend missing, got: {}", label);
+}

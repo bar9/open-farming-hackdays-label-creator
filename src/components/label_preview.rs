@@ -405,6 +405,9 @@ pub fn LabelPreview(
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.knospe_marketing_allowed").to_string()}
                     }
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                        {t!("bio_hints.alternative_marking").to_string()}
+                    }
                 }
                 if conditionals.0().get("knospe_marketing_not_allowed").unwrap_or(&false) == &true {
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",

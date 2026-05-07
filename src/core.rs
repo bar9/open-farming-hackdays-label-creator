@@ -781,7 +781,11 @@ impl OutputFormatter {
 
     pub fn format(&self) -> String {
         let escaped_name = html_escape(&self.ingredient.name);
-        let mut output = match self.ingredient.is_allergen {
+        // Composite parents delegate allergen bolding to their children
+        // (lowest-level-only). The bold wrap and any origin display are
+        // skipped on the parent when it has non-empty children.
+        let has_children = self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty());
+        let mut output = match self.ingredient.is_allergen && !has_children {
             true => format!("<b>{}</b>", escaped_name),
             false => escaped_name,
         };
@@ -790,7 +794,6 @@ impl OutputFormatter {
         // Lowest-level-only: suppress bio marker on composite parents when bio status
         // was computed from children (not explicitly set). Children show their own markers.
         let is_umstellbetrieb = self.ingredient.aus_umstellbetrieb.unwrap_or(false);
-        let has_children = self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty());
         let bio_inherited_from_children = has_children
             && self.ingredient.is_bio.is_none()
             && self.ingredient.bio_ch.is_none();
@@ -867,6 +870,12 @@ impl OutputFormatter {
             .RuleDefs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
         let has_knospe_under90_rule = self
             .RuleDefs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
+
+        // Composite parents inherit origin from their children — origin is
+        // declared at the lowest level only, never on the parent.
+        if has_children {
+            return output;
+        }
 
         if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
             // Knospe origin rules — shared with composite children
