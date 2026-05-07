@@ -54,7 +54,12 @@ pub fn SplitLayout() -> Element {
                         Link {
                             to: Route::SplashScreen {},
                             class: "text-2xl font-bold hover:text-primary transition-colors",
-                            {t!("app.title").to_string()}
+                            {
+                                #[cfg(not(feature = "hidebio"))]
+                                { rsx! { img { src: asset!("assets/declarino-logo-vectorized.svg"), class: "h-16", alt: "Declarino" } } }
+                                #[cfg(feature = "hidebio")]
+                                { rsx! { {t!("app.title").to_string()} } }
+                            }
                         }
                         div {
                             class: "dropdown dropdown-end",

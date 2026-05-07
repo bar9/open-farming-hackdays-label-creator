@@ -1036,7 +1036,11 @@ impl Calculator {
         web_sys::console::log_1(&format!("🎛️ Conditional elements: {} enabled", conditionals.len()).into());
 
         let mut sorted_ingredients = input.ingredients.clone();
-        sorted_ingredients.sort_by(|y, x| x.computed_amount().partial_cmp(&y.computed_amount()).unwrap());
+        sorted_ingredients.sort_by(|y, x| {
+            x.computed_amount()
+                .partial_cmp(&y.computed_amount())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         if self
             .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)

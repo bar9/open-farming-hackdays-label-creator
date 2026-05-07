@@ -20,14 +20,17 @@ pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
             .collect::<Vec<_>>()
     });
 
+    let has_errors = !relevant_validation_entries().is_empty();
+    let border_class = if has_errors { "border border-error rounded-md" } else { "" };
+
     rsx! {
         div {
             class: "flex flex-col",
             div {
-                class: if !relevant_validation_entries().is_empty() { "border border-error rounded-md" } else { "" },
+                class: "{border_class}",
                 {props.children}
             }
-            if !relevant_validation_entries().is_empty() {
+            if has_errors {
                 div {
                     class: "bg-error/30 border border-error/40 rounded-md p-3 mt-2",
                     for (index, (_path, msg)) in relevant_validation_entries().iter().enumerate() {

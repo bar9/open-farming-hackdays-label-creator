@@ -92,7 +92,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                         short_url.set(Some(shortened));
                         shorten_error.set(None);
                     } else {
-                        shorten_error.set(Some("URL konnte nicht gekürzt werden. Bitte den vollständigen Link verwenden.".to_string()));
+                        shorten_error.set(Some(t!("link_shorten_error").to_string()));
                         show_shorten_button.set(true);
                     }
                 }

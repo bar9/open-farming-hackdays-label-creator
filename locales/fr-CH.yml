@@ -274,6 +274,7 @@ link_short_disclaimer: "Remarque : Le contenu de la recette sera stocké dans le
 link_copied_success: Le lien a été copié dans le presse-papiers !
 shorten_url_button: Raccourcir le lien
 shortening: Raccourcissement...
+link_shorten_error: "Le lien n'a pas pu être raccourci. Veuillez utiliser le lien complet."
 close: Fermer
 
 disclaimer:

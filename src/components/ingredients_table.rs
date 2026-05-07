@@ -118,15 +118,20 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             }
         }
         if props.ingredients.len() > 0 {
-            // Button to trigger recipe validation
-            div { class: "mt-4",
-                button {
-                    class: if (props.rezeptur_vollstaendig)() { "btn btn-disabled" } else { "btn btn-accent" },
-                    disabled: (props.rezeptur_vollstaendig)(),
-                    onclick: move |_| {
-                        props.rezeptur_vollstaendig.set(true);
-                    },
-                    "{t!(\"label.rezepturVollstaendig\").to_string()}"
+            {
+                let rezeptur_vollstaendig = (props.rezeptur_vollstaendig)();
+                let btn_class = if rezeptur_vollstaendig { "btn btn-disabled" } else { "btn btn-accent" };
+                rsx! {
+                    div { class: "mt-4",
+                        button {
+                            class: "{btn_class}",
+                            disabled: rezeptur_vollstaendig,
+                            onclick: move |_| {
+                                props.rezeptur_vollstaendig.set(true);
+                            },
+                            "{t!(\"label.rezepturVollstaendig\").to_string()}"
+                        }
+                    }
                 }
             }
         }

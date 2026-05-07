@@ -16,7 +16,10 @@ pub fn SplashScreen() -> Element {
                     class: "flex justify-between items-center",
                     div {
                         class: "text-2xl font-bold",
-                        {t!("app.title").to_string()}
+                        {
+                            #[cfg(feature = "hidebio")]
+                            { rsx! { {t!("app.title").to_string()} } }
+                        }
                     }
                     div {
                         class: "dropdown dropdown-end",
@@ -99,12 +102,17 @@ pub fn SplashScreen() -> Element {
                 div {
                     class: "text-center max-w-4xl",
                     h1 {
-                        class: "text-4xl md:text-5xl font-bold mb-4 text-base-content",
-                        {t!("app.title").to_string()}
+                        class: "text-4xl md:text-5xl font-bold mb-4 text-base-content flex justify-center",
+                        {
+                            #[cfg(not(feature = "hidebio"))]
+                            { rsx! { img { src: asset!("assets/declarino-logo-vectorized.svg"), class: "h-40 md:h-48", alt: "Declarino" } } }
+                            #[cfg(feature = "hidebio")]
+                            { rsx! { {t!("app.title").to_string()} } }
+                        }
                     }
-                    h2 {
-                        class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content",
-                        {t!("splash.subtitle").to_string()}
+                    {
+                        #[cfg(feature = "hidebio")]
+                        { rsx! { h2 { class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content", {t!("splash.subtitle").to_string()} } } }
                     }
                     p {
                         class: "text-lg md:text-xl text-base-content/70 mb-12 max-w-2xl mx-auto",

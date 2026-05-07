@@ -286,6 +286,7 @@ link_short_disclaimer: "Hinweis: Der Inhalt des Rezepts wird bei einem Kurz-Link
 link_copied_success: Link wurde in die Zwischenablage kopiert!
 shorten_url_button: Link kürzen
 shortening: Wird gekürzt...
+link_shorten_error: "URL konnte nicht gekürzt werden. Bitte den vollständigen Link verwenden."
 close: Schliessen
 
 disclaimer:

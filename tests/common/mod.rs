@@ -551,10 +551,13 @@ pub async fn select_configuration(c: &Client, label: &str, confirm: bool) -> boo
 /// `<table>`, so we walk the rows in JS.
 pub async fn open_ingredient_edit_by_name(c: &Client, name: &str) -> bool {
     let safe_name = name.replace('\\', "\\\\").replace('\'', "\\'");
+    // Scope to rows outside any open dialog — the genesis modal also contains
+    // `.grid.grid-cols-3` rows, which would otherwise match first.
     let script = format!(
         r#"
         const rows = document.querySelectorAll('div.grid.grid-cols-3');
         for (const r of rows) {{
+            if (r.closest('dialog[open]')) continue;
             if (r.innerText && r.innerText.includes('{}')) {{
                 const btn = r.querySelector('button');
                 if (btn) {{ btn.click(); return true; }}

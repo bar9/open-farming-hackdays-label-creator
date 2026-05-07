@@ -267,6 +267,7 @@ link_short_disclaimer: "Nota: Il contenuto della ricetta verrà memorizzato nel 
 link_copied_success: Il link è stato copiato negli appunti!
 shorten_url_button: Accorcia link
 shortening: Accorciamento...
+link_shorten_error: "Impossibile accorciare il link. Si prega di utilizzare il link completo."
 close: Chiudi
 
 disclaimer:

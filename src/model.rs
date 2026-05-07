@@ -1079,3 +1079,24 @@ pub fn lookup_agricultural(name: &str) -> bool {
     tracing::warn!("Ingredient '{}' not found in food_db, defaulting to agricultural=true", name);
     true // Default to agricultural if not found
 }
+
+#[cfg(test)]
+mod food_db_tests {
+    use super::*;
+
+    // food_db.csv is `include_str!`'d, so any malformed row would only manifest
+    // at runtime — typically on first user interaction. This test exercises the
+    // parser at CI time so a broken row is caught before deployment.
+    #[test]
+    fn food_db_loads_without_panic() {
+        let entries = food_db();
+        assert!(entries.len() > 50, "food_db should have many entries, got {}", entries.len());
+    }
+
+    #[test]
+    fn food_db_full_loads_without_panic() {
+        let entries = food_db_full();
+        assert!(entries.len() > 50, "food_db_full should have many entries, got {}", entries.len());
+        assert_eq!(food_db().len(), entries.len(), "food_db and food_db_full row counts must match");
+    }
+}

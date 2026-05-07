@@ -137,6 +137,220 @@ async fn edit_delete_ingredient() {
     assert!(errs.is_empty(), "panics in delete-ingredient:\n  {}", errs.join("\n  "));
 }
 
+// Regression tests for tester feedback against v0.8.5:
+// (1) editing an ingredient amount didn't update the displayed list,
+// (2) repeated edits trailed the typed value (30→40 showed 38, then 39, then 40),
+// (3) the "Total" line failed to recalculate (needed a URL copy/paste roundtrip).
+// The v0.8.6 refactor (PR #31) unified ingredient state into a single signal;
+// these tests assert the visible values now follow each edit.
+
+/// Force-close any open dialog (genesis modal stays open after
+/// `add_simple_ingredient` because we click "Speichern und nächste Zutat").
+async fn close_any_open_dialog(c: &fantoccini::Client) {
+    if open_dialog_count(c).await == 0 {
+        return;
+    }
+    for label in &["Schliessen", "Schließen", "Close"] {
+        if click_button_by_text(c, label).await {
+            break;
+        }
+    }
+    if open_dialog_count(c).await > 0 {
+        if let Ok(body) = c.find(Locator::Css("body")).await {
+            let _ = body.send_keys("\u{E00C}").await; // ESC
+        }
+    }
+    // Last resort: native dialog.close()
+    if open_dialog_count(c).await > 0 {
+        let _ = c
+            .execute(
+                "document.querySelectorAll('dialog[open]').forEach(d => d.close()); return null;",
+                vec![],
+            )
+            .await;
+    }
+    tokio::time::sleep(Duration::from_millis(200)).await;
+}
+
+async fn edit_amount_to(c: &fantoccini::Client, name: &str, new_amount: u32) -> bool {
+    close_any_open_dialog(c).await;
+    if !open_ingredient_edit_by_name(c, name).await {
+        return false;
+    }
+    let _ = c
+        .execute(
+            "const el = document.querySelector(\"dialog[open] input[type='number']\"); \
+             if (el) { el.focus(); el.value=''; el.dispatchEvent(new Event('input', {bubbles:true})); } \
+             return null;",
+            vec![],
+        )
+        .await;
+    if let Ok(num) = c
+        .find(Locator::Css("dialog[open] input[type='number']"))
+        .await
+    {
+        let _ = num.click().await;
+        let _ = num.send_keys(&new_amount.to_string()).await;
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    for label in &["Speichern", "Schliessen", "Schließen", "OK"] {
+        if click_button_by_text(c, label).await {
+            break;
+        }
+    }
+    close_any_open_dialog(c).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    true
+}
+
+async fn read_ingredient_row_text(c: &fantoccini::Client, name: &str) -> String {
+    let safe = name.replace('\\', "\\\\").replace('\'', "\\'");
+    let script = format!(
+        r#"
+        const rows = document.querySelectorAll('div.grid.grid-cols-3');
+        for (const r of rows) {{
+            if (r.closest('dialog[open]')) continue;
+            if (r.innerText && r.innerText.includes('{name}')) {{
+                return r.innerText;
+            }}
+        }}
+        return '';
+        "#,
+        name = safe
+    );
+    c.execute(&script, vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default()
+}
+
+async fn read_total_row_text(c: &fantoccini::Client) -> String {
+    c.execute(
+        r#"
+        const rows = document.querySelectorAll('div.grid.grid-cols-3');
+        for (const r of rows) {
+            if (r.closest('dialog[open]')) continue;
+            const cells = r.children;
+            if (cells.length >= 2) {
+                const first = (cells[0].innerText || '').trim();
+                if (first === 'Total' || first === 'Totale') {
+                    return r.innerText;
+                }
+            }
+        }
+        return '';
+        "#,
+        vec![],
+    )
+    .await
+    .ok()
+    .and_then(|v| v.as_str().map(|s| s.to_string()))
+    .unwrap_or_default()
+}
+
+// Note: ingredient names must be exact food_db.csv entries (or strings that
+// don't prefix-match anything). Pressing Enter in the genesis input commits
+// the first autocomplete match — typing "Mehl" autocompletes to
+// "Buchweizenmehl", which then breaks substring lookups with case-sensitive
+// helpers.
+const ING1: &str = "Buchweizenmehl";
+const ING2: &str = "Salz";
+
+#[tokio::test]
+async fn edit_amount_reflects_in_list() {
+    let c = connect().await;
+    goto(&c, "lebensmittelrecht").await;
+
+    set_product_title(&c, "Edit-Reflect").await;
+    add_simple_ingredient(&c, ING1, 100).await;
+
+    let opened = edit_amount_to(&c, ING1, 300).await;
+    let row = read_ingredient_row_text(&c, ING1).await;
+    let errs = read_errors(&c).await;
+    c.close().await.ok();
+
+    assert!(opened, "could not open edit modal for {ING1}");
+    assert!(
+        row.contains("300"),
+        "ingredient row should reflect new amount 300 after edit, got: {row:?}"
+    );
+    assert!(
+        !row.contains("100.0 g"),
+        "ingredient row still shows stale 100.0 g after edit, got: {row:?}"
+    );
+    assert!(
+        errs.is_empty(),
+        "panics in edit_amount_reflects_in_list:\n  {}",
+        errs.join("\n  ")
+    );
+}
+
+#[tokio::test]
+async fn edit_amount_repeated_updates() {
+    let c = connect().await;
+    goto(&c, "lebensmittelrecht").await;
+
+    set_product_title(&c, "Repeat-Edit").await;
+    add_simple_ingredient(&c, ING1, 30).await;
+
+    let mut failures: Vec<String> = Vec::new();
+    for new in [40u32, 50, 60] {
+        if !edit_amount_to(&c, ING1, new).await {
+            failures.push(format!("edit modal didn't open for target {new}"));
+            continue;
+        }
+        let row = read_ingredient_row_text(&c, ING1).await;
+        if !row.contains(&new.to_string()) {
+            failures.push(format!("after edit to {new}, row was {row:?}"));
+        }
+    }
+
+    let errs = read_errors(&c).await;
+    c.close().await.ok();
+    assert!(
+        failures.is_empty(),
+        "successive edits did not reflect in list:\n  {}",
+        failures.join("\n  ")
+    );
+    assert!(
+        errs.is_empty(),
+        "panics in edit_amount_repeated_updates:\n  {}",
+        errs.join("\n  ")
+    );
+}
+
+#[tokio::test]
+async fn total_weight_recalculates_on_edit() {
+    let c = connect().await;
+    goto(&c, "lebensmittelrecht").await;
+
+    set_product_title(&c, "Total-Recalc").await;
+    add_simple_ingredient(&c, ING1, 100).await;
+    add_simple_ingredient(&c, ING2, 50).await;
+
+    let total_before = read_total_row_text(&c).await;
+    let edited = edit_amount_to(&c, ING1, 200).await;
+    let total_after = read_total_row_text(&c).await;
+    let errs = read_errors(&c).await;
+    c.close().await.ok();
+
+    assert!(edited, "could not open edit modal for {ING1}");
+    assert!(
+        total_before.contains("150"),
+        "expected total to read 150 g before edit, got: {total_before:?}"
+    );
+    assert!(
+        total_after.contains("250"),
+        "total did not recalc after edit (expected 250), got: {total_after:?}"
+    );
+    assert!(
+        errs.is_empty(),
+        "panics in total_weight_recalculates_on_edit:\n  {}",
+        errs.join("\n  ")
+    );
+}
+
 // ---------- C. Page switching ----------
 
 #[tokio::test]

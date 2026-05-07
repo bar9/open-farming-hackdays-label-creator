@@ -22,14 +22,17 @@ lint: css
 	cargo clippy -- -D warnings
 
 test: css
-	cargo test --bins
+	cargo test --bins --test locale_parity
 
 # Requires `make dev` (port 8080) and geckodriver/chromedriver (port 4444) running.
+# Tests within each binary run 2 at a time — each test gets its own fresh
+# WebDriver session, so state is isolated. --test-threads=4 was flaky here
+# (intermittent failures in different tests across runs); 2 is stable.
 e2e:
-	cargo test --test e2e_smoke --test e2e_recipes --test e2e_label --test e2e_validation --test e2e_flows --test e2e_ux -- --nocapture --test-threads=1
+	cargo test --test e2e_smoke --test e2e_recipes --test e2e_label --test e2e_validation --test e2e_flows --test e2e_ux -- --nocapture --test-threads=2
 
 e2e-ux:
-	cargo test --test e2e_ux -- --nocapture --test-threads=1
+	cargo test --test e2e_ux -- --nocapture --test-threads=2
 
 check: check-rust lint build
 	@echo "All checks passed."
