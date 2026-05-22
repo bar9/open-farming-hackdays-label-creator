@@ -362,17 +362,6 @@ pub fn LabelPreview(
                         }
                     }
 
-                // if !(price_per_100().is_empty() && total_price().is_empty()) {
-                //     div { class: "py-2 grid grid-cols-2 gap-4",
-                //         div {
-                //             span {class: "font-bold pr-2", "{t!(\"preview.preisPro\", amount = 100, unit = \"g\").to_string()}"} "{price_per_100} " {t!("units.chf").to_string()}
-                //         }
-                //         div {
-                //             span {class: "font-bold pr-2", "{t!(\"preview.preisTotal\").to_string()}"} "{total_price} " {t!("units.chf").to_string()}
-                //         }
-                //     }
-                // }
-
                 // Display certification body if provided
                 if let Some(cert_body_signal) = certification_body {
                     div { class: "py-2",

@@ -365,6 +365,24 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             edit_is_bio.set(is_bio);
         }
 
+        // If this name matches a user-saved composite ingredient, restore its hierarchy.
+        // Saved entries always have children (handle_save_to_storage enforces it), so the
+        // is_composite flag can be set unconditionally on a hit.
+        let saved_ingredients = get_saved_ingredients_list();
+        if let Some(saved) = saved_ingredients.into_iter().find(|i| i.name == unified_ingredient.name) {
+            edit_is_composite.set(true);
+            edit_children.set(saved.children.clone());
+            edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
+            edit_unit.set(saved.unit.clone());
+            edit_origins.set(saved.origins.clone());
+            is_allergen_custom.set(saved.is_allergen);
+            if saved.category.is_some() {
+                edit_category.set(saved.category.clone());
+            }
+            is_custom_ingredient.set(true);
+            return;
+        }
+
         match unified_ingredient.source {
             crate::services::IngredientSource::Local => {
                 is_custom_ingredient.set(false);
@@ -375,34 +393,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             crate::services::IngredientSource::Merged => {
                 is_custom_ingredient.set(false);
             }
-        }
-    };
-
-    let _update_name = move |new_name: String| {
-        edit_name.set(new_name.clone());
-
-        let saved_ingredients = get_saved_ingredients_list();
-        if let Some(saved) = saved_ingredients.iter().find(|i| i.name == new_name) {
-            edit_is_composite.set(true);
-            edit_children.set(saved.children.clone());
-            is_allergen_custom.set(saved.is_allergen);
-            edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
-            if let Some(category) = &saved.category {
-                edit_category.set(Some(category.clone()));
-            }
-            is_custom_ingredient.set(true);
-            return;
-        }
-
-        let in_database = food_db().iter().any(|(name, _)| name == &new_name);
-        is_custom_ingredient.set(!in_database);
-
-        if in_database {
-            is_allergen_custom.set(lookup_allergen(&new_name));
-        }
-
-        if new_name.is_empty() {
-            edit_category.set(None);
         }
     };
 

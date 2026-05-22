@@ -124,15 +124,17 @@ async fn config_switch_abbrechen_preserves_data() {
     let _ = c.close().await;
 }
 
-// ---------- §6 — Saved composite recall (name-shortcut only) ----------
+// ---------- §6 — Saved composite recall (full subtree restore) ----------
 //
-// Note on product behavior: clicking a saved-ingredient suggestion only
-// carries the name via UnifiedIngredient (`unified_ingredient_input.rs:251-265`),
-// which has no `children` field. So the composite tree (Salz, Pfeffer) is
-// NOT preserved on recall — the user gets a name shortcut, not a subtree
-// insert. If recall should preserve children, that's a product gap, not a
-// test bug. This test verifies the actual current behavior: name appears
-// in the recipe after recall+amount+save.
+// Product behavior: clicking a saved-ingredient suggestion now restores
+// the full composite subtree. `handle_ingredient_select` in
+// `src/components/ingredient_pane.rs` looks up the name in
+// `get_saved_ingredients_list()` and, on a hit, sets `edit_is_composite`
+// and re-hydrates children, unit, origins, category, is_namensgebend
+// and is_allergen from the saved record (aligning the top-level pane
+// with the equivalent recall path in `sub_ingredients_table.rs:72-89`).
+// This test verifies the recall produces a composite whose children
+// (Salz, Pfeffer) end up rendered in the label.
 
 #[tokio::test]
 async fn saved_composite_recall_name_appears_in_label() {
@@ -237,11 +239,17 @@ async fn saved_composite_recall_name_appears_in_label() {
     }
     tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
-    // The label should now mention the composite (rendered with parens).
+    // The label should now render the composite with its restored children.
     let html = label_html(&c).await;
     assert!(
-        html.contains("Salzbouillon") || html.contains("Salz"),
-        "expected saved composite to appear in label after recall. label:\n{}",
+        html.contains("Salzbouillon"),
+        "expected composite name 'Salzbouillon' in label after recall. label:\n{}",
+        html
+    );
+    assert!(
+        html.contains("Salz") && html.contains("Pfeffer"),
+        "expected saved composite children (Salz, Pfeffer) in label after recall — \
+         subtree restoration failed (see src/components/ingredient_pane.rs handle_ingredient_select). label:\n{}",
         html
     );
 

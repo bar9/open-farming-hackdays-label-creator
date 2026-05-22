@@ -16,14 +16,8 @@ pub enum RuleType {
 /// Trait for rules that can be applied during label generation
 #[allow(dead_code)]
 pub trait Rule {
-    /// Returns the dependencies this rule requires to function correctly
-    fn deps(&self) -> Vec<Self>
-    where
-        Self: Sized;
     /// Returns the category/type of this rule
     fn get_type(&self) -> RuleType;
-    /// Returns a URL to the specification or documentation for this rule
-    fn get_specs_url(&self) -> Option<&'static str>;
     /// Returns a human-readable description of what this rule does
     fn get_description(&self) -> &'static str;
 }
@@ -86,15 +80,6 @@ impl RuleDef {
 }
 
 impl Rule for RuleDef {
-    fn deps(&self) -> Vec<Self> {
-        match self {
-            RuleDef::AP1_2_ProzentOutputNamensgebend => {
-                vec![RuleDef::AP1_3_EingabeNamensgebendeZutat]
-            }
-            _ => vec![],
-        }
-    }
-
     fn get_type(&self) -> RuleType {
         match self {
             RuleDef::AP1_1_ZutatMengeValidierung => RuleType::Validation,
@@ -117,16 +102,6 @@ impl Rule for RuleDef {
             RuleDef::Bio_AllAgriAreBio => RuleType::Output,
             RuleDef::Bio_PartialBioMarking => RuleType::Output,
             RuleDef::Wildsammlung_Ueber10Prozent => RuleType::Output,
-        }
-    }
-
-    fn get_specs_url(&self) -> Option<&'static str> {
-        match self {
-            RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
-            RuleDef::AP7_3_HerkunftFleischUeber20Prozent => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
-            RuleDef::AP7_4_RindfleischHerkunftDetails => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
-            RuleDef::AP7_5_FischFangort => Some("https://www.blv.admin.ch/blv/de/home/lebensmittel-und-ernaehrung/rechts-und-vollzugsgrundlagen/hilfsmittel-vollzug.html"),
-            _ => None
         }
     }
 
@@ -238,45 +213,6 @@ impl RuleRegistry {
 
     pub fn get_rules_for_config(&self, config: &Configuration) -> Option<&Vec<RuleDef>> {
         self.rules_by_config.get(config)
-    }
-
-    #[allow(dead_code)]
-    pub fn get_rules_by_type(&self, config: &Configuration, rule_type: RuleType) -> Vec<RuleDef> {
-        self.get_rules_for_config(config)
-            .map(|rules| {
-                rules
-                    .iter()
-                    .filter(|rule| rule.get_type() == rule_type)
-                    .cloned()
-                    .collect()
-            })
-            .unwrap_or_default()
-    }
-
-    #[allow(dead_code)]
-    pub fn get_rule_description(&self, rule: &RuleDef) -> &'static str {
-        rule.get_description()
-    }
-
-    #[allow(dead_code)]
-    pub fn get_rule_specs_url(&self, rule: &RuleDef) -> Option<&'static str> {
-        rule.get_specs_url()
-    }
-
-    #[allow(dead_code)]
-    pub fn validate_dependencies(&self, rules: &[RuleDef]) -> Result<(), String> {
-        for rule in rules {
-            let deps = rule.deps();
-            for dep in deps {
-                if !rules.contains(&dep) {
-                    return Err(format!(
-                        "Rule {:?} depends on {:?}, but dependency is not included",
-                        rule, dep
-                    ));
-                }
-            }
-        }
-        Ok(())
     }
 }
 
