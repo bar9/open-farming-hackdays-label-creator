@@ -459,6 +459,11 @@ pub struct Ingredient {
     pub aus_umstellbetrieb: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub override_children: Option<bool>,
+    /// Canonical food_db name when `name` is a curated alias term (e.g. name
+    /// "Mehl" with canonical "Weizenmehl"). Drives allergen/agricultural/category
+    /// lookups; `None` when `name` is itself the canonical entry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canonical: Option<String>,
 }
 
 fn default_is_agricultural() -> bool {
@@ -506,6 +511,7 @@ impl Ingredient {
             processing_steps: None,
             aus_umstellbetrieb: None,
             override_children: None,
+            canonical: None,
         }
     }
 
@@ -752,6 +758,7 @@ impl Default for Ingredient {
             processing_steps: None,
             aus_umstellbetrieb: None,
             override_children: None,
+            canonical: None,
         }
     }
 }

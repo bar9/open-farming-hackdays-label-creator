@@ -26,6 +26,8 @@ fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
 
     UnifiedIngredient {
         name: ingredient.name.clone(),
+        canonical: ingredient.canonical.clone(),
+        priority: 0,
         category: ingredient.category.clone(),
         origin: ingredient.origins.as_ref().and_then(|o| o.first().cloned()),
         is_allergen: Some(ingredient.is_allergen),

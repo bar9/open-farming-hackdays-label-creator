@@ -19,6 +19,8 @@ routes:
 splash:
   subtitle: Créer des étiquettes conformes
   description: Pour configurer une étiquette, choisissez la configuration de base. Celle-ci contient les règles spécifiques pour cette marque.
+  traegerschaft: Organisation responsable
+  supporters: Soutenu par
 
 label:
   produktname: Nom du produit
@@ -254,7 +256,7 @@ help:
   aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
   wildsammlung: Ingrédient issu de cueillette sauvage certifiée. Marqué ° sur l'étiquette si >10% du total.
   nicht_landwirtschaftlich: "Ingrédient non agricole (p.ex. eau, sel, cultures, certains additifs). Non pris en compte dans les calculs bio."
-  andere: Ingrédient ni certifié bio ni non agricole.
+  andere: Ingrédient agricole non certifié bio.
   aufzucht_location: Lieu où l'animal a vécu la majeure partie de sa vie
   certification_body_bio: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bio)
   certification_body_knospe: Sélectionnez votre organisme de certification bio (champ obligatoire pour la certification Bourgeon)
@@ -435,7 +437,7 @@ bio_labels:
   aus_umstellbetrieb: En conversion
   wildsammlung: Issu de cueillette sauvage certifiée
   nicht_landwirtschaftlich: Non agricole
-  andere: Autre
+  andere: Non biologique
   knospe_icon_ch: Certifié Bourgeon (origine suisse)
   knospe_icon_no_cross: Certifié Bourgeon (origine étrangère)
 

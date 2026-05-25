@@ -19,6 +19,8 @@ routes:
 splash:
   subtitle: Dein Etiketten-Helfer
   description: Um eine Etikette zu erstellen, wähle den passenden Standard. Dieser enthält die spezifischen Regeln.
+  traegerschaft: Trägerschaft
+  supporters: Unterstützt durch
 label:
   produktname: Produktname
   certification_body: Bio-Zertifizierungsstelle
@@ -198,7 +200,7 @@ help:
   aus_umstellbetrieb: Zutat stammt aus einem Betrieb, der auf biologische Landwirtschaft umstellt. Wird auf dem Etikett mit ** gekennzeichnet.
   wildsammlung: Zutat stammt aus zertifizierter Wildsammlung. Wird auf dem Etikett mit ° gekennzeichnet wenn >10% Anteil.
   nicht_landwirtschaftlich: "Nicht-landwirtschaftliche Zutat (z.B. Wasser, Salz, Kulturen, gewisse Zusatzstoffe). Wird bei Bio-Berechnungen nicht berücksichtigt."
-  andere: Zutat ist weder bio-zertifiziert noch nicht-landwirtschaftlich.
+  andere: Landwirtschaftliche Zutat, die nicht bio-zertifiziert ist.
   aufzucht_location: Ort, wo es die meiste Zeit gelebt hat
   certification_body_bio: Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Bio-Zertifizierung)
   certification_body_knospe: Wählen Sie Ihre Bio-Zertifizierungsstelle aus (Pflichtfeld für Knospe-Zertifizierung)
@@ -673,7 +675,7 @@ bio_labels:
   aus_umstellbetrieb: Aus Umstellbetrieb
   wildsammlung: Aus zertifizierter Wildsammlung
   nicht_landwirtschaftlich: Nicht-landwirtschaftlich
-  andere: Andere
+  andere: Nicht-biologisch
   knospe_icon_ch: Knospe-zertifiziert (Schweizer Herkunft)
   knospe_icon_no_cross: Knospe-zertifiziert (ausländische Herkunft)
 

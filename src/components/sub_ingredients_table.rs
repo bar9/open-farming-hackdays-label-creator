@@ -52,6 +52,8 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             // Use the selected ingredient if available, otherwise create custom
             let unified_ingredient = selected_ingredient().unwrap_or_else(|| UnifiedIngredient {
                 name: value.clone(),
+                canonical: None,
+                priority: 0,
                 category: None,
                 origin: None,
                 is_allergen: None,
@@ -88,13 +90,17 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         }
                     }
                 } else {
+                    // Alias names aren't in food_db; resolve flags against the canonical entry.
+                    let canonical = unified_ingredient.canonical.clone();
+                    let lookup_name = canonical.clone().unwrap_or_else(|| ingredient_name.clone());
                     // Extract allergen status from unified ingredient, falling back to lookup
-                    let allergen_status = unified_ingredient.is_allergen.unwrap_or_else(|| lookup_allergen(&ingredient_name));
+                    let allergen_status = unified_ingredient.is_allergen.unwrap_or_else(|| lookup_allergen(&lookup_name));
 
                     let new_child = Ingredient {
                         name: ingredient_name.clone(),
                         is_allergen: allergen_status,
-                        is_agricultural: lookup_agricultural(&ingredient_name),
+                        is_agricultural: lookup_agricultural(&lookup_name),
+                        canonical,
                         ..Default::default()
                     };
 

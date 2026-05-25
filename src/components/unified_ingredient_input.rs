@@ -57,8 +57,21 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
             return;
         }
 
-        if value.len() < 3 {
-            return; // Wait for at least 3 characters
+        // Require at least 3 characters, except for short curated aliases like
+        // "Ei" which should still surface their suggestion.
+        let trimmed = value.trim();
+        if trimmed.chars().count() < 3 && !crate::model::is_curated_alias(trimmed) {
+            return;
+        }
+
+        // Surface matching saved composites immediately, independent of the
+        // external search: open the dropdown as soon as the query matches a saved
+        // ingredient, so recall works even when food_db/BLV returns nothing or errors.
+        {
+            let q = value.to_lowercase();
+            if get_saved_ingredients_list().iter().any(|s| s.name.to_lowercase().contains(&q)) {
+                is_dropdown_open.set(true);
+            }
         }
 
         // Clear previous errors and increment debounce ID to cancel pending searches
@@ -183,6 +196,8 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                 // Create custom ingredient from free text
                                 let custom_ingredient = UnifiedIngredient {
                                     name: value.clone(),
+                                    canonical: None,
+                                    priority: 0,
                                     category: None,
                                     origin: None,
                                     is_allergen: None,  // User will set manually
@@ -222,8 +237,15 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                 }
             }
 
-            // Dropdown with results
-            if is_dropdown_open() && !search_results.read().is_empty() {
+            // Dropdown with results, or matching saved composites. Saved
+            // suggestions surface even when the external search returns nothing
+            // (offline/slow/no match) so users can recall their own ingredients.
+            if is_dropdown_open()
+                && (!search_results.read().is_empty() || {
+                    let q = (props.bound_value)().to_lowercase();
+                    get_saved_ingredients_list().iter().any(|s| s.name.to_lowercase().contains(&q))
+                })
+            {
                 div {
                     class: "absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-96 overflow-y-auto",
 
@@ -250,6 +272,8 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                                                 // Convert saved ingredient to UnifiedIngredient
                                                 let unified = UnifiedIngredient {
                                                     name: saved_clone.name.clone(),
+                                                    canonical: None,
+                                                    priority: 0,
                                                     category: saved_clone.category.clone(),
                                                     origin: None, // Saved ingredients don't have origin info
                                                 is_allergen: Some(saved_clone.is_allergen),
@@ -291,7 +315,13 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
                             },
 
                             div { class: "flex items-center gap-2",
-                                span { class: "font-medium", {ingredient.name.clone()} }
+                                span { class: "font-medium",
+                                    if let Some(canonical) = &ingredient.canonical {
+                                        "{ingredient.name} ({canonical})"
+                                    } else {
+                                        "{ingredient.name}"
+                                    }
+                                }
                             }
 
                             if let Some(category) = &ingredient.category {

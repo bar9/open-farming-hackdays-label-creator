@@ -9,9 +9,9 @@ pub fn SplashScreen() -> Element {
 
     rsx! {
         div {
-            class: "min-h-screen bg-base-200",
+            class: "min-h-screen md:h-screen flex flex-col md:overflow-hidden bg-base-200",
             header {
-                class: "bg-base-200 p-4",
+                class: "flex-none bg-base-200 p-4",
                 div {
                     class: "flex justify-between items-center",
                     div {
@@ -98,14 +98,14 @@ pub fn SplashScreen() -> Element {
                 }
             }
             div {
-                class: "flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-8",
+                class: "flex-1 min-h-0 flex flex-col items-center justify-start md:justify-center px-8 py-4",
                 div {
                     class: "text-center max-w-4xl",
                     h1 {
-                        class: "text-4xl md:text-5xl font-bold mb-4 text-base-content flex justify-center",
+                        class: "text-4xl md:text-5xl font-bold mb-2 text-base-content flex justify-center",
                         {
                             #[cfg(not(feature = "hidebio"))]
-                            { rsx! { img { src: asset!("assets/declarino-logo-vectorized.svg"), class: "h-40 md:h-48", alt: "Declarino" } } }
+                            { rsx! { img { src: asset!("assets/declarino-logo-vectorized.svg"), class: "h-28 md:h-32", alt: "Declarino" } } }
                             #[cfg(feature = "hidebio")]
                             { rsx! { {t!("app.title").to_string()} } }
                         }
@@ -115,11 +115,11 @@ pub fn SplashScreen() -> Element {
                         { rsx! { h2 { class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content", {t!("splash.subtitle").to_string()} } } }
                     }
                     p {
-                        class: "text-lg md:text-xl text-base-content/70 mb-12 max-w-2xl mx-auto",
+                        class: "text-lg md:text-xl text-base-content/70 mb-6 max-w-2xl mx-auto",
                         {t!("splash.description").to_string()}
                     }
                     div {
-                        class: "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl",
+                        class: "grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl",
 
                         button {
                             class: "card bg-red-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
@@ -127,13 +127,13 @@ pub fn SplashScreen() -> Element {
                                 nav.push(Route::Swiss {});
                             },
                         div {
-                            class: "card-body items-center text-center",
+                            class: "card-body items-center text-center py-5",
                             h3 {
-                                class: "card-title text-xl mb-4",
+                                class: "card-title text-xl mb-2",
                                 {t!("routes.swiss").to_string()}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center mb-2",
+                                class: "w-20 h-16 flex items-center justify-center mb-2",
                                 svg {
                                     class: "w-16 h-16",
                                     view_box: "0 0 32 32",
@@ -179,13 +179,13 @@ pub fn SplashScreen() -> Element {
                                 }
                             },
                         div {
-                            class: "card-body items-center text-center",
+                            class: "card-body items-center text-center py-5",
                             h3 {
-                                class: "card-title text-xl mb-4",
+                                class: "card-title text-xl mb-2",
                                 {t!("routes.bio").to_string()}
                             }
                             div {
-                                class: "w-24 h-24 flex flex-col items-center justify-center mb-2",
+                                class: "w-20 h-16 flex flex-col items-center justify-center mb-2",
                                 span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
                                 span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                             }
@@ -220,13 +220,13 @@ pub fn SplashScreen() -> Element {
                                 }
                             },
                         div {
-                            class: "card-body items-center text-center",
+                            class: "card-body items-center text-center py-5",
                             h3 {
-                                class: "card-title text-xl mb-4",
+                                class: "card-title text-xl mb-2",
                                 {t!("routes.knospe").to_string()}
                             }
                             div {
-                                class: "w-24 h-24 flex items-center justify-center mb-2",
+                                class: "w-20 h-16 flex items-center justify-center mb-2",
 
                                 svg {
                                     height: "768",
@@ -285,8 +285,34 @@ pub fn SplashScreen() -> Element {
             }
 
 
+            {
+                #[cfg(not(feature = "hidebio"))]
+                { rsx! {
+                    // Trägerschaft logo ribbon
+                    div {
+                        class: "flex-none bg-base-100 px-6 pt-3 pb-2",
+                        p {
+                            class: "text-center text-sm text-base-content/70 mb-2",
+                            {t!("splash.traegerschaft").to_string()}
+                        }
+                        // Per-logo heights are tuned so the lettering reads at a comparable
+                        // cap-height across all marks (pure wordmarks like FiBL/Liebegg are
+                        // scaled down; stacked emblem+text marks are scaled up), then
+                        // optically centered on a common line.
+                        div {
+                            class: "flex flex-wrap items-center justify-around gap-x-8 gap-y-3 max-w-5xl mx-auto",
+                            img { src: asset!("assets/logos/bio-suisse.png"), class: "h-10 md:h-12 w-auto object-contain", alt: "Bio Suisse" }
+                            img { src: asset!("assets/logos/arenenberg.png"), class: "h-12 md:h-14 w-auto object-contain", alt: "Arenenberg" }
+                            img { src: asset!("assets/logos/hightech-zentrum-aargau.png"), class: "h-9 md:h-11 w-auto object-contain", alt: "Hightech Zentrum Aargau" }
+                            img { src: asset!("assets/logos/fibl.png"), class: "h-8 md:h-9 w-auto object-contain", alt: "FiBL" }
+                            img { src: asset!("assets/logos/liebegg.png"), class: "h-7 md:h-8 w-auto object-contain", alt: "Liebegg" }
+                        }
+                    }
+                } }
+            }
+
             footer {
-                class: "bg-base-200 p-4 text-center text-sm mt-auto border-t border-base-300",
+                class: "flex-none bg-base-200 p-4 text-center text-sm border-t border-base-300",
                 div {
                     class: "flex justify-center items-center gap-4",
                     span {

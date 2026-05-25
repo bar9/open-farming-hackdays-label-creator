@@ -19,6 +19,8 @@ routes:
 splash:
   subtitle: Crea etichette conformi
   description: Per configurare un'etichetta, scegli la configurazione di base. Questa contiene le regole specifiche per questo marchio.
+  traegerschaft: Ente responsabile
+  supporters: Sostenuto da
 
 label:
   produktname: Nome del prodotto
@@ -247,7 +249,7 @@ help:
   aus_umstellbetrieb: Ingrediente da un'azienda in conversione all'agricoltura biologica. Contrassegnato con ** sull'etichetta.
   wildsammlung: Ingrediente da raccolta selvatica certificata. Contrassegnato con ° sull'etichetta se >10% del totale.
   nicht_landwirtschaftlich: "Ingrediente non agricolo (es. acqua, sale, colture, certi additivi). Non considerato nei calcoli bio."
-  andere: Ingrediente né certificato bio né non agricolo.
+  andere: Ingrediente agricolo non certificato bio.
   aufzucht_location: Luogo in cui ha trascorso la maggior parte della vita
   certification_body_bio: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Bio)
   certification_body_knospe: Selezionate il vostro ente di certificazione bio (campo obbligatorio per la certificazione Gemma)
@@ -428,7 +430,7 @@ bio_labels:
   aus_umstellbetrieb: Da azienda in conversione
   wildsammlung: Da raccolta selvatica certificata
   nicht_landwirtschaftlich: Non agricolo
-  andere: Altro
+  andere: Non biologico
   knospe_icon_ch: Certificato Gemma (origine svizzera)
   knospe_icon_no_cross: Certificato Gemma (origine estera)
 

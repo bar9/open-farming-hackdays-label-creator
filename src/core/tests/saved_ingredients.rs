@@ -389,6 +389,7 @@ fn test_saved_ingredient_json_preserves_all_optional_fields() {
         processing_steps: Some(vec!["geröstet".to_string(), "gemahlen".to_string()]),
         aus_umstellbetrieb: Some(true),
         override_children: Some(true),
+        canonical: Some("Kanonisch".to_string()),
     };
 
     let saved = vec![SavedIngredient { ingredient }];

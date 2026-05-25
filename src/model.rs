@@ -1080,6 +1080,52 @@ pub fn lookup_agricultural(name: &str) -> bool {
     true // Default to agricultural if not found
 }
 
+/// Curated alias / priority table. Each row maps a common term (`alias`) to a
+/// canonical `food_db` entry, with a `priority` used to rank suggestions.
+/// A row where `alias == canonical` is a pure priority boost for that entry.
+pub fn ingredient_aliases() -> Vec<(String, String, i32)> {
+    let mut aliases: Vec<(String, String, i32)> = Vec::new();
+    let csv = include_str!("ingredient_aliases.csv");
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(csv.as_bytes());
+
+    for record in rdr.records() {
+        let record = record.unwrap();
+        let alias = record.get(0).unwrap().to_string();
+        let canonical = record.get(1).unwrap().to_string();
+        // Priority is parsed defensively: a malformed integer degrades to 0
+        // rather than panicking on first user interaction.
+        let priority = record.get(2).unwrap().trim().parse::<i32>().unwrap_or(0);
+        aliases.push((alias, canonical, priority));
+    }
+
+    aliases
+}
+
+/// Whether `term` exactly matches a curated alias term (case-insensitive).
+/// Used to let short common terms like "Ei" bypass the search-length minimum.
+pub fn is_curated_alias(term: &str) -> bool {
+    let term_lower = term.to_lowercase();
+    ingredient_aliases()
+        .into_iter()
+        .any(|(alias, _, _)| alias.to_lowercase() == term_lower)
+}
+
+/// Highest curated priority for an exact ingredient name (case-insensitive),
+/// matching either the alias or the canonical column. Returns 0 when uncurated.
+pub fn lookup_priority(name: &str) -> i32 {
+    let name_lower = name.to_lowercase();
+    ingredient_aliases()
+        .into_iter()
+        .filter(|(alias, canonical, _)| {
+            alias.to_lowercase() == name_lower || canonical.to_lowercase() == name_lower
+        })
+        .map(|(_, _, priority)| priority)
+        .max()
+        .unwrap_or(0)
+}
+
 #[cfg(test)]
 mod food_db_tests {
     use super::*;
@@ -1098,5 +1144,35 @@ mod food_db_tests {
         let entries = food_db_full();
         assert!(entries.len() > 50, "food_db_full should have many entries, got {}", entries.len());
         assert_eq!(food_db().len(), entries.len(), "food_db and food_db_full row counts must match");
+    }
+
+    #[test]
+    fn ingredient_aliases_loads_without_panic() {
+        let aliases = ingredient_aliases();
+        assert!(!aliases.is_empty(), "ingredient_aliases should have entries");
+    }
+
+    // Every alias must point at a real food_db entry, otherwise allergen /
+    // agricultural / category lookups silently fall back to defaults.
+    #[test]
+    fn alias_canonicals_exist_in_food_db() {
+        let db_names: Vec<String> = food_db().into_iter().map(|(name, _)| name).collect();
+        for (alias, canonical, _) in ingredient_aliases() {
+            assert!(
+                db_names.iter().any(|n| n == &canonical),
+                "alias '{}' points at canonical '{}' which is missing from food_db",
+                alias,
+                canonical
+            );
+        }
+    }
+
+    #[test]
+    fn lookup_priority_returns_curated_values() {
+        assert_eq!(lookup_priority("Mehl"), 100); // alias term
+        // Canonical inherits its alias's priority (matched on the canonical column).
+        assert_eq!(lookup_priority("Weizenmehl"), 100);
+        assert_eq!(lookup_priority("Eiweiss"), 50); // standalone boost row
+        assert_eq!(lookup_priority("Buchweizenmehl"), 0); // uncurated
     }
 }

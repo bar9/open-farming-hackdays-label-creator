@@ -86,6 +86,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     });
     let mut edit_children = use_signal(|| original_ingredient.children.clone());
     let mut edit_category = use_signal(|| original_ingredient.category.clone());
+    // Canonical food_db name when the ingredient name is a curated alias term.
+    // Drives allergen/agricultural lookups (the alias name itself isn't in food_db).
+    let mut edit_canonical = use_signal(|| original_ingredient.canonical.clone());
     let mut edit_origins = use_signal(|| original_ingredient.origins.clone());
     let mut edit_aufzucht_ort = use_signal(|| original_ingredient.aufzucht_ort.clone());
     let mut edit_schlachtungs_ort = use_signal(|| original_ingredient.schlachtungs_ort.clone());
@@ -111,8 +114,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         disabled_sig.set(props.disabled);
     }
 
-    let mut is_custom_ingredient = use_signal(|| {
-        !food_db().iter().any(|(name, _)| name == &edit_name())
+    // Derived reactively from the name so it updates as the user types (not just
+    // on explicit selection): "custom" == name not an exact match in the food DB.
+    let is_custom_ingredient = use_memo(move || {
+        // An alias resolves to a canonical food_db entry, so it is not "custom".
+        let typed = edit_name();
+        let lookup = edit_canonical().unwrap_or(typed);
+        !food_db().iter().any(|(name, _)| name == &lookup)
     });
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
 
@@ -166,6 +174,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             processing_steps: original_ingredient.processing_steps.clone(),
             aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
             override_children: None,
+            canonical: original_ingredient.canonical.clone(),
         }]
     });
 
@@ -195,7 +204,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 sub_components: None,
                 children: children_to_use,
                 origins: edit_origins(),
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&edit_name()) },
+                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { let typed = edit_name(); lookup_agricultural(&edit_canonical().unwrap_or(typed)) },
                 is_bio: Some(edit_is_bio()),
                 category: edit_category(),
                 aufzucht_ort: edit_aufzucht_ort(),
@@ -209,6 +218,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 processing_steps: edit_processing_steps(),
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
                 override_children: None,
+                canonical: edit_canonical(),
             };
         } else {
             wrapper_ingredients.write()[0].children = None;
@@ -257,6 +267,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             let erlaubte_ausnahme_knospe_details = edit_erlaubte_ausnahme_knospe_details();
             let processing_steps = edit_processing_steps();
             let aus_umstellbetrieb = edit_aus_umstellbetrieb();
+            let canonical = edit_canonical();
+            // Resolve allergen/agricultural against the canonical entry when the
+            // displayed name is an alias (the alias itself isn't in food_db).
+            let lookup_name = canonical.clone().unwrap_or_else(|| name.clone());
 
             let new_ing = Ingredient {
                 name,
@@ -267,7 +281,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 sub_components: None,
                 children,
                 origins,
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&edit_name()) },
+                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&lookup_name) },
                 is_bio: Some(is_bio),
                 category,
                 aufzucht_ort,
@@ -281,6 +295,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 processing_steps,
                 aus_umstellbetrieb: Some(aus_umstellbetrieb),
                 override_children: None,
+                canonical,
             };
 
             let needs_update = ingredients.get(pane_index)
@@ -302,9 +317,21 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     {
         let ingredients = props.ingredients;
         let pane_index = props.index;
+        let is_genesis = props.is_genesis;
         use_effect(move || {
             if !edit_is_composite() { return; }
-            if let Some(ing) = ingredients.read().get(pane_index) {
+            // Source of truth for the composite differs by mode. In genesis the
+            // ingredient isn't committed to `props.ingredients` yet (the auto-sync
+            // effect skips genesis), so its computed values and children live in
+            // `wrapper_ingredients`. Reading the empty committed slot here would
+            // clobber the children/origins/bio that a saved-composite recall
+            // (handle_ingredient_select) just restored into the edit_* signals.
+            let source = if is_genesis {
+                wrapper_ingredients.read().first().cloned()
+            } else {
+                ingredients.read().get(pane_index).cloned()
+            };
+            if let Some(ing) = source {
                 let ca = ing.computed_amount();
                 if edit_amount.peek().is_none_or(|a| (a - ca).abs() > 0.001) {
                     edit_amount.set(Some(ca));
@@ -351,6 +378,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let handle_ingredient_select = move |unified_ingredient: UnifiedIngredient| {
         edit_name.set(unified_ingredient.name.clone());
+        edit_canonical.set(unified_ingredient.canonical.clone());
         edit_category.set(unified_ingredient.category.clone());
 
         if let Some(category) = &unified_ingredient.category {
@@ -379,20 +407,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             if saved.category.is_some() {
                 edit_category.set(saved.category.clone());
             }
-            is_custom_ingredient.set(true);
-            return;
-        }
-
-        match unified_ingredient.source {
-            crate::services::IngredientSource::Local => {
-                is_custom_ingredient.set(false);
-            }
-            crate::services::IngredientSource::BLV => {
-                is_custom_ingredient.set(true);
-            }
-            crate::services::IngredientSource::Merged => {
-                is_custom_ingredient.set(false);
-            }
         }
     };
 
@@ -407,7 +421,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 sub_components: None,
                 children: edit_children(),
                 origins: edit_origins(),
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&edit_name()) },
+                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { let typed = edit_name(); lookup_agricultural(&edit_canonical().unwrap_or(typed)) },
                 is_bio: Some(edit_is_bio()),
                 category: edit_category(),
                 aufzucht_ort: edit_aufzucht_ort(),
@@ -421,6 +435,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 processing_steps: edit_processing_steps(),
                 aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
                 override_children: None,
+                canonical: edit_canonical(),
             };
 
             match save_composite_ingredient(&ingredient_to_save) {
@@ -461,9 +476,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             }
         };
 
-        let in_database = food_db().iter().any(|(name, _)| name == &edit_name());
+        // Alias names ("Mehl") aren't in food_db; resolve flags via the canonical.
+        let canonical = edit_canonical();
+        let typed = edit_name();
+        let lookup_name = canonical.clone().unwrap_or(typed);
+        let in_database = food_db().iter().any(|(name, _)| name == &lookup_name);
         let allergen_status = if in_database {
-            lookup_allergen(&edit_name())
+            lookup_allergen(&lookup_name)
         } else {
             is_allergen_custom()
         };
@@ -477,7 +496,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             sub_components: None,
             children: edit_children(),
             origins: edit_origins(),
-            is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&edit_name()) },
+            is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&lookup_name) },
             is_bio: Some(edit_is_bio()),
             category: edit_category(),
             aufzucht_ort: edit_aufzucht_ort(),
@@ -491,6 +510,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             processing_steps: edit_processing_steps(),
             aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
             override_children: None,
+            canonical,
         })
     };
 
@@ -519,6 +539,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 edit_erlaubte_ausnahme_knospe.set(false);
                 edit_erlaubte_ausnahme_knospe_details.set(String::new());
                 edit_processing_steps.set(None);
+                edit_canonical.set(None);
                 wrapper_ingredients.write()[0] = Ingredient {
                     name: String::new(),
                     amount: 0.0,
@@ -542,6 +563,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     processing_steps: None,
                     aus_umstellbetrieb: None,
                     override_children: None,
+                    canonical: None,
                 };
             }
         }
@@ -571,6 +593,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             edit_erlaubte_ausnahme_knospe.set(false);
             edit_erlaubte_ausnahme_knospe_details.set(String::new());
             edit_processing_steps.set(None);
+            edit_canonical.set(None);
             wrapper_ingredients.write()[0] = Ingredient::default();
         }
     };
@@ -587,7 +610,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             edit_is_namensgebend.set(false);
             edit_children.set(None);
             is_allergen_custom.set(false);
-            is_custom_ingredient.set(true);
             edit_category.set(None);
             edit_origins.set(None);
             edit_aufzucht_ort.set(None);
@@ -600,6 +622,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             edit_erlaubte_ausnahme_knospe.set(false);
             edit_erlaubte_ausnahme_knospe_details.set(String::new());
             edit_processing_steps.set(None);
+            edit_canonical.set(None);
             return;
         }
         let Some(orig_ref) = ingredients.get(index) else {
@@ -607,13 +630,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         };
         let orig = orig_ref.clone();
         edit_name.set(orig.name.clone());
+        edit_canonical.set(orig.canonical.clone());
         edit_amount.set(Some(orig.amount));
         edit_unit.set(orig.unit.clone());
         edit_is_composite.set(orig.children.as_ref().is_some_and(|c: &Vec<Ingredient>| !c.is_empty()));
         edit_is_namensgebend.set(orig.is_namensgebend.unwrap_or(false));
         edit_children.set(orig.children.clone());
         is_allergen_custom.set(orig.is_allergen);
-        is_custom_ingredient.set(!food_db().iter().any(|(name, _)| name == &orig.name));
         edit_category.set(orig.category.clone());
         edit_origins.set(orig.origins.clone());
         edit_aufzucht_ort.set(orig.aufzucht_ort.clone());
@@ -979,6 +1002,19 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     onchange: move |_| { set_bio_cat("bio"); }
                                 }
                             }
+                            // Radio: Andere (Nicht-biologisch)
+                            FormField {
+                                help: Some(t!("help.andere").to_string()),
+                                label: t!("bio_labels.andere").to_string(),
+                                inline_checkbox: true,
+                                input {
+                                    r#type: "radio",
+                                    name: "bio_category",
+                                    class: "radio radio-primary",
+                                    checked: bio_cat == "andere",
+                                    onchange: move |_| { set_bio_cat("andere"); }
+                                }
+                            }
                             // Radio: Nicht-landwirtschaftliche Zutat
                             FormField {
                                 help: Some(t!("help.nicht_landwirtschaftlich").to_string()),
@@ -990,19 +1026,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     class: "radio radio-primary",
                                     checked: bio_cat == "nicht_lw",
                                     onchange: move |_| { set_bio_cat("nicht_lw"); }
-                                }
-                            }
-                            // Radio: Andere
-                            FormField {
-                                help: Some(t!("help.andere").to_string()),
-                                label: t!("bio_labels.andere").to_string(),
-                                inline_checkbox: true,
-                                input {
-                                    r#type: "radio",
-                                    name: "bio_category",
-                                    class: "radio radio-primary",
-                                    checked: bio_cat == "andere",
-                                    onchange: move |_| { set_bio_cat("andere"); }
                                 }
                             }
 
