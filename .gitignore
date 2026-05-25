@@ -22,3 +22,5 @@ assets
 /target
 /CLAUDE.md
 requirements/
+temp/
+.claude/

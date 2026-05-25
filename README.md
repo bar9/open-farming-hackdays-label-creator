@@ -106,4 +106,3 @@ Both workflows trigger on push to `main`:
 - [Dioxus Patterns](requirements/DIOXUS.md)
 - [UI Patterns](requirements/PATTERNS.md)
 - [Rules System](requirements/RULES.md)
-- [Three Instances Architecture](requirements/THREE_INSTANCES.md)

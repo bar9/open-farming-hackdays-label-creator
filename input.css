@@ -1,9 +1,3 @@
-/** @import "tailwindcss";
-@plugin "daisyui" {
-    themes: pastel --default;
-}
-*/
-
 @import "tailwindcss";
 @source "./src/**/*.{rs,html,css}";
 @plugin "@tailwindcss/typography";
