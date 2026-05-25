@@ -283,7 +283,7 @@ fn calculate_knospe_certified_percentage(ingredients: &[Ingredient]) -> f64 {
     let knospe_certified_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
+        .filter(|ingredient| ingredient.is_knospe_compliant())
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -306,8 +306,7 @@ fn calculate_bio_ch_certified_percentage(ingredients: &[Ingredient]) -> f64 {
     let bio_ch_certified_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.bio_ch.unwrap_or(false))
-        .filter(|ingredient| !ingredient.aus_umstellbetrieb.unwrap_or(false))
+        .filter(|ingredient| ingredient.is_bio_ch_compliant())
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -512,6 +511,21 @@ impl Ingredient {
 
     pub fn is_agricultural(&self) -> bool {
         self.is_agricultural
+    }
+
+    /// Counts toward Knospe certification: Knospe-certified bio, or a permitted
+    /// non-organic / non-Knospe exception (Annex 3 WBF / Bio Suisse Part III).
+    pub fn is_knospe_compliant(&self) -> bool {
+        self.is_bio.unwrap_or(false)
+            || self.erlaubte_ausnahme_bio.unwrap_or(false)
+            || self.erlaubte_ausnahme_knospe.unwrap_or(false)
+    }
+
+    /// Counts toward Bio-CH certification: Bio-CH certified (and not from a
+    /// conversion farm), or a permitted non-organic exception (Annex 3 WBF).
+    pub fn is_bio_ch_compliant(&self) -> bool {
+        (self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false))
+            || self.erlaubte_ausnahme_bio.unwrap_or(false)
     }
 
     pub fn composite_name(&self) -> String {

@@ -67,6 +67,8 @@ impl IngredientBuilder {
     pub fn bio(mut self) -> Self { self.0.is_bio = Some(true); self }
     pub fn bio_ch(mut self) -> Self { self.0.bio_ch = Some(true); self }
     pub fn umstellbetrieb(mut self) -> Self { self.0.aus_umstellbetrieb = Some(true); self }
+    pub fn erlaubte_ausnahme_bio(mut self) -> Self { self.0.erlaubte_ausnahme_bio = Some(true); self }
+    pub fn erlaubte_ausnahme_knospe(mut self) -> Self { self.0.erlaubte_ausnahme_knospe = Some(true); self }
     pub fn sub_components(mut self, subs: Vec<SubIngredient>) -> Self { self.0.sub_components = Some(subs); self }
     pub fn children(mut self, kids: Vec<Ingredient>) -> Self { self.0.children = Some(kids); self }
     pub fn processing_steps(mut self, steps: Vec<&str>) -> Self { self.0.processing_steps = Some(steps.iter().map(|s| s.to_string()).collect()); self }

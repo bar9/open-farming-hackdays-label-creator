@@ -39,6 +39,24 @@ fn bio_ch_partial_sets_marketing_not_allowed() {
 }
 
 #[test]
+fn bio_ch_erlaubte_ausnahme_bio_does_not_block_sachbezeichnung() {
+    // A non-bio_ch ingredient that is a permitted non-organic exception (Annex 3 WBF)
+    // must count toward the >= 95% Bio-CH threshold rather than dragging it down.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("bio_marketing_not_allowed"), None);
+}
+
+#[test]
 fn bio_ch_zero_percent_shows_warning() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
@@ -305,6 +323,49 @@ fn knospe_no_logo_when_not_100_knospe() {
 
     assert_eq!(c.get("bio_suisse_regular"), None);
     assert_eq!(c.get("bio_suisse_no_cross"), None);
+}
+
+#[test]
+fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
+    // A non-bio ingredient that is a permitted non-organic exception (Annex 3 WBF)
+    // must not block the Knospe logo.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_marketing_not_allowed"), None);
+    // A logo variant must be set (exception is non-bio so 100% Swiss of the bio share → regular).
+    assert!(c.get("bio_suisse_regular") == Some(&true) || c.get("bio_suisse_no_cross") == Some(&true));
+}
+
+#[test]
+fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
+    // A non-Knospe ingredient that is a permitted Bio Suisse Part III exception
+    // must not block the Knospe logo.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_marketing_not_allowed"), None);
+    assert!(c.get("bio_suisse_regular") == Some(&true) || c.get("bio_suisse_no_cross") == Some(&true));
 }
 
 #[test]
