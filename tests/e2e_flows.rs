@@ -167,20 +167,46 @@ async fn saved_composite_recall_name_appears_in_label() {
     seed_saved_ingredient_json(&c, json).await;
     reload(&c).await;
 
-    // Open the genesis modal and search for "Salz".
-    open_add_ingredient(&c).await;
-    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-    if let Some(input) = first_accent_input(&c).await {
-        let _ = input.click().await;
-        let _ = input.send_keys("Salz").await;
+    // Wait for the WASM app to actually render — a hot-reload/rebuild of the dev
+    // server can leave the page blank past the harness's fixed mount delay.
+    for _ in 0..30 {
+        let mounted = c
+            .execute("return document.body.innerText.length > 0;", vec![])
+            .await
+            .ok()
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        if mounted {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
     }
-    // Poll for the saved-ingredient suggestion to appear. The dropdown
-    // is gated on `search_results` being non-empty (see
-    // `unified_ingredient_input.rs:226`); BLV API + food_db lookups are
-    // async, so timing varies. The suggestion is a `div.cursor-pointer`
-    // — onclick is on the outer div, not the inner span.
+    // Open the genesis pane and wait for its ingredient input. The open click
+    // (`Zutat hinzufügen`) can race with mount, so poll for the accent input and
+    // re-issue the open click if it hasn't appeared yet (the button has open,
+    // not toggle, semantics so re-clicking is idempotent).
+    let mut input_el = None;
+    for attempt in 0..30 {
+        if let Some(el) = first_accent_input(&c).await {
+            input_el = Some(el);
+            break;
+        }
+        if attempt % 3 == 0 {
+            open_add_ingredient(&c).await;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    }
+    let input = input_el.expect("genesis ingredient input (input.input-accent) never appeared");
+    let _ = input.click().await;
+    let _ = input.send_keys("Salz").await;
+    // Poll for the saved-ingredient suggestion to appear. Saved suggestions now
+    // surface independently of the external food_db/BLV search (the dropdown
+    // opens as soon as the query matches a saved ingredient — see
+    // unified_ingredient_input.rs), but the open is still subject to a debounce,
+    // so poll for up to ~6 s. The suggestion is a `div.cursor-pointer` — onclick
+    // is on the outer div.
     let mut clicked = false;
-    for _ in 0..10 {
+    for _ in 0..20 {
         clicked = c
             .execute(
                 r#"
@@ -207,21 +233,12 @@ async fn saved_composite_recall_name_appears_in_label() {
         }
         tokio::time::sleep(std::time::Duration::from_millis(300)).await;
     }
-    assert!(clicked, "could not click 'Salzbouillon' saved-ingredient suggestion after 3s of polling — verify the typeahead dropdown opens for 'Salz' query (see unified_ingredient_input.rs:226-275)");
+    assert!(clicked, "could not click 'Salzbouillon' saved-ingredient suggestion after ~6s of polling — verify the typeahead dropdown opens for 'Salz' query (see unified_ingredient_input.rs:226-275)");
     tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-    // The suggestion click only fills the name (handle_ingredient_select
-    // at unified_ingredient_input.rs:125-129). Amount must be filled
-    // separately or the recipe gets a 0g ingredient that's filtered out.
-    if let Ok(num) = c
-        .find(fantoccini::Locator::Css(
-            "dialog[open] input[type='number']",
-        ))
-        .await
-    {
-        let _ = num.click().await;
-        let _ = num.send_keys("10").await;
-        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
-    }
+    // No amount entry needed: recalling a saved composite restores its children
+    // subtree (handle_ingredient_select), and the parent weight is computed from
+    // those children (computed_amount). The composite-mode UI has no parent-amount
+    // field, so we go straight to save.
     // Save / commit.
     for label in &["Speichern und nächste Zutat", "Speichern", "Hinzufügen"] {
         if click_button_by_text(&c, label).await {
