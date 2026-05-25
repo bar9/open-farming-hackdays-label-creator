@@ -175,6 +175,36 @@ fn test_recursive_composites_three_levels() {
 }
 
 #[test]
+fn test_composites_sorted_by_weight_descending() {
+    // Children entered out of weight order must render weight-descending.
+    let ingredient = IngredientBuilder::new("Sauce", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Salz", 10.0).build(),
+            IngredientBuilder::new("Tomate", 60.0).build(),
+            IngredientBuilder::new("Zwiebel", 30.0).build(),
+        ])
+        .build();
+
+    let composites = ingredient.composites();
+    assert_eq!(composites, " (Tomate, Zwiebel, Salz)");
+}
+
+#[test]
+fn test_composites_zero_weight_children_keep_insertion_order() {
+    // Qualitative-only children (all amounts zero) must keep their manual order (stable sort).
+    let ingredient = IngredientBuilder::new("Gewürzmischung", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Salz", 0.0).build(),
+            IngredientBuilder::new("Pfeffer", 0.0).build(),
+            IngredientBuilder::new("Senf", 0.0).build(),
+        ])
+        .build();
+
+    let composites = ingredient.composites();
+    assert_eq!(composites, " (Salz, Pfeffer, Senf)");
+}
+
+#[test]
 fn test_scale_recursive() {
     let mut ingredient = IngredientBuilder::new("Parent", 100.0)
         .children(vec![

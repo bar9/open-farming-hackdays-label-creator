@@ -519,6 +519,7 @@ impl Ingredient {
         name.push_str(&self.name);
         if let Some(children) = &self.children {
             if !children.is_empty() {
+                let children = sort_children_by_weight(children);
                 name.push_str(" (");
                 name.push_str(
                     &children
@@ -545,6 +546,7 @@ impl Ingredient {
                     || rules.contains(&RuleDef::Bio_PartialBioMarking);
                 let suppress_asterisk = rules.contains(&RuleDef::Bio_AllAgriAreBio);
 
+                let children = sort_children_by_weight(children);
                 output.push_str(" (");
                 output.push_str(
                     &children
@@ -1401,6 +1403,20 @@ fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], to
             None
         }
     }
+}
+
+/// Stable-sort a copy of the children by computed weight, descending — mirroring the
+/// top-level ingredient sort. Because the sort is stable, zero-weight (qualitative)
+/// children keep their manual insertion order, which encodes the legally-relevant ranking
+/// when weights are missing.
+fn sort_children_by_weight(children: &[Ingredient]) -> Vec<Ingredient> {
+    let mut sorted = children.to_vec();
+    sorted.sort_by(|a, b| {
+        b.computed_amount()
+            .partial_cmp(&a.computed_amount())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    sorted
 }
 
 /// Format valid origins (filtering out NoOriginRequired) into a parenthetical string.
