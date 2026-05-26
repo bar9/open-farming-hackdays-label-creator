@@ -203,7 +203,9 @@ fn render_ingredient_tree(
                         div {
                             class: "flex items-center gap-1",
                             if let Some(origins) = &computed_origins {
-                                for origin in origins.iter() {
+                                // Skip origins without a flag glyph (e.g. generic `Import`)
+                                // so an imported ingredient with no named country shows no flag.
+                                for origin in origins.iter().filter(|o| !o.flag_emoji().is_empty()) {
                                     span { class: "text-lg", "{origin.flag_emoji()}" }
                                 }
                             }

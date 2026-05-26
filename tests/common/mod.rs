@@ -711,6 +711,7 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         BioStatus::Conventional => None,
         BioStatus::BioCh => Some("Bio"),
         BioStatus::BioKnospe => Some("Bio (Knospe)"),
+        BioStatus::BioKnospeImport => Some("Bio (Knospe) Import"),
         BioStatus::NichtLandwirtschaftlich => Some("Nicht-landwirtschaftliche Zutat"),
         BioStatus::Andere => Some("Andere"),
     };

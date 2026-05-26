@@ -211,3 +211,70 @@ async fn knospe_fail_path_radio_change() {
     assert_no_errors(&c, "knospe_fail_path_radio_change").await;
     let _ = c.close().await;
 }
+
+// ---------- §3.x — Knospe origin lock (CH) vs Knospe Import ----------
+//
+// New in the per-attribute aggregation work: selecting "Bio (Knospe)" locks
+// origin to CH (origin control replaced by a locked CH badge); selecting
+// "Bio (Knospe) Import" leaves origin editable.
+
+#[tokio::test]
+async fn knospe_origin_locks_to_ch_and_import_unlocks() {
+    use std::time::Duration;
+    let c = connect().await;
+    goto_config(&c, Config::Knospe).await;
+    assert!(open_add_ingredient(&c).await, "could not open genesis add-ingredient modal");
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    // Enter a name + amount so the bio/quality block renders.
+    if let Some(input) = first_accent_input(&c).await {
+        let _ = input.click().await;
+        let _ = input.send_keys("Weizenmehl").await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        let _ = input.send_keys("\u{E007}").await; // Enter commits exact match / custom
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+    if let Ok(num) = c.find(fantoccini::Locator::Css("dialog[open] input[type='number']")).await {
+        let _ = num.click().await;
+        let _ = num.send_keys("100").await;
+    }
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let dialog_text = |c: &fantoccini::Client| {
+        let c = c.clone();
+        async move {
+            c.execute("const d=document.querySelector('dialog[open]'); return d?d.innerText:'';", vec![])
+                .await.ok().and_then(|v| v.as_str().map(|s| s.to_string())).unwrap_or_default()
+        }
+    };
+
+    // Plain "Bio (Knospe)" → origin locked to CH: static CH badge, no editable
+    // country picker (the "Land hinzufügen" option of MultiCountrySelect is absent).
+    let knospe_xpath = "//dialog[@open]//label[contains(normalize-space(.), 'Bio (Knospe)') and not(contains(normalize-space(.), 'Import'))]";
+    if let Ok(el) = c.find(fantoccini::Locator::XPath(knospe_xpath)).await {
+        let _ = el.click().await;
+    }
+    tokio::time::sleep(Duration::from_millis(400)).await;
+    let after_knospe = dialog_text(&c).await;
+    assert!(
+        !after_knospe.contains("Land hinzufügen"),
+        "plain Knospe must lock origin to CH (no editable country picker). dialog:\n{}",
+        after_knospe
+    );
+
+    // "Bio (Knospe) Import" → origin editable again (country picker reappears).
+    let import_xpath = "//dialog[@open]//label[contains(normalize-space(.), 'Bio (Knospe) Import')]";
+    if let Ok(el) = c.find(fantoccini::Locator::XPath(import_xpath)).await {
+        let _ = el.click().await;
+    }
+    tokio::time::sleep(Duration::from_millis(400)).await;
+    let after_import = dialog_text(&c).await;
+    assert!(
+        after_import.contains("Land hinzufügen"),
+        "Knospe Import must leave origin editable (country picker present). dialog:\n{}",
+        after_import
+    );
+
+    assert_no_errors(&c, "knospe_origin_locks_to_ch_and_import_unlocks").await;
+    let _ = c.close().await;
+}

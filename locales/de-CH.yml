@@ -194,7 +194,8 @@ help:
     Preis der Verkaufseinheit
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
 
-  bio_knospe: Gibt an, ob diese Zutat nach Bio Suisse Knospe-Standards zertifiziert ist
+  bio_knospe: Gibt an, ob diese Zutat nach Bio Suisse Knospe-Standards zertifiziert ist (Schweizer Herkunft, fix auf CH)
+  bio_knospe_import: Knospe-zertifizierte Zutat aus Import. Herkunftsland frei wählbar (Standard "Import").
   bio_ch: Gibt an, ob diese Zutat nach Schweizer Bio-Verordnung (aber nicht Knospe) zertifiziert ist
   bio_transitional: Gibt an, ob diese Zutat aus einem Umstellbetrieb stammt
   aus_umstellbetrieb: Zutat stammt aus einem Betrieb, der auf biologische Landwirtschaft umstellt. Wird auf dem Etikett mit ** gekennzeichnet.
@@ -355,6 +356,7 @@ validation:
   origin_required_name_giving: Herkunftsland ist erforderlich für namensgebende Zutaten.
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
   origin_required_knospe: Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).
+  origin_single_level: Herkunft ist auf mehreren Ebenen dieser Zutat definiert. Bitte nur auf einer Ebene angeben und die andere entfernen.
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
   certification_body_format: "Die Zertifizierungsstelle muss das Format CH-BIO-xxx haben."
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
@@ -668,6 +670,7 @@ bio_legend:
 
 bio_labels:
   bio_knospe: Bio (Knospe)
+  bio_knospe_import: Bio (Knospe) Import
   bio_ch: Bio
   erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat

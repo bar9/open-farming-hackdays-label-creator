@@ -103,6 +103,7 @@ fn parse_country_code(value: &str) -> Option<Country> {
         "CH" => Some(Country::CH),
         "EU" => Some(Country::EU),
         "NoOriginRequired" => Some(Country::NoOriginRequired),
+        "Import" => Some(Country::Import),
         "AD" => Some(Country::AD), "AE" => Some(Country::AE), "AF" => Some(Country::AF),
         "AG" => Some(Country::AG), "AI" => Some(Country::AI), "AL" => Some(Country::AL),
         "AM" => Some(Country::AM), "AO" => Some(Country::AO), "AQ" => Some(Country::AQ),
@@ -235,7 +236,7 @@ fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
     let swiss_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)))
+        .filter(|ingredient| ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)))
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -248,7 +249,7 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f6
     let total_bio_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
+        .filter(|ingredient| ingredient.computed_bio_status().unwrap_or(false))
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -259,8 +260,8 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f6
     let swiss_bio_agricultural_amount: f64 = leaves
         .iter()
         .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.is_bio.unwrap_or(false))
-        .filter(|ingredient| ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)))
+        .filter(|ingredient| ingredient.computed_bio_status().unwrap_or(false))
+        .filter(|ingredient| ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)))
         .map(|ingredient| ingredient.amount)
         .sum();
 
@@ -519,9 +520,22 @@ impl Ingredient {
         self.is_agricultural
     }
 
+    /// Quality and origin aggregate **bottom-up**: when an ingredient has children
+    /// (and `override_children` is not forcing leaf treatment), the children are the
+    /// authoritative source for quality/origin, regardless of whether they carry
+    /// weights. Weight, by contrast, is top-down (see `is_leaf`/`computed_amount`).
+    fn aggregates_from_children(&self) -> bool {
+        !self.override_children.unwrap_or(false)
+            && self.children.as_ref().is_some_and(|c| !c.is_empty())
+    }
+
     /// Counts toward Knospe certification: Knospe-certified bio, or a permitted
     /// non-organic / non-Knospe exception (Annex 3 WBF / Bio Suisse Part III).
+    /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_knospe_compliant(&self) -> bool {
+        if self.aggregates_from_children() {
+            return self.children.as_ref().unwrap().iter().all(|c| c.is_knospe_compliant());
+        }
         self.is_bio.unwrap_or(false)
             || self.erlaubte_ausnahme_bio.unwrap_or(false)
             || self.erlaubte_ausnahme_knospe.unwrap_or(false)
@@ -529,7 +543,11 @@ impl Ingredient {
 
     /// Counts toward Bio-CH certification: Bio-CH certified (and not from a
     /// conversion farm), or a permitted non-organic exception (Annex 3 WBF).
+    /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_bio_ch_compliant(&self) -> bool {
+        if self.aggregates_from_children() {
+            return self.children.as_ref().unwrap().iter().all(|c| c.is_bio_ch_compliant());
+        }
         (self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false))
             || self.erlaubte_ausnahme_bio.unwrap_or(false)
     }
@@ -679,45 +697,52 @@ impl Ingredient {
         }
     }
 
-    /// Effective bio status: own if leaf/override, all-children-bio otherwise
+    /// Effective bio status (bottom-up): all-children-bio when it has children,
+    /// own value otherwise. Aggregates regardless of child weights, since quality
+    /// is a bottom-up attribute (weight is the top-down one).
     pub fn computed_bio_status(&self) -> Option<bool> {
-        if self.is_leaf() {
-            self.is_bio
-        } else {
+        if self.aggregates_from_children() {
             let children = self.children.as_ref().unwrap();
             if children.iter().any(|c| c.computed_bio_status().is_some()) {
                 Some(children.iter().all(|c| c.computed_bio_status().unwrap_or(false)))
             } else {
                 None
             }
+        } else {
+            self.is_bio
         }
     }
 
-    /// Effective bio_ch status: same logic as bio
+    /// Effective bio_ch status: same bottom-up logic as bio
     pub fn computed_bio_ch_status(&self) -> Option<bool> {
-        if self.is_leaf() {
-            self.bio_ch
-        } else {
+        if self.aggregates_from_children() {
             let children = self.children.as_ref().unwrap();
             if children.iter().any(|c| c.computed_bio_ch_status().is_some()) {
                 Some(children.iter().all(|c| c.computed_bio_ch_status().unwrap_or(false)))
             } else {
                 None
             }
+        } else {
+            self.bio_ch
         }
     }
 
-    /// Effective origins: own if leaf/override, union of children's otherwise
+    /// Effective origins: origin is defined on a single level. Prefer this node's
+    /// own origins when set; otherwise fall back to the union of children's
+    /// (bottom-up). `override_children` forces own-value treatment.
     pub fn computed_origins(&self) -> Option<Vec<Country>> {
-        if self.is_leaf() {
-            self.origins.clone()
-        } else {
+        if let Some(own) = self.origins.as_ref().filter(|o| !o.is_empty()) {
+            return Some(own.clone());
+        }
+        if self.aggregates_from_children() {
             let all: HashSet<Country> = self.children.as_ref().unwrap()
                 .iter()
                 .filter_map(|c| c.computed_origins())
                 .flatten()
                 .collect();
             if all.is_empty() { None } else { Some(all.into_iter().collect()) }
+        } else {
+            self.origins.clone()
         }
     }
 
@@ -1036,6 +1061,13 @@ impl Calculator {
                 validate_certification_body(&input.certification_body, &mut validation_messages);
             }
         }
+
+        // Config-agnostic: origin must live on a single level per branch. Run
+        // once (outside the per-rule loop) whenever the recipe is complete.
+        if input.rezeptur_vollstaendig {
+            validate_origin_single_level(&input.ingredients, &mut validation_messages);
+        }
+
         #[cfg(target_arch = "wasm32")]
         {
             let total_errors: usize = validation_messages.values().map(|v| v.len()).sum();
@@ -1369,8 +1401,10 @@ fn validate_origin(
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
-        let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
+        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        // Respect bottom-up origin: a composite satisfies the requirement when its
+        // sub-ingredients carry origins, even if the parent declares none.
+        let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
         if percentage > 50.0 && !has_origin {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
@@ -1508,11 +1542,11 @@ fn validate_meat_origin(
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
+        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
         if percentage > 20.0 {
             // Check if this ingredient is meat-based using the category
             if let Some(category) = &ingredient.category {
-                let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
+                let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
                 if is_meat_category(category) && !has_origin {
                     validation_messages.entry(format!("ingredients[{}][origin]", i))
                         .or_default()
@@ -1528,11 +1562,51 @@ fn validate_all_ingredients_origin(
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
+        // Respect bottom-up origin: a composite satisfies the requirement when
+        // its sub-ingredients carry origins, even if the parent declares none.
+        let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
         if !has_origin {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_knospe").to_string());
+        }
+    }
+}
+
+/// True when this node carries an explicitly declared origin (the
+/// `NoOriginRequired` sentinel does not count as a declaration).
+fn has_declared_origin(ing: &Ingredient) -> bool {
+    ing.origins
+        .as_ref()
+        .is_some_and(|o| o.iter().any(|c| !matches!(c, Country::NoOriginRequired)))
+}
+
+/// Detects whether origin is declared on more than one level within a single
+/// composite branch (an ancestor and one of its descendants both carry one).
+fn branch_origin_conflict(ing: &Ingredient, ancestor_has_origin: bool) -> bool {
+    let self_has = has_declared_origin(ing);
+    if self_has && ancestor_has_origin {
+        return true;
+    }
+    let seen = ancestor_has_origin || self_has;
+    ing.children
+        .as_ref()
+        .is_some_and(|children| children.iter().any(|c| branch_origin_conflict(c, seen)))
+}
+
+/// Origin must be defined on exactly one level per branch (top-down on the
+/// composite OR bottom-up on its sub-ingredients, never both). Emits a warning
+/// on the top-level ingredient's origin path when a branch defines it twice.
+fn validate_origin_single_level(
+    ingredients: &[Ingredient],
+    validation_messages: &mut HashMap<String, Vec<String>>,
+) {
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        if branch_origin_conflict(ingredient, false) {
+            validation_messages
+                .entry(format!("ingredients[{}][origin]", i))
+                .or_default()
+                .push(t!("validation.origin_single_level").to_string());
         }
     }
 }
@@ -1618,11 +1692,13 @@ fn validate_knospe_under90_origin(
         .count();
 
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
+        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
         let is_mono_product = agricultural_count == 1;
 
+        // `requires_origin` keeps the Excel category/percentage thresholds as-is;
+        // only the presence check aggregates bottom-up (composite origin on children).
         let requires_origin = should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product);
-        let has_origin = ingredient.origins.as_ref().is_some_and(|v| !v.is_empty());
+        let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
 
         if requires_origin && !has_origin {
             let reason = if is_mono_product {
@@ -1637,7 +1713,7 @@ fn validate_knospe_under90_origin(
                 } else if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category) {
                     t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
                 } else if ingredient.is_agricultural() &&
-                          ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) &&
+                          ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)) &&
                           percentage >= 10.0 {
                     t!("validation.knospe_over_10_percent_origin_required").to_string()
                 } else {

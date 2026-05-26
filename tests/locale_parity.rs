@@ -24,6 +24,7 @@ const KNOWN_MISSING_FR: &[&str] = &[
 const KNOWN_MISSING_IT: &[&str] = &[
     "help.bio_ch",
     "help.bio_knospe",
+    "help.bio_knospe_import",
     "help.erlaubte_ausnahme_bio.Referenz",
     "help.haltbarkeit.Grundsatz",
     "help.herkunft_liv_art_16",

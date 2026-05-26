@@ -91,6 +91,7 @@ impl InputBuilder {
     pub fn build(self) -> Input { self.0 }
 }
 
+mod aggregation;
 mod basic;
 mod rules;
 mod validation;

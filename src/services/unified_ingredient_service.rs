@@ -300,21 +300,56 @@ fn search_local_db(query: &str) -> Vec<String> {
         .collect()
 }
 
-/// Find the best matching BLV result for a local ingredient name
+/// True when `word` occurs in `name` delimited by word boundaries (start/end of
+/// string or a non-alphanumeric char). Prevents a short name like "Ei" from
+/// matching inside a longer word ("Eierlikör", "Schweinefleisch").
+fn name_contains_word(name: &str, word: &str) -> bool {
+    if word.is_empty() {
+        return false;
+    }
+    name.match_indices(word).any(|(start, _)| {
+        let before_ok = start == 0
+            || !name[..start].chars().next_back().is_some_and(|c| c.is_alphanumeric());
+        let end = start + word.len();
+        let after_ok = end == name.len()
+            || !name[end..].chars().next().is_some_and(|c| c.is_alphanumeric());
+        before_ok && after_ok
+    })
+}
+
+/// Find the best matching BLV result for a local ingredient name.
+///
+/// Matching is ordered most-precise first so a loose hit can't shadow a better
+/// one, and short names don't merge with unrelated foods:
+/// 1. exact (case-insensitive) anywhere in the results;
+/// 2. word-boundary occurrence (e.g. "Ei" ↔ "Ei, gekocht", not "Eierlikör");
+/// 3. loose substring, but only for names ≥ 4 chars (long enough to be unambiguous).
 fn find_best_blv_match(local_name: &str, blv_results: &[FoodItem]) -> Option<(usize, FoodItem)> {
     let local_lower = local_name.to_lowercase();
 
-    // Look for exact or very close matches
-    for (index, item) in blv_results.iter().enumerate() {
+    // 1) Exact match (scan all — don't let an earlier loose hit win).
+    if let Some((index, item)) = blv_results
+        .iter()
+        .enumerate()
+        .find(|(_, item)| item.food_name.to_lowercase() == local_lower)
+    {
+        return Some((index, item.clone()));
+    }
+
+    // 2) Whole-word occurrence in either direction.
+    if let Some((index, item)) = blv_results.iter().enumerate().find(|(_, item)| {
         let blv_lower = item.food_name.to_lowercase();
+        name_contains_word(&blv_lower, &local_lower) || name_contains_word(&local_lower, &blv_lower)
+    }) {
+        return Some((index, item.clone()));
+    }
 
-        // Exact match
-        if blv_lower == local_lower {
-            return Some((index, item.clone()));
-        }
-
-        // Check if local name is contained in BLV name or vice versa
-        if blv_lower.contains(&local_lower) || local_lower.contains(&blv_lower) {
+    // 3) Loose substring fallback, only for unambiguous (longer) names.
+    if local_lower.chars().count() >= 4 {
+        if let Some((index, item)) = blv_results.iter().enumerate().find(|(_, item)| {
+            let blv_lower = item.food_name.to_lowercase();
+            blv_lower.contains(&local_lower) || local_lower.contains(&blv_lower)
+        }) {
             return Some((index, item.clone()));
         }
     }
@@ -364,6 +399,47 @@ mod tests {
         assert_eq!(relevance("Mehlsuppe", "mehl"), 0.8); // prefix
         assert_eq!(relevance("Weizenmehl", "mehl"), 0.6); // substring
         assert!(relevance("Apfel", "mehl") < 0.4); // character overlap only
+    }
+
+    fn food(name: &str, category: &str) -> FoodItem {
+        FoodItem {
+            food_name: name.to_string(),
+            category_names: Some(category.to_string()),
+            ..Default::default()
+        }
+    }
+
+    // A short local name ("Ei") must not merge with an unrelated longer word
+    // ("Eierlikör" → alcoholic). It should pick the exact / word-boundary egg
+    // entry, or nothing — never the alcoholic one.
+    #[test]
+    fn short_name_does_not_match_inside_longer_word() {
+        // Only the alcoholic look-alike present → no match (no false category).
+        let only_likoer = vec![food("Eierlikör", "Sonstige Alkoholische Getränke")];
+        assert!(find_best_blv_match("Ei", &only_likoer).is_none());
+
+        // Egg entry present (even after the look-alike) → picks the egg one.
+        let mixed = vec![
+            food("Eierlikör", "Sonstige Alkoholische Getränke"),
+            food("Ei, gekocht", "Eier und Eiprodukte"),
+        ];
+        let m = find_best_blv_match("Ei", &mixed).expect("should match the egg entry");
+        assert_eq!(m.1.food_name, "Ei, gekocht");
+
+        // Exact match wins regardless of position.
+        let exact = vec![food("Eierlikör", "alc"), food("Ei", "Eier und Eiprodukte")];
+        assert_eq!(find_best_blv_match("Ei", &exact).unwrap().1.food_name, "Ei");
+    }
+
+    // Longer names keep the loose substring behavior (e.g. enriching from a
+    // qualified BLV name).
+    #[test]
+    fn longer_name_still_matches_loosely() {
+        let results = vec![food("Weizenmehl, hell", "Getreideprodukte")];
+        assert_eq!(
+            find_best_blv_match("Weizenmehl", &results).unwrap().1.food_name,
+            "Weizenmehl, hell"
+        );
     }
 
     // Query "mehl": curated alias first, boosted canonical second, uncurated

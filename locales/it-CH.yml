@@ -336,6 +336,7 @@ validation:
   origin_required_name_giving: Il paese di origine è richiesto per gli ingredienti caratterizzanti.
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
   origin_required_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Gemma).
+  origin_single_level: L'origine è definita su più livelli di questo ingrediente. Indicarla su un solo livello e rimuovere l'altra.
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
   certification_body_format: "L'ente di certificazione deve avere il formato CH-BIO-xxx."
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
@@ -423,6 +424,7 @@ bio_legend:
 
 bio_labels:
   bio_knospe: Bio (Gemma)
+  bio_knospe_import: Bio (Gemma) Import
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito

@@ -1,7 +1,7 @@
 use gloo::net::http::Request;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct FoodItem {
     pub id: i64,
     #[serde(rename = "foodName")]

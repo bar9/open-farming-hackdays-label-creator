@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::components::ingredient_path::IngredientPath;
 use crate::core::{Ingredient, AmountUnit};
-use crate::model::{food_db, lookup_allergen, lookup_agricultural};
+use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
 use crate::shared::Validations;
@@ -342,8 +342,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 if *edit_is_bio.peek() != cb { edit_is_bio.set(cb); }
                 let cbc = ing.computed_bio_ch_status().unwrap_or(false);
                 if *edit_bio_ch.peek() != cbc { edit_bio_ch.set(cbc); }
-                let co = ing.computed_origins();
-                if *edit_origins.peek() != co { edit_origins.set(co); }
+                // NOTE: origin is intentionally NOT mirrored up from children here.
+                // Origin is single-level: a composite's parent origin must stay
+                // purely user-authored (top-down) and empty for bottom-up composites,
+                // so it doesn't create a spurious two-level conflict. The label still
+                // shows the aggregated origin via `computed_origins()`.
                 let ch = ing.children.clone();
                 if *edit_children.peek() != ch { edit_children.set(ch); }
                 // Allergen: true if any child is allergen
@@ -461,11 +464,24 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let build_ingredient = move || -> Option<Ingredient> {
         let amount = if edit_is_composite() {
-            // Composite: amount is computed from children; require at least one child with weight
             let children = edit_children();
-            let has_weighted_child = children.as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0));
-            if !has_weighted_child { return None; }
-            edit_amount().unwrap_or(0.0)
+            let has_weighted_child = children
+                .as_ref()
+                .is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0));
+            if has_weighted_child {
+                // Bottom-up weight: the total is the sum of the children. Derive it
+                // directly (don't depend on edit_amount being synced yet — e.g. right
+                // after a saved-composite recall).
+                let tmp = Ingredient { name: edit_name(), children: children.clone(), ..Default::default() };
+                tmp.computed_amount()
+            } else {
+                // Top-down weight: weightless (qualitative) children mean the parent
+                // supplies the total directly, so a positive amount is required.
+                match edit_amount() {
+                    Some(amt) if amt > 0.0 => amt,
+                    _ => return None,
+                }
+            }
         } else if props.is_sub_ingredient {
             // Sub-ingredients: allow amount 0 (qualitative ingredients)
             edit_amount().unwrap_or(0.0)
@@ -659,6 +675,25 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo)
     });
 
+    // Plain "Knospe" (Bio Suisse, Swiss) locks the origin to CH; "Knospe Import"
+    // keeps it editable (defaults to the generic `Import` origin). Lock the origin
+    // control whenever the current quality is Knospe with a Swiss origin.
+    let origin_locked_ch = use_memo(move || {
+        is_knospe_config()
+            && edit_is_bio()
+            && edit_origins().as_ref().is_some_and(|o| o.contains(&Country::CH))
+    });
+
+    // Does this composite have at least one child carrying a weight? When it does,
+    // the parent amount is the (read-only) sum of children (bottom-up). When it
+    // doesn't, the children are qualitative and the parent supplies the total
+    // weight top-down — so the amount field is editable.
+    let composite_has_weighted_child = use_memo(move || {
+        edit_children()
+            .as_ref()
+            .is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0))
+    });
+
     // Use the path for validation display paths, falling back to index
     let validation_index = if props.path.is_empty() { index } else { props.path[0] };
 
@@ -803,18 +838,69 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 }
 
+                // Weight is top-down: when the sub-ingredients carry no weights the
+                // parent supplies the total directly (editable); when they do, the
+                // total is their (read-only) sum shown in the summary below.
+                if !composite_has_weighted_child() {
+                    br {}
+                    FormField {
+                        label: format!("{} (g)", t!("label.menge").to_string()),
+                        help: Some(t!("help.menge").to_string()),
+                        ValidationDisplay {
+                            paths: vec![
+                                format!("ingredients[{}][amount]", validation_index)
+                            ],
+                            div { class: "flex gap-2",
+                                input {
+                                    r#type: "number",
+                                    placeholder: t!("placeholders.amount_in_grams").to_string(),
+                                    class: "input input-accent flex-1",
+                                    min: "0",
+                                    step: "any",
+                                    oninput: move |evt| {
+                                        let value = evt.data.value();
+                                        if value.is_empty() {
+                                            edit_amount.set(None);
+                                        } else if let Ok(amount) = value.parse::<f64>() {
+                                            edit_amount.set(Some(amount));
+                                        }
+                                    },
+                                    value: edit_amount().map_or(String::new(), |v| v.to_string()),
+                                }
+                                select {
+                                    class: "select select-accent w-20",
+                                    value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
+                                    onchange: move |evt| {
+                                        let value = evt.data.value();
+                                        if value == "ml" {
+                                            edit_unit.set(AmountUnit::Milliliter);
+                                        } else {
+                                            edit_unit.set(AmountUnit::Gram);
+                                        }
+                                    },
+                                    option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
+                                    option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Read-only computed summary as key/value pairs
                 br {}
                 div { class: "bg-base-200 rounded-lg p-3 space-y-1 text-sm",
                     div { class: "font-semibold mb-2", {t!("label.computedValues").to_string()} }
-                    // Amount
-                    div { class: "flex justify-between",
-                        span { class: "text-base-content/60", {t!("label.menge").to_string()} }
-                        span {
-                            if let Some(amt) = edit_amount().filter(|a| *a > 0.0) {
-                                "{amt} {t!(edit_unit().translation_key()).to_string()}"
-                            } else {
-                                "—"
+                    // Amount — read-only sum when children carry weights (bottom-up);
+                    // when weightless it's set via the editable field above.
+                    if composite_has_weighted_child() {
+                        div { class: "flex justify-between",
+                            span { class: "text-base-content/60", {t!("label.menge").to_string()} }
+                            span {
+                                if let Some(amt) = edit_amount().filter(|a| *a > 0.0) {
+                                    "{amt} {t!(edit_unit().translation_key()).to_string()}"
+                                } else {
+                                    "—"
+                                }
                             }
                         }
                     }
@@ -843,13 +929,21 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             if edit_bio_ch() { "✓" } else { "✗" }
                         }
                     }
-                    // Origins
-                    if let Some(origins) = edit_origins() {
-                        div { class: "flex justify-between",
-                            span { class: "text-base-content/60", {t!("origin.herkunft").to_string()} }
-                            div { class: "flex gap-1 flex-wrap justify-end",
-                                for origin in origins.iter() {
-                                    span { class: "badge badge-sm badge-outline", "{origin.flag_emoji()} {origin.country_code()}" }
+                    // Origins — derived from children (bottom-up) for display, since
+                    // a composite parent doesn't store its own origin.
+                    {
+                        let display_origins = edit_origins().or_else(|| {
+                            Ingredient { children: edit_children(), ..Default::default() }.computed_origins()
+                        });
+                        rsx! {
+                            if let Some(origins) = display_origins {
+                                div { class: "flex justify-between",
+                                    span { class: "text-base-content/60", {t!("origin.herkunft").to_string()} }
+                                    div { class: "flex gap-1 flex-wrap justify-end",
+                                        for origin in origins.iter() {
+                                            span { class: "badge badge-sm badge-outline", "{origin.flag_emoji()} {origin.country_code()}" }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -957,18 +1051,33 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
                 if should_show_bio() {
                     if is_knospe_config() {
-                        // Derive current bio category from signals
-                        let bio_cat = if edit_is_bio() { "knospe" }
+                        // Derive current bio category from signals. Knospe splits into
+                        // CH-Knospe ("knospe") and "knospe_import" by whether the origin
+                        // is Swiss — quality is the bio flag, origin is the discriminator.
+                        let origins_have_ch = edit_origins().as_ref().is_some_and(|o| o.contains(&Country::CH));
+                        let bio_cat = if edit_is_bio() {
+                                if origins_have_ch { "knospe" } else { "knospe_import" }
+                            }
                             else if edit_bio_ch() { "bio" }
                             else if edit_nicht_landwirtschaftlich() { "nicht_lw" }
                             else { "andere" };
 
-                        // Helper closure to set all bio signals from a category
+                        // Helper closure to set all bio signals from a category.
+                        // "knospe" locks origin to CH; "knospe_import" defaults to the
+                        // generic Import origin (keeping a named import country if set).
                         let mut set_bio_cat = move |cat: &str| {
-                            edit_is_bio.set(cat == "knospe");
+                            edit_is_bio.set(cat == "knospe" || cat == "knospe_import");
                             edit_bio_ch.set(cat == "bio");
                             edit_nicht_landwirtschaftlich.set(cat == "nicht_lw");
-                            if cat != "knospe" && cat != "bio" {
+                            if cat == "knospe" {
+                                edit_origins.set(Some(vec![Country::CH]));
+                            } else if cat == "knospe_import" {
+                                let keep = edit_origins()
+                                    .filter(|o| !o.is_empty() && !o.contains(&Country::CH));
+                                edit_origins.set(keep.or(Some(vec![Country::Import])));
+                            }
+                            // Umstellbetrieb is valid for both Knospe variants and Bio.
+                            if !matches!(cat, "knospe" | "knospe_import" | "bio") {
                                 edit_aus_umstellbetrieb.set(false);
                             }
                         };
@@ -976,7 +1085,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         let wildsammlung_step = "aus zertifizierter Wildsammlung";
 
                         rsx! {
-                            // Radio: Bio (Knospe)
+                            // Radio: Bio (Knospe) — Swiss, origin locked to CH
                             FormField {
                                 help: Some(t!("help.bio_knospe").to_string()),
                                 label: t!("bio_labels.bio_knospe").to_string(),
@@ -987,6 +1096,19 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     class: "radio radio-primary",
                                     checked: bio_cat == "knospe",
                                     onchange: move |_| { set_bio_cat("knospe"); }
+                                }
+                            }
+                            // Radio: Knospe Import — imported Knospe, origin = Import / country
+                            FormField {
+                                help: Some(t!("help.bio_knospe_import").to_string()),
+                                label: t!("bio_labels.bio_knospe_import").to_string(),
+                                inline_checkbox: true,
+                                input {
+                                    r#type: "radio",
+                                    name: "bio_category",
+                                    class: "radio radio-primary",
+                                    checked: bio_cat == "knospe_import",
+                                    onchange: move |_| { set_bio_cat("knospe_import"); }
                                 }
                             }
                             // Radio: Bio
@@ -1029,8 +1151,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                 }
                             }
 
-                            // Conditional sub-fields below separator
-                            if bio_cat == "knospe" {
+                            // Conditional sub-fields below separator. Both Knospe
+                            // variants share Wildsammlung + Umstellbetrieb.
+                            if bio_cat == "knospe" || bio_cat == "knospe_import" {
                                 br {}
                                 div { class: "border-t border-base-300 pt-2 mt-2",
                                     {
@@ -1292,10 +1415,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     paths: vec![
                         format!("ingredients[{}][origin]", validation_index)
                     ],
-                    MultiCountrySelect {
-                        values: edit_origins.read().clone(),
-                        onchange: move |countries| {
-                            edit_origins.set(countries);
+                    if origin_locked_ch() {
+                        // Plain Knospe is Swiss by definition — origin is fixed to CH.
+                        // Shown as a static badge (no editable country picker).
+                        div { class: "flex items-center gap-2",
+                            span { class: "badge badge-lg badge-outline",
+                                "{Country::CH.flag_emoji()} {Country::CH.country_code()}"
+                            }
+                        }
+                    } else {
+                        MultiCountrySelect {
+                            values: edit_origins.read().clone(),
+                            onchange: move |countries| {
+                                edit_origins.set(countries);
+                            }
                         }
                     }
                 }
@@ -1415,14 +1548,18 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 }
 
-                // Show save button:
+                // Show save button (mirror `build_ingredient`'s acceptance rules):
                 // - Sub-ingredient: name non-empty (amount 0 ok for qualitative)
                 // - Top-level leaf: name non-empty + amount > 0
-                // - Composite: name non-empty + at least one child with weight
+                // - Composite: name non-empty + EITHER a weighted child (bottom-up sum)
+                //   OR a positive parent amount (top-down weight, weightless children)
                 if !edit_name().is_empty() && (
                     props.is_sub_ingredient
                     || (!edit_is_composite() && edit_amount().is_some_and(|a| a > 0.0))
-                    || (edit_is_composite() && edit_children().as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0)))
+                    || (edit_is_composite() && (
+                        edit_children().as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0))
+                        || edit_amount().is_some_and(|a| a > 0.0)
+                    ))
                 ) {
                     button {
                         class: "btn btn-primary",

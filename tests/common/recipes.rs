@@ -44,8 +44,10 @@ pub enum BioStatus {
     Conventional,
     /// `bio_ch` checkbox set (Bio config).
     BioCh,
-    /// "Bio (Knospe)" radio (Knospe config).
+    /// "Bio (Knospe)" radio (Knospe config) — Swiss, origin locked to CH.
     BioKnospe,
+    /// "Bio (Knospe) Import" radio (Knospe config) — imported Knospe, origin kept.
+    BioKnospeImport,
     /// "Nicht-landwirtschaftliche Zutat" radio (Knospe config) — Salz, Wasser, etc.
     NichtLandwirtschaftlich,
     /// "Andere" / non-bio agricultural (Knospe config).
@@ -137,7 +139,7 @@ pub const SCHOGGI_COOKIE_BSK_FR_BUTTER: Recipe = Recipe {
     ingredients: &[
         RecipeIngredient { name: "Weizenmehl", grams: 33.5, origin: Some("CH"), bio: BioStatus::BioKnospe },
         RecipeIngredient { name: "Zucker",     grams: 23.0, origin: Some("CH"), bio: BioStatus::BioKnospe },
-        RecipeIngredient { name: "Bratbutter", grams: 22.0, origin: Some("FR"), bio: BioStatus::BioKnospe },
+        RecipeIngredient { name: "Bratbutter", grams: 22.0, origin: Some("FR"), bio: BioStatus::BioKnospeImport },
         RecipeIngredient { name: "Ei",         grams: 9.0,  origin: Some("CH"), bio: BioStatus::BioKnospe },
         RecipeIngredient { name: "Salz",       grams: 0.5,  origin: Some("CH"), bio: BioStatus::NichtLandwirtschaftlich },
     ],
@@ -211,8 +213,8 @@ pub const BAERLAUCH_PESTO_BK: Recipe = Recipe {
     ingredients: &[
         RecipeIngredient { name: "Rapsöl",   grams: 150.0, origin: Some("CH"), bio: BioStatus::BioKnospe },
         RecipeIngredient { name: "Bärlauch", grams: 100.0, origin: Some("CH"), bio: BioStatus::BioKnospe },
-        RecipeIngredient { name: "Mandeln",  grams: 50.0,  origin: Some("TR"), bio: BioStatus::BioKnospe },
-        RecipeIngredient { name: "Parmesan", grams: 50.0,  origin: Some("IT"), bio: BioStatus::BioKnospe },
+        RecipeIngredient { name: "Mandeln",  grams: 50.0,  origin: Some("TR"), bio: BioStatus::BioKnospeImport },
+        RecipeIngredient { name: "Parmesan", grams: 50.0,  origin: Some("IT"), bio: BioStatus::BioKnospeImport },
         RecipeIngredient { name: "Salz",     grams: 5.0,   origin: Some("EU"), bio: BioStatus::NichtLandwirtschaftlich },
     ],
 };
@@ -229,7 +231,7 @@ pub const BAERLAUCH_PESTO_BSK: Recipe = Recipe {
         RecipeIngredient { name: "Rapsöl",    grams: 175.0, origin: Some("CH"), bio: BioStatus::BioKnospe },
         RecipeIngredient { name: "Bärlauch",  grams: 150.0, origin: Some("CH"), bio: BioStatus::BioKnospe },
         RecipeIngredient { name: "Baumnüsse", grams: 150.0, origin: Some("CH"), bio: BioStatus::BioKnospe },
-        RecipeIngredient { name: "Parmesan",  grams: 50.0,  origin: Some("IT"), bio: BioStatus::BioKnospe },
+        RecipeIngredient { name: "Parmesan",  grams: 50.0,  origin: Some("IT"), bio: BioStatus::BioKnospeImport },
         RecipeIngredient { name: "Salz",      grams: 5.0,   origin: Some("EU"), bio: BioStatus::NichtLandwirtschaftlich },
     ],
 };

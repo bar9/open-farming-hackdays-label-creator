@@ -82,9 +82,10 @@ fn recipe_schoggi_cookie_bk() {
                 .build(),
         )
         .ingredient(
+            // Origin lives on the sub-ingredients (bottom-up); the composite
+            // must not also declare one (single-level origin rule).
             IngredientBuilder::new_agri("Schokoladewürfel", 17.0)
                 .bio()
-                .origin(Country::EU)
                 .children(dark_chocolate_children(17.0))
                 .build(),
         )
@@ -181,7 +182,6 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         .ingredient(
             IngredientBuilder::new_agri("Milchschokoladewürfel", 17.0)
                 .bio()
-                .origin(Country::EU)
                 .children(milk_chocolate_children(17.0))
                 .build(),
         )
@@ -264,7 +264,6 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
         .ingredient(
             IngredientBuilder::new_agri("Milchschokoladewürfel", 12.0)
                 .bio()
-                .origin(Country::EU)
                 .children(milk_chocolate_children(12.0))
                 .build(),
         )

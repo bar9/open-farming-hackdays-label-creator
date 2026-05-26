@@ -5,6 +5,9 @@ pub enum Country {
     CH,
     EU,
     NoOriginRequired,
+    /// Generic imported origin (non-CH), country unspecified. Used for Knospe Import
+    /// when no specific country is named; renders without a flag.
+    Import,
     AD,
     AE,
     AF,
@@ -259,6 +262,7 @@ impl Country {
     pub fn display_name(&self) -> &'static str {
         match self {
             Country::CH => "Schweiz",
+            Country::Import => "Import",
             Country::EU => "EU",
             Country::NoOriginRequired => "Keine Herkunftsangabe benötigt",
             Country::AD => "Andorra",
@@ -517,6 +521,7 @@ impl Country {
             Country::CH => "CH",
             Country::EU => "EU",
             Country::NoOriginRequired => "",
+            Country::Import => "Import",
             Country::AD => "AD",
             Country::AE => "AE",
             Country::AF => "AF",
@@ -773,6 +778,7 @@ impl Country {
             Country::CH => "🇨🇭",
             Country::EU => "🇪🇺",
             Country::NoOriginRequired => "",
+            Country::Import => "",
             Country::AD => "🇦🇩",
             Country::AE => "🇦🇪",
             Country::AF => "🇦🇫",

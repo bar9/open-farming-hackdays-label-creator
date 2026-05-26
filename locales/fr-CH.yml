@@ -250,7 +250,8 @@ help:
     Prix de l'unité de vente
     Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
 
-  bio_knospe: Indique si cet ingrédient est certifié selon les normes Bio Suisse Bourgeon
+  bio_knospe: Indique si cet ingrédient est certifié selon les normes Bio Suisse Bourgeon (origine suisse, fixée à CH)
+  bio_knospe_import: Ingrédient certifié Bourgeon importé. Pays d'origine librement sélectionnable (par défaut «Import»).
   bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
   bio_transitional: Indique si cet ingrédient provient d'une exploitation en reconversion
   aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
@@ -343,6 +344,7 @@ validation:
   origin_required_name_giving: Le pays d'origine est requis pour les ingrédients caractéristiques.
   origin_required_meat_over_20: Le pays d'origine est requis pour les ingrédients de viande de plus de 20%.
   origin_required_knospe: Le pays d'origine est requis pour tous les ingrédients (exigence Bourgeon).
+  origin_single_level: L'origine est définie à plusieurs niveaux de cet ingrédient. Veuillez ne l'indiquer qu'à un seul niveau et supprimer l'autre.
   certification_body_required: L'organisme de certification bio est obligatoire pour les produits Bio et Bourgeon.
   certification_body_format: "L'organisme de certification doit avoir le format CH-BIO-xxx."
   beef_breeding_location_required: Le lieu d'élevage est requis pour les ingrédients de boeuf.
@@ -430,6 +432,7 @@ bio_legend:
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)
+  bio_knospe_import: Bio (Bourgeon) Import
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrédient non-biologique autorisé
   erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
