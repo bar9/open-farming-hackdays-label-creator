@@ -102,10 +102,10 @@ pub fn SplashScreen() -> Element {
                 div {
                     class: "text-center max-w-4xl",
                     h1 {
-                        class: "text-4xl md:text-5xl font-bold mb-2 text-base-content flex justify-center",
+                        class: "text-4xl md:text-5xl font-bold mb-8 md:mb-10 text-base-content flex justify-center",
                         {
                             #[cfg(not(feature = "hidebio"))]
-                            { rsx! { img { src: asset!("assets/declarino-logo-vectorized.svg"), class: "h-28 md:h-32", alt: "Declarino" } } }
+                            { rsx! { span { class: "inline-block h-28 md:h-32 -mt-4 md:-mt-8 text-black", "aria-label": "Declarino", dangerous_inner_html: crate::layout::locale_logo() } } }
                             #[cfg(feature = "hidebio")]
                             { rsx! { {t!("app.title").to_string()} } }
                         }

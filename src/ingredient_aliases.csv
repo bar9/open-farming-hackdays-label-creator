@@ -1,7 +1,20 @@
 alias,canonical,priority
 Eier,Hühnerei ganz,100
 Ei,Hühnerei ganz,90
-Vollei,Hühnerei ganz,80
 Eigelb,Hühnereigelb,80
 Eiweiss,Eiweiss,50
 Mehl,Weizenmehl,100
+Butter,Kochbutter,100
+Rahm,Vollrahm,100
+Sahne,Vollrahm,80
+Schlagrahm,Vollrahm,70
+Schlagsahne,Vollrahm,60
+Milch,Vollmilch pasteurisiert,90
+Vollmilch,Vollmilch pasteurisiert,80
+Magermilch,Magermilch UHT,70
+Quark,Magerquark,80
+Joghurt,Joghurt nature,100
+Jogurt,Joghurt nature,90
+Rüebli,Karotte,90
+Möhre,Karotte,70
+Peterli,Petersilie,90
