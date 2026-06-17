@@ -706,12 +706,14 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         set_origin_in_open_dialog(c, code).await;
         tokio::time::sleep(Duration::from_millis(200)).await;
     }
-    // Bio status — labels per locales/de-CH.yml ingredient.* keys.
+    // Bio status — Variante b: the top radio is "Bio (Knospe)"; the Swiss/Import
+    // (and Umstellung) distinction is a logo row underneath, replacing the old
+    // separate "Bio (Knospe) Import" radio.
     let bio_label = match ing.bio {
         BioStatus::Conventional => None,
         BioStatus::BioCh => Some("Bio"),
         BioStatus::BioKnospe => Some("Bio (Knospe)"),
-        BioStatus::BioKnospeImport => Some("Bio (Knospe) Import"),
+        BioStatus::BioKnospeImport => Some("Bio (Knospe)"),
         BioStatus::NichtLandwirtschaftlich => Some("Nicht-landwirtschaftliche Zutat"),
         BioStatus::Andere => Some("Andere"),
     };
@@ -720,6 +722,22 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         let xpath = format!(
             "//dialog[@open]//label[contains(normalize-space(.), '{}')]",
             label
+        );
+        if let Ok(el) = c.find(Locator::XPath(&xpath)).await {
+            let _ = el.click().await;
+            tokio::time::sleep(Duration::from_millis(150)).await;
+        }
+    }
+    // Knospe logo (Variante b): pick the specific Knospe variant by its caption.
+    let knospe_logo = match ing.bio {
+        BioStatus::BioKnospe => Some("Knospe (Schweiz)"),
+        BioStatus::BioKnospeImport => Some("Knospe Import"),
+        _ => None,
+    };
+    if let Some(logo) = knospe_logo {
+        let xpath = format!(
+            "//dialog[@open]//button[.//span[contains(normalize-space(.), '{}')]]",
+            logo
         );
         if let Ok(el) = c.find(Locator::XPath(&xpath)).await {
             let _ = el.click().await;

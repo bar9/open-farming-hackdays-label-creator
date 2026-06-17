@@ -40,6 +40,47 @@ fn mixed_quality_composite_is_not_knospe_compliant() {
     assert!(!composite.is_knospe_compliant());
 }
 
+/// Non-agricultural children (salt, water, …) carry no country-of-origin
+/// declaration, so their origin must NOT be taken over into the parent's
+/// aggregated origin. Regression: it was wrongly carried over for such quality.
+#[test]
+fn non_agricultural_child_origin_not_aggregated() {
+    let composite = IngredientBuilder::new("Mischung", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Kräuter", 0.0).origin(Country::FR).build(), // agricultural (default)
+            IngredientBuilder::new("Salz", 0.0).agricultural(false).origin(Country::CH).build(), // non-agri
+        ])
+        .build();
+
+    let origins = composite.computed_origins().expect("agricultural child still provides an origin");
+    assert!(origins.contains(&Country::FR), "agricultural child origin should aggregate. Got: {:?}", origins);
+    assert!(!origins.contains(&Country::CH), "non-agricultural child origin must NOT aggregate. Got: {:?}", origins);
+}
+
+/// Quality "parent claim overrides": a composite declared Knospe as a whole (e.g. a
+/// bought, certified composite ingredient) counts as Knospe even if a child isn't
+/// individually marked bio. Without a parent claim it derives bottom-up.
+#[test]
+fn parent_quality_claim_overrides_children() {
+    let claimed = IngredientBuilder::new("Knospe-Schokolade", 100.0)
+        .bio()
+        .children(vec![
+            IngredientBuilder::new("Kakao", 0.0).bio().build(),
+            IngredientBuilder::new("Zucker", 0.0).build(), // no own quality claim
+        ])
+        .build();
+    assert!(claimed.is_knospe_compliant(), "parent Knospe claim should override a non-bio child");
+    assert_eq!(claimed.computed_bio_status(), Some(true));
+
+    let derived = IngredientBuilder::new("Mischung", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Kakao", 0.0).bio().build(),
+            IngredientBuilder::new("Zucker", 0.0).build(),
+        ])
+        .build();
+    assert!(!derived.is_knospe_compliant(), "no parent claim → derive bottom-up (not all bio)");
+}
+
 /// Origin is defined on a single level: an explicit parent origin wins over
 /// whatever the children carry (no silent union across levels).
 #[test]

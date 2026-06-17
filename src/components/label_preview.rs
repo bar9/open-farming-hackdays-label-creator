@@ -183,7 +183,7 @@ pub fn LabelPreview(
                                 class: "pr-1",
                                 "{date_prefix}"
                             }
-                            "{date}"
+                            " {date}"
                         }
                     }
                 }
@@ -217,11 +217,11 @@ pub fn LabelPreview(
                                 class: "text-sm",
                                 span {
                                     span {class: "pr-2", "{t!(\"preview.nettogewicht\").to_string()}" }
-                                    "{netto} {get_unit()}"
+                                    " {netto} {get_unit()}"
                                 }
                                 span {
-                                    span {class: "pl-2 pr-2", "{t!(\"preview.abtropfgewicht\").to_string()}" }
-                                    "{brutto} {get_unit()}"
+                                    span {class: "pl-2 pr-2", " {t!(\"preview.abtropfgewicht\").to_string()}" }
+                                    " {brutto} {get_unit()}"
                                 }
                             }
                         },
@@ -300,12 +300,12 @@ pub fn LabelPreview(
                                         class: "text-sm",
                                         span {
                                             span {class: "pr-2", {t!("units.chfPro").to_string()} {get_base_factor_and_unit()} }
-                                            "{display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
+                                            " {display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
                                         }
                                         if let Some(total_price) = total_price_display {
                                             span {
-                                                span {class: "pl-2 pr-2", {t!("preview.preis").to_string()} }
-                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
+                                                span {class: "pl-2 pr-2", " " {t!("preview.preis").to_string()} }
+                                                " {display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
                                             }
                                         }
                                     }
@@ -345,13 +345,13 @@ pub fn LabelPreview(
                                         if let Some(unit_price) = unit_price_display {
                                             span {
                                                 span {class: "pr-2", {t!("units.chfPro").to_string()} {get_base_factor_and_unit()} }
-                                                "{display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
+                                                " {display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
                                             }
                                         }
                                         if let Some(total_price) = total_price_display {
                                             span {
-                                                span {class: "pl-2 pr-2", {t!("preview.preis").to_string()} }
-                                                "{display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
+                                                span {class: "pl-2 pr-2", " " {t!("preview.preis").to_string()} }
+                                                " {display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
                                             }
                                         }
                                     }

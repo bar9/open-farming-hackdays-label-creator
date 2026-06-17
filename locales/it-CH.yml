@@ -402,6 +402,10 @@ version:
   version: Versione
   from: del
 
+cross_level:
+  defined_on_subingredients: "Definito tramite i sotto-ingredienti:"
+  goto: Apri
+  clear: Rimuovi
 origin:
   herkunft: Origine
   aufzucht: Allevamento
@@ -425,10 +429,18 @@ bio_legend:
 bio_labels:
   bio_knospe: Bio (Gemma)
   bio_knospe_import: Bio (Gemma) Import
+  quality: Qualità
+  knospe: Gemma
+  umstellungsknospe: Gemma di riconversione
+  knospe_ch: Gemma (Svizzera)
+  knospe_import: Gemma Import
+  umstellung_ch: Gemma di riconversione (Svizzera)
+  umstellung_import: Gemma di riconversione Import
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
   erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...
+  erlaubte_ausnahme_details_note: Solo nota interna – non appare sull'etichetta.
   aus_umstellbetrieb: Da azienda in conversione
   wildsammlung: Da raccolta selvatica certificata
   nicht_landwirtschaftlich: Non agricolo

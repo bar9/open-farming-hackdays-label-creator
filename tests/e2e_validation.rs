@@ -262,8 +262,8 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
         after_knospe
     );
 
-    // "Bio (Knospe) Import" → origin editable again (country picker reappears).
-    let import_xpath = "//dialog[@open]//label[contains(normalize-space(.), 'Bio (Knospe) Import')]";
+    // Variante b: click the "Knospe Import" logo → origin editable again (picker reappears).
+    let import_xpath = "//dialog[@open]//button[.//span[contains(normalize-space(.), 'Knospe Import')]]";
     if let Ok(el) = c.find(fantoccini::Locator::XPath(import_xpath)).await {
         let _ = el.click().await;
     }

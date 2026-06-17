@@ -46,9 +46,53 @@ pub fn set_at_path(ingredients: &mut [Ingredient], path: &[usize], value: Ingred
     }
 }
 
+/// Collect the paths of the **shallowest** proper descendants of the ingredient at
+/// `base` for which `defines` returns true. Recursion stops at a node that defines
+/// the attribute (its deeper descendants are not reported separately).
+///
+/// Foundation for the cross-level rule: when editing a composite, an attribute is
+/// "defined on another level" iff this returns a non-empty list — and those paths
+/// are exactly where the user can navigate to, or clear.
+pub fn descendant_definitions(
+    ingredients: &[Ingredient],
+    base: &[usize],
+    defines: &dyn Fn(&Ingredient) -> bool,
+) -> Vec<IngredientPath> {
+    let mut out = Vec::new();
+    let Some(node) = get_at_path(ingredients, base) else { return out };
+    if let Some(children) = node.children.as_ref() {
+        for (i, child) in children.iter().enumerate() {
+            let mut child_path = base.to_vec();
+            child_path.push(i);
+            collect_definitions(child, &child_path, defines, &mut out);
+        }
+    }
+    out
+}
+
+fn collect_definitions(
+    node: &Ingredient,
+    path: &[usize],
+    defines: &dyn Fn(&Ingredient) -> bool,
+    out: &mut Vec<IngredientPath>,
+) {
+    if defines(node) {
+        out.push(path.to_vec());
+        return; // shallowest only — don't descend past a defining node
+    }
+    if let Some(children) = node.children.as_ref() {
+        for (i, child) in children.iter().enumerate() {
+            let mut child_path = path.to_vec();
+            child_path.push(i);
+            collect_definitions(child, &child_path, defines, out);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::Country;
 
     fn make_tree() -> Vec<Ingredient> {
         // Tree structure:
@@ -147,5 +191,66 @@ mod tests {
         assert!(!set_at_path(&mut tree, &[], replacement.clone()));
         assert!(!set_at_path(&mut tree, &[10], replacement.clone()));
         assert!(!set_at_path(&mut tree, &[1, 0], replacement)); // Flour has no children
+    }
+
+    /// Tree for cross-level detection: a composite with one origin-bearing child,
+    /// one nested origin (grandchild), and one plain child.
+    fn origin_tree() -> Vec<Ingredient> {
+        vec![Ingredient {
+            name: "Composite".into(),
+            children: Some(vec![
+                // [0,0] direct child WITH an origin
+                Ingredient { name: "Apfel".into(), origins: Some(vec![Country::CH]), ..Default::default() },
+                // [0,1] composite child WITHOUT its own origin, but [0,1,0] grandchild has one
+                Ingredient {
+                    name: "Mix".into(),
+                    children: Some(vec![
+                        Ingredient { name: "Birne".into(), origins: Some(vec![Country::FR]), ..Default::default() },
+                    ]),
+                    ..Default::default()
+                },
+                // [0,2] plain child, no origin
+                Ingredient { name: "Wasser".into(), ..Default::default() },
+            ]),
+            ..Default::default()
+        }]
+    }
+
+    #[test]
+    fn descendant_definitions_finds_shallowest() {
+        let tree = origin_tree();
+        let has_origin = |i: &Ingredient| i.origins.as_ref().is_some_and(|o| !o.is_empty());
+        let defs = descendant_definitions(&tree, &[0], &has_origin);
+        // Direct child [0,0] defines it; the grandchild [0,1,0] (shallowest below [0,1]) defines it.
+        assert!(defs.contains(&vec![0, 0]), "direct origin child should be found: {:?}", defs);
+        assert!(defs.contains(&vec![0, 1, 0]), "nested origin grandchild should be found: {:?}", defs);
+        assert_eq!(defs.len(), 2, "Wasser has no origin; expected exactly 2 definitions: {:?}", defs);
+    }
+
+    #[test]
+    fn descendant_definitions_empty_when_none_defined() {
+        let tree = make_tree(); // no origins anywhere
+        let has_origin = |i: &Ingredient| i.origins.as_ref().is_some_and(|o| !o.is_empty());
+        assert!(descendant_definitions(&tree, &[0], &has_origin).is_empty());
+    }
+
+    #[test]
+    fn descendant_definitions_stops_at_shallowest() {
+        // A defining composite child should be reported once, not also its children.
+        let tree = vec![Ingredient {
+            name: "Root".into(),
+            children: Some(vec![Ingredient {
+                name: "Sub".into(),
+                origins: Some(vec![Country::CH]),
+                children: Some(vec![
+                    Ingredient { name: "Deep".into(), origins: Some(vec![Country::DE]), ..Default::default() },
+                ]),
+                ..Default::default()
+            }]),
+            ..Default::default()
+        }];
+        let has_origin = |i: &Ingredient| i.origins.as_ref().is_some_and(|o| !o.is_empty());
+        let defs = descendant_definitions(&tree, &[0], &has_origin);
+        assert_eq!(defs, vec![vec![0, 0]], "should stop at the shallowest defining node");
     }
 }

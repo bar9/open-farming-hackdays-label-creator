@@ -142,23 +142,24 @@ pub fn MultiCountrySelect(props: MultiCountrySelectProps) -> Element {
                                     key: "{idx}",
                                     class: "badge badge-lg gap-1",
                                     "{country_clone.flag_emoji()} {country_clone.display_name()}"
-                                    button {
-                                        class: "btn btn-xs btn-ghost btn-circle",
-                                        r#type: "button",
-                                        title: "{t!(\"origin.remove_country\").to_string()}",
-                                        onclick: move |_| {
-                                            let new_values: Vec<Country> = values_for_remove
-                                                .iter()
-                                                .filter(|c| *c != &country_clone)
-                                                .cloned()
-                                                .collect();
-                                            if new_values.is_empty() {
-                                                onchange_for_remove.call(None);
-                                            } else {
-                                                onchange_for_remove.call(Some(new_values));
-                                            }
-                                        },
-                                        "×"
+                                    span { class: "tooltip tooltip-bottom", "data-tip": t!("origin.remove_country").to_string(),
+                                        button {
+                                            class: "btn btn-xs btn-ghost btn-circle",
+                                            r#type: "button",
+                                            onclick: move |_| {
+                                                let new_values: Vec<Country> = values_for_remove
+                                                    .iter()
+                                                    .filter(|c| *c != &country_clone)
+                                                    .cloned()
+                                                    .collect();
+                                                if new_values.is_empty() {
+                                                    onchange_for_remove.call(None);
+                                                } else {
+                                                    onchange_for_remove.call(Some(new_values));
+                                                }
+                                            },
+                                            "×"
+                                        }
                                     }
                                 }
                             }

@@ -273,3 +273,111 @@ async fn saved_composite_recall_name_appears_in_label() {
     assert_no_errors(&c, "saved_composite_recall_inserts_subtree").await;
     let _ = c.close().await;
 }
+
+// ---------- Cross-level lock (testing round 2026-06-16, item 1 / Phase 8) ----------
+//
+// When a sub-ingredient already declares an attribute (here: origin), the
+// composite's matching control must LOCK to it — greyed, with a "defined on
+// sub-ingredients" popover offering go-to / clear — instead of an editable input.
+// Composites are seeded via localStorage (the UI path for building them is not
+// reliably drivable — see e2e_label.rs:209 / e2e_recipes.rs:475), reusing the same
+// Salzbouillon fixture whose children (Salz CH, Pfeffer DE) both carry an origin.
+#[tokio::test]
+async fn composite_origin_locks_when_subingredient_defines_it() {
+    use std::time::Duration;
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+
+    let json = r#"[{
+        "ingredient": {
+            "name": "Salzbouillon",
+            "is_allergen": false,
+            "amount": 9.0,
+            "is_agricultural": true,
+            "children": [
+                {"name": "Salz", "is_allergen": false, "amount": 5.0, "is_agricultural": false, "origins": ["CH"]},
+                {"name": "Pfeffer", "is_allergen": false, "amount": 4.0, "is_agricultural": true, "origins": ["DE"]}
+            ]
+        }
+    }]"#;
+    seed_saved_ingredient_json(&c, json).await;
+    reload(&c).await;
+
+    // Wait for mount, open the genesis pane, and recall the saved composite.
+    for _ in 0..30 {
+        if c.execute("return document.body.innerText.length > 0;", vec![]).await.ok()
+            .and_then(|v| v.as_bool()).unwrap_or(false) { break; }
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+    let mut input_el = None;
+    for attempt in 0..30 {
+        if let Some(el) = first_accent_input(&c).await { input_el = Some(el); break; }
+        if attempt % 3 == 0 { open_add_ingredient(&c).await; }
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+    let input = input_el.expect("genesis ingredient input never appeared");
+    let _ = input.click().await;
+    let _ = input.send_keys("Salz").await;
+    let mut clicked = false;
+    for _ in 0..20 {
+        clicked = c.execute(r#"
+            for (const d of document.querySelectorAll('dialog[open]')) {
+                for (const it of d.querySelectorAll('div.cursor-pointer')) {
+                    if (it.innerText && it.innerText.includes('Salzbouillon')) { it.click(); return true; }
+                }
+            }
+            return false;
+        "#, vec![]).await.ok().and_then(|v| v.as_bool()).unwrap_or(false);
+        if clicked { break; }
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+    assert!(clicked, "could not recall 'Salzbouillon' saved composite");
+    tokio::time::sleep(Duration::from_millis(300)).await;
+
+    // Save + close so the composite lands in the recipe list.
+    for label in &["Speichern und nächste Zutat", "Speichern", "Hinzufügen"] {
+        if click_button_by_text(&c, label).await { break; }
+    }
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    if open_dialog_count(&c).await > 0 {
+        for label in &["Schliessen", "Schließen", "Abbrechen", "Close"] {
+            if click_button_by_text(&c, label).await { break; }
+        }
+    }
+    tokio::time::sleep(Duration::from_millis(300)).await;
+
+    // Open the composite for editing and inspect its Herkunft control.
+    assert!(
+        open_ingredient_edit_by_name(&c, "Salzbouillon").await,
+        "could not open the recalled Salzbouillon composite for editing"
+    );
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    let dom = c
+        .execute("const d=document.querySelector('dialog[open]'); return d?d.textContent:'';", vec![])
+        .await.ok().and_then(|v| v.as_str().map(|s| s.to_string())).unwrap_or_default();
+
+    // Cross-level lock is now a greyed control + a (non-interactive) tooltip whose
+    // text lives in the `data-tip` attribute — query that, not textContent.
+    let has_lock_tooltip = c
+        .execute(
+            r#"const d=document.querySelector('dialog[open]'); if(!d) return false;
+               return Array.from(d.querySelectorAll('[data-tip]'))
+                 .some(e => (e.getAttribute('data-tip')||'').includes('Über Unterzutaten definiert'));"#,
+            vec![],
+        )
+        .await.ok().and_then(|v| v.as_bool()).unwrap_or(false);
+    assert!(
+        has_lock_tooltip,
+        "composite should show the cross-level lock tooltip (children Salz/Pfeffer carry origins/weights)."
+    );
+    assert!(
+        !dom.contains("Land hinzufügen"),
+        "composite Herkunft must LOCK (no editable country picker) when a sub-ingredient defines \
+         origin. dialog:\n{}",
+        dom
+    );
+
+    assert_no_errors(&c, "composite_origin_locks_when_subingredient_defines_it").await;
+    let _ = c.close().await;
+}

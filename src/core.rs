@@ -529,11 +529,27 @@ impl Ingredient {
             && self.children.as_ref().is_some_and(|c| !c.is_empty())
     }
 
+    /// A node makes its own positive quality claim — Knospe / Bio-CH / permitted
+    /// exception — which overrides bottom-up derivation from children (e.g. a bought,
+    /// certified composite declared Knospe as a whole). Used only for quality, not
+    /// origin/weight.
+    fn claims_own_quality(&self) -> bool {
+        self.is_bio == Some(true)
+            || self.bio_ch == Some(true)
+            || self.erlaubte_ausnahme_bio == Some(true)
+            || self.erlaubte_ausnahme_knospe == Some(true)
+    }
+
+    /// Quality aggregates from children only when this node makes no own claim.
+    fn aggregates_quality_from_children(&self) -> bool {
+        self.aggregates_from_children() && !self.claims_own_quality()
+    }
+
     /// Counts toward Knospe certification: Knospe-certified bio, or a permitted
     /// non-organic / non-Knospe exception (Annex 3 WBF / Bio Suisse Part III).
     /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_knospe_compliant(&self) -> bool {
-        if self.aggregates_from_children() {
+        if self.aggregates_quality_from_children() {
             return self.children.as_ref().unwrap().iter().all(|c| c.is_knospe_compliant());
         }
         self.is_bio.unwrap_or(false)
@@ -545,7 +561,7 @@ impl Ingredient {
     /// conversion farm), or a permitted non-organic exception (Annex 3 WBF).
     /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_bio_ch_compliant(&self) -> bool {
-        if self.aggregates_from_children() {
+        if self.aggregates_quality_from_children() {
             return self.children.as_ref().unwrap().iter().all(|c| c.is_bio_ch_compliant());
         }
         (self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false))
@@ -701,7 +717,7 @@ impl Ingredient {
     /// own value otherwise. Aggregates regardless of child weights, since quality
     /// is a bottom-up attribute (weight is the top-down one).
     pub fn computed_bio_status(&self) -> Option<bool> {
-        if self.aggregates_from_children() {
+        if self.aggregates_quality_from_children() {
             let children = self.children.as_ref().unwrap();
             if children.iter().any(|c| c.computed_bio_status().is_some()) {
                 Some(children.iter().all(|c| c.computed_bio_status().unwrap_or(false)))
@@ -715,7 +731,7 @@ impl Ingredient {
 
     /// Effective bio_ch status: same bottom-up logic as bio
     pub fn computed_bio_ch_status(&self) -> Option<bool> {
-        if self.aggregates_from_children() {
+        if self.aggregates_quality_from_children() {
             let children = self.children.as_ref().unwrap();
             if children.iter().any(|c| c.computed_bio_ch_status().is_some()) {
                 Some(children.iter().all(|c| c.computed_bio_ch_status().unwrap_or(false)))
@@ -735,8 +751,12 @@ impl Ingredient {
             return Some(own.clone());
         }
         if self.aggregates_from_children() {
+            // Non-agricultural children (e.g. salt, water) carry no country-of-origin
+            // declaration, so their origin must not be taken over into the parent's
+            // aggregated origin.
             let all: HashSet<Country> = self.children.as_ref().unwrap()
                 .iter()
+                .filter(|c| c.is_agricultural)
                 .filter_map(|c| c.computed_origins())
                 .flatten()
                 .collect();
@@ -838,23 +858,29 @@ impl OutputFormatter {
             false => escaped_name,
         };
 
-        // Umstellbetrieb-Stern (**) vor Bio-Stern (*) prüfen
-        // Lowest-level-only: suppress bio marker on composite parents when bio status
-        // was computed from children (not explicitly set). Children show their own markers.
+        // Umstellbetrieb-Stern (**) vor Bio-Stern (*) prüfen.
+        // The marker lives on the leaf ingredients that show it: a composite parent
+        // must NOT duplicate a marker its children already carry — "Mix (A*, B*)",
+        // not "Mix* (A*, B*)". The parent keeps its own marker only when no child
+        // shows one (the parent-claim-override case: composite Knospe, plain children).
         let is_umstellbetrieb = self.ingredient.aus_umstellbetrieb.unwrap_or(false);
-        let bio_inherited_from_children = has_children
-            && self.ingredient.is_bio.is_none()
-            && self.ingredient.bio_ch.is_none();
+        let children_show_marker = self.ingredient.children.as_ref().is_some_and(|kids| {
+            kids.iter().any(|c| {
+                c.aus_umstellbetrieb.unwrap_or(false)
+                    || c.computed_bio_status().unwrap_or(false)
+                    || c.computed_bio_ch_status().unwrap_or(false)
+            })
+        });
         let is_bio_ingredient = self.ingredient.computed_bio_status().unwrap_or(false)
             || self.ingredient.computed_bio_ch_status().unwrap_or(false);
         let has_bio_input_rule = self.RuleDefs.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
             || self.RuleDefs.contains(&RuleDef::Bio_PartialBioMarking);
         let suppress_asterisk = self.RuleDefs.contains(&RuleDef::Bio_AllAgriAreBio);
 
-        if has_bio_input_rule && is_umstellbetrieb {
+        if has_bio_input_rule && is_umstellbetrieb && !children_show_marker {
             // Umstellbetrieb ingredients get ** instead of *
             output = format!("{}**", output);
-        } else if has_bio_input_rule && is_bio_ingredient && !suppress_asterisk && !bio_inherited_from_children {
+        } else if has_bio_input_rule && is_bio_ingredient && !suppress_asterisk && !children_show_marker {
             output = format!("{}*", output);
         }
 
@@ -1474,12 +1500,14 @@ fn sort_children_by_weight(children: &[Ingredient]) -> Vec<Ingredient> {
     sorted
 }
 
-/// Format valid origins (filtering out NoOriginRequired) into a parenthetical string.
+/// Format valid origins into a parenthetical string, dropping placeholders that
+/// must never reach the label: `NoOriginRequired`, and the generic `Import`
+/// sentinel (imported, country unspecified — declaring "(Import)" is not valid).
 fn format_valid_origins(origins: &Option<Vec<Country>>) -> Option<String> {
     origins.as_ref().and_then(|origins| {
         let valid: Vec<&str> = origins
             .iter()
-            .filter(|o| !matches!(o, Country::NoOriginRequired))
+            .filter(|o| !matches!(o, Country::NoOriginRequired | Country::Import))
             .map(|o| o.country_code())
             .collect();
         if valid.is_empty() {

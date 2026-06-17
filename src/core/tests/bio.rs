@@ -741,8 +741,9 @@ fn composite_child_umstellbetrieb_gets_double_asterisk_on_label() {
 
     let output = calculator.execute(input);
 
-    // Parent gets * (computed bio from children)
-    assert!(output.label.contains("Müeslimischung*"), "Parent should get bio asterisk. Label: {}", output.label);
+    // Star on ONE level only: the children carry the markers, so the composite
+    // parent must NOT also get a star (testing round 2026-06-17).
+    assert!(!output.label.contains("Müeslimischung*"), "Composite parent must not duplicate the children's star. Label: {}", output.label);
     // Hafer child gets * (bio)
     assert!(output.label.contains("Hafer*"), "Bio child should get *. Label: {}", output.label);
     // Dinkel child gets ** (umstellbetrieb)
@@ -826,8 +827,37 @@ fn composite_children_bio_markers_in_knospe_context() {
     // Children inside composite get bio asterisk
     assert!(output.label.contains("Zucker*"), "Bio child Zucker should get *. Label: {}", output.label);
     assert!(output.label.contains("Kakaobutter*"), "Bio child Kakaobutter should get *. Label: {}", output.label);
-    // Parent composite has explicit is_bio=true, so it also gets *
-    assert!(output.label.contains("Schokolade*"), "Bio parent with explicit is_bio should get *. Label: {}", output.label);
+    // Star on ONE level only: the children show the markers, so the composite
+    // parent must NOT also get a star — even with explicit is_bio (2026-06-17).
+    assert!(!output.label.contains("Schokolade*"), "Composite parent must not duplicate the children's star. Label: {}", output.label);
+}
+
+// Counterpart to the "one level only" rule: when a composite is declared Knospe as a
+// whole (parent-claim override, Phase 9) but its children carry NO bio markers, the
+// star belongs on the parent — there is no child star to defer to (2026-06-17).
+#[test]
+fn composite_parent_keeps_star_when_children_unmarked() {
+    let calculator = calculator_for(Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .certification_body("CH-BIO-006 (bio.inspecta AG)")
+        .ingredient(
+            IngredientBuilder::new_agri("Fertigmischung", 100.0)
+                .bio() // parent claims Knospe as a whole
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new_agri("Komponente A", 60.0).origin(Country::CH).build(),
+                    IngredientBuilder::new_agri("Komponente B", 40.0).origin(Country::CH).build(),
+                ])
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    // Children are not bio → no child stars → the parent carries the star.
+    assert!(output.label.contains("Fertigmischung*"), "Composite with a parent-only bio claim should get the star. Label: {}", output.label);
+    assert!(!output.label.contains("Komponente A*"), "Unmarked child must not get a star. Label: {}", output.label);
 }
 
 #[test]

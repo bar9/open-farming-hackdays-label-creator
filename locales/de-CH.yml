@@ -648,6 +648,10 @@ date_prefixes:
   best_before: Mindestens haltbar bis
   use_by: Zu verbrauchen bis
 
+cross_level:
+  defined_on_subingredients: "Über Unterzutaten definiert:"
+  goto: Öffnen
+  clear: Entfernen
 origin:
   herkunft: Herkunft
   aufzucht: Aufzucht
@@ -671,10 +675,18 @@ bio_legend:
 bio_labels:
   bio_knospe: Bio (Knospe)
   bio_knospe_import: Bio (Knospe) Import
+  quality: Qualität
+  knospe: Knospe
+  umstellungsknospe: Umstellungsknospe
+  knospe_ch: Knospe (Schweiz)
+  knospe_import: Knospe Import
+  umstellung_ch: Umstellungsknospe (Schweiz)
+  umstellung_import: Umstellungsknospe Import
   bio_ch: Bio
   erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat
   erlaubte_ausnahme_details_placeholder: Begründung / Referenz eingeben...
+  erlaubte_ausnahme_details_note: Nur interne Notiz – erscheint nicht auf der Etikette.
   aus_umstellbetrieb: Aus Umstellbetrieb
   wildsammlung: Aus zertifizierter Wildsammlung
   nicht_landwirtschaftlich: Nicht-landwirtschaftlich

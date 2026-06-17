@@ -410,6 +410,10 @@ version:
   version: Version
   from: du
 
+cross_level:
+  defined_on_subingredients: "Défini via les sous-ingrédients :"
+  goto: Ouvrir
+  clear: Supprimer
 origin:
   herkunft: Origine
   aufzucht: Élevage
@@ -433,10 +437,18 @@ bio_legend:
 bio_labels:
   bio_knospe: Bio (Bourgeon)
   bio_knospe_import: Bio (Bourgeon) Import
+  quality: Qualité
+  knospe: Bourgeon
+  umstellungsknospe: Bourgeon de reconversion
+  knospe_ch: Bourgeon (Suisse)
+  knospe_import: Bourgeon Import
+  umstellung_ch: Bourgeon de reconversion (Suisse)
+  umstellung_import: Bourgeon de reconversion Import
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrédient non-biologique autorisé
   erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
   erlaubte_ausnahme_details_placeholder: Saisir la justification / référence...
+  erlaubte_ausnahme_details_note: Note interne uniquement – n'apparaît pas sur l'étiquette.
   aus_umstellbetrieb: En conversion
   wildsammlung: Issu de cueillette sauvage certifiée
   nicht_landwirtschaftlich: Non agricole

@@ -138,14 +138,15 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                 }
                             }
                             td {
-                                button {
-                                    class: "btn btn-square btn-sm btn-ghost",
-                                    title: t!("nav.bearbeiten").to_string(),
-                                    onclick: {
-                                        let on_edit = props.on_edit_child;
-                                        move |_| on_edit.call(key)
-                                    },
-                                    icons::ListDetail {}
+                                span { class: "tooltip tooltip-left", "data-tip": t!("nav.bearbeiten").to_string(),
+                                    button {
+                                        class: "btn btn-square btn-sm btn-ghost",
+                                        onclick: {
+                                            let on_edit = props.on_edit_child;
+                                            move |_| on_edit.call(key)
+                                        },
+                                        icons::ListDetail {}
+                                    }
                                 }
                             }
                             td {

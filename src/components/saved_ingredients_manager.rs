@@ -43,11 +43,12 @@ pub fn SavedIngredientsManager() -> Element {
     };
     
     rsx! {
-        button {
-            class: "btn btn-secondary btn-sm",
-            onclick: move |_| is_open.toggle(),
-            title: t!("tooltips.manage_saved_ingredients").to_string(),
-            {t!("nav.saved_ingredients").to_string()}
+        span { class: "tooltip tooltip-bottom", "data-tip": t!("tooltips.manage_saved_ingredients").to_string(),
+            button {
+                class: "btn btn-secondary btn-sm",
+                onclick: move |_| is_open.toggle(),
+                {t!("nav.saved_ingredients").to_string()}
+            }
         }
         
         dialog { open: is_open(), class: "modal",

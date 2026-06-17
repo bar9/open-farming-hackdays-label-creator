@@ -39,6 +39,24 @@ fn validation_missing_origin_for_ingredient_over_50_percent() {
 }
 
 #[test]
+fn import_placeholder_never_printed_verbatim() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        // CH + generic Import placeholder: CH must print, Import must be dropped.
+        .ingredient(IngredientBuilder::new("Milch", 600.0).origins(vec![Country::CH, Country::Import]).build())
+        // Import-only: no origin should be printed at all (not "(Import)").
+        .ingredient(IngredientBuilder::new("Zucker", 200.0).origin(Country::Import).build())
+        .total(800.0)
+        .build();
+    let output = calculator.execute(input);
+    let label = output.label;
+    assert!(!label.contains("Import"), "literal 'Import' must never appear on the label. Label: {}", label);
+    assert!(label.contains("Milch (CH)"), "CH origin should still print alongside a dropped Import. Label: {}", label);
+    assert!(!label.contains("Zucker ("), "Import-only ingredient should show no origin. Label: {}", label);
+}
+
+#[test]
 fn country_display_on_label_for_ingredients_with_origin() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);

@@ -16,7 +16,7 @@ asset_dir = "public"
 [web.app]
 
 # HTML title tag content
-title = "Label Creator"
+title = "declarino.ch"
 base_path = "open-farming-hackdays-label-creator"
 
 [web.watcher]

@@ -20,6 +20,33 @@ fn single_ingredient_visible_on_label() {
     assert!(label.contains("Hafer"));
 }
 
+// Item 5 of the 2026-06-16 round: the free-text "Begründung" for a permitted
+// non-bio / non-Knospe ingredient is an internal note only — it must never be
+// printed on the label (the UI now flags this with an eye-off marker).
+#[test]
+fn exception_justification_note_never_printed_on_label() {
+    let calculator = setup_simple_calculator();
+    let mut ingredient = IngredientBuilder::new("Zitronensäure", 100.0)
+        .erlaubte_ausnahme_bio()
+        .build();
+    ingredient.erlaubte_ausnahme_bio_details = Some("INTERNE-NOTIZ-BIO-XYZ".to_string());
+    ingredient.erlaubte_ausnahme_knospe_details = Some("INTERNE-NOTIZ-KNOSPE-ABC".to_string());
+
+    let output = calculator.execute(
+        InputBuilder::new().ingredient(ingredient).build(),
+    );
+
+    assert!(output.label.contains("Zitronensäure"), "ingredient should appear. Label: {}", output.label);
+    assert!(
+        !output.label.contains("INTERNE-NOTIZ-BIO-XYZ"),
+        "bio exception justification must not be printed. Label: {}", output.label
+    );
+    assert!(
+        !output.label.contains("INTERNE-NOTIZ-KNOSPE-ABC"),
+        "knospe exception justification must not be printed. Label: {}", output.label
+    );
+}
+
 #[test]
 fn multiple_ingredients_comma_separated_on_label() {
     let calculator = setup_simple_calculator();
