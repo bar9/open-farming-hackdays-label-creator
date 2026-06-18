@@ -305,7 +305,7 @@ pub fn SplashScreen() -> Element {
                             img { src: asset!("assets/logos/arenenberg.png"), class: "h-12 md:h-14 w-auto object-contain", alt: "Arenenberg" }
                             img { src: asset!("assets/logos/hightech-zentrum-aargau.png"), class: "h-9 md:h-11 w-auto object-contain", alt: "Hightech Zentrum Aargau" }
                             img { src: asset!("assets/logos/fibl.png"), class: "h-8 md:h-9 w-auto object-contain", alt: "FiBL" }
-                            img { src: asset!("assets/logos/liebegg.png"), class: "h-7 md:h-8 w-auto object-contain", alt: "Liebegg" }
+                            img { src: asset!("assets/logos/liebegg.svg"), class: "h-7 md:h-8 w-auto object-contain", alt: "Liebegg" }
                         }
                     }
                 } }
