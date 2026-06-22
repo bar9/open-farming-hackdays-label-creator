@@ -10,7 +10,7 @@ app:
 routes:
   swiss: CH-Lebensmittelrecht
   swiss_desc: Schweizer Lebensmittelverordnung
-  bio: BioV
+  bio: Bio-Verordnung
   bio_desc: Biologische Produkte
   knospe: Bio Knospe
   knospe_desc: Bio Suisse Knospe
@@ -53,6 +53,8 @@ label:
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
+  mengen_als_prozent: Mengen als Prozent erfassen
+  anteil: Anteil
   computedValues: Eigenschaften der Unterzutaten
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
@@ -72,6 +74,8 @@ label:
   saved_indicator: (Gespeichert)
   allergen_indicator: (Allergen)
   rezepturVollstaendig: "Rezeptur vollständig \u2014 überprüfen"
+  rezepturGueltig: "Keine Fehler gefunden"
+  rezepturProbleme: "%{count} Problem(e) gefunden"
   liv_anhang7_format: "100g Enderzeugnis enthalten %{grams}g"
   verarbeitungsschritte: Verarbeitungsschritte
 
@@ -150,6 +154,11 @@ help:
   verarbeitungsschritte: |
     Wählen Sie die Verarbeitungsschritte, die auf dieses Produkt zutreffen.
     Diese werden auf der Etikette im Zutatenverzeichnis angezeigt.
+
+  mengen_als_prozent: |
+    Erfasse die Unterzutaten als **Prozent der Gesamtmenge** der zusammengesetzten Zutat.
+    Die Gesamtmenge (in g/ml) bleibt oben eingebbar; das Gewicht jeder Unterzutat wird daraus
+    berechnet. Die Prozente müssen nicht zwingend 100 % ergeben.
 
   menge: |
     Die Menge bezieht sich auf die **gerüsteten Zutaten** (geschält, gerüstet, vorbereitet).
@@ -279,6 +288,7 @@ units:
   g: g
   ml: ml
   l: l
+  percent: "%"
   chf: CHF
   chfPro: "CHF pro "
 

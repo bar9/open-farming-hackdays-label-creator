@@ -54,6 +54,39 @@ pub struct IngredientsTableProps {
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let editing_path: Signal<IngredientPath> = use_signal(Vec::new);
 
+    // Flatten all validation messages into an ordered (ingredient label, message)
+    // list. Keys are either "certification_body" or "ingredients[i][field]" where
+    // `i` is the TOP-LEVEL ingredient index (every validator in core.rs iterates
+    // `ingredients.iter().enumerate()`), so it maps directly to the ingredient name.
+    let issues = use_memo(move || {
+        let msgs = props.validation_messages.read();
+        let ingredients = props.ingredients.read();
+        let mut out: Vec<(usize, String, String)> = Vec::new();
+        for (key, messages) in msgs.iter() {
+            // Parse the top-level index from "ingredients[i][field]" (None for
+            // non-indexed keys such as "certification_body").
+            let idx = key
+                .strip_prefix("ingredients[")
+                .and_then(|rest| rest.split(']').next())
+                .and_then(|n| n.parse::<usize>().ok());
+            let label = idx
+                .and_then(|i| ingredients.get(i))
+                .map(|ing| ing.name.clone())
+                .unwrap_or_default();
+            // `usize::MAX` sorts non-indexed (e.g. cert body) keys last.
+            let sort_idx = idx.unwrap_or(usize::MAX);
+            for m in messages {
+                out.push((sort_idx, label.clone(), m.clone()));
+            }
+        }
+        // Deterministic order: HashMap iteration is unordered.
+        out.sort_by(|a, b| a.0.cmp(&b.0).then(a.2.cmp(&b.2)));
+        out.into_iter().map(|(_, label, msg)| (label, msg)).collect::<Vec<_>>()
+    });
+
+    // Recipe is "valid" once marked complete and no validation errors remain.
+    let recipe_valid = use_memo(move || (props.rezeptur_vollstaendig)() && issues().is_empty());
+
     let total_amount = use_memo(move || {
         props
             .ingredients
@@ -123,15 +156,68 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             {
                 let rezeptur_vollstaendig = (props.rezeptur_vollstaendig)();
                 let btn_class = if rezeptur_vollstaendig { "btn btn-disabled" } else { "btn btn-accent" };
+                // Always render the feedback; toggle visibility via an interpolated
+                // class string (Dioxus 0.7 `if` conditionals don't reliably
+                // re-render on Memo changes).
+                let valid = recipe_valid();
+                let green_vis = if valid { "inline-flex" } else { "hidden" };
+                let error_vis = if rezeptur_vollstaendig && !valid { "flex" } else { "hidden" };
+                let problems = issues();
+                let problem_count = problems.len();
                 rsx! {
-                    div { class: "mt-4",
-                        button {
-                            class: "{btn_class}",
-                            disabled: rezeptur_vollstaendig,
-                            onclick: move |_| {
-                                props.rezeptur_vollstaendig.set(true);
-                            },
-                            "{t!(\"label.rezepturVollstaendig\").to_string()}"
+                    div { class: "mt-4 flex flex-col gap-2",
+                        div { class: "flex items-center gap-2",
+                            button {
+                                class: "{btn_class}",
+                                disabled: rezeptur_vollstaendig,
+                                onclick: move |_| {
+                                    props.rezeptur_vollstaendig.set(true);
+                                },
+                                "{t!(\"label.rezepturVollstaendig\").to_string()}"
+                            }
+                            span {
+                                class: "{green_vis} items-center gap-1 text-success font-medium",
+                                svg {
+                                    class: "h-6 w-6",
+                                    fill: "none",
+                                    view_box: "0 0 24 24",
+                                    stroke: "currentColor",
+                                    stroke_width: "2.5",
+                                    path {
+                                        stroke_linecap: "round",
+                                        stroke_linejoin: "round",
+                                        d: "M5 13l4 4L19 7",
+                                    }
+                                }
+                                "{t!(\"label.rezepturGueltig\").to_string()}"
+                            }
+                        }
+                        div {
+                            class: "{error_vis} flex-col gap-1 bg-error/30 rounded p-3 text-sm",
+                            div {
+                                class: "flex items-center gap-1 font-medium text-error",
+                                svg {
+                                    class: "h-5 w-5",
+                                    fill: "none",
+                                    view_box: "0 0 24 24",
+                                    stroke: "currentColor",
+                                    stroke_width: "2",
+                                    path {
+                                        stroke_linecap: "round",
+                                        stroke_linejoin: "round",
+                                        d: "M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z",
+                                    }
+                                }
+                                "{t!(\"label.rezepturProbleme\", count = problem_count).to_string()}"
+                            }
+                            for (label, msg) in problems {
+                                div { class: "flex gap-1 pl-6",
+                                    if !label.is_empty() {
+                                        span { class: "font-medium", "{label}: " }
+                                    }
+                                    span { "{msg}" }
+                                }
+                            }
                         }
                     }
                 }
@@ -143,12 +229,6 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             ingredients: props.ingredients,
             editing_path: editing_path,
             rules: props.rules,
-        }
-
-        // Show validation messages for all ingredients
-        ValidationDisplay {
-            paths: (0..props.ingredients.read().len()).map(|i| format!("ingredients[{}][origin]", i)).collect::<Vec<_>>(),
-            div {}
         }
     }
 }

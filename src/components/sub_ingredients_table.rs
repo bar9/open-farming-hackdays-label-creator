@@ -1,5 +1,5 @@
 use crate::components::*;
-use crate::core::Ingredient;
+use crate::core::{AmountUnit, Ingredient};
 use crate::model::{lookup_allergen, lookup_agricultural};
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{UnifiedIngredient, IngredientSource};
@@ -11,6 +11,15 @@ pub struct SubIngredientsTableProps {
     ingredients: Signal<Vec<Ingredient>>,
     index: usize,
     on_edit_child: EventHandler<usize>,
+    /// When true, children are entered as percentages of `parent_total` (inline % input).
+    #[props(default = false)]
+    percentage_mode: bool,
+    /// Parent composite's total amount, used to show each child's derived grams.
+    #[props(default = 0.0)]
+    parent_total: f64,
+    /// Parent composite's unit (g/ml) for the derived-grams display.
+    #[props(default)]
+    parent_unit: AmountUnit,
 }
 pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
     let name_to_add = use_signal(String::new);
@@ -23,6 +32,23 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             if let Some(mut ingredient) = ingredients.get_mut(index) {
                 if let Some(children) = &mut ingredient.children {
                     children.remove(child_index);
+                }
+            }
+        }
+    };
+
+    // Set a child's percentage value (percentage mode only). Stored on the child's
+    // `amount` with `unit: Percent`; grams are derived from the parent total downstream.
+    let mut set_child_percentage = {
+        let mut ingredients = props.ingredients;
+        let index = props.index;
+        move |child_index: usize, pct: f64| {
+            if let Some(mut ingredient) = ingredients.get_mut(index) {
+                if let Some(children) = &mut ingredient.children {
+                    if let Some(child) = children.get_mut(child_index) {
+                        child.amount = pct;
+                        child.unit = AmountUnit::Percent;
+                    }
                 }
             }
         }
@@ -101,6 +127,8 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         is_allergen: allergen_status,
                         is_agricultural: lookup_agricultural(&lookup_name),
                         canonical,
+                        // In percentage mode new children are percentage shares (start at 0%).
+                        unit: if props.percentage_mode { AmountUnit::Percent } else { AmountUnit::default() },
                         ..Default::default()
                     };
 
@@ -121,6 +149,9 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
             table { class: "table border-solid",
                 tr {
                     th { "{t!(\"label.zutat\").to_string()}" }
+                    if props.percentage_mode {
+                        th { class: "text-right", "{t!(\"label.anteil\").to_string()}" }
+                    }
                     th { "" }
                     th { "" }
                 }
@@ -134,6 +165,29 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                         span { class: "font-bold", "{child.name}" }
                                     } else {
                                         "{child.name}"
+                                    }
+                                }
+                            }
+                            if props.percentage_mode {
+                                td {
+                                    div { class: "flex items-center gap-2 justify-end",
+                                        input {
+                                            r#type: "number",
+                                            class: "input input-accent input-sm w-20",
+                                            min: "0",
+                                            step: "any",
+                                            value: "{child.amount}",
+                                            oninput: move |evt| {
+                                                let v = evt.data.value();
+                                                let pct = if v.is_empty() { 0.0 } else { v.parse::<f64>().unwrap_or(0.0) };
+                                                set_child_percentage(key, pct);
+                                            },
+                                        }
+                                        span { class: "text-sm opacity-70", "%" }
+                                        // Derived grams from the parent total (read-only feedback).
+                                        span { class: "text-sm opacity-60 w-20 text-right",
+                                            { format!("= {:.0} {}", props.parent_total * child.amount / 100.0, t!(props.parent_unit.translation_key())) }
+                                        }
                                     }
                                 }
                             }

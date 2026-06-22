@@ -54,6 +54,8 @@ label:
   menge: Quantité
   namensgebendeZutat: Ingrédient caractéristique
   zusammengesetzteZutat: Ingrédient composé
+  mengen_als_prozent: Saisir les quantités en pourcentage
+  anteil: Proportion
   computedValues: Propriétés des sous-ingrédients
   zutatEingeben: Ingrédient (saisir ou sélectionner)
   namensgebend: Caractéristique
@@ -73,6 +75,8 @@ label:
   saved_indicator: (Enregistré)
   allergen_indicator: (Allergène)
   rezepturVollstaendig: "Recette complète \u2014 vérifier"
+  rezepturGueltig: "Aucune erreur trouv\u00e9e"
+  rezepturProbleme: "%{count} probl\u00e8me(s) d\u00e9tect\u00e9(s)"
   liv_anhang7_format: "100g de produit fini contiennent %{grams}g"
   verarbeitungsschritte: Procédés de transformation
 
@@ -111,6 +115,7 @@ units:
   g: g
   ml: ml
   l: l
+  percent: "%"
   chf: CHF
   chfPro: "CHF par "
 
@@ -209,6 +214,11 @@ help:
   verarbeitungsschritte: |
     Sélectionnez les procédés de transformation applicables à ce produit.
     Ils seront affichés sur l'étiquette dans la liste des ingrédients.
+
+  mengen_als_prozent: |
+    Saisissez les sous-ingrédients en **pourcentage de la quantité totale** de l'ingrédient composé.
+    La quantité totale (en g/ml) reste modifiable ci-dessus; le poids de chaque sous-ingrédient en
+    est déduit. Les pourcentages ne doivent pas obligatoirement totaliser 100 %.
 
   menge: |
     La quantité se réfère aux **ingrédients préparés** (épluchés, préparés).

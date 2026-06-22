@@ -73,6 +73,7 @@ impl IngredientBuilder {
     pub fn children(mut self, kids: Vec<Ingredient>) -> Self { self.0.children = Some(kids); self }
     pub fn processing_steps(mut self, steps: Vec<&str>) -> Self { self.0.processing_steps = Some(steps.iter().map(|s| s.to_string()).collect()); self }
     pub fn override_children(mut self) -> Self { self.0.override_children = Some(true); self }
+    pub fn unit(mut self, unit: AmountUnit) -> Self { self.0.unit = unit; self }
     pub fn build(self) -> Ingredient { self.0 }
 }
 

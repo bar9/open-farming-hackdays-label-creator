@@ -89,6 +89,12 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let mut edit_is_composite = use_signal(|| {
         original_ingredient.children.as_ref().is_some_and(|s| !s.is_empty())
     });
+    // Percentage mode: children are entered as percentages of the parent total
+    // (which stays editable in g/ml). Detected from children carrying the Percent unit.
+    let mut edit_percentage_mode = use_signal(|| {
+        original_ingredient.children.as_ref()
+            .is_some_and(|c| c.iter().any(|ch| ch.unit == AmountUnit::Percent))
+    });
     let mut edit_is_namensgebend = use_signal(|| {
         original_ingredient.is_namensgebend.unwrap_or(false)
     });
@@ -501,9 +507,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let build_ingredient = move || -> Option<Ingredient> {
         let amount = if edit_is_composite() {
             let children = edit_children();
+            // Percentage children are shares of the parent total (top-down), not
+            // bottom-up weights, so they don't count here.
             let has_weighted_child = children
                 .as_ref()
-                .is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0));
+                .is_some_and(|c| c.iter().any(|child| {
+                    child.unit != AmountUnit::Percent && child.computed_amount() > 0.0
+                }));
             if has_weighted_child {
                 // Bottom-up weight: the total is the sum of the children. Derive it
                 // directly (don't depend on edit_amount being synced yet — e.g. right
@@ -727,7 +737,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let composite_has_weighted_child = use_memo(move || {
         edit_children()
             .as_ref()
-            .is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0))
+            .is_some_and(|c| c.iter().any(|child| {
+                // Percentage children don't make the parent a bottom-up sum; the
+                // parent total stays user-entered, so they don't count as "weighted".
+                child.unit != AmountUnit::Percent && child.computed_amount() > 0.0
+            }))
     });
 
     // Use the path for validation display paths, falling back to index
@@ -838,8 +852,61 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 SubIngredientsTable {
                     ingredients: wrapper_ingredients,
                     index: 0,
+                    percentage_mode: edit_percentage_mode(),
+                    parent_total: edit_amount().unwrap_or(0.0),
+                    parent_unit: edit_unit(),
                     on_edit_child: move |child_index: usize| {
                         goto_child.call(child_index);
+                    }
+                }
+
+                // Percentage mode: enter children as percentages of the (editable) parent
+                // total. Toggling converts existing children between % and absolute g/ml.
+                br {}
+                FormField {
+                    label: t!("label.mengen_als_prozent").to_string(),
+                    help: Some(t!("help.mengen_als_prozent").to_string()),
+                    inline_checkbox: true,
+                    input {
+                        class: "toggle toggle-accent",
+                        r#type: "checkbox",
+                        checked: edit_percentage_mode(),
+                        oninput: move |evt| {
+                            let on = evt.data.checked();
+                            let children = edit_children().unwrap_or_default();
+                            if on {
+                                // absolute -> percentage: seed parent total from the current
+                                // sum, then express each child as a share of it.
+                                let synth = Ingredient { children: Some(children.clone()), ..Default::default() };
+                                let total = synth.computed_amount();
+                                if total > 0.0 {
+                                    edit_amount.set(Some(total));
+                                    edit_unit.set(synth.computed_unit());
+                                }
+                                let new_children = children.iter().map(|c| {
+                                    let mut nc = c.clone();
+                                    nc.amount = if total > 0.0 { c.computed_amount() / total * 100.0 } else { 0.0 };
+                                    nc.unit = AmountUnit::Percent;
+                                    nc
+                                }).collect::<Vec<_>>();
+                                edit_children.set(Some(new_children));
+                            } else {
+                                // percentage -> absolute: realize each child's grams from the
+                                // current parent total and unit.
+                                let total = edit_amount().unwrap_or(0.0);
+                                let unit = if edit_unit() == AmountUnit::Percent { AmountUnit::Gram } else { edit_unit() };
+                                let new_children = children.iter().map(|c| {
+                                    let mut nc = c.clone();
+                                    if c.unit == AmountUnit::Percent {
+                                        nc.amount = total * c.amount / 100.0;
+                                        nc.unit = unit.clone();
+                                    }
+                                    nc
+                                }).collect::<Vec<_>>();
+                                edit_children.set(Some(new_children));
+                            }
+                            edit_percentage_mode.set(on);
+                        }
                     }
                 }
 
@@ -849,7 +916,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 if !composite_has_weighted_child() {
                     br {}
                     FormField {
-                        label: format!("{} (g)", t!("label.menge").to_string()),
+                        label: {
+                            let n = edit_name();
+                            if n.trim().is_empty() {
+                                format!("{} (g)", t!("label.menge"))
+                            } else {
+                                format!("{} {} (g)", t!("label.menge"), n.trim())
+                            }
+                        },
                         help: Some(t!("help.menge").to_string()),
                         ValidationDisplay {
                             paths: vec![
@@ -900,7 +974,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         let unit_key = synth[0].computed_unit().translation_key();
                         rsx! {
                             FormField {
-                                label: format!("{} (g)", t!("label.menge").to_string()),
+                                label: {
+                            let n = edit_name();
+                            if n.trim().is_empty() {
+                                format!("{} (g)", t!("label.menge"))
+                            } else {
+                                format!("{} {} (g)", t!("label.menge"), n.trim())
+                            }
+                        },
                                 help: Some(t!("help.menge").to_string()),
                                 CrossLevelLock {
                                     locked: weight_locked,
@@ -1077,7 +1158,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 // === LEAF MODE: editable form fields ===
                 br {}
                 FormField {
-                    label: format!("{} (g)", t!("label.menge").to_string()),
+                    label: {
+                        let n = edit_name();
+                        if n.trim().is_empty() {
+                            format!("{} (g)", t!("label.menge"))
+                        } else {
+                            format!("{} {} (g)", t!("label.menge"), n.trim())
+                        }
+                    },
                     help: Some(t!("help.menge").to_string()),
                     ValidationDisplay {
                         paths: vec![

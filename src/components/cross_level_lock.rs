@@ -19,7 +19,7 @@ pub fn CrossLevelLock(props: CrossLevelLockProps) -> Element {
     rsx! {
         // Outer element captures hover (for the tooltip); inner greys + disables the control.
         div {
-            class: "tooltip tooltip-left block w-full",
+            class: "tooltip tooltip-top block w-full",
             "data-tip": t!("cross_level.defined_on_subingredients").to_string(),
             div { class: "opacity-50 pointer-events-none", {props.children} }
         }

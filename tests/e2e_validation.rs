@@ -84,6 +84,131 @@ async fn validation_clears_when_origin_restored() {
     let _ = c.close().await;
 }
 
+// ---------- success badge — green checkmark when recipe is error-free ----------
+//
+// After "Rezeptur vollständig" the user should get positive feedback when no
+// validation errors remain: a green checkmark + "Keine Fehler gefunden" badge
+// next to the button. The badge is always in the DOM but toggled via a
+// `hidden`/`inline-flex` class, so `innerText` (which omits display:none nodes)
+// only contains the text when the badge is actually visible.
+
+#[tokio::test]
+async fn success_badge_shows_when_recipe_valid() {
+    let c = connect().await;
+
+    // Minimal error-free Lebensmittelrecht recipe: a single non-meat
+    // ingredient at 100% with an origin set — satisfies AP7_1 and trips no
+    // meat/fish/cert-body rules.
+    let recipe = Recipe {
+        config: Config::Lebensmittelrecht,
+        product_name: "Zucker pur",
+        sachbezeichnung: "Zucker",
+        certification_body: None,
+        ingredients: &[
+            RecipeIngredient { name: "Zucker", grams: 100.0, origin: Some("CH"), bio: BioStatus::Conventional },
+        ],
+    };
+    goto_config(&c, recipe.config).await;
+    seed_recipe_via_ui(&c, &recipe).await; // also presses "Rezeptur vollständig"
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    let body: String = c
+        .execute("return document.body.innerText;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    assert!(
+        body.contains("Keine Fehler gefunden"),
+        "expected success badge after Rezeptur vollständig on an error-free recipe. body excerpt:\n{}",
+        &body.chars().take(2000).collect::<String>()
+    );
+
+    assert_no_errors(&c, "success_badge_shows_when_recipe_valid").await;
+    let _ = c.close().await;
+}
+
+#[tokio::test]
+async fn success_badge_hidden_when_validation_error() {
+    let c = connect().await;
+
+    // Same shape but Rindfleisch (>50%, meat) missing its origin → AP7_1/AP7_3
+    // fire, so the recipe is NOT error-free and the success badge must stay hidden.
+    let recipe = Recipe {
+        config: Config::Lebensmittelrecht,
+        product_name: "Rindshackbraten — kein Origin",
+        sachbezeichnung: "Rindshackbraten",
+        certification_body: None,
+        ingredients: &[
+            RecipeIngredient { name: "Rindfleisch", grams: 350.0, origin: None,       bio: BioStatus::Conventional },
+            RecipeIngredient { name: "Zwiebel",     grams: 80.0,  origin: Some("CH"), bio: BioStatus::Conventional },
+        ],
+    };
+    goto_config(&c, recipe.config).await;
+    seed_recipe_via_ui(&c, &recipe).await;
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    let body: String = c
+        .execute("return document.body.innerText;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    assert!(
+        !body.contains("Keine Fehler gefunden"),
+        "success badge must stay hidden while validation errors remain. body excerpt:\n{}",
+        &body.chars().take(2000).collect::<String>()
+    );
+
+    assert_no_errors(&c, "success_badge_hidden_when_validation_error").await;
+    let _ = c.close().await;
+}
+
+// ---------- consolidated summary surfaces a previously-invisible error ----------
+//
+// Beef birthplace/slaughter errors (AP7_4) only had per-field UI inside the
+// ingredient edit modal — never in the main view. The new summary box beside the
+// check button must list them (with the ingredient name) so the recipe isn't
+// silently invalid. Seed Rindfleisch WITH origin (so AP7_1/AP7_3 are satisfied)
+// but WITHOUT aufzucht_ort/schlachtungs_ort, so only AP7_4 fires.
+
+#[tokio::test]
+async fn summary_surfaces_invisible_beef_error() {
+    let c = connect().await;
+    goto_config(&c, RINDSHACKBRATEN.config).await;
+    seed_recipe_via_ui(&c, &RINDSHACKBRATEN).await; // origin set, no birthplace/slaughter
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    let body: String = c
+        .execute("return document.body.innerText;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+
+    // The beef breeding/slaughter message is now visible in the main view.
+    assert!(
+        body.contains("Aufzuchtort ist erforderlich") || body.contains("Schlachtungsort ist erforderlich"),
+        "expected beef birthplace/slaughter validation message in the consolidated summary. body excerpt:\n{}",
+        &body.chars().take(2500).collect::<String>()
+    );
+    // Prefixed with the ingredient name.
+    assert!(
+        body.contains("Rindfleisch"),
+        "expected the ingredient name 'Rindfleisch' alongside the issue. body excerpt:\n{}",
+        &body.chars().take(2500).collect::<String>()
+    );
+    // And the success badge must NOT be shown.
+    assert!(
+        !body.contains("Keine Fehler gefunden"),
+        "success badge must be hidden while the beef error is outstanding. body excerpt:\n{}",
+        &body.chars().take(2500).collect::<String>()
+    );
+
+    assert_no_errors(&c, "summary_surfaces_invisible_beef_error").await;
+    let _ = c.close().await;
+}
+
 // ---------- §2.2 — Bio cert body required ----------
 
 #[tokio::test]

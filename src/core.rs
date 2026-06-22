@@ -476,6 +476,10 @@ pub enum AmountUnit {
     #[default]
     Gram,
     Milliliter,
+    /// A child's amount expressed as a percentage of its parent's total. Only
+    /// valid on direct children of a composite (percentage mode); resolved to
+    /// the parent's gram/ml unit before label generation (see `resolve_percentages`).
+    Percent,
 }
 
 impl AmountUnit {
@@ -483,6 +487,7 @@ impl AmountUnit {
         match self {
             AmountUnit::Gram => "units.g",
             AmountUnit::Milliliter => "units.ml",
+            AmountUnit::Percent => "units.percent",
         }
     }
 }
@@ -666,24 +671,87 @@ impl Ingredient {
         }
     }
 
-    /// Recursively scale amounts by a factor
+    /// Recursively scale amounts by a factor. Percentage-mode children are left
+    /// untouched: their share of the parent is fixed, and the derived grams scale
+    /// automatically once the parent total scales.
     pub fn scale_recursive(&mut self, factor: f64) {
         self.amount *= factor;
         if let Some(children) = &mut self.children {
             for child in children {
+                if child.unit == AmountUnit::Percent {
+                    continue;
+                }
                 child.scale_recursive(factor);
             }
         }
     }
 
+    /// Percentage mode: at least one direct child is expressed as a percentage of
+    /// this node's total. In that mode the parent's own `amount` is authoritative
+    /// (top-down) and children's grams are derived from it (see `resolve_percentages`).
+    fn is_percentage_mode(&self) -> bool {
+        self.children
+            .as_ref()
+            .is_some_and(|c| c.iter().any(|child| child.unit == AmountUnit::Percent))
+    }
+
     /// Is this node a leaf (no children, override active, or children are qualitative-only)?
     /// Qualitative-only children (all amounts zero) means the parent is the authoritative
     /// source for calculations, while children are display-only (for the composites label).
+    /// A percentage-mode parent is also authoritative *for weight* (its total drives the
+    /// children's grams) — note this governs weight only; quality/origin still aggregate
+    /// bottom-up via `aggregates_from_children`.
     fn is_leaf(&self) -> bool {
         self.override_children.unwrap_or(false)
+            || self.is_percentage_mode()
             || self.children.as_ref().is_none_or(|c| {
                 c.is_empty() || c.iter().all(|child| child.amount == 0.0)
             })
+    }
+
+    /// Resolve percentage-mode children into absolute (gram/ml) children, recursively.
+    /// A percent child's grams become `parent_total * pct / 100` in the parent's unit.
+    /// The parent stays a normal bottom-up composite afterwards, so its weight equals the
+    /// sum of the resolved children (== the parent total when the percentages sum to 100%,
+    /// the expected case) and quality/origin keep aggregating bottom-up untouched.
+    /// Idempotent on trees that contain no percentage children.
+    pub fn resolve_percentages(&self) -> Ingredient {
+        let mut resolved = self.clone();
+        if resolved.is_percentage_mode() {
+            let parent_total = resolved.amount;
+            let parent_unit = resolved.unit.clone();
+            if let Some(children) = resolved.children.as_mut() {
+                for child in children.iter_mut() {
+                    if child.unit == AmountUnit::Percent {
+                        let target = parent_total * child.amount / 100.0;
+                        child.unit = parent_unit.clone();
+                        // If the child is itself a weighted composite, scale its subtree so
+                        // it sums to the target grams (keeps its bottom-up quality/origin
+                        // intact); otherwise it's a leaf and the target is simply its amount.
+                        let current = child.computed_amount();
+                        let is_weighted_composite = child.children.as_ref().is_some_and(|c| {
+                            !c.is_empty() && c.iter().any(|g| g.amount != 0.0)
+                        });
+                        if is_weighted_composite && current > 0.0 {
+                            let factor = target / current;
+                            if let Some(grandchildren) = child.children.as_mut() {
+                                for g in grandchildren.iter_mut() {
+                                    g.scale_recursive(factor);
+                                }
+                            }
+                        }
+                        child.amount = target;
+                    }
+                }
+            }
+        }
+        // Recurse so nested composites (percentage or absolute) resolve too.
+        if let Some(children) = resolved.children.as_mut() {
+            for child in children.iter_mut() {
+                *child = child.resolve_percentages();
+            }
+        }
+        resolved
     }
 
     /// Effective amount: own value if leaf/override, sum of children otherwise
@@ -1032,6 +1100,14 @@ impl Calculator {
     pub fn execute(&self, input: Input) -> Output {
         // Debug logging: Show active rules
         self.log_active_rules();
+
+        // Resolve percentage-mode composites into absolute gram/ml children up front,
+        // so the entire downstream pipeline (computed_amount, QUID, sorting, validations)
+        // operates on plain weights. The persisted Form keeps the percentages.
+        let input = Input {
+            ingredients: input.ingredients.iter().map(|i| i.resolve_percentages()).collect(),
+            ..input
+        };
 
         let mut validation_messages = HashMap::new();
         let mut conditionals = HashMap::new();

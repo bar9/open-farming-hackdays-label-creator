@@ -53,6 +53,8 @@ label:
   menge: Quantità
   namensgebendeZutat: Ingrediente caratterizzante
   zusammengesetzteZutat: Ingrediente composto
+  mengen_als_prozent: Inserire le quantità in percentuale
+  anteil: Quota
   computedValues: Proprietà degli ingredienti secondari
   zutatEingeben: Ingrediente (inserire o selezionare)
   namensgebend: Caratterizzante
@@ -72,6 +74,8 @@ label:
   saved_indicator: (Salvato)
   allergen_indicator: (Allergene)
   rezepturVollstaendig: "Ricetta completa \u2014 verificare"
+  rezepturGueltig: "Nessun errore rilevato"
+  rezepturProbleme: "%{count} problema/i rilevato/i"
   liv_anhang7_format: "100g di prodotto finito contengono %{grams}g"
   verarbeitungsschritte: Fasi di lavorazione
 
@@ -110,6 +114,7 @@ units:
   g: g
   ml: ml
   l: l
+  percent: "%"
   chf: CHF
   chfPro: "CHF per "
 
@@ -204,6 +209,11 @@ help:
 
   namensgebendeZutaten: |
     Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, deve essere selezionato il simbolo dietro l'ingrediente. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
+
+  mengen_als_prozent: |
+    Inserisci gli ingredienti secondari come **percentuale della quantità totale** dell'ingrediente
+    composto. La quantità totale (in g/ml) resta modificabile sopra; il peso di ogni ingrediente
+    secondario viene calcolato di conseguenza. Le percentuali non devono necessariamente sommare a 100 %.
 
   menge: |
     La quantità si riferisce agli **ingredienti preparati** (sbucciati, preparati).

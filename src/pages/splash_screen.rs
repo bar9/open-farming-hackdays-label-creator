@@ -290,7 +290,7 @@ pub fn SplashScreen() -> Element {
                 { rsx! {
                     // Trägerschaft logo ribbon
                     div {
-                        class: "flex-none bg-base-100 px-6 pt-3 pb-2",
+                        class: "flex-none bg-base-100 px-6 pt-4 pb-8",
                         p {
                             class: "text-center text-sm text-base-content/70 mb-2",
                             {t!("splash.traegerschaft").to_string()}

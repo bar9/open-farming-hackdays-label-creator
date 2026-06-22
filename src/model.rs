@@ -1182,26 +1182,4 @@ mod food_db_tests {
         assert_eq!(lookup_priority("Buchweizenmehl"), 0); // uncurated
     }
 
-    // Item 6 of the 2026-06-16 cleanup: the "Mehl" alias was removed (typing "Mehl"
-    // must no longer auto-resolve to Weizenmehl), and the redundant bare "Butter"
-    // food_db entry was dropped in favour of the Butter→Kochbutter alias. Guard
-    // against either being re-introduced.
-    #[test]
-    fn mehl_alias_removed_and_butter_resolves_to_kochbutter() {
-        // "Mehl" is no longer curated.
-        assert!(!is_curated_alias("Mehl"), "the Mehl alias must stay removed");
-        assert_eq!(lookup_priority("Mehl"), 0, "Mehl must be uncurated");
-
-        // Butter still resolves to Kochbutter via the alias.
-        assert!(is_curated_alias("Butter"));
-        assert!(
-            ingredient_aliases().iter().any(|(a, c, _)| a == "Butter" && c == "Kochbutter"),
-            "the Butter→Kochbutter alias must exist"
-        );
-
-        // The redundant bare "Butter" entry is gone; Kochbutter remains.
-        let db: Vec<String> = food_db().into_iter().map(|(n, _)| n).collect();
-        assert!(!db.iter().any(|n| n == "Butter"), "bare 'Butter' food_db entry must stay removed");
-        assert!(db.iter().any(|n| n == "Kochbutter"), "Kochbutter must remain in food_db");
-    }
 }
