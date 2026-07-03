@@ -110,7 +110,8 @@ den blauen «Rezeptur OK»-Text **nicht** (Annahme, zu verifizieren).
 
 - Testing-Notizen: `requirements/Testing Declarino - Notizen aus Besprechung 25.06.2026.docx`
 - Excel-Referenz Kategorien/Herkunft: `requirements/Inhaltsverzeichnis_Bio_Zusatz.xlsx`
-- Januar-Vergleichsinstanz: v0.8.0 (Commit `9a0113f`), Deployment separat.
+- Januar-Vergleichsinstanz (Stand Ende Januar, Commit `f1a2bb9`):
+  https://bar9.github.io/open-farming-hackdays-label-creator/v0.8.0/
 - Implementierung: `src/core.rs` (`should_show_origin_knospe_under90`,
   `validate_import_knospe_origin`, `format_origin_for_knospe_rules`),
   `src/food_db.csv` (Spalte `category`).
