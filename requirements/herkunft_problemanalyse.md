@@ -6,25 +6,54 @@ Validierung/Fehlermeldungen) an einem Ort dokumentieren, offene Fragen markieren
 und fachlich verifizieren lassen. Referenz-Instanz mit dem Stand vom Januar
 (v0.8.0) wird separat bereitgestellt.
 
+**Terminologie:** Die Fallbezeichnungen A)/B)/C) stammen wörtlich aus dem
+`Inhaltsverzeichnis_Bio_Zusatz.xlsx`, Blatt «Inhaltsverzeichnis». Dort gibt es
+**zwei getrennte** Aufzählungen, die nicht verwechselt werden dürfen:
+- **Zeile 8 «Herkunft der Rohstoffe (Knospe)»** — Typ *Validierungsregel* —
+  Fälle A/B/C für die **Herkunftsangabe in der Zutatenliste** (Abschnitt 1.1/1.2).
+- **Zeile 9 «Knospe-Logo»** — Typ *Ausgaberegel* — Fälle A/B/C/D für die
+  **Logo-Wahl** (Abschnitt 1.5).
+
 ## 1. Anzeige der Herkunft auf der Etikette (IST nach Umsetzung)
 
-### 1.1 Knospe-Konfiguration — abhängig vom CH-Anteil der landw. Zutaten
+### 1.1 «Herkunft der Rohstoffe (Knospe)» — Excel Zeile 8, Fälle A/B/C
 
-| CH-Anteil | Regel | Anzeige |
+Excel-Wortlaut (gekürzt) und Implementierungsstatus:
+
+| Fall | Excel-Wortlaut | Implementiert |
 |---|---|---|
-| 100 % | Rule A | Keine Herkunftsangaben |
-| 90–99.9 % | Rule B | «(CH)» nur bei landwirtschaftlichen CH-Zutaten |
-| < 90 % | Rule C | Zutatenspezifische Regeln (siehe 1.2) |
+| **A)** | «Falls 100% der landw. Zutaten aus CH: Herkunft der Zutaten muss nicht angegeben werden.» | ✓ keine Herkunftsangaben |
+| **B)** | «Falls mind. 90%–99.99% der landw. Zutaten aus CH: Herkunft der CH-Zutaten angeben in Klammern nach Zutat ("Schweiz" oder "CH")» | ✓ «(CH)» bei landw. CH-Zutaten |
+| **C)** | «Bei mehr als 10% landw. Zutaten nicht aus der Schweiz, muss in folgenden Fällen Herkunft einer Zutat angegeben werden: …» (Liste siehe 1.2) | ✓ zutatenspezifisch (1.2) |
 
-### 1.2 Knospe < 90 % CH — zutatenspezifische Anzeige (Excel-Referenztabelle)
+> **Frage an Mirjam (steht so bereits im Excel, Fall B):** «Stimmt das? Muss
+> Herkunft der anderen Zutaten nicht angegeben werden?» — d.h. ob im Fall B
+> ausländische Zutaten wirklich ohne Angabe bleiben. Aktuell implementiert:
+> nur CH-Zutaten zeigen «(CH)».
 
-Herkunft wird angezeigt für:
-- Monoprodukte: immer
-- Namensgebende Zutaten: immer
-- Pflanzliche Zutaten > 50 % Anteil
-- Eier / Honig / Fisch & Aquakultur > 10 % Anteil
-- Milch & Milchprodukte / Fleisch / Insekten: immer
-- Landw. CH-Zutaten ≥ 10 % Anteil (unabhängig von Kategorie)
+### 1.2 Fall C im Detail — zutatenspezifische Liste (Excel Zeile 8)
+
+Excel-Liste 1:1 (Herkunft angeben für):
+- «Schweizer Zutat mit mind. 10% Anteil» → ✓ implementiert (≥ 10 %)
+- «pflanzliche Zutat mit mehr als 50% Anteil» → ✓ implementiert (> 50 %)
+- «Eier/Honig/Fisch/andere Aquakulturen mit mehr als 10% Anteil» → ✓ implementiert (> 10 %)
+- «Monoprodukten» → ✓ implementiert (immer)
+- «Milch/Milchprodukte/Fleisch(erzeugnisse)/Insekten(erzeugnisse)» → ✓ implementiert (immer, ohne Schwellenwert)
+
+**Zusätzlich implementiert, NICHT aus der Excel-C-Liste:** Namensgebende
+Zutaten zeigen immer die Herkunft. Quelle ist der LIV-Kommentar in derselben
+Excel-Zeile (Spalte H, Art. 15/16 LIV: Herkunft der namens-/wertgebenden
+Zutat, gilt für alle Qualitäten).
+
+> **Frage an Mirjam (steht so bereits im Excel, Fall C):** «gilt das auch bei
+> solchen Zutaten, oder nur wenn das ganze Produkt zB ein Milchprodukt ist?»
+> — Implementiert ist die Auslegung **pro Zutat** (jede Milch-/Fleisch-Zutat
+> zeigt Herkunft). Diese Frage hängt direkt mit der Milchpulver-Frage unten
+> zusammen.
+
+**Formatabweichung:** Das Excel erlaubt Herkunft «ausgeschrieben (Paraguay)
+oder als Ländercode (ISO-3166 Alpha-2: PY)», Kommentar: «Die Wahl lassen.»
+Implementiert ist derzeit **nur der Ländercode** — Wahlmöglichkeit fehlt.
 
 **Neu seit 25.06-Feedback:** Die Kategorie einer Zutat wird nicht mehr nur von
 der BLV-API übernommen, sondern fällt auf eine kuratierte Kategorie-Spalte in
@@ -61,7 +90,30 @@ der lokalen Zutaten-DB (`src/food_db.csv`) zurück. Damit zeigt z.B. **Butter**
 - LMR: Herkunft > 50 % (AP7.1), Fleisch > 20 % (AP7.3), Rind-Details (AP7.4),
   Fisch-Fangort (AP7.5) — unverändert.
 
+### 1.5 «Knospe-Logo» — Excel Zeile 9, Fälle A/B/C/D (Ausgaberegel)
+
+| Fall | Excel-Wortlaut | Implementiert |
+|---|---|---|
+| **A)** | «Produkte aus mind. 90% Schweizer Knospe-Rohstoffe: Knospe-Logo mit Schweizer Flagge.» | ✓ |
+| **B)** | «Produkte mit mehr als 10% ausländischen Knospe-Zutaten: Knospe-Logo ohne Schweizer Flagge.» | ✓ |
+| **C)** | «Produkte mit Zutaten aus Knospe-Umstellungsbetrieben: Umstellungsknospe-Logo, mit oder ohne Schweizer Flagge, gleiche Logik wie A) & B). Direkt neben Logo: Hinweis: "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."» | ✓ **neu seit 25.06-Feedback** (offizielle Bio-Suisse-Logos, Satz links vom Logo, dreisprachig) |
+| **D)** | «Für verarbeitete Produkte, die nicht vollständig den Bio Suisse-Verarbeitungsrichtlinien entsprechen (z.B. Rohstoff nach Bio-CH anstatt Knospe, oder nicht erlaubter Verarbeitungsschritt): Umstellungsknospe mit Hinweis "Hergestellt im Rahmen der Umstellung auf die **Bio Suisse Richtlinien**."» | ✗ **NICHT implementiert** |
+
+Zusatzbedingung (implementiert): Ein Logo erscheint nur, wenn 100 % der
+landwirtschaftlichen Zutaten Knospe-zertifiziert sind (bzw. erlaubte Ausnahmen).
+
+> **Frage an Mirjam / offener Punkt:** Fall D («Umstellung Verarbeitung», mit
+> dem abweichenden Hinweissatz auf die *Richtlinien* statt die *Landwirtschaft*)
+> ist noch nicht umgesetzt. Soll das Tool diesen Fall abdecken (z.B. via die
+> Checkbox «Umstellung Verarbeitung» aus der Excel-Eingabespalte), und wenn ja,
+> wann greift er genau?
+
 ## 2. Validierung («Rezeptur vollständig — überprüfen»)
+
+Das Excel klassifiziert «Herkunft der Rohstoffe (Knospe)» (Zeile 8) als
+**Validierungsregel**: Die Fallunterscheidung A/B/C aus 1.1 steuert die
+Anzeige; die rote Fehlermeldung unten ist die dazugehörige Prüfregel gemäss
+Sitzungsentscheid vom 25.06.
 
 ### 2.1 Neu umgesetzte Regel (25.06-Feedback, «roter Text»)
 
@@ -109,7 +161,9 @@ den blauen «Rezeptur OK»-Text **nicht** (Annahme, zu verifizieren).
 ## 4. Referenzen
 
 - Testing-Notizen: `requirements/Testing Declarino - Notizen aus Besprechung 25.06.2026.docx`
-- Excel-Referenz Kategorien/Herkunft: `requirements/Inhaltsverzeichnis_Bio_Zusatz.xlsx`
+- Excel-Referenz: `requirements/Inhaltsverzeichnis_Bio_Zusatz.xlsx`, Blatt
+  «Inhaltsverzeichnis», Zeile 8 «Herkunft der Rohstoffe (Knospe)» (Fälle A/B/C,
+  Validierungsregel) und Zeile 9 «Knospe-Logo» (Fälle A/B/C/D, Ausgaberegel)
 - Januar-Vergleichsinstanz (Stand Ende Januar, Commit `f1a2bb9`):
   https://bar9.github.io/open-farming-hackdays-label-creator/v0.8.0/
 - Implementierung: `src/core.rs` (`should_show_origin_knospe_under90`,
