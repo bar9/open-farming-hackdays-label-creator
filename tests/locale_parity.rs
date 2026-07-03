@@ -15,24 +15,15 @@ const COUNTRIES_PREFIX: &str = "countries.";
 const KNOWN_MISSING_FR: &[&str] = &[
     "help.erlaubte_ausnahme_bio.Referenz",
     "help.haltbarkeit.Grundsatz",
-    "help.herkunft_liv_art_16",
     "help.menge.Beispiel",
     "help.nettogewicht.Achtung",
-    "help.plz",
 ];
 
 const KNOWN_MISSING_IT: &[&str] = &[
-    "help.bio_ch",
-    "help.bio_knospe",
-    "help.bio_knospe_import",
     "help.erlaubte_ausnahme_bio.Referenz",
     "help.haltbarkeit.Grundsatz",
-    "help.herkunft_liv_art_16",
     "help.menge.Beispiel",
     "help.nettogewicht.Achtung",
-    "help.plz",
-    "help.verarbeitungsschritte",
-    "label.saved_ingredients",
 ];
 
 /// Minimal YAML key extractor for the project's locale files.

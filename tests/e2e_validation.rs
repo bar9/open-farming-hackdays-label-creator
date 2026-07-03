@@ -257,7 +257,9 @@ async fn bio_cert_body_required() {
 async fn knospe_origin_required_for_all() {
     let c = connect().await;
 
-    // Knospe recipe with one ingredient missing origin.
+    // Reworked rule (Testing 25.06.2026): origin is required for an
+    // Import-Knospe ingredient without a country when the label shows the
+    // Import-Knospe (<90% Swiss). The non-agricultural Salz must NOT be flagged.
     let recipe = Recipe {
         config: Config::Knospe,
         product_name: "Knospe Test",
@@ -271,9 +273,15 @@ async fn knospe_origin_required_for_all() {
                 bio: BioStatus::BioKnospe,
             },
             RecipeIngredient {
+                name: "Rohrzucker",
+                grams: 60.0, // majority share → <90% Swiss → Import-Knospe on the label
+                origin: None, // Import-Knospe without a country — must be flagged.
+                bio: BioStatus::BioKnospeImport,
+            },
+            RecipeIngredient {
                 name: "Salz",
                 grams: 1.0,
-                origin: None, // Missing — Knospe_AlleZutatenHerkunft must flag it.
+                origin: None, // Non-agricultural: never requires an origin.
                 bio: BioStatus::NichtLandwirtschaftlich,
             },
         ],
@@ -288,8 +296,13 @@ async fn knospe_origin_required_for_all() {
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_default();
     assert!(
-        body.contains("Herkunft"),
-        "expected origin-required validation when an ingredient lacks origin in Knospe config. body:\n{}",
+        body.contains("Import-Knospe"),
+        "expected origin-required validation for the Import-Knospe ingredient without country. body:\n{}",
+        body
+    );
+    assert!(
+        !body.contains("Salz: Herkunft"),
+        "non-agricultural Salz must not be flagged for origin. body:\n{}",
         body
     );
 
@@ -319,8 +332,14 @@ async fn knospe_fail_path_radio_change() {
     click_button_by_text(&c, "Schliessen").await;
     tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
-    // Knospe-fail warning banner: text from de-CH translation
-    // "knospe_marketing_not_allowed" or similar phrasing.
+    // Editing an ingredient resets `rezeptur_vollstaendig`, so the info text is
+    // the neutral "Bitte Rezeptur prüfen" pending state. Re-run the check to get
+    // the failed verdict (tri-state, Testing 25.06.2026).
+    click_button_by_text(&c, "Rezeptur vollständig").await;
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    // Knospe-fail banner: tri-state failed text from de-CH translation
+    // ("… erfüllt die Knospe-Anforderungen nicht …").
     let body: String = c
         .execute("return document.body.innerText;", vec![])
         .await
@@ -387,8 +406,9 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
         after_knospe
     );
 
-    // Variante b: click the "Knospe Import" logo → origin editable again (picker reappears).
-    let import_xpath = "//dialog[@open]//button[.//span[contains(normalize-space(.), 'Knospe Import')]]";
+    // Variante b: click the "Herkunft Import" logo card (first match = plain
+    // Knospe Import) → origin editable again (picker reappears).
+    let import_xpath = "//dialog[@open]//button[.//span[contains(normalize-space(.), 'Herkunft Import')]]";
     if let Ok(el) = c.find(fantoccini::Locator::XPath(import_xpath)).await {
         let _ = el.click().await;
     }

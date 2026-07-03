@@ -71,6 +71,73 @@ fn country_display_on_label_for_ingredients_with_origin() {
     assert!(label.contains("Zucker (EU)"));
 }
 
+// Regression (Testing 25.06.2026, Bio Verordnung): an origin declared top-down on
+// the composite parent was silently dropped by the composite early-return in
+// OutputFormatter::format — selected Herkunft never reached the label.
+#[test]
+fn composite_parent_declared_origin_shows_on_label() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Himbeerstreusel", 600.0)
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new("Himbeere", 0.0).build(),
+                    IngredientBuilder::new("Zucker", 0.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Haferflocken", 400.0).origin(Country::AT).build())
+        .total(1000.0)
+        .build();
+    let output = calculator.execute(input);
+    let label = output.label;
+    assert!(
+        label.contains("Himbeerstreusel (Himbeere, Zucker) (CH)"),
+        "parent-declared origin must print after the composite list. Label: {}",
+        label
+    );
+    assert!(label.contains("Haferflocken (AT)"));
+}
+
+// Composite without a parent-declared origin keeps the lowest-level-only display.
+#[test]
+fn composite_parent_without_declared_origin_shows_none() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Himbeerstreusel", 600.0)
+                .children(vec![
+                    IngredientBuilder::new("Himbeere", 0.0).origin(Country::CH).build(),
+                    IngredientBuilder::new("Zucker", 0.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Haferflocken", 400.0).build())
+        .total(1000.0)
+        .build();
+    let output = calculator.execute(input);
+    let label = output.label;
+    assert!(
+        label.contains("Himbeere (CH)"),
+        "child origin still prints at the lowest level. Label: {}",
+        label
+    );
+    assert!(
+        !label.contains("Zucker) (CH)") && !label.contains("Himbeerstreusel (CH)"),
+        "parent must not show an origin it never declared. Label: {}",
+        label
+    );
+}
+
 #[test]
 fn no_country_display_when_origin_not_set() {
     let mut calculator = setup_simple_calculator();

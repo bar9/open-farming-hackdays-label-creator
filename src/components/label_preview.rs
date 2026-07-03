@@ -1,5 +1,5 @@
 use crate::components::{Amount, AmountType, Price};
-use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross};
+use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, UmstellungsknospeRegular, UmstellungsknospeNoCross};
 use crate::layout::DisclaimerContext;
 use crate::shared::Conditionals;
 use crate::nl2br::Nl2Br;
@@ -123,14 +123,37 @@ pub fn LabelPreview(
         div { class: "p-8 flex flex-col bg-base-200",
             if disclaimer_accepted() {
             div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative",
-                // Bio Suisse logo display
-                if conditionals.0().get("bio_suisse_regular").unwrap_or(&false) == &true {
-                    div { class: "absolute top-2 right-2 w-16",
-                        BioSuisseRegular {}
-                    }
-                } else if conditionals.0().get("bio_suisse_no_cross").unwrap_or(&false) == &true {
-                    div { class: "absolute top-2 right-2 w-16",
-                        BioSuisseNoCross {}
+                // Bio Suisse logo display. With Umstellungs ingredients the artwork
+                // switches to the official Umstellungsknospe and the Umstellungssatz
+                // is rendered to the LEFT of the logo (Testing 25.06.2026).
+                {
+                    let c = conditionals.0();
+                    let regular = c.get("bio_suisse_regular").unwrap_or(&false) == &true;
+                    let no_cross = c.get("bio_suisse_no_cross").unwrap_or(&false) == &true;
+                    let umstellung = c.get("knospe_umstellung_logo").unwrap_or(&false) == &true;
+                    if regular || no_cross {
+                        rsx! {
+                            div { class: "absolute top-2 right-2 flex items-center gap-2",
+                                if umstellung {
+                                    span { class: "text-[10px] leading-tight text-right max-w-36",
+                                        {t!("preview.umstellungssatz").to_string()}
+                                    }
+                                }
+                                div { class: "w-16 shrink-0",
+                                    if umstellung && regular {
+                                        UmstellungsknospeRegular {}
+                                    } else if umstellung {
+                                        UmstellungsknospeNoCross {}
+                                    } else if regular {
+                                        BioSuisseRegular {}
+                                    } else {
+                                        BioSuisseNoCross {}
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        rsx! {}
                     }
                 }
 
@@ -367,15 +390,20 @@ pub fn LabelPreview(
                     div { class: "py-2",
                         if !cert_body_signal.read().is_empty() {
                             span { class: "text-sm",
-                                "Bio-Zertifizierung: {cert_body_signal}"
+                                {t!("preview.bio_zertifizierung", body = cert_body_signal.read()).to_string()}
                             }
                         } else {
-                            span { class: "badge badge-warning", "Bio-Zertifizierungsstelle" }
+                            span { class: "badge badge-warning", {t!("preview.bio_zertifizierungsstelle").to_string()} }
                         }
                     }
                 }
+                }
+            }
 
-                // Bio Marketing Hints
+            // Bio/Knospe marketing hints: informational texts ABOUT the label,
+            // deliberately outside the white card so users see they are not part
+            // of the physical label (Testing 25.06.2026).
+            div { class: "mx-4",
                 if conditionals.0().get("bio_marketing_allowed").unwrap_or(&false) == &true {
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.marketing_allowed").to_string()}
@@ -389,20 +417,36 @@ pub fn LabelPreview(
                         {t!("bio_hints.marketing_not_allowed").to_string()}
                     }
                 }
-                // Knospe Marketing Hints
-                if conditionals.0().get("knospe_marketing_allowed").unwrap_or(&false) == &true {
+                // Knospe: tri-state result of the «Rezeptur prüfen» check.
+                if conditionals.0().get("knospe_check_pending").unwrap_or(&false) == &true {
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.knospe_marketing_allowed").to_string()}
+                        {t!("bio_hints.knospe_check_pending").to_string()}
+                    }
+                }
+                if conditionals.0().get("knospe_check_ok").unwrap_or(&false) == &true {
+                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                        {t!("bio_hints.knospe_check_ok").to_string()}
                     }
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.alternative_marking").to_string()}
                     }
                 }
-                if conditionals.0().get("knospe_marketing_not_allowed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.knospe_marketing_not_allowed").to_string()}
+                if conditionals.0().get("knospe_check_failed").unwrap_or(&false) == &true {
+                    div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
+                        svg {
+                            class: "w-4 h-4 shrink-0 mt-0.5",
+                            fill: "none",
+                            stroke: "currentColor",
+                            stroke_width: "2",
+                            view_box: "0 0 24 24",
+                            path {
+                                stroke_linecap: "round",
+                                stroke_linejoin: "round",
+                                d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
+                            }
+                        }
+                        span { {t!("bio_hints.knospe_check_failed").to_string()} }
                     }
-                }
                 }
             }
             } // end if disclaimer_accepted

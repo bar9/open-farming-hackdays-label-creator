@@ -1076,6 +1076,25 @@ pub fn food_db_full() -> Vec<(String, bool, bool)> {
     db
 }
 
+/// Curated Bio-Suisse-relevant category for a food_db entry (4th CSV column),
+/// e.g. "Milch und Milchprodukte". Empty column ⇒ `None`. Exact name match,
+/// like the other food_db lookups; ingredients picked via the BLV API carry
+/// their own category and don't need this.
+pub fn lookup_category(name: &str) -> Option<String> {
+    let db_csv = include_str!("food_db.csv");
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(db_csv.as_bytes());
+
+    for record in rdr.records() {
+        let record = record.unwrap();
+        if record.get(0).unwrap() == name {
+            return record.get(3).filter(|c| !c.is_empty()).map(String::from);
+        }
+    }
+    None
+}
+
 pub fn lookup_agricultural(name: &str) -> bool {
     for entry in food_db_full() {
         if entry.0.as_str() == name {
@@ -1180,6 +1199,9 @@ mod food_db_tests {
         assert_eq!(lookup_priority("Kochbutter"), 100);
         assert_eq!(lookup_priority("Eiweiss"), 50); // standalone boost row
         assert_eq!(lookup_priority("Buchweizenmehl"), 0); // uncurated
+        // Label convention uses the plural «Mandeln»; alias to the food_db «Mandel».
+        assert_eq!(lookup_priority("Mandeln"), 90);
+        assert_eq!(lookup_priority("Vollmilch"), 80); // existing alias to Vollmilch pasteurisiert
     }
 
 }

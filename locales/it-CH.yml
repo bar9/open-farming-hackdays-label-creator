@@ -78,6 +78,7 @@ label:
   rezepturProbleme: "%{count} problema/i rilevato/i"
   liv_anhang7_format: "100g di prodotto finito contengono %{grams}g"
   verarbeitungsschritte: Fasi di lavorazione
+  saved_ingredients: Ingredienti salvati
 
 nav:
   linkKopieren: Copia link
@@ -106,6 +107,9 @@ preview:
   preisPro: "Prezzo per %{amount}%{unit}"
   preisTotal: Prezzo totale
   produktnameSachbezeichnung: Nome del prodotto / Denominazione specifica
+  bio_zertifizierung: "Certificazione bio: %{body}"
+  bio_zertifizierungsstelle: Ente di certificazione bio
+  umstellungssatz: "Prodotto nel quadro della conversione all'agricoltura biologica."
   zutatenliste: Elenco degli ingredienti
   herstelleradresse: Indirizzo del produttore
   preis: Prezzo
@@ -119,6 +123,7 @@ units:
   chfPro: "CHF per "
 
 tooltips:
+  save_needs_amount: "Quantità mancante — inserire prima una quantità."
   manage_saved_ingredients: Gestisci ingredienti composti salvati
   save_composite_ingredient: Salva questo ingrediente composto per uso futuro
 
@@ -271,6 +276,18 @@ help:
     Secondo le direttive Bio Suisse parte III, sono ammesse eccezioni specifiche per alcuni
     ingredienti non Gemma (ad es. pectina, alcuni additivi). Gli ingredienti semplici come
     farina, pepe ecc. devono essere certificati Gemma.
+  bio_knospe: Indica se questo ingrediente è certificato secondo gli standard Gemma di Bio Suisse (origine svizzera, fissa su CH)
+  bio_knospe_import: Ingrediente certificato Gemma d'importazione. Paese d'origine liberamente selezionabile (predefinito «Import»).
+  bio_ch: Indica se questo ingrediente è certificato secondo l'ordinanza bio svizzera (ma non Gemma)
+  verarbeitungsschritte: |
+    Selezionate le fasi di lavorazione che si applicano a questo prodotto.
+    Queste vengono visualizzate sull'etichetta nell'elenco degli ingredienti.
+  plz: |
+    Aggiungete CH- (Svizzera) o FL- (Liechtenstein) davanti al CAP per garantire l'indicazione del paese di produzione.
+  herkunft_liv_art_16: |
+    Conformemente all'art. 16 OID raccomandiamo di indicare l'origine degli ingredienti. L'indicazione dell'origine può essere eliminata se l'imballaggio non è ingannevole.
+
+    [OID su Fedlex](https://www.fedlex.admin.ch/eli/cc/2017/158/it)
 
 link_share_title: Condividi link
 link_type_full: Link completo
@@ -346,6 +363,8 @@ validation:
   origin_required_name_giving: Il paese di origine è richiesto per gli ingredienti caratterizzanti.
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
   origin_required_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Gemma).
+  origin_required_import_knospe: Il paese di origine è richiesto per gli ingredienti con Gemma Import quando la Gemma Import appare sull'etichetta.
+  namensgebend_amount_required: Per l'ingrediente che dà il nome al prodotto occorre indicare la quantità affinché la percentuale appaia sull'etichetta.
   origin_single_level: L'origine è definita su più livelli di questo ingrediente. Indicarla su un solo livello e rimuovere l'altra.
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
   certification_body_format: "L'ente di certificazione deve avere il formato CH-BIO-xxx."
@@ -382,6 +401,7 @@ certification_body:
   bio_004: "CH-BIO-004 (Ecocert Swiss AG)"
 
 warnings:
+  composite_quality_pushdown: "Assicurati che, secondo l'elenco degli ingredienti del tuo ingrediente composto, tutti gli ingredienti siano bio. In caso contrario, modifica la qualità direttamente nel singolo sotto-ingrediente. (Spesso è il caso degli additivi.)"
   title: Avvertimento
   data_loss_on_switch: I tuoi dati andranno persi se passi a un altro standard
 
@@ -442,10 +462,11 @@ bio_labels:
   quality: Qualità
   knospe: Gemma
   umstellungsknospe: Gemma di riconversione
-  knospe_ch: Gemma (Svizzera)
-  knospe_import: Gemma Import
-  umstellung_ch: Gemma di riconversione (Svizzera)
-  umstellung_import: Gemma di riconversione Import
+  knospe_ch: Origine Svizzera
+  knospe_import: Origine Import
+  umstellung_ch: Origine Svizzera
+  umstellung_import: Origine Import
+  inherited_quality: Qualità ripresa dall'ingrediente composto
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito
@@ -465,6 +486,9 @@ bio_hints:
   knospe_marketing_allowed: "Il prodotto soddisfa i requisiti Gemma e può essere commercializzato con il logo Bio Suisse Gemma."
   knospe_marketing_not_allowed: "Il prodotto NON soddisfa i requisiti Gemma perché non tutti gli ingredienti agricoli sono certificati Gemma. Il logo Gemma non può essere utilizzato."
 
+  knospe_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
+  knospe_check_ok: "La ricetta inserita soddisfa i requisiti della Gemma e il prodotto può essere commercializzato con la Gemma."
+  knospe_check_failed: "La ricetta inserita è incompleta o non soddisfa i requisiti della Gemma. Si prega di verificare i dati inseriti."
 umstellbetrieb:
   hinweis: "Prodotto nell'ambito della conversione all'agricoltura biologica"
 

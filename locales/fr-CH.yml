@@ -107,6 +107,9 @@ preview:
   preisPro: "Prix par %{amount}%{unit}"
   preisTotal: Prix total
   produktnameSachbezeichnung: Nom du produit / Dénomination spécifique
+  bio_zertifizierung: "Certification bio: %{body}"
+  bio_zertifizierungsstelle: Organisme de certification bio
+  umstellungssatz: "Produit dans le cadre de la reconversion à l'agriculture biologique."
   zutatenliste: Liste des ingrédients
   herstelleradresse: Adresse du fabricant
   preis: Prix
@@ -120,6 +123,7 @@ units:
   chfPro: "CHF par "
 
 tooltips:
+  save_needs_amount: "Quantité manquante — veuillez d'abord saisir une quantité."
   manage_saved_ingredients: Gérer les ingrédients composés enregistrés
   save_composite_ingredient: Enregistrer cet ingrédient composé pour une utilisation ultérieure
 
@@ -279,6 +283,12 @@ help:
     Selon les directives Bio Suisse partie III, des exceptions spécifiques aux produits sont
     autorisées pour certains ingrédients non-Bourgeon (p.ex. pectine, certains additifs).
     Les ingrédients simples comme farine, poivre etc. doivent être certifiés Bourgeon.
+  plz: |
+    Ajoutez CH- (Suisse) ou FL- (Liechtenstein) devant le NPA afin de garantir l'indication du pays de production.
+  herkunft_liv_art_16: |
+    Conformément à l'art. 16 OIDAl, nous recommandons d'indiquer l'origine des ingrédients. L'indication de l'origine peut être supprimée si l'emballage n'est pas trompeur.
+
+    [OIDAl sur Fedlex](https://www.fedlex.admin.ch/eli/cc/2017/158/fr)
 
 link_share_title: Partager le lien
 link_type_full: Lien complet
@@ -354,6 +364,8 @@ validation:
   origin_required_name_giving: Le pays d'origine est requis pour les ingrédients caractéristiques.
   origin_required_meat_over_20: Le pays d'origine est requis pour les ingrédients de viande de plus de 20%.
   origin_required_knospe: Le pays d'origine est requis pour tous les ingrédients (exigence Bourgeon).
+  origin_required_import_knospe: Le pays d'origine est requis pour les ingrédients avec Bourgeon Import lorsque le Bourgeon Import figure sur l'étiquette.
+  namensgebend_amount_required: La quantité de l'ingrédient qui donne son nom au produit doit être saisie afin que le pourcentage figure sur l'étiquette.
   origin_single_level: L'origine est définie à plusieurs niveaux de cet ingrédient. Veuillez ne l'indiquer qu'à un seul niveau et supprimer l'autre.
   certification_body_required: L'organisme de certification bio est obligatoire pour les produits Bio et Bourgeon.
   certification_body_format: "L'organisme de certification doit avoir le format CH-BIO-xxx."
@@ -390,6 +402,7 @@ certification_body:
   bio_004: "CH-BIO-004 (Ecocert Swiss AG)"
 
 warnings:
+  composite_quality_pushdown: "Assure-toi que, selon la liste des ingrédients de ton ingrédient composé, tous les ingrédients sont bio. Si ce n'est pas le cas, modifie la qualité directement sur le sous-ingrédient concerné. (Souvent le cas des additifs.)"
   title: Avertissement
   data_loss_on_switch: Vos données seront perdues si vous passez à une autre norme
 
@@ -450,10 +463,11 @@ bio_labels:
   quality: Qualité
   knospe: Bourgeon
   umstellungsknospe: Bourgeon de reconversion
-  knospe_ch: Bourgeon (Suisse)
-  knospe_import: Bourgeon Import
-  umstellung_ch: Bourgeon de reconversion (Suisse)
-  umstellung_import: Bourgeon de reconversion Import
+  knospe_ch: Origine Suisse
+  knospe_import: Origine Import
+  umstellung_ch: Origine Suisse
+  umstellung_import: Origine Import
+  inherited_quality: Qualité reprise de l'ingrédient composé
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrédient non-biologique autorisé
   erlaubte_ausnahme_knospe: Ingrédient non-Bourgeon autorisé
@@ -473,6 +487,9 @@ bio_hints:
   knospe_marketing_allowed: "Le produit remplit les exigences Bourgeon et peut être commercialisé avec le logo Bio Suisse Bourgeon."
   knospe_marketing_not_allowed: "Le produit ne remplit PAS les exigences Bourgeon car tous les ingrédients agricoles ne sont pas certifiés Bourgeon. Le logo Bourgeon ne peut pas être utilisé."
 
+  knospe_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
+  knospe_check_ok: "La recette saisie satisfait aux exigences du Bourgeon et le produit peut être commercialisé avec le Bourgeon."
+  knospe_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences du Bourgeon. Veuillez vérifier la saisie."
 umstellbetrieb:
   hinweis: "Produit dans le cadre de la conversion à l'agriculture biologique"
 

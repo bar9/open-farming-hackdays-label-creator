@@ -53,6 +53,28 @@ jobs:
           cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/404.html"
           cp "./public/robots.txt" "$PUBLIC_DIR/robots.txt"
 
+      # January comparison instance (Testing 25.06.2026, hand note 6): the last
+      # January state (f1a2bb9, "Version vom Januar") published under /v0.8.0/
+      # so Mirjam can compare the old Herkunft behavior. Same dx 0.7.3 pipeline.
+      - name: Checkout January comparison version
+        uses: actions/checkout@v4
+        with:
+          ref: f1a2bb94514b30c888bc5a6cad7c0ca6f31e6225
+          path: v080-src
+
+      - name: Build January version under /v0.8.0/
+        run: |
+          cd v080-src
+          sed -i 's|^base_path = .*|base_path = "open-farming-hackdays-label-creator/v0.8.0"|' Dioxus.toml
+          npm install
+          npx @tailwindcss/cli -i input.css -o assets/tailwind.css
+          dx build --release
+          OLD_PUBLIC="./target/dx/open-farming-hackdays-label-creator/release/web/public"
+          cp "$OLD_PUBLIC/index.html" "$OLD_PUBLIC/404.html"
+          DEST="../target/dx/open-farming-hackdays-label-creator/release/web/public/v0.8.0"
+          mkdir -p "$DEST"
+          cp -r "$OLD_PUBLIC"/. "$DEST/"
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

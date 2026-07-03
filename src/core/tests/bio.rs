@@ -325,6 +325,147 @@ fn knospe_no_logo_when_not_100_knospe() {
     assert_eq!(c.get("bio_suisse_no_cross"), None);
 }
 
+// Umstellungs-Knospe on the label (Testing 25.06.2026): any ingredient aus
+// Umstellung flips the logo artwork to the Umstellungsknospe variant; the
+// regular/no_cross conditionals keep encoding the Suisse/Import split.
+#[test]
+fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().umstellbetrieb().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio().origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_suisse_regular"), Some(&true));
+    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+}
+
+#[test]
+fn knospe_umstellung_logo_import_variant() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 400.0).bio().umstellbetrieb().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Rohrzucker", 600.0).bio().origin(Country::PE).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true));
+    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+}
+
+#[test]
+fn knospe_umstellung_logo_absent_without_umstellbetrieb() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+
+    assert_eq!(output.conditional_elements.get("knospe_umstellung_logo"), None);
+}
+
+#[test]
+fn knospe_umstellung_logo_from_composite_parent_claim() {
+    // A bought certified composite declared "Umstellung" as a whole carries the
+    // flag on the parent node — the whole-tree helper must still see it.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new_agri("Müeslimischung", 900.0)
+                .bio()
+                .umstellbetrieb()
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new_agri("Hafer", 0.0).build(),
+                    IngredientBuilder::new_agri("Dinkel", 0.0).build(),
+                ])
+                .build(),
+        )
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+}
+
+// Tri-state «Rezeptur prüfen» result (Testing 25.06.2026): pending before the
+// check button is pressed, ok/failed afterwards. The certification body is NOT
+// part of this check (yellow label placeholder covers it).
+#[test]
+fn knospe_check_pending_before_recipe_marked_complete() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_check_pending"), Some(&true));
+    assert_eq!(c.get("knospe_check_ok"), None);
+    assert_eq!(c.get("knospe_check_failed"), None);
+}
+
+#[test]
+fn knospe_check_ok_when_complete_and_valid() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    // No certification body set: must NOT block the OK state.
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_check_pending"), None);
+    assert_eq!(c.get("knospe_check_ok"), Some(&true));
+    assert_eq!(c.get("knospe_check_failed"), None);
+}
+
+#[test]
+fn knospe_check_failed_when_recipe_has_validation_issue() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_AlleZutatenHerkunft,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        // Import-Knospe without a country while the Import-Knospe logo shows
+        // → recipe-scoped validation error → failed
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::Import).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_check_ok"), None);
+    assert_eq!(c.get("knospe_check_failed"), Some(&true));
+}
+
+#[test]
+fn knospe_check_failed_when_not_fully_knospe() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Olivenöl", 400.0).origin(Country::EU).build()) // NOT bio
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_check_ok"), None);
+    assert_eq!(c.get("knospe_check_failed"), Some(&true));
+}
+
 #[test]
 fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
     // A non-bio ingredient that is a permitted non-organic exception (Annex 3 WBF)
@@ -836,7 +977,10 @@ fn composite_children_bio_markers_in_knospe_context() {
 // whole (parent-claim override, Phase 9) but its children carry NO bio markers, the
 // star belongs on the parent — there is no child star to defer to (2026-06-17).
 #[test]
-fn composite_parent_keeps_star_when_children_unmarked() {
+fn composite_parent_claim_pushes_star_down_to_children() {
+    // Testing 25.06.2026: the * must ALWAYS sit on the sub-ingredients, never on
+    // the composite name — a parent-level quality claim is inherited by the
+    // (agricultural) children instead.
     let calculator = calculator_for(Configuration::Knospe);
     let input = InputBuilder::new()
         .vollstaendig()
@@ -846,8 +990,8 @@ fn composite_parent_keeps_star_when_children_unmarked() {
                 .bio() // parent claims Knospe as a whole
                 .origin(Country::CH)
                 .children(vec![
-                    IngredientBuilder::new_agri("Komponente A", 60.0).origin(Country::CH).build(),
-                    IngredientBuilder::new_agri("Komponente B", 40.0).origin(Country::CH).build(),
+                    IngredientBuilder::new_agri("Komponente A", 60.0).build(),
+                    IngredientBuilder::new_agri("Komponente B", 40.0).build(),
                 ])
                 .build(),
         )
@@ -855,9 +999,37 @@ fn composite_parent_keeps_star_when_children_unmarked() {
 
     let output = calculator.execute(input);
 
-    // Children are not bio → no child stars → the parent carries the star.
-    assert!(output.label.contains("Fertigmischung*"), "Composite with a parent-only bio claim should get the star. Label: {}", output.label);
-    assert!(!output.label.contains("Komponente A*"), "Unmarked child must not get a star. Label: {}", output.label);
+    assert!(!output.label.contains("Fertigmischung*"), "Composite parent must never carry the star. Label: {}", output.label);
+    assert!(output.label.contains("Komponente A*"), "Children inherit the parent-level claim. Label: {}", output.label);
+    assert!(output.label.contains("Komponente B*"), "Children inherit the parent-level claim. Label: {}", output.label);
+    // Inherited stars also drive the legend.
+    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Legend must appear for inherited stars. Label: {}", output.label);
+}
+
+#[test]
+fn composite_parent_umstellung_claim_pushes_double_star_down() {
+    let calculator = calculator_for(Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new_agri("Fertigmischung", 100.0)
+                .bio()
+                .umstellbetrieb() // whole composite from Umstellung
+                .origin(Country::CH)
+                .children(vec![
+                    IngredientBuilder::new_agri("Komponente A", 60.0).build(),
+                    // Non-agricultural additive: NO inherited marker
+                    IngredientBuilder::new("Zusatzstoff", 40.0).agricultural(false).build(),
+                ])
+                .build(),
+        )
+        .build();
+
+    let output = calculator.execute(input);
+
+    assert!(!output.label.contains("Fertigmischung*"), "Parent carries no marker. Label: {}", output.label);
+    assert!(output.label.contains("Komponente A**"), "Agricultural child inherits **. Label: {}", output.label);
+    assert!(!output.label.contains("Zusatzstoff*"), "Non-agricultural child must not inherit a marker. Label: {}", output.label);
+    assert!(output.label.contains("aus Umstellung"), "** legend must appear. Label: {}", output.label);
 }
 
 #[test]

@@ -1,42 +1,84 @@
 use super::*;
 
+// Reworked per Testing 25.06.2026: the «alle Zutaten Herkunft» rule now flags an
+// ingredient only when it carries the Import-(Umstellungs-)Knospe without a real
+// country AND the label output is the Import-Knospe.
 #[test]
 fn bio_knospe_alle_zutaten_herkunft_conditional() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new("Milch", 300.0).build())
-        .ingredient(IngredientBuilder::new("Zucker", 200.0).build())
+        // Import-Knospe without a country → origin required
+        .ingredient(IngredientBuilder::new_agri("Rohrzucker", 700.0).bio().origin(Country::Import).build())
+        // CH-Knospe → nothing required
+        .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).bio().origin(Country::CH).build())
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
 
-    // All ingredients should require herkunft
     assert_eq!(conditionals.get("herkunft_benoetigt_0"), Some(&true));
-    assert_eq!(conditionals.get("herkunft_benoetigt_1"), Some(&true));
+    assert_eq!(conditionals.get("herkunft_benoetigt_1"), None);
     assert_eq!(conditionals.get("herkunft_benoetigt_ueber_50_prozent"), Some(&true));
 }
 
 #[test]
-fn bio_knospe_validation_missing_origin_for_all_ingredients() {
+fn bio_knospe_validation_missing_origin_for_import_knospe() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new("Milch", 300.0).origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new("Zucker", 200.0).build())
+        .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Rohrzucker", 700.0).bio().origin(Country::Import).build())
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
 
-    // Should have validation error for the ingredient without origin
+    // The Import-Knospe ingredient without a real country is flagged
     let ingredient_1_messages = output.validation_messages.get("ingredients[1][origin]");
     assert!(ingredient_1_messages
-               .map_or(false, |v| v.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).")));
-    // Should NOT have validation error for the ingredient with origin
-    assert!(output.validation_messages.get("ingredients[0][origin]").map_or(true, |v| v.is_empty()));
+               .is_some_and(|v| v.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten mit Import-Knospe, wenn die Import-Knospe auf der Etikette erscheint.")));
+    // The CH-Knospe ingredient is not
+    assert!(output.validation_messages.get("ingredients[0][origin]").is_none_or(|v| v.is_empty()));
+}
+
+#[test]
+fn bio_knospe_no_origin_error_when_ch_knospe_logo_shows() {
+    // Import-Knospe ingredient without a country, but ≥90% Swiss share → the
+    // label shows the CH-Knospe, so no origin error is raised (plan assumption,
+    // recorded in the Herkunft-Problemanalyse for Mirjam).
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Rohrzucker", 50.0).bio().origin(Country::Import).build())
+        .total(1000.0)
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(output.validation_messages.is_empty(),
+        "no origin error when the CH-Knospe shows, got: {:?}", output.validation_messages);
+}
+
+#[test]
+fn bio_knospe_non_agricultural_never_requires_origin() {
+    // Dicarbonat case (Testing 25.06.2026): non-agricultural ingredients must
+    // never be asked for an origin.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Rohrzucker", 900.0).bio().origin(Country::Import).build())
+        .ingredient(IngredientBuilder::new("Dicarbonat", 5.0).agricultural(false).build())
+        .total(905.0)
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(output.validation_messages.get("ingredients[0][origin]").is_some());
+    assert!(output.validation_messages.get("ingredients[1][origin]").is_none(),
+        "non-agricultural ingredient must not require origin, got: {:?}", output.validation_messages);
 }
 
 #[test]
@@ -57,7 +99,9 @@ fn bio_knospe_country_display_on_label_for_all_ingredients() {
 }
 
 #[test]
-fn bio_knospe_validation_all_ingredients_missing_origin() {
+fn bio_knospe_no_origin_error_for_plain_ingredients_without_knospe() {
+    // Plain (non-Knospe) ingredients without origins are no longer flagged by
+    // the reworked rule — only Import-Knospe ingredients are.
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
@@ -68,11 +112,9 @@ fn bio_knospe_validation_all_ingredients_missing_origin() {
         .build();
     let output = calculator.execute(input);
 
-    // Should have validation errors for all ingredients
-    let origin_messages_0 = output.validation_messages.get("ingredients[0][origin]").unwrap();
-    let origin_messages_1 = output.validation_messages.get("ingredients[1][origin]").unwrap();
-    assert!(origin_messages_0.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung)."));
-    assert!(origin_messages_1.iter().any(|m| m == "Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung)."));
+    assert!(output.validation_messages.is_empty(),
+        "plain ingredients must not require origin under the reworked rule, got: {:?}",
+        output.validation_messages);
 }
 
 #[test]
@@ -261,6 +303,50 @@ fn knospe_under_90_validation_dairy_always_requires_origin() {
     assert!(messages.iter().any(|msg| msg == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
 }
 
+// Regression (Testing 25.06.2026): "Butter" picked from the local food_db resolves
+// via alias to canonical "Kochbutter" and carries NO BLV category — the dairy
+// always-show-origin rule silently skipped it while "Milch" (API category) worked.
+// `effective_category()` must fall back to the curated food_db category.
+#[test]
+fn knospe_under_90_butter_without_api_category_shows_origin() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Butter", 50.0)
+                .canonical("Kochbutter")
+                .origin(Country::CH)
+                .build()
+        )
+        .build();
+    let output = calculator.execute(input);
+
+    // Dairy always shows origin, even <10% and without a BLV API category
+    assert!(output.label.contains("Butter (CH)"), "label was: {}", output.label);
+}
+
+#[test]
+fn knospe_under_90_validation_butter_without_api_category_requires_origin() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Butter", 50.0)
+                .canonical("Kochbutter")
+                .build()
+        )
+        .build();
+    let output = calculator.execute(input);
+
+    let butter_messages = output.validation_messages.get("ingredients[1][origin]");
+    assert!(butter_messages.is_some_and(|msgs| msgs.iter().any(
+        |msg| msg == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."
+    )));
+}
+
 #[test]
 fn knospe_under_90_validation_meat_always_requires_origin() {
     let mut calculator = setup_simple_calculator();
@@ -372,7 +458,7 @@ fn knospe_composite_parent_origin_only_on_lowest_level() {
     // children (CH allergen + IT). Origin and allergen bolding belong to
     // the lowest level only; the foreign IT origin must be declared under
     // the Under-90 rule (49.3% Swiss).
-    let mut calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let input = InputBuilder::new()
         .vollstaendig()
         .certification_body("bio.inspecta")

@@ -230,6 +230,7 @@ help:
 
 
 tooltips:
+  save_needs_amount: "Menge fehlt — bitte zuerst eine Menge erfassen."
   manage_saved_ingredients: Gespeicherte zusammengesetzte Zutaten verwalten
   save_composite_ingredient: Diese zusammengesetzte Zutat für spätere Verwendung speichern
 
@@ -280,6 +281,9 @@ preview:
   preisPro: "Preis pro %{amount}%{unit}"
   preisTotal: Preis total
   produktnameSachbezeichnung: Produktname / Sachbezeichnung
+  bio_zertifizierung: "Bio-Zertifizierung: %{body}"
+  bio_zertifizierungsstelle: Bio-Zertifizierungsstelle
+  umstellungssatz: "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."
   zutatenliste: Zutatenliste
   herstelleradresse: Herstelleradresse
   preis: Preis
@@ -366,6 +370,8 @@ validation:
   origin_required_name_giving: Herkunftsland ist erforderlich für namensgebende Zutaten.
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
   origin_required_knospe: Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).
+  origin_required_import_knospe: Herkunftsland ist erforderlich für Zutaten mit Import-Knospe, wenn die Import-Knospe auf der Etikette erscheint.
+  namensgebend_amount_required: Für die namensgebende Unterzutat muss eine Menge erfasst werden, damit der Prozentwert auf der Etikette erscheint.
   origin_single_level: Herkunft ist auf mehreren Ebenen dieser Zutat definiert. Bitte nur auf einer Ebene angeben und die andere entfernen.
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
   certification_body_format: "Die Zertifizierungsstelle muss das Format CH-BIO-xxx haben."
@@ -651,6 +657,7 @@ certification_body:
   bio_004: "CH-BIO-004 (Ecocert Swiss AG)"
 
 warnings:
+  composite_quality_pushdown: "Vergewissere dich, dass gemäss Zutatenliste deiner zusammengesetzten Zutat alle Zutaten Bio-Zutaten sind. Ist das nicht der Fall, ändere die Qualität direkt bei der Unterzutat deiner zusammengesetzten Zutat. (Oft der Fall bei Zusatzstoffen.)"
   title: Warnung
   data_loss_on_switch: Ihre Daten gehen verloren, wenn Sie in einen anderen Standard wechseln
 
@@ -688,10 +695,11 @@ bio_labels:
   quality: Qualität
   knospe: Knospe
   umstellungsknospe: Umstellungsknospe
-  knospe_ch: Knospe (Schweiz)
-  knospe_import: Knospe Import
-  umstellung_ch: Umstellungsknospe (Schweiz)
-  umstellung_import: Umstellungsknospe Import
+  knospe_ch: Herkunft Schweiz
+  knospe_import: Herkunft Import
+  umstellung_ch: Herkunft Schweiz
+  umstellung_import: Herkunft Import
+  inherited_quality: Qualität von der zusammengesetzten Zutat übernommen
   bio_ch: Bio
   erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat
@@ -711,6 +719,9 @@ bio_hints:
   knospe_marketing_allowed: "Das Produkt erfüllt die Knospe-Anforderungen und darf mit dem Bio Suisse Knospe-Logo vermarktet werden."
   knospe_marketing_not_allowed: "Das Produkt erfüllt die Knospe-Anforderungen NICHT, da nicht alle landwirtschaftlichen Zutaten Knospe-zertifiziert sind. Das Knospe-Logo darf nicht verwendet werden."
 
+  knospe_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
+  knospe_check_ok: "Die Rezeptur-Eingabe erfüllt die Knospe-Anforderungen und das Produkt darf mit der Knospe vermarktet werden."
+  knospe_check_failed: "Die Rezeptur-Eingabe ist unvollständig oder erfüllt die Knospe-Anforderungen nicht. Bitte überprüfe die Eingabe."
 umstellbetrieb:
   hinweis: "Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft"
 

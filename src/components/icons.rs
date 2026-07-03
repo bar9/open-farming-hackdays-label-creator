@@ -287,6 +287,34 @@ pub fn BioSuisseNoCross() -> Element {
     }
 }
 
+/// Official Umstellungsknospe with SUISSE addition (Swiss cross) — language-
+/// specific artwork from the Bio Suisse logo download (screen, farbig).
+/// The word-image mark must not be altered, hence bitmap assets, not SVG paths.
+#[component]
+pub fn UmstellungsknospeRegular() -> Element {
+    let src = match rust_i18n::locale().as_ref() {
+        "fr-CH" => asset!("assets/logos/umstellungsknospe-fr-CH.png"),
+        "it-CH" => asset!("assets/logos/umstellungsknospe-it-CH.png"),
+        _ => asset!("assets/logos/umstellungsknospe-de-CH.png"),
+    };
+    rsx! {
+        img { class: "w-16", src, alt: "Umstellungsknospe" }
+    }
+}
+
+/// Official Umstellungsknospe without the SUISSE addition (Import variant).
+#[component]
+pub fn UmstellungsknospeNoCross() -> Element {
+    let src = match rust_i18n::locale().as_ref() {
+        "fr-CH" => asset!("assets/logos/umstellungsknospe-import-fr-CH.png"),
+        "it-CH" => asset!("assets/logos/umstellungsknospe-import-it-CH.png"),
+        _ => asset!("assets/logos/umstellungsknospe-import-de-CH.png"),
+    };
+    rsx! {
+        img { class: "w-16", src, alt: "Umstellungsknospe Import" }
+    }
+}
+
 /// Compact Knospe icon with Swiss cross for inline use (ingredient list).
 /// Shares viewBox with KnospeNoCrossCompact so the green bud is rendered at identical size.
 #[component]

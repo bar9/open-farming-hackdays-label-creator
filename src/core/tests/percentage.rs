@@ -232,3 +232,120 @@ fn resolve_percentages_idempotent_on_absolute_tree() {
     assert_eq!(resolved.children.as_ref().unwrap()[0].amount, 120.0);
     assert_eq!(resolved.computed_amount(), 200.0);
 }
+
+// --- Namensgebende sub-ingredients: % of the WHOLE product (Testing 25.06.2026) ---
+
+#[test]
+fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::AP1_2_ProzentOutputNamensgebend,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    // Rosinenmischung 200g of a 1000g product; Rosinen 100g inside it → 10%
+    // relative to the WHOLE product, not 50% of the composite.
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Rosinenmischung", 0.0)
+                .children(vec![
+                    IngredientBuilder::new("Rosinen", 100.0).namensgebend().build(),
+                    IngredientBuilder::new("Zimt", 100.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Mehl", 800.0).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(
+        output.label.contains("Rosinen 10%"),
+        "namensgebend child must print its whole-product share. Label: {}",
+        output.label
+    );
+    assert!(!output.label.contains("Rosinen 50%"), "share must not be composite-relative. Label: {}", output.label);
+}
+
+#[test]
+fn namensgebend_percent_mode_child_resolves_to_whole_product_percent() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::AP1_2_ProzentOutputNamensgebend,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    // Percent-mode composite: parent total 200g, Rosinen entered as 50% → 100g
+    // → 10% of the 1000g product on the label.
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Rosinenmischung", 200.0)
+                .children(vec![
+                    IngredientBuilder::new("Rosinen", 50.0).unit(AmountUnit::Percent).namensgebend().build(),
+                    IngredientBuilder::new("Zimt", 50.0).unit(AmountUnit::Percent).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Mehl", 800.0).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(
+        output.label.contains("Rosinen 10%"),
+        "percent-mode namensgebend child must print whole-product share. Label: {}",
+        output.label
+    );
+}
+
+#[test]
+fn namensgebend_sub_ingredient_without_amount_is_flagged() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::AP1_2_ProzentOutputNamensgebend,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new("Himbeerstreusel", 600.0)
+                .children(vec![
+                    IngredientBuilder::new("Himbeere", 0.0).namensgebend().build(),
+                    IngredientBuilder::new("Zucker", 0.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Haferflocken", 400.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let msgs = output.validation_messages.get("ingredients[0][amount]");
+    assert!(
+        msgs.is_some_and(|v| v.iter().any(|m| m.contains("namensgebende"))),
+        "0g namensgebend child must be flagged. Messages: {:?}",
+        output.validation_messages
+    );
+    // No spurious % appears for the amount-less child
+    assert!(!output.label.contains("Himbeere 0%"), "Label: {}", output.label);
+}
+
+#[test]
+fn namensgebend_validator_quiet_when_amounts_present() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::AP1_2_ProzentOutputNamensgebend,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new("Himbeerstreusel", 0.0)
+                .children(vec![
+                    IngredientBuilder::new("Himbeere", 300.0).namensgebend().build(),
+                    IngredientBuilder::new("Zucker", 300.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Haferflocken", 400.0).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(
+        output.validation_messages.get("ingredients[0][amount]").is_none(),
+        "weighted namensgebend child must not be flagged. Messages: {:?}",
+        output.validation_messages
+    );
+    assert!(output.label.contains("Himbeere 30%"), "Label: {}", output.label);
+}

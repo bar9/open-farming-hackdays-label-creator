@@ -59,6 +59,7 @@ impl IngredientBuilder {
     pub fn origin(mut self, country: Country) -> Self { self.0.origins = Some(vec![country]); self }
     pub fn origins(mut self, countries: Vec<Country>) -> Self { self.0.origins = Some(countries); self }
     pub fn category(mut self, cat: &str) -> Self { self.0.category = Some(cat.to_string()); self }
+    pub fn canonical(mut self, name: &str) -> Self { self.0.canonical = Some(name.to_string()); self }
     pub fn namensgebend(mut self) -> Self { self.0.is_namensgebend = Some(true); self }
     pub fn aufzucht(mut self, country: Country) -> Self { self.0.aufzucht_ort = Some(country); self }
     pub fn schlachtung(mut self, country: Country) -> Self { self.0.schlachtungs_ort = Some(country); self }

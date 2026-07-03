@@ -114,10 +114,13 @@ pub async fn input_by_placeholder(c: &Client, fragment: &str) -> Option<Element>
         .ok()
 }
 
-/// Find a button containing the given visible text (XPath, language-sensitive).
+/// Find an ENABLED button containing the given visible text (XPath,
+/// language-sensitive). Disabled buttons are skipped — since the save button
+/// is rendered greyed-out instead of hidden (Testing 25.06.2026), clicking a
+/// disabled match would silently no-op.
 pub async fn button_by_text(c: &Client, text: &str) -> Option<Element> {
     c.find(Locator::XPath(&format!(
-        "//button[contains(normalize-space(.), '{}')]",
+        "//button[contains(normalize-space(.), '{}') and not(@disabled)]",
         text
     )))
     .await
@@ -225,11 +228,15 @@ pub async fn add_simple_ingredient(c: &Client, name: &str, amount_grams: u32) {
         tokio::time::sleep(Duration::from_millis(150)).await;
     }
     // Try to commit. Buttons in IngredientPane are usually labelled "Speichern" or
-    // "Speichern und nächste" depending on context.
-    for label in &["Speichern und nächste", "Speichern", "Hinzufügen", "OK"] {
-        if click_button_by_text(c, label).await {
-            break;
+    // "Speichern und nächste" depending on context. The enabled button appears
+    // only once the amount signal has propagated, so poll briefly.
+    'commit: for _ in 0..10 {
+        for label in &["Speichern und nächste", "Speichern", "Hinzufügen", "OK"] {
+            if click_button_by_text(c, label).await {
+                break 'commit;
+            }
         }
+        tokio::time::sleep(Duration::from_millis(200)).await;
     }
     // Close modal if still open
     tokio::time::sleep(Duration::from_millis(300)).await;
@@ -729,9 +736,11 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         }
     }
     // Knospe logo (Variante b): pick the specific Knospe variant by its caption.
+    // Captions carry only the origin split ("Herkunft Schweiz/Import"); the first
+    // XPath match in grid order is the plain-Knospe card, not the Umstellung one.
     let knospe_logo = match ing.bio {
-        BioStatus::BioKnospe => Some("Knospe (Schweiz)"),
-        BioStatus::BioKnospeImport => Some("Knospe Import"),
+        BioStatus::BioKnospe => Some("Herkunft Schweiz"),
+        BioStatus::BioKnospeImport => Some("Herkunft Import"),
         _ => None,
     };
     if let Some(logo) = knospe_logo {
@@ -745,11 +754,15 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         }
     }
     // Save and close. ingredient_pane.rs uses "Speichern und nächste Zutat"
-    // for the genesis flow and "Speichern" for plain saves.
-    for label in &["Speichern und nächste Zutat", "Speichern", "Hinzufügen", "OK"] {
-        if click_button_by_text(c, label).await {
-            break;
+    // for the genesis flow and "Speichern" for plain saves. Poll briefly: the
+    // enabled button appears only once the amount signal has propagated.
+    'commit: for _ in 0..10 {
+        for label in &["Speichern und nächste Zutat", "Speichern", "Hinzufügen", "OK"] {
+            if click_button_by_text(c, label).await {
+                break 'commit;
+            }
         }
+        tokio::time::sleep(Duration::from_millis(200)).await;
     }
     tokio::time::sleep(Duration::from_millis(300)).await;
     // Close modal if still open

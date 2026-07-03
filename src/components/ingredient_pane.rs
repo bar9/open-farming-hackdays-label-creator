@@ -443,6 +443,12 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         // is_composite flag can be set unconditionally on a hit.
         let saved_ingredients = get_saved_ingredients_list();
         if let Some(saved) = saved_ingredients.into_iter().find(|i| i.name == unified_ingredient.name) {
+            // Refresh the wrapper FIRST: in genesis mode the computed-value sync
+            // effect reads the wrapper as source of truth and may be scheduled
+            // before the composite-sync effect — with a stale (empty) wrapper it
+            // would clobber the children/unit/bio restored below (recall bug,
+            // reproduced on the Lebensmittelrecht config).
+            wrapper_ingredients.write()[0] = saved.clone();
             edit_is_composite.set(true);
             edit_children.set(saved.children.clone());
             edit_is_namensgebend.set(saved.is_namensgebend.unwrap_or(false));
@@ -761,15 +767,50 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // Focus trigger signal (use provided or create a dummy)
     let focus_signal = props.focus_trigger.unwrap_or_else(|| use_signal(|| false));
 
+    // Herkunft field for leaf ingredients. Rendered in one of two spots — directly
+    // under the Knospe variant cards (Knospe quality, Testing 25.06.2026) or at the
+    // classic position further down — so it lives in a closure; exactly one call
+    // renders per pass.
+    let leaf_origin_field = move || rsx! {
+        FormField {
+            label: t!("origin.herkunft").to_string(),
+            help: Some(t!("help.herkunft_liv_art_16").to_string()),
+            ValidationDisplay {
+                paths: vec![
+                    format!("ingredients[{}][origin]", validation_index)
+                ],
+                if origin_locked_ch() {
+                    // Plain Knospe is Swiss by definition — origin is fixed to CH.
+                    // Shown as a static badge (no editable country picker).
+                    div { class: "flex items-center gap-2",
+                        span { class: "badge badge-lg badge-outline",
+                            "{Country::CH.flag_emoji()} {Country::CH.country_code()}"
+                        }
+                    }
+                } else {
+                    MultiCountrySelect {
+                        values: edit_origins.read().clone(),
+                        onchange: move |countries| {
+                            edit_origins.set(countries);
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     rsx! {
         div { class: if props.disabled { "opacity-50 pointer-events-none" } else { "" },
-            h3 { class: "font-bold text-lg text-left",
-                if props.is_genesis {
-                    "{t!(\"label.zutatDetails\").to_string()}"
-                } else if props.is_sub_ingredient {
-                    "{t!(\"label.unterzutatBearbeiten\").to_string()}"
-                } else {
-                    "{t!(\"nav.bearbeiten\").to_string()}"
+            // One title per window (Testing 25.06.2026): card stacks already render
+            // a name title bar above the pane, so only the genesis modal adds its
+            // own heading — showing the entered name as soon as it exists.
+            if props.is_genesis {
+                h3 { class: "font-bold text-lg text-left",
+                    if edit_name().is_empty() {
+                        "{t!(\"label.zutatDetails\").to_string()}"
+                    } else {
+                        "{edit_name}"
+                    }
                 }
             }
             FormField {
@@ -849,6 +890,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             if edit_is_composite() {
                 // === COMPOSITE MODE: children list + read-only computed summary ===
                 br {}
+                // Sub-ingredient block (children list + percent toggle), indented and
+                // set off from the parent-level fields so the hierarchy is visible
+                // (Testing 25.06.2026: Unterzutaten einrücken, Baumstruktur andeuten).
+                div { class: "ml-3 pl-4 py-2 border-l-4 border-base-300 bg-base-200/40 rounded-r-lg text-sm",
                 SubIngredientsTable {
                     ingredients: wrapper_ingredients,
                     index: 0,
@@ -909,6 +954,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         }
                     }
                 }
+                } // end indented sub-ingredient block
 
                 // Weight is top-down: when the sub-ingredients carry no weights the
                 // parent supplies the total directly (editable); when they do, the
@@ -1033,6 +1079,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         edit_nicht_landwirtschaftlich.set(false);
                         edit_aus_umstellbetrieb.set(umstellung);
                     };
+                    // Variant setter for the unlocked-origin case: like the leaf's
+                    // set_knospe_variant, the CH/Import cards also own the origin.
+                    let mut set_comp_knospe_variant = move |variant: &str| {
+                        edit_is_bio.set(true);
+                        edit_bio_ch.set(false);
+                        edit_nicht_landwirtschaftlich.set(false);
+                        edit_aus_umstellbetrieb.set(matches!(variant, "umstellung_ch" | "umstellung_import"));
+                        if matches!(variant, "knospe_ch" | "umstellung_ch") {
+                            edit_origins.set(Some(vec![Country::CH]));
+                        } else {
+                            let keep = edit_origins().filter(|o| !o.is_empty() && !o.contains(&Country::CH));
+                            edit_origins.set(keep.or(Some(vec![Country::Import])));
+                        }
+                    };
                     let cur = if edit_is_bio() { "knospe" } else if edit_bio_ch() { "bio" }
                         else if edit_nicht_landwirtschaftlich() { "nicht_lw" } else { "andere" };
                     rsx! {
@@ -1046,41 +1106,117 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                         span { class: "badge badge-outline", "{derived_label}" }
                                     } else {
                                         div { class: "flex flex-col gap-1",
-                                            for (key, label) in [
-                                                ("knospe", t!("bio_labels.bio_knospe").to_string()),
-                                                ("bio", t!("bio_labels.bio_ch").to_string()),
-                                                ("nicht_lw", t!("bio_labels.nicht_landwirtschaftlich").to_string()),
-                                                ("andere", t!("bio_labels.andere").to_string()),
-                                            ].into_iter() {
-                                                label { class: "flex items-center gap-2 cursor-pointer",
-                                                    input {
-                                                        r#type: "radio",
-                                                        name: "comp_quality",
-                                                        class: "radio radio-primary radio-sm",
-                                                        checked: cur == key,
-                                                        onchange: move |_| { set_q(key); }
-                                                    }
-                                                    span { "{label}" }
+                                            // Push-down warning (Testing 25.06.2026): a quality
+                                            // claimed here marks ALL agricultural sub-ingredients
+                                            // on the label — they must really all be bio.
+                                            if cur == "knospe" || cur == "bio" {
+                                                div { class: "p-2 bg-warning/30 text-xs rounded",
+                                                    {t!("warnings.composite_quality_pushdown").to_string()}
                                                 }
                                             }
-                                            // Knospe logo chooser (decoupled from origin): Knospe vs Umstellungsknospe.
+                                            {
+                                                // Bio Verordnung offers no Knospe quality — only the
+                                                // Knospe config lists it (Testing 25.06.2026, MIG).
+                                                let mut quality_options: Vec<(&'static str, String)> = Vec::new();
+                                                if is_knospe_config() {
+                                                    quality_options.push(("knospe", t!("bio_labels.bio_knospe").to_string()));
+                                                }
+                                                quality_options.push(("bio", t!("bio_labels.bio_ch").to_string()));
+                                                quality_options.push(("nicht_lw", t!("bio_labels.nicht_landwirtschaftlich").to_string()));
+                                                quality_options.push(("andere", t!("bio_labels.andere").to_string()));
+                                                rsx! {
+                                                    for (key, label) in quality_options.into_iter() {
+                                                        label { class: "flex items-center gap-2 cursor-pointer",
+                                                            input {
+                                                                r#type: "radio",
+                                                                name: "comp_quality",
+                                                                class: "radio radio-primary radio-sm",
+                                                                checked: cur == key,
+                                                                onchange: move |_| { set_q(key); }
+                                                            }
+                                                            span { "{label}" }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            // Knospe logo chooser. With the composite origin editable
+                                            // (no child declares one) the same four cards as on the
+                                            // leaf appear — CH/Import cards also set the origin. When
+                                            // the origin is child-locked, Schweiz/Import derives
+                                            // bottom-up and only the Knospe/Umstellung split remains.
                                             if cur == "knospe" {
-                                                div { class: "flex gap-2 mt-2",
-                                                    for (umst, label) in [
-                                                        (false, t!("bio_labels.knospe").to_string()),
-                                                        (true, t!("bio_labels.umstellungsknospe").to_string()),
-                                                    ].into_iter() {
-                                                        {
-                                                            let selected = edit_aus_umstellbetrieb() == umst;
-                                                            rsx! {
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: if selected { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-primary bg-primary/5" } else { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-base-300 hover:border-base-content/30" },
-                                                                    onclick: move |_| { set_comp_knospe(umst); },
-                                                                    div { class: if umst { "opacity-60" } else { "" },
-                                                                        crate::components::icons::BioSuisseRegular {}
+                                                {
+                                                    let has_origin = |c: &Ingredient| c.origins.as_ref().is_some_and(|o| !o.is_empty());
+                                                    let synth_origin = vec![Ingredient { children: edit_children(), ..Default::default() }];
+                                                    let origin_locked = cross_level_locked(&synth_origin, &has_origin);
+                                                    if origin_locked {
+                                                        rsx! {
+                                                            div { class: "flex gap-2 mt-2",
+                                                                for (umst, label) in [
+                                                                    (false, t!("bio_labels.knospe").to_string()),
+                                                                    (true, t!("bio_labels.umstellungsknospe").to_string()),
+                                                                ].into_iter() {
+                                                                    {
+                                                                        let selected = edit_aus_umstellbetrieb() == umst;
+                                                                        rsx! {
+                                                                            button {
+                                                                                r#type: "button",
+                                                                                class: if selected { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-primary bg-primary/5" } else { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-base-300 hover:border-base-content/30" },
+                                                                                onclick: move |_| { set_comp_knospe(umst); },
+                                                                                div { class: "h-16 flex items-center",
+                                                                                    if umst {
+                                                                                        crate::components::icons::UmstellungsknospeRegular {}
+                                                                                    } else {
+                                                                                        crate::components::icons::BioSuisseRegular {}
+                                                                                    }
+                                                                                }
+                                                                                span { class: "text-xs text-center leading-tight font-medium", "{label}" }
+                                                                            }
+                                                                        }
                                                                     }
-                                                                    span { class: "text-xs text-center leading-tight font-medium", "{label}" }
+                                                                }
+                                                            }
+                                                        }
+                                                    } else {
+                                                        let origins_have_ch = edit_origins().as_ref().is_some_and(|o| o.contains(&Country::CH));
+                                                        let comp_variant = match (origins_have_ch, edit_aus_umstellbetrieb()) {
+                                                            (true, false) => "knospe_ch",
+                                                            (false, false) => "knospe_import",
+                                                            (true, true) => "umstellung_ch",
+                                                            (false, true) => "umstellung_import",
+                                                        };
+                                                        rsx! {
+                                                            div { class: "grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2",
+                                                                for (key, label) in [
+                                                                    ("knospe_ch", t!("bio_labels.knospe_ch").to_string()),
+                                                                    ("knospe_import", t!("bio_labels.knospe_import").to_string()),
+                                                                    ("umstellung_ch", t!("bio_labels.umstellung_ch").to_string()),
+                                                                    ("umstellung_import", t!("bio_labels.umstellung_import").to_string()),
+                                                                ].into_iter() {
+                                                                    {
+                                                                        let selected = comp_variant == key;
+                                                                        let umstellung = key.starts_with("umstellung");
+                                                                        let ch = key.ends_with("_ch");
+                                                                        rsx! {
+                                                                            button {
+                                                                                r#type: "button",
+                                                                                class: if selected { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-primary bg-primary/5" } else { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-base-300 hover:border-base-content/30" },
+                                                                                onclick: move |_| { set_comp_knospe_variant(key); },
+                                                                                div { class: "h-16 flex items-center",
+                                                                                    if umstellung && ch {
+                                                                                        crate::components::icons::UmstellungsknospeRegular {}
+                                                                                    } else if umstellung {
+                                                                                        crate::components::icons::UmstellungsknospeNoCross {}
+                                                                                    } else if ch {
+                                                                                        crate::components::icons::BioSuisseRegular {}
+                                                                                    } else {
+                                                                                        crate::components::icons::BioSuisseNoCross {}
+                                                                                    }
+                                                                                }
+                                                                                span { class: "text-xs text-center leading-tight font-medium", "{label}" }
+                                                                            }
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -1314,8 +1450,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             }
                         };
 
-                        let wildsammlung_step = "aus zertifizierter Wildsammlung";
-
                         rsx! {
                             // Radio: Bio (Knospe) — Swiss, origin locked to CH
                             FormField {
@@ -1371,7 +1505,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             }
 
                             // Variante b: when "Bio (Knospe)" is chosen, pick WHICH Knospe
-                            // via the logo row (Swiss/Import × Knospe/Umstellung) + Wildsammlung.
+                            // via the logo row (artwork = Knospe mit/ohne Kreuz resp.
+                            // Umstellungsknospe; caption carries only the origin split,
+                            // Testing 25.06.2026). The Herkunft field follows directly.
                             if bio_cat == "knospe" {
                                 br {}
                                 div { class: "border-t border-base-300 pt-2 mt-2",
@@ -1391,8 +1527,16 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                                         r#type: "button",
                                                         class: if selected { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-primary bg-primary/5" } else { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-base-300 hover:border-base-content/30" },
                                                         onclick: move |_| { set_knospe_variant(key); },
-                                                        div { class: if umstellung { "opacity-60" } else { "" },
-                                                            if ch { crate::components::icons::BioSuisseRegular {} } else { crate::components::icons::BioSuisseNoCross {} }
+                                                        div { class: "h-16 flex items-center",
+                                                            if umstellung && ch {
+                                                                crate::components::icons::UmstellungsknospeRegular {}
+                                                            } else if umstellung {
+                                                                crate::components::icons::UmstellungsknospeNoCross {}
+                                                            } else if ch {
+                                                                crate::components::icons::BioSuisseRegular {}
+                                                            } else {
+                                                                crate::components::icons::BioSuisseNoCross {}
+                                                            }
                                                         }
                                                         span { class: "text-xs text-center leading-tight font-medium", "{label}" }
                                                     }
@@ -1400,36 +1544,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                             }
                                         }
                                     }
-                                    {
-                                        let is_wildsammlung_checked = edit_processing_steps()
-                                            .as_ref()
-                                            .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
-                                        rsx! {
-                                            FormField {
-                                                help: Some(t!("help.wildsammlung").to_string()),
-                                                label: t!("bio_labels.wildsammlung").to_string(),
-                                                inline_checkbox: true,
-                                                input {
-                                                    r#type: "checkbox",
-                                                    class: "checkbox checkbox-accent",
-                                                    checked: is_wildsammlung_checked,
-                                                    onchange: move |evt: dioxus::prelude::Event<dioxus::prelude::FormData>| {
-                                                        let mut current = edit_processing_steps().unwrap_or_default();
-                                                        if evt.data.value() == "true" {
-                                                            if !current.contains(&wildsammlung_step.to_string()) {
-                                                                current.push(wildsammlung_step.to_string());
-                                                            }
-                                                        } else {
-                                                            current.retain(|s| s != wildsammlung_step);
-                                                        }
-                                                        edit_processing_steps.set(
-                                                            if current.is_empty() { None } else { Some(current) }
-                                                        );
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                    {leaf_origin_field()}
                                 }
                             } else if bio_cat == "bio" {
                                 br {}
@@ -1646,31 +1761,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     rsx! {}
                 }
             }
-            br {}
-            FormField {
-                label: t!("origin.herkunft").to_string(),
-                help: Some(t!("help.herkunft_liv_art_16").to_string()),
-                ValidationDisplay {
-                    paths: vec![
-                        format!("ingredients[{}][origin]", validation_index)
-                    ],
-                    if origin_locked_ch() {
-                        // Plain Knospe is Swiss by definition — origin is fixed to CH.
-                        // Shown as a static badge (no editable country picker).
-                        div { class: "flex items-center gap-2",
-                            span { class: "badge badge-lg badge-outline",
-                                "{Country::CH.flag_emoji()} {Country::CH.country_code()}"
-                            }
-                        }
-                    } else {
-                        MultiCountrySelect {
-                            values: edit_origins.read().clone(),
-                            onchange: move |countries| {
-                                edit_origins.set(countries);
-                            }
-                        }
-                    }
-                }
+            // Classic Herkunft position — used unless the Knospe quality is active,
+            // where the field renders directly under the variant cards instead.
+            if !(is_knospe_config() && edit_is_bio()) {
+                br {}
+                {leaf_origin_field()}
             }
             br {}
             {
@@ -1766,6 +1861,42 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     rsx! {}
                 }
             }
+            // Wildsammlung sits at the very bottom of the modal (Testing 25.06.2026,
+            // hand note 2) — only relevant when the Knospe quality is selected.
+            if is_knospe_config() && edit_is_bio() {
+                {
+                    let wildsammlung_step = "aus zertifizierter Wildsammlung";
+                    let is_wildsammlung_checked = edit_processing_steps()
+                        .as_ref()
+                        .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
+                    rsx! {
+                        br {}
+                        FormField {
+                            help: Some(t!("help.wildsammlung").to_string()),
+                            label: t!("bio_labels.wildsammlung").to_string(),
+                            inline_checkbox: true,
+                            input {
+                                r#type: "checkbox",
+                                class: "checkbox checkbox-accent",
+                                checked: is_wildsammlung_checked,
+                                onchange: move |evt: dioxus::prelude::Event<dioxus::prelude::FormData>| {
+                                    let mut current = edit_processing_steps().unwrap_or_default();
+                                    if evt.data.value() == "true" {
+                                        if !current.contains(&wildsammlung_step.to_string()) {
+                                            current.push(wildsammlung_step.to_string());
+                                        }
+                                    } else {
+                                        current.retain(|s| s != wildsammlung_step);
+                                    }
+                                    edit_processing_steps.set(
+                                        if current.is_empty() { None } else { Some(current) }
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             } // end if !edit_is_composite() for bio/origins/beef/fish
             div { class: "modal-action sticky bottom-0 bg-base-100 -mx-4 px-4 pt-3 pb-2 border-t border-base-300 mt-0",
                 button {
@@ -1788,29 +1919,46 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 }
 
-                // Show save button (mirror `build_ingredient`'s acceptance rules):
+                // Save button (mirror `build_ingredient`'s acceptance rules):
                 // - Sub-ingredient: name non-empty (amount 0 ok for qualitative)
                 // - Top-level leaf: name non-empty + amount > 0
                 // - Composite: name non-empty + EITHER a weighted child (bottom-up sum)
                 //   OR a positive parent amount (top-down weight, weightless children)
-                if !edit_name().is_empty() && (
-                    props.is_sub_ingredient
-                    || (!edit_is_composite() && edit_amount().is_some_and(|a| a > 0.0))
-                    || (edit_is_composite() && (
-                        edit_children().as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0))
-                        || edit_amount().is_some_and(|a| a > 0.0)
-                    ))
-                ) {
-                    button {
-                        class: "btn btn-primary",
-                        onclick: move |_| handle_save(false),
-                        {t!("nav.speichern").to_string()},
-                    }
-                    if props.is_genesis && !edit_is_composite() {
-                        button {
-                            class: "btn btn-secondary",
-                            onclick: move |_| handle_save_and_next(),
-                            {t!("nav.speichernUndNaechste").to_string()}
+                // Without an amount the button is DISABLED with a hover hint instead
+                // of hidden (Testing 25.06.2026).
+                if !edit_name().is_empty() {
+                    {
+                        let amount_ok = props.is_sub_ingredient
+                            || (!edit_is_composite() && edit_amount().is_some_and(|a| a > 0.0))
+                            || (edit_is_composite() && (
+                                edit_children().as_ref().is_some_and(|c| c.iter().any(|child| child.computed_amount() > 0.0))
+                                || edit_amount().is_some_and(|a| a > 0.0)
+                            ));
+                        if amount_ok {
+                            rsx! {
+                                button {
+                                    class: "btn btn-primary",
+                                    onclick: move |_| handle_save(false),
+                                    {t!("nav.speichern").to_string()},
+                                }
+                                if props.is_genesis && !edit_is_composite() {
+                                    button {
+                                        class: "btn btn-secondary",
+                                        onclick: move |_| handle_save_and_next(),
+                                        {t!("nav.speichernUndNaechste").to_string()}
+                                    }
+                                }
+                            }
+                        } else {
+                            rsx! {
+                                span { class: "tooltip", "data-tip": t!("tooltips.save_needs_amount").to_string(),
+                                    button {
+                                        class: "btn btn-primary btn-disabled",
+                                        disabled: true,
+                                        {t!("nav.speichern").to_string()},
+                                    }
+                                }
+                            }
                         }
                     }
                 }

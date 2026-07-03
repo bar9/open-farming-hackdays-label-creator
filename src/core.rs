@@ -323,10 +323,69 @@ fn is_mono_product(ingredients: &[Ingredient]) -> bool {
 }
 
 /// Check if any leaf ingredient has aus_umstellbetrieb set
-fn has_umstellbetrieb_ingredients(ingredients: &[Ingredient]) -> bool {
-    ingredients.iter()
-        .flat_map(|i| i.leaves())
-        .any(|i| i.aus_umstellbetrieb.unwrap_or(false))
+/// Umstellung anywhere in the tree — a composite parent claiming Umstellung as a
+/// bought certified unit carries the flag on the parent node, which `leaves()`
+/// never visits.
+fn has_umstellbetrieb_in_tree(ingredients: &[Ingredient]) -> bool {
+    fn node_or_descendant(i: &Ingredient) -> bool {
+        i.aus_umstellbetrieb.unwrap_or(false)
+            || i.children.as_ref().is_some_and(|cs| cs.iter().any(node_or_descendant))
+    }
+    ingredients.iter().any(node_or_descendant)
+}
+
+/// Quality claimed at a composite level is pushed DOWN onto the children's
+/// rendered markers (Testing 25.06.2026). Carries the accumulated claim while
+/// walking a composite subtree.
+#[derive(Clone, Copy, Default)]
+struct InheritedQuality {
+    bio: bool,
+    umstellung: bool,
+}
+
+impl InheritedQuality {
+    fn from_parent(parent: &Ingredient) -> Self {
+        Self {
+            bio: parent.is_bio == Some(true) || parent.bio_ch == Some(true),
+            umstellung: parent.aus_umstellbetrieb == Some(true),
+        }
+    }
+}
+
+/// Which markers the rendered ingredient list will actually contain:
+/// `(simple_star, double_star)`. Mirrors the marker rules in `format` /
+/// `composites_with_inherited` including parent-claim push-down, so the
+/// legend lines match what is printed.
+fn tree_marker_presence(ingredients: &[Ingredient]) -> (bool, bool) {
+    fn walk(ing: &Ingredient, inherited: InheritedQuality, star: &mut bool, double_star: &mut bool) {
+        let own_bio = ing.is_bio == Some(true) || ing.bio_ch == Some(true);
+        let own_umst = ing.aus_umstellbetrieb.unwrap_or(false);
+        match ing.children.as_ref().filter(|c| !c.is_empty()) {
+            Some(children) => {
+                let next = InheritedQuality {
+                    bio: inherited.bio || own_bio,
+                    umstellung: inherited.umstellung || own_umst,
+                };
+                for c in children {
+                    walk(c, next, star, double_star);
+                }
+            }
+            None => {
+                let eff_umst = own_umst || (inherited.umstellung && ing.is_agricultural());
+                let eff_bio = own_bio || (inherited.bio && ing.is_agricultural());
+                if eff_umst {
+                    *double_star = true;
+                } else if eff_bio {
+                    *star = true;
+                }
+            }
+        }
+    }
+    let (mut star, mut double_star) = (false, false);
+    for ing in ingredients {
+        walk(ing, InheritedQuality::default(), &mut star, &mut double_star);
+    }
+    (star, double_star)
 }
 
 /// Calculate the percentage of an ingredient relative to the total amount
@@ -525,6 +584,17 @@ impl Ingredient {
         self.is_agricultural
     }
 
+    /// Category for the Knospe origin rules: the BLV API category when the
+    /// ingredient was picked from the API, else the curated food_db category
+    /// (looked up via the canonical entry, e.g. "Butter" → "Kochbutter").
+    /// Locally sourced ingredients otherwise have `category: None`, which made
+    /// the dairy/meat origin rules silently skip them.
+    pub fn effective_category(&self) -> Option<String> {
+        self.category.clone().or_else(|| {
+            crate::model::lookup_category(self.canonical.as_deref().unwrap_or(&self.name))
+        })
+    }
+
     /// Quality and origin aggregate **bottom-up**: when an ingredient has children
     /// (and `override_children` is not forcing leaf treatment), the children are the
     /// authoritative source for quality/origin, regardless of whether they carry
@@ -598,6 +668,13 @@ impl Ingredient {
     }
 
     pub fn composites_with_rules(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize) -> String {
+        // A quality claimed on this composite itself (bought certified unit) is
+        // pushed DOWN onto the children's markers (Testing 25.06.2026) — the
+        // parent name never carries `*`/`**`.
+        self.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, InheritedQuality::from_parent(self))
+    }
+
+    fn composites_with_inherited(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize, inherited: InheritedQuality) -> String {
         let mut output = String::new();
         if let Some(children) = &self.children {
             if !children.is_empty() {
@@ -617,19 +694,49 @@ impl Ingredient {
                             } else {
                                 escaped_name
                             };
-                            // Bio/Umstellbetrieb markers on children
+                            // Bio/Umstellbetrieb markers on children — own status OR
+                            // inherited from a parent-level claim (agricultural only:
+                            // additives/salt never earn a bio marker).
                             if has_bio_input_rule {
-                                let is_umstellbetrieb = child.aus_umstellbetrieb.unwrap_or(false);
+                                let is_umstellbetrieb = child.aus_umstellbetrieb.unwrap_or(false)
+                                    || (inherited.umstellung && child.is_agricultural());
                                 let is_bio = child.computed_bio_status().unwrap_or(false)
-                                    || child.computed_bio_ch_status().unwrap_or(false);
+                                    || child.computed_bio_ch_status().unwrap_or(false)
+                                    || (inherited.bio && child.is_agricultural());
                                 if is_umstellbetrieb {
                                     base_name = format!("{}**", base_name);
                                 } else if is_bio && !suppress_asterisk {
                                     base_name = format!("{}*", base_name);
                                 }
                             }
-                            // Recurse into children's children
-                            base_name.push_str(&child.composites_with_rules(rules, total_amount, agricultural_ingredient_count));
+                            // Namensgebende sub-ingredients print their share of the
+                            // WHOLE product (Testing 25.06.2026) — `total_amount` is the
+                            // product total; percent-mode children were resolved to grams
+                            // up front in `resolve_percentages`.
+                            if rules.contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
+                                && child.is_namensgebend == Some(true)
+                                && total_amount > 0.0
+                            {
+                                let percentage = child.computed_amount() / total_amount * 100.0;
+                                if percentage > 100.0 {
+                                    // LIV Anhang 7: >100% uses the grams-per-100g format
+                                    let grams_per_100g = percentage.round() as u32;
+                                    base_name = format!(
+                                        "{} ({})",
+                                        base_name,
+                                        t!("label.liv_anhang7_format", grams = grams_per_100g)
+                                    );
+                                } else if percentage > 0.0 {
+                                    base_name = format!("{} {}", base_name, format_percentage(percentage));
+                                }
+                            }
+                            // Recurse into children's children, extending inheritance
+                            // with this child's own claim.
+                            let child_inherited = InheritedQuality {
+                                bio: inherited.bio || child.is_bio == Some(true) || child.bio_ch == Some(true),
+                                umstellung: inherited.umstellung || child.aus_umstellbetrieb == Some(true),
+                            };
+                            base_name.push_str(&child.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, child_inherited));
                             // Add processing steps
                             if let Some(steps) = &child.processing_steps {
                                 if !steps.is_empty() {
@@ -834,6 +941,26 @@ impl Ingredient {
         }
     }
 
+    /// Any node in this subtree marked with the Import-(Umstellungs-)Knospe —
+    /// Knospe quality claimed with a non-Swiss origin — that lacks a real,
+    /// printable country anywhere on its branch. On an Import-Knospe label such
+    /// ingredients must declare their origin (Testing 25.06.2026); non-agricultural
+    /// nodes never require one.
+    fn has_import_knospe_without_origin(&self) -> bool {
+        let has_real_origin = self.computed_origins().is_some_and(|o| {
+            o.iter().any(|c| !matches!(c, Country::Import | Country::NoOriginRequired))
+        });
+        let self_flagged = self.is_agricultural()
+            && self.is_bio == Some(true)
+            && !self.origins.as_ref().is_some_and(|o| o.contains(&Country::CH))
+            && !has_real_origin;
+        self_flagged
+            || self
+                .children
+                .as_ref()
+                .is_some_and(|cs| cs.iter().any(|c| c.has_import_knospe_without_origin()))
+    }
+
     /// Collect leaf-level ingredients for percentage calculations.
     /// If override is set, treat this node as a leaf.
     pub fn leaves(&self) -> Vec<&Ingredient> {
@@ -927,28 +1054,21 @@ impl OutputFormatter {
         };
 
         // Umstellbetrieb-Stern (**) vor Bio-Stern (*) prüfen.
-        // The marker lives on the leaf ingredients that show it: a composite parent
-        // must NOT duplicate a marker its children already carry — "Mix (A*, B*)",
-        // not "Mix* (A*, B*)". The parent keeps its own marker only when no child
-        // shows one (the parent-claim-override case: composite Knospe, plain children).
+        // Markers live on the sub-ingredients, NEVER on a composite parent — a
+        // quality claimed at the composite level is pushed down onto the children
+        // in `composites_with_rules` instead (Testing 25.06.2026): "Mix (A*, B*)",
+        // never "Mix* (…)".
         let is_umstellbetrieb = self.ingredient.aus_umstellbetrieb.unwrap_or(false);
-        let children_show_marker = self.ingredient.children.as_ref().is_some_and(|kids| {
-            kids.iter().any(|c| {
-                c.aus_umstellbetrieb.unwrap_or(false)
-                    || c.computed_bio_status().unwrap_or(false)
-                    || c.computed_bio_ch_status().unwrap_or(false)
-            })
-        });
         let is_bio_ingredient = self.ingredient.computed_bio_status().unwrap_or(false)
             || self.ingredient.computed_bio_ch_status().unwrap_or(false);
         let has_bio_input_rule = self.RuleDefs.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
             || self.RuleDefs.contains(&RuleDef::Bio_PartialBioMarking);
         let suppress_asterisk = self.RuleDefs.contains(&RuleDef::Bio_AllAgriAreBio);
 
-        if has_bio_input_rule && is_umstellbetrieb && !children_show_marker {
+        if has_bio_input_rule && is_umstellbetrieb && !has_children {
             // Umstellbetrieb ingredients get ** instead of *
             output = format!("{}**", output);
-        } else if has_bio_input_rule && is_bio_ingredient && !suppress_asterisk && !children_show_marker {
+        } else if has_bio_input_rule && is_bio_ingredient && !suppress_asterisk && !has_children {
             output = format!("{}*", output);
         }
 
@@ -1013,9 +1133,16 @@ impl OutputFormatter {
         let has_knospe_under90_rule = self
             .RuleDefs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
-        // Composite parents inherit origin from their children — origin is
-        // declared at the lowest level only, never on the parent.
+        // Composite parents normally inherit origin from their children (declared
+        // at the lowest level). But origin is single-level and may equally be
+        // declared top-down on the composite itself — that declaration must still
+        // reach the label instead of being silently dropped (Testing 25.06.2026).
         if has_children {
+            if has_declared_origin(&self.ingredient) {
+                if let Some(origin_str) = format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount, self.agricultural_ingredient_count) {
+                    output = format!("{} {}", output, origin_str);
+                }
+            }
             return output;
         }
 
@@ -1122,6 +1249,20 @@ impl Calculator {
             }
         }
 
+        // Whether the output label would carry the Import-Knospe (no Swiss cross):
+        // 100% Knospe-certified but <90% Swiss share. Computed up front (pure
+        // functions) because the origin validator below depends on the logo choice;
+        // the logo conditionals themselves are emitted further down.
+        let import_knospe_logo_would_show = !input.ingredients.is_empty() && {
+            let knospe_pct = calculate_knospe_certified_percentage(&input.ingredients);
+            let swiss_pct = if self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio) {
+                calculate_bio_swiss_agricultural_percentage(&input.ingredients)
+            } else {
+                calculate_swiss_agricultural_percentage(&input.ingredients)
+            };
+            knospe_pct >= 100.0 && swiss_pct < 90.0
+        };
+
         // validations
         #[cfg(target_arch = "wasm32")]
         web_sys::console::log_1(&"📋 Validation Rules".into());
@@ -1131,6 +1272,10 @@ impl Calculator {
                 if let RuleDef::AP1_1_ZutatMengeValidierung = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking ingredient amounts > 0"));
                     validate_amount(&input.ingredients, &mut validation_messages)
+                }
+                if let RuleDef::AP1_2_ProzentOutputNamensgebend = ruleDef {
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking namensgebend sub-ingredients carry an amount"));
+                    validate_namensgebend_amounts(&input.ingredients, &mut validation_messages)
                 }
                 if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking origin for ingredients >50% of {}g total", total_amount)));
@@ -1149,8 +1294,8 @@ impl Calculator {
                     validate_fish_catch_location(&input.ingredients, &mut validation_messages);
                 }
                 if let RuleDef::Knospe_AlleZutatenHerkunft = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for ALL ingredients (Bio/Knospe)"));
-                    validate_all_ingredients_origin(&input.ingredients, &mut validation_messages)
+                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for Import-Knospe ingredients when the Import-Knospe shows"));
+                    validate_import_knospe_origin(&input.ingredients, import_knospe_logo_would_show, &mut validation_messages)
                 }
                 if let RuleDef::Knospe_Under90_Percent_CH_IngredientRules = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking Knospe <90% specific ingredient origin requirements"));
@@ -1298,11 +1443,38 @@ impl Calculator {
                         // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
                         conditionals.insert(String::from("bio_suisse_no_cross"), true);
                     }
+                    // Umstellungs-Knospe (Testing 25.06.2026): any ingredient aus
+                    // Umstellung switches the logo artwork to the Umstellungsknospe
+                    // (Suisse/Import per the regular/no_cross branch above) and adds
+                    // the Umstellungssatz next to it on the label preview.
+                    if has_umstellbetrieb_in_tree(&input.ingredients) {
+                        conditionals.insert(String::from("knospe_umstellung_logo"), true);
+                    }
                     conditionals.insert(String::from("knospe_marketing_allowed"), true);
                 } else {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
                     conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
+                }
+            }
+
+            // Tri-state result of the «Rezeptur prüfen» check (Testing 25.06.2026).
+            // These drive the info text shown below the label; the marketing
+            // conditionals above keep encoding the pure recipe math (logo choice).
+            // Only recipe-scoped issues count — the certification body is covered
+            // by the yellow placeholder on the label, not by this check.
+            if !input.rezeptur_vollstaendig {
+                conditionals.insert(String::from("knospe_check_pending"), true);
+            } else {
+                let has_recipe_issues = validation_messages
+                    .keys()
+                    .any(|k| k.starts_with("ingredients["));
+                let fulfils_knospe = !input.ingredients.is_empty()
+                    && calculate_knospe_certified_percentage(&input.ingredients) >= 100.0;
+                if fulfils_knospe && !has_recipe_issues {
+                    conditionals.insert(String::from("knospe_check_ok"), true);
+                } else {
+                    conditionals.insert(String::from("knospe_check_failed"), true);
                 }
             }
         }
@@ -1317,8 +1489,9 @@ impl Calculator {
             } else {
                 conditionals.insert(String::from("bio_marketing_not_allowed"), true);
             }
-            // Umstellbetrieb handling for Bio Sachbezeichnung
-            if has_umstellbetrieb_ingredients(&input.ingredients) {
+            // Umstellbetrieb handling for Bio Sachbezeichnung — whole tree, so a
+            // parent-claim Umstellung composite counts too.
+            if has_umstellbetrieb_in_tree(&input.ingredients) {
                 if is_mono_product(&input.ingredients) {
                     // Monoprodukt with umstellbetrieb: keep suffix, add hinweis
                     conditionals.insert(String::from("umstellbetrieb_hinweis"), true);
@@ -1364,10 +1537,15 @@ impl Calculator {
                     }
                 }
 
-                // Check if Bio/Knospe rule applies (requires origin for ALL ingredients)
-                if has_bio_knospe_rule {
+                // Bio/Knospe rule (Testing 25.06.2026): origin is required only for
+                // Import-Knospe ingredients without a country, and only when the
+                // label output is the Import-Knospe.
+                if has_bio_knospe_rule
+                    && import_knospe_logo_would_show
+                    && ingredient.has_import_knospe_without_origin()
+                {
                     requires_herkunft = true;
-                    reasons.push("Bio/Knospe".to_string());
+                    reasons.push("Import-Knospe ohne Herkunft".to_string());
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -1418,17 +1596,15 @@ impl Calculator {
         }
 
         // Prüfe ob Bio-Zutaten oder Umstellbetrieb vorhanden sind (für Legende).
-        // `has_bio_ingredients` zählt nur Zutaten, die ein einfaches `*` bekommen —
-        // d.h. bio, aber nicht aus Umstellbetrieb (die kriegen stattdessen `**`).
-        // So erscheint die `*`-Legendenzeile nicht, wenn nur `**`-Einträge existieren.
+        // Die Legende spiegelt die tatsächlich gedruckten Marker inkl.
+        // Parent-Claim-Push-down: ein einfaches `*` nur für bio ohne Umstellung
+        // (Umstellung kriegt stattdessen `**`), beides über den ganzen Baum.
         let has_bio_rules = output_rules.contains(&RuleDef::Bio_Knospe_EingabeIstBio)
             || output_rules.contains(&RuleDef::Bio_AllAgriAreBio)
             || output_rules.contains(&RuleDef::Bio_PartialBioMarking);
-        let has_bio_ingredients = has_bio_rules && sorted_ingredients.iter()
-            .flat_map(|ing| ing.leaves())
-            .any(|ing| (ing.is_bio == Some(true) || ing.bio_ch == Some(true))
-                && !ing.aus_umstellbetrieb.unwrap_or(false));
-        let has_umstellbetrieb = has_bio_rules && has_umstellbetrieb_ingredients(&sorted_ingredients);
+        let (tree_has_star, tree_has_double_star) = tree_marker_presence(&sorted_ingredients);
+        let has_bio_ingredients = has_bio_rules && tree_has_star;
+        let has_umstellbetrieb = has_bio_rules && tree_has_double_star;
 
         // Count agricultural ingredients for Monoprodukt detection in OutputFormatter
         let agricultural_ingredient_count = sorted_ingredients.iter()
@@ -1608,7 +1784,7 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
     }
 
     // Category-based rules (only apply when ingredient has a recognized category)
-    if let Some(category) = &ingredient.category {
+    if let Some(category) = &ingredient.effective_category() {
         // Plant ingredients with more than 50% share
         if is_plant_category(category) && percentage > 50.0 {
             return true;
@@ -1661,18 +1837,51 @@ fn validate_meat_origin(
     }
 }
 
-fn validate_all_ingredients_origin(
+/// Namensgebende sub-ingredients must carry an amount — without one their
+/// percentage of the end product cannot appear on the label (Testing
+/// 25.06.2026: missing Rosinen-%, BioVo Himbeere case). Checks all depths
+/// below the top level; top-level amounts are covered by `validate_amount`.
+fn validate_namensgebend_amounts(
     ingredients: &[Ingredient],
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
+    fn subtree_has_zero_namensgebend(ing: &Ingredient) -> bool {
+        (ing.is_namensgebend == Some(true) && ing.computed_amount() <= 0.0)
+            || ing
+                .children
+                .as_ref()
+                .is_some_and(|cs| cs.iter().any(subtree_has_zero_namensgebend))
+    }
     for (i, ingredient) in ingredients.iter().enumerate() {
-        // Respect bottom-up origin: a composite satisfies the requirement when
-        // its sub-ingredients carry origins, even if the parent declares none.
-        let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
-        if !has_origin {
+        let flagged = ingredient
+            .children
+            .as_ref()
+            .is_some_and(|cs| cs.iter().any(subtree_has_zero_namensgebend));
+        if flagged {
+            validation_messages.entry(format!("ingredients[{}][amount]", i))
+                .or_default()
+                .push(t!("validation.namensgebend_amount_required").to_string());
+        }
+    }
+}
+
+/// Reworked per Testing 25.06.2026: origin is required only for ingredients
+/// carrying the Import-(Umstellungs-)Knospe without a real country, and only
+/// when the label output is the Import-Knospe. Non-agricultural ingredients
+/// (e.g. Dicarbonat) never require an origin.
+fn validate_import_knospe_origin(
+    ingredients: &[Ingredient],
+    import_knospe_logo_would_show: bool,
+    validation_messages: &mut HashMap<String, Vec<String>>,
+) {
+    if !import_knospe_logo_would_show {
+        return;
+    }
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        if ingredient.has_import_knospe_without_origin() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
-                .push(t!("validation.origin_required_knospe").to_string());
+                .push(t!("validation.origin_required_import_knospe").to_string());
         }
     }
 }
@@ -1809,7 +2018,7 @@ fn validate_knospe_under90_origin(
                 t!("validation.knospe_mono_origin_required").to_string()
             } else if ingredient.is_namensgebend == Some(true) {
                 t!("validation.knospe_name_giving_origin_required").to_string()
-            } else if let Some(category) = &ingredient.category {
+            } else if let Some(category) = &ingredient.effective_category() {
                 if is_plant_category(category) && percentage > 50.0 {
                     t!("validation.knospe_plants_over_50_origin_required").to_string()
                 } else if (is_egg_category(category) || is_honey_category(category) || is_fish_category(category)) && percentage > 10.0 {

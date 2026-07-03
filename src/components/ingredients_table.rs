@@ -54,29 +54,32 @@ pub struct IngredientsTableProps {
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let editing_path: Signal<IngredientPath> = use_signal(Vec::new);
 
-    // Flatten all validation messages into an ordered (ingredient label, message)
-    // list. Keys are either "certification_body" or "ingredients[i][field]" where
-    // `i` is the TOP-LEVEL ingredient index (every validator in core.rs iterates
-    // `ingredients.iter().enumerate()`), so it maps directly to the ingredient name.
+    // Flatten the recipe-scoped validation messages into an ordered (ingredient
+    // label, message) list. Only "ingredients[i][field]" keys count — `i` is the
+    // TOP-LEVEL ingredient index (every validator in core.rs iterates
+    // `ingredients.iter().enumerate()`), so it maps directly to the ingredient
+    // name. Non-recipe keys (e.g. "certification_body") stay out of this panel:
+    // the yellow placeholder on the label preview covers them (Testing 25.06.2026).
     let issues = use_memo(move || {
         let msgs = props.validation_messages.read();
         let ingredients = props.ingredients.read();
         let mut out: Vec<(usize, String, String)> = Vec::new();
         for (key, messages) in msgs.iter() {
-            // Parse the top-level index from "ingredients[i][field]" (None for
-            // non-indexed keys such as "certification_body").
-            let idx = key
+            // Parse the top-level index from "ingredients[i][field]"; skip
+            // everything else (non-recipe issues).
+            let Some(idx) = key
                 .strip_prefix("ingredients[")
                 .and_then(|rest| rest.split(']').next())
-                .and_then(|n| n.parse::<usize>().ok());
-            let label = idx
-                .and_then(|i| ingredients.get(i))
+                .and_then(|n| n.parse::<usize>().ok())
+            else {
+                continue;
+            };
+            let label = ingredients
+                .get(idx)
                 .map(|ing| ing.name.clone())
                 .unwrap_or_default();
-            // `usize::MAX` sorts non-indexed (e.g. cert body) keys last.
-            let sort_idx = idx.unwrap_or(usize::MAX);
             for m in messages {
-                out.push((sort_idx, label.clone(), m.clone()));
+                out.push((idx, label.clone(), m.clone()));
             }
         }
         // Deterministic order: HashMap iteration is unordered.
@@ -116,6 +119,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 &editing_path,
                 props.ingredients,
                 show_knospe_icon,
+                None,
             )}
 
             if props.ingredients.len() > 0 {
@@ -241,6 +245,9 @@ fn render_ingredient_tree(
     editing_path: &Signal<IngredientPath>,
     root_ingredients: Signal<Vec<Ingredient>>,
     show_knospe_icon: bool,
+    // Some(is_ch) when an ancestor composite claims the quality — children show
+    // the inherited Knospe desaturated ("Pastellfarben", Testing 25.06.2026).
+    inherited_knospe: Option<bool>,
 ) -> Element {
     use crate::model::Country;
 
@@ -256,6 +263,7 @@ fn render_ingredient_tree(
             let ingr = ingr.clone();
             let name = ingr.name.clone();
             let is_allergen = ingr.is_allergen;
+            let is_agricultural = ingr.is_agricultural;
             let is_namensgebend = ingr.is_namensgebend.unwrap_or(false);
             let computed_origins = ingr.computed_origins();
             let computed_amount = ingr.computed_amount();
@@ -292,7 +300,18 @@ fn render_ingredient_tree(
                             match knospe_variant {
                                 Some(true) => rsx! { icons::KnospeCompactCh {} },
                                 Some(false) => rsx! { icons::KnospeCompactNoCross {} },
-                                None => rsx! {},
+                                // Inherited from a parent-level claim: desaturated icon
+                                // (agricultural sub-ingredients only).
+                                None => match inherited_knospe.filter(|_| show_knospe_icon && is_agricultural) {
+                                    Some(ch) => rsx! {
+                                        span {
+                                            class: "opacity-40 saturate-50",
+                                            title: t!("bio_labels.inherited_quality").to_string(),
+                                            if ch { icons::KnospeCompactCh {} } else { icons::KnospeCompactNoCross {} }
+                                        }
+                                    },
+                                    None => rsx! {},
+                                },
                             }
                             div {
                                 if is_allergen {
@@ -309,7 +328,19 @@ fn render_ingredient_tree(
                     }
                     div {
                         class: "text-right",
-                        "{computed_amount:.1} " {t!(&unit_key).to_string()}
+                        // Uniform amount display (Testing 25.06.2026, hand note 11):
+                        // percent entries without decimals, qualitative zero amounts
+                        // as a quiet dash instead of noisy "0.0 %" rows.
+                        {
+                            let unit_txt = t!(&unit_key).to_string();
+                            if computed_amount <= 0.0 {
+                                rsx! { span { class: "text-base-content/40", "–" } }
+                            } else if unit_txt == "%" {
+                                rsx! { "{computed_amount:.0} {unit_txt}" }
+                            } else {
+                                rsx! { "{computed_amount:.1} {unit_txt}" }
+                            }
+                        }
                     }
                     div {
                         class: "text-right",
@@ -337,7 +368,8 @@ fn render_ingredient_tree(
                         }
                     }
                 }
-                // Render children recursively (always expanded)
+                // Render children recursively (always expanded). A quality claim on
+                // this node starts (or continues) the inherited-Knospe display.
                 if let Some(ref children) = children_for_recurse {
                     if !children.is_empty() {
                         {render_ingredient_tree(
@@ -347,6 +379,7 @@ fn render_ingredient_tree(
                             &editing_path_signal,
                             root_ingredients,
                             show_knospe_icon,
+                            knospe_variant.or(inherited_knospe),
                         )}
                     }
                 }
