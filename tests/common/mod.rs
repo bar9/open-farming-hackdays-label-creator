@@ -508,6 +508,22 @@ pub async fn has_bio_suisse_cross(c: &Client) -> bool {
     .unwrap_or(false)
 }
 
+/// Detects the green "qualifies as Bio" status badge (BioV) rendered in the
+/// top-right corner of the label card when the recipe reaches >= 95% Bio-CH.
+pub async fn has_bio_qualified_badge(c: &Client) -> bool {
+    c.execute(
+        r##"
+        const el = document.querySelector('div.absolute.top-2.right-2 .badge-success');
+        return !!el && /Bio/.test(el.textContent || '');
+        "##,
+        vec![],
+    )
+    .await
+    .ok()
+    .and_then(|v| v.as_bool())
+    .unwrap_or(false)
+}
+
 // ---------- Configuration switching ----------
 
 /// Open the configuration dropdown in the header and pick `label`

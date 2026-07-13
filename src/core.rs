@@ -314,6 +314,34 @@ fn calculate_bio_ch_certified_percentage(ingredients: &[Ingredient]) -> f64 {
     (bio_ch_certified_amount / total_agricultural_amount) * 100.0
 }
 
+/// Percentage (of total agricultural weight) made up of permitted non-organic
+/// exceptions (Annex 3 WBF, e.g. Pektin) that are not bio-certified. The Bio-V
+/// "Bio" Sachbezeichnung tolerates these only up to 5% of the agricultural weight.
+fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total_agricultural_amount: f64 = leaves
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    if total_agricultural_amount == 0.0 {
+        return 0.0;
+    }
+
+    let ausnahme_amount: f64 = leaves
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .filter(|ingredient| {
+            ingredient.erlaubte_ausnahme_bio.unwrap_or(false) && !ingredient.is_bio_ch_compliant()
+        })
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    (ausnahme_amount / total_agricultural_amount) * 100.0
+}
+
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
     ingredients.iter()
@@ -632,15 +660,16 @@ impl Ingredient {
             || self.erlaubte_ausnahme_knospe.unwrap_or(false)
     }
 
-    /// Counts toward Bio-CH certification: Bio-CH certified (and not from a
-    /// conversion farm), or a permitted non-organic exception (Annex 3 WBF).
+    /// Counts toward Bio-CH certification: Bio-CH certified and not from a
+    /// conversion farm. A permitted non-organic exception (Annex 3 WBF, e.g. Pektin)
+    /// is NOT bio — it is tolerated only up to 5% of the agricultural weight, which
+    /// the >= 95% Sachbezeichnung threshold enforces, so it must NOT count here.
     /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_bio_ch_compliant(&self) -> bool {
         if self.aggregates_quality_from_children() {
             return self.children.as_ref().unwrap().iter().all(|c| c.is_bio_ch_compliant());
         }
-        (self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false))
-            || self.erlaubte_ausnahme_bio.unwrap_or(false)
+        self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false)
     }
 
     pub fn composite_name(&self) -> String {
@@ -1078,7 +1107,8 @@ impl OutputFormatter {
         let has_wildsammlung_step = self.ingredient.processing_steps.as_ref()
             .is_some_and(|s| s.iter().any(|step| step == wildsammlung_step));
         let show_wildsammlung_marker = has_wildsammlung_rule && has_wildsammlung_step
-            && calculate_ingredient_percentage(self.ingredient.computed_amount(), self.total_amount) > 10.0;
+            // Excel Zeile 12: "grösser/gleich 10 %" → inclusive boundary.
+            && calculate_ingredient_percentage(self.ingredient.computed_amount(), self.total_amount) >= 10.0;
 
         if show_wildsammlung_marker {
             output = format!("{}°", output);
@@ -1489,17 +1519,57 @@ impl Calculator {
             } else {
                 conditionals.insert(String::from("bio_marketing_not_allowed"), true);
             }
+            // Erlaubte nicht-bio Zutaten (Anhang 3 WBF, z.B. Pektin) dürfen höchstens
+            // 5% der landwirtschaftlichen Zutaten ausmachen; darüber ist "Bio" nicht
+            // zulässig (> 5% ⇒ Bio-Anteil < 95%, also stets zusammen mit
+            // bio_marketing_not_allowed — dieser Hinweis nennt den konkreten Grund).
+            if calculate_erlaubte_ausnahme_bio_percentage(&input.ingredients) > 5.0 {
+                conditionals.insert(String::from("bio_erlaubte_ausnahme_ueber_5_prozent"), true);
+            }
             // Umstellbetrieb handling for Bio Sachbezeichnung — whole tree, so a
             // parent-claim Umstellung composite counts too.
             if has_umstellbetrieb_in_tree(&input.ingredients) {
                 if is_mono_product(&input.ingredients) {
-                    // Monoprodukt with umstellbetrieb: keep suffix, add hinweis
-                    conditionals.insert(String::from("umstellbetrieb_hinweis"), true);
+                    // Monoprodukt aus Umstellbetrieb (Excel Zeile 7): a single Bio-CH
+                    // agricultural ingredient from a conversion farm MAY carry "Bio" in
+                    // the Sachbezeichnung, with the mandatory Umstellungshinweis. Because
+                    // is_bio_ch_compliant excludes Umstellbetrieb, the percentage is 0 and
+                    // the >=95 gate never set the suffix — re-assert it for the mono case.
+                    let mono_is_bio_ch = input.ingredients.iter()
+                        .flat_map(|i| i.leaves())
+                        .filter(|i| i.is_agricultural())
+                        .all(|i| i.bio_ch == Some(true));
+                    if mono_is_bio_ch {
+                        conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
+                        conditionals.insert(String::from("bio_marketing_allowed"), true);
+                        conditionals.remove("bio_marketing_not_allowed");
+                        conditionals.insert(String::from("umstellbetrieb_hinweis"), true);
+                    }
                 } else {
                     // Composite with umstellbetrieb: remove suffix, block marketing
                     conditionals.remove("bio_sachbezeichnung_suffix");
                     conditionals.remove("bio_marketing_allowed");
                     conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+                }
+            }
+
+            // Tri-state «Rezeptur prüfen» for BioV, mirroring the Knospe check. The
+            // marketing conditionals above encode the pure recipe math (incl. the
+            // mono-Umstellbetrieb case); this layer folds in "recipe checked" +
+            // per-ingredient validation, so the Bio-badge/verdict is only asserted
+            // once the user has confirmed the recipe and no recipe-scoped errors remain.
+            if !input.rezeptur_vollstaendig {
+                conditionals.insert(String::from("bio_check_pending"), true);
+            } else {
+                let has_recipe_issues = validation_messages
+                    .keys()
+                    .any(|k| k.starts_with("ingredients["));
+                let fulfils_bio = !input.ingredients.is_empty()
+                    && conditionals.get("bio_marketing_allowed").copied().unwrap_or(false);
+                if fulfils_bio && !has_recipe_issues {
+                    conditionals.insert(String::from("bio_check_ok"), true);
+                } else {
+                    conditionals.insert(String::from("bio_check_failed"), true);
                 }
             }
 
@@ -1519,15 +1589,24 @@ impl Calculator {
             for (index, ingredient) in input.ingredients.iter().enumerate() {
                 let mut requires_herkunft = false;
                 let mut reasons = Vec::new();
-                let percentage = calculate_ingredient_percentage(ingredient.amount, total_amount);
+                // Use the aggregated weight (computed_amount), NOT the raw entered
+                // amount: for a composite the weight lives in its children and the
+                // parent's own `amount` is often 0, so the raw value collapses the
+                // percentage toward 0 and the >50%/meat-20% flags never fire. This
+                // matches the denominator `total_amount` (Σ computed_amount, ~line 1272)
+                // and the validators `validate_origin` / `validate_meat_origin`.
+                let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
 
-                // Check if >50% rule applies
-                if has_50_percent_rule && percentage > 50.0 {
+                // Check if >50% rule applies (non-agricultural ingredients never require origin)
+                if has_50_percent_rule && percentage > 50.0 && ingredient.is_agricultural() {
                     requires_herkunft = true;
                     reasons.push(format!(">50% ({:.1}%)", percentage));
                 }
 
-                // Check if meat rule applies (meat ingredients >20%)
+                // Check if meat rule applies (meat ingredients >20%). NOTE: keys off the
+                // ingredient's own `category`, which composite parents usually lack, so a
+                // composite meat product won't trigger AP7_3 at the top level (category is
+                // not aggregated from children — a separate facet, not fixed here).
                 if has_meat_rule && percentage > 20.0 {
                     if let Some(category) = &ingredient.category {
                         if is_meat_category(category) {
@@ -1578,9 +1657,15 @@ impl Calculator {
 
         // Inject Bio marking mode rules (only for Bio config with Bio_ShowBioSachbezeichnung)
         if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
-            if bio_ch_percentage >= 95.0 {
+            // Three bands (Excel "Inhaltsverzeichnis_Bio_Zusatz", Zeilen 2–4):
+            //   = 100%     → "Alle landwirtschaftlichen … aus biologischer Landwirtschaft", kein *
+            //   95–99.99%  → per-Zutat * + "* aus biologischer Landwirtschaft" (weder Rule injiziert;
+            //                Bio_Knospe_EingabeIstBio schaltet das * frei, Legende fällt auf den
+            //                aus_biologischer_landwirtschaft-Zweig durch)
+            //   0–<95%     → per-Zutat * + "x% … aus biologischer Produktion"
+            if bio_ch_percentage >= 100.0 {
                 output_rules.push(RuleDef::Bio_AllAgriAreBio);
-            } else if bio_ch_percentage > 0.0 {
+            } else if bio_ch_percentage > 0.0 && bio_ch_percentage < 95.0 {
                 output_rules.push(RuleDef::Bio_PartialBioMarking);
             }
         }
@@ -1616,7 +1701,7 @@ impl Calculator {
         let has_wildsammlung_marker = output_rules.contains(&RuleDef::Wildsammlung_Ueber10Prozent)
             && sorted_ingredients.iter().any(|ing| {
                 let pct = calculate_ingredient_percentage(ing.computed_amount(), total_amount);
-                pct > 10.0 && ing.processing_steps.as_ref()
+                pct >= 10.0 && ing.processing_steps.as_ref()
                     .is_some_and(|s| s.iter().any(|step| step == "aus zertifizierter Wildsammlung"))
             });
 
@@ -1683,7 +1768,7 @@ fn validate_origin(
         // Respect bottom-up origin: a composite satisfies the requirement when its
         // sub-ingredients carry origins, even if the parent declares none.
         let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
-        if percentage > 50.0 && !has_origin {
+        if percentage > 50.0 && !has_origin && ingredient.is_agricultural() {
             validation_messages.entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_over_50_percent").to_string());
@@ -1708,7 +1793,7 @@ fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], to
         None
     } else if has_knospe_90_99_rule {
         // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
-        if ingredient.is_agricultural && ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) {
+        if ingredient.is_agricultural() && ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)) {
             Some("(CH)".to_string())
         } else {
             None
@@ -1719,7 +1804,7 @@ fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], to
         let is_mono_product = agricultural_ingredient_count == 1;
 
         if should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product) {
-            format_valid_origins(&ingredient.origins)
+            format_valid_origins(&ingredient.computed_origins())
         } else {
             None
         }
@@ -1731,7 +1816,7 @@ fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], to
             || *x == RuleDef::Knospe_AlleZutatenHerkunft
         );
         if has_herkunft_rule {
-            format_valid_origins(&ingredient.origins)
+            format_valid_origins(&ingredient.computed_origins())
         } else {
             None
         }
@@ -1773,6 +1858,13 @@ fn format_valid_origins(origins: &Option<Vec<Country>>) -> Option<String> {
 /// Determines if an ingredient should show origin for Knospe <90% CH rules
 /// Based on specific Knospe criteria for ingredient types and percentages
 fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _total_amount: f64, is_mono_product: bool) -> bool {
+    // Non-agricultural ingredients (water, salt, additives like Dicarbonat) never require
+    // or show an origin — this MUST win over the Monoprodukt short-circuit below, which
+    // otherwise flags every origin-less ingredient once the product has a single agri leaf.
+    if !ingredient.is_agricultural() {
+        return false;
+    }
+
     // For monoproducts (single ingredient products), always show origin
     if is_mono_product {
         return true;
@@ -1808,7 +1900,7 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
 
     // Swiss agricultural ingredients with >=10% share (regardless of category)
     if ingredient.is_agricultural() &&
-       ingredient.origins.as_ref().is_some_and(|o| o.contains(&Country::CH)) &&
+       ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)) &&
        percentage >= 10.0 {
         return true;
     }

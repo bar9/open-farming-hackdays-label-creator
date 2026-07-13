@@ -715,6 +715,10 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."
   marketing_not_allowed: "Das Produkt darf NICHT als Bio-Produkt vermarktet werden, da nicht alle landwirtschaftlichen Zutaten bio-zertifiziert sind. Es dürfen nur einzelne Zutaten als biologisch gekennzeichnet werden."
+  erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (gemäss Anhang 3 der WBF-Verordnung, z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Produkt darf nicht als Bio-Produkt vermarktet werden."
+  umstellbetrieb_mono: "Als Monoprodukt aus einem Umstellbetrieb darf «Bio» in der Sachbezeichnung stehen. Pflichthinweis auf der Etikette: «Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft» (im Zutatenverzeichnis mit ** gekennzeichnet)."
+  bio_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
+  bio_check_failed: "Die Rezeptur-Eingabe ist unvollständig oder erfüllt die Bio-Anforderungen nicht. Bitte überprüfe die Eingabe."
   alternative_marking: "Hinweis: Neben der *-Kennzeichnung sind auch folgende Varianten zulässig: «Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft» oder der Präfix «Bio-» vor den einzelnen Zutaten."
   knospe_marketing_allowed: "Das Produkt erfüllt die Knospe-Anforderungen und darf mit dem Bio Suisse Knospe-Logo vermarktet werden."
   knospe_marketing_not_allowed: "Das Produkt erfüllt die Knospe-Anforderungen NICHT, da nicht alle landwirtschaftlichen Zutaten Knospe-zertifiziert sind. Das Knospe-Logo darf nicht verwendet werden."
@@ -743,6 +747,7 @@ languages:
 badges:
   not_for_meat_dairy: nicht für Fleisch- / Milchprodukte
   in_development: In Bearbeitung
+  bio_qualified: "Bio ✓"
 
 version:
   version: Version

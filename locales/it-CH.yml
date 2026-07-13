@@ -427,6 +427,7 @@ languages:
 badges:
   not_for_meat_dairy: non per carne / latticini
   in_development: In sviluppo
+  bio_qualified: "Bio ✓"
 
 version:
   version: Versione
@@ -482,6 +483,10 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."
   marketing_not_allowed: "Il prodotto NON può essere commercializzato come prodotto biologico perché non tutti gli ingredienti agricoli sono certificati bio. Solo alcuni ingredienti possono essere contrassegnati come biologici."
+  erlaubte_ausnahme_ueber_5_prozent: "Gli ingredienti non biologici ammessi (secondo l'allegato 3 dell'ordinanza del DEFR, p. es. la pectina) non possono superare il 5% degli ingredienti agricoli. Questo limite è superato – il prodotto non può essere commercializzato come prodotto biologico."
+  umstellbetrieb_mono: "Come prodotto mono proveniente da un'azienda in conversione, «Bio» può figurare nella denominazione. Indicazione obbligatoria sull'etichetta: «Prodotto nel quadro della conversione all'agricoltura biologica» (contrassegnata con ** nell'elenco degli ingredienti)."
+  bio_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
+  bio_check_failed: "La ricetta inserita è incompleta o non soddisfa i requisiti Bio. Si prega di verificare i dati inseriti."
   alternative_marking: "Nota: Oltre alla marcatura *, sono ammesse anche le seguenti varianti: «Tutti gli ingredienti agricoli provengono dall'agricoltura biologica» oppure il prefisso «Bio-» davanti ai singoli ingredienti."
   knospe_marketing_allowed: "Il prodotto soddisfa i requisiti Gemma e può essere commercializzato con il logo Bio Suisse Gemma."
   knospe_marketing_not_allowed: "Il prodotto NON soddisfa i requisiti Gemma perché non tutti gli ingredienti agricoli sono certificati Gemma. Il logo Gemma non può essere utilizzato."

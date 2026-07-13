@@ -62,9 +62,12 @@ pub enum RuleDef {
     Knospe_ShowBioSuisseLogo,
     /// Bio/Knospe: Requires certification body for Bio and Knospe products
     Bio_Knospe_ZertifizierungsstellePflicht,
-    /// Bio-V: Shows "Bio" in Sachbezeichnung when 100% Bio-CH certified
+    /// Bio-V: Adds "Bio" to the Sachbezeichnung when >= 95% of the agricultural
+    /// weight is Bio-CH certified (permitted non-bio exceptions tolerated up to 5%)
     Bio_ShowBioSachbezeichnung,
-    /// Bio-V: >= 95% bio_ch — suppress individual * marking, use "Alle landwirtschaftlichen" legend
+    /// Bio-V: 100% bio_ch — suppress individual * marking, use "Alle landwirtschaftlichen" legend.
+    /// At 95–99.99% neither this nor Bio_PartialBioMarking is injected: per-ingredient * stays and
+    /// the legend is the simple "* aus biologischer Landwirtschaft".
     Bio_AllAgriAreBio,
     /// Bio-V: > 0% and < 95% bio_ch — individual * + percentage legend
     Bio_PartialBioMarking,
@@ -123,7 +126,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_Knospe_EingabeIstBio => "Ermöglicht die Eingabe ob eine Zutat bio-zertifiziert ist",
             RuleDef::Knospe_ShowBioSuisseLogo => "Zeigt Bio Suisse Logo basierend auf Schweizer Zutaten-Prozentsatz",
             RuleDef::Bio_Knospe_ZertifizierungsstellePflicht => "Erfordert die Angabe der Bio-Zertifizierungsstelle für Bio und Knospe Produkte",
-            RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn 100% Bio-CH zertifiziert",
+            RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn ≥ 95% Bio-CH zertifiziert",
             RuleDef::Bio_AllAgriAreBio => "Bio-V: Alle landwirtschaftlichen Zutaten sind bio — kein individueller * Stern",
             RuleDef::Bio_PartialBioMarking => "Bio-V: Teilweise bio — individueller * Stern und Prozentangabe in Legende",
             RuleDef::Wildsammlung_Ueber10Prozent => "L11/B15: Kennzeichnung mit ° für Zutaten aus zertifizierter Wildsammlung wenn >10% Anteil",

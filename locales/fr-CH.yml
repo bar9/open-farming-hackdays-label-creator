@@ -428,6 +428,7 @@ languages:
 badges:
   not_for_meat_dairy: pas pour viande / produits laitiers
   in_development: En développement
+  bio_qualified: "Bio ✓"
 
 version:
   version: Version
@@ -483,6 +484,10 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Le produit peut être commercialisé comme produit bio. Bio peut figurer dans la dénomination, le nom de fantaisie ou librement sur l'emballage."
   marketing_not_allowed: "Le produit ne peut PAS être commercialisé comme produit bio car tous les ingrédients agricoles ne sont pas certifiés bio. Seuls certains ingrédients peuvent être désignés comme biologiques."
+  erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (selon l'annexe 3 de l'ordonnance du DEFR, p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le produit ne peut pas être commercialisé comme produit bio."
+  umstellbetrieb_mono: "En tant que produit mono issu d'une exploitation en reconversion, «Bio» peut figurer dans la dénomination. Mention obligatoire sur l'étiquette : «Produit dans le cadre de la reconversion à l'agriculture biologique» (marquée par ** dans la liste des ingrédients)."
+  bio_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
+  bio_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences Bio. Veuillez vérifier la saisie."
   alternative_marking: "Remarque : En plus du marquage *, les variantes suivantes sont également autorisées : «Tous les ingrédients agricoles proviennent de l'agriculture biologique» ou le préfixe «Bio-» devant chaque ingrédient."
   knospe_marketing_allowed: "Le produit remplit les exigences Bourgeon et peut être commercialisé avec le logo Bio Suisse Bourgeon."
   knospe_marketing_not_allowed: "Le produit ne remplit PAS les exigences Bourgeon car tous les ingrédients agricoles ne sont pas certifiés Bourgeon. Le logo Bourgeon ne peut pas être utilisé."

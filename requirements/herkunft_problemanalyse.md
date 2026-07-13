@@ -96,7 +96,7 @@ der lokalen Zutaten-DB (`src/food_db.csv`) zurück. Damit zeigt z.B. **Butter**
 |---|---|---|
 | **A)** | «Produkte aus mind. 90% Schweizer Knospe-Rohstoffe: Knospe-Logo mit Schweizer Flagge.» | ✓ |
 | **B)** | «Produkte mit mehr als 10% ausländischen Knospe-Zutaten: Knospe-Logo ohne Schweizer Flagge.» | ✓ |
-| **C)** | «Produkte mit Zutaten aus Knospe-Umstellungsbetrieben: Umstellungsknospe-Logo, mit oder ohne Schweizer Flagge, gleiche Logik wie A) & B). Direkt neben Logo: Hinweis: "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."» | ✓ **neu seit 25.06-Feedback** (offizielle Bio-Suisse-Logos, Satz links vom Logo, dreisprachig) |
+| **C)** | «Produkte mit Zutaten aus Knospe-Umstellungsbetrieben: Umstellungsknospe-Logo, mit oder ohne Schweizer Flagge, gleiche Logik wie A) & B). Direkt neben Logo: Hinweis: "Hergestellt im Rahmen der Umstellung auf die biologische Landwirtschaft."» | ✓ **neu seit 25.06-Feedback** (offizielle Bio-Suisse-Logos, Satz rechts vom Logo, dreisprachig) |
 | **D)** | «Für verarbeitete Produkte, die nicht vollständig den Bio Suisse-Verarbeitungsrichtlinien entsprechen (z.B. Rohstoff nach Bio-CH anstatt Knospe, oder nicht erlaubter Verarbeitungsschritt): Umstellungsknospe mit Hinweis "Hergestellt im Rahmen der Umstellung auf die **Bio Suisse Richtlinien**."» | ✗ **NICHT implementiert** |
 
 Zusatzbedingung (implementiert): Ein Logo erscheint nur, wenn 100 % der

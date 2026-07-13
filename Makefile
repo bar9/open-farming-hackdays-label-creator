@@ -1,10 +1,16 @@
-.PHONY: dev build check check-rust lint test e2e clean setup css help
+.PHONY: dev build check check-rust lint test e2e clean setup css help umstellung-assets
 
 setup:
 	npm install
 
 css:
 	npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css
+
+# Bake the Umstellungssatz text-image + logo into one combined PNG per language
+# x variant. Requires Pillow (pip install pillow). Uses placeholder text if the
+# official raw images are absent — see scripts/build_umstellung_assets.py.
+umstellung-assets:
+	python3 scripts/build_umstellung_assets.py
 
 dev:
 	dx serve
@@ -45,6 +51,7 @@ clean:
 help:
 	@echo "make setup            Install npm dependencies (Tailwind, daisyUI)"
 	@echo "make css              Compile Tailwind CSS"
+	@echo "make umstellung-assets Bake Umstellungssatz text + logo into combined PNGs (Pillow)"
 	@echo "make dev              Start Dioxus dev server (hot-reload)"
 	@echo "make build            Production build (dx build --release)"
 	@echo "make build-production Production build with hidebio feature"

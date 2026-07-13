@@ -82,6 +82,30 @@ fn bio_knospe_non_agricultural_never_requires_origin() {
 }
 
 #[test]
+fn knospe_under90_non_agricultural_never_requires_origin_even_when_mono() {
+    // Demo regression: with exactly ONE agricultural leaf the product is "mono", and the
+    // Monoprodukt short-circuit in should_show_origin_knospe_under90 used to return true for
+    // EVERY origin-less ingredient — flagging a non-agricultural additive (Dicarbonat) too,
+    // even after the user correctly marked it "Nicht-landwirtschaftlich".
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).origin(Country::EU).build())
+        .ingredient(IngredientBuilder::new("Dicarbonat", 5.0).agricultural(false).build())
+        .total(505.0)
+        .build();
+    let output = calculator.execute(input);
+
+    // Hafer is the single agricultural leaf (mono) and carries a real origin → satisfied.
+    assert!(output.validation_messages.get("ingredients[0][origin]").is_none());
+    // Dicarbonat is non-agricultural → never flagged, even though the product is mono.
+    assert!(output.validation_messages.get("ingredients[1][origin]").is_none(),
+        "non-agricultural ingredient must not require origin even in a mono product, got: {:?}",
+        output.validation_messages);
+}
+
+#[test]
 fn bio_knospe_country_display_on_label_for_all_ingredients() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
@@ -495,4 +519,51 @@ fn knospe_composite_parent_origin_only_on_lowest_level() {
     assert!(!label.contains("Mais* (IT)"), "child Mais must NOT show (IT) per Excel rules, got: {}", label);
     // Bio legend should appear (children are bio)
     assert!(label.contains("aus biologischer Landwirtschaft"), "bio legend missing, got: {}", label);
+}
+
+// =============================================================================
+// Group — Wildsammlung (Excel Zeile 12, ° marker at >= 10% of total)
+// =============================================================================
+
+#[test]
+fn wildsammlung_marker_and_legend_over_10_percent() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).build())
+        .build();
+    let output = calculator.execute(input);
+    // Bärlauch = 15% >= 10% → ° marker + Wildsammlung legend.
+    assert!(output.label.contains('°'), "expected ° marker; label: {}", output.label);
+    assert!(output.label.contains("Wildsammlung"), "expected Wildsammlung legend; label: {}", output.label);
+}
+
+#[test]
+fn wildsammlung_exactly_10_percent_shows_marker() {
+    // Boundary: exactly 10% must show — Excel Zeile 12 says "grösser/gleich 10 %".
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 100.0)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 900.0).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(output.label.contains('°'), "exactly 10% must show the ° marker; label: {}", output.label);
+}
+
+#[test]
+fn wildsammlung_under_10_percent_no_marker() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).build())
+        .build();
+    let output = calculator.execute(input);
+    // Bärlauch = 5% < 10% → no ° marker.
+    assert!(!output.label.contains('°'), "under 10% must NOT show a ° marker; label: {}", output.label);
 }

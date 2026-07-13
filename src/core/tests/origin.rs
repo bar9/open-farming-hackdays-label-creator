@@ -22,6 +22,57 @@ fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
 }
 
 #[test]
+fn herkunft_benoetigt_composite_children_over_50_percent() {
+    // A composite whose weight lives in its children (parent amount 0) and which
+    // aggregates to >50% of the product must trigger the "Herkunft benötigt" flag.
+    // Before the computed_amount fix, line 1558 read the raw parent amount (0), so
+    // the percentage collapsed to 0% and the flag never fired for composites.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Fruchtmischung", 0.0)
+                .children(vec![
+                    IngredientBuilder::new("Himbeere", 400.0).build(),
+                    IngredientBuilder::new("Erdbeere", 200.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Zucker", 200.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+    // Composite = 600 / 800 = 75% > 50% → its origin is required (top-level index 0).
+    assert_eq!(c.get("herkunft_benoetigt_0"), Some(&true));
+    assert_eq!(c.get("herkunft_benoetigt_ueber_50_prozent"), Some(&true));
+}
+
+#[test]
+fn herkunft_benoetigt_composite_under_50_percent_not_required() {
+    // Guard against a raw-amount regression: a composite aggregating to <50% must NOT
+    // be flagged, while a genuine >50% sibling still is.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Fruchtmischung", 0.0)
+                .children(vec![
+                    IngredientBuilder::new("Himbeere", 200.0).build(),
+                    IngredientBuilder::new("Erdbeere", 100.0).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new("Zucker", 500.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+    // Composite = 300 / 800 = 37.5% < 50% → NOT required.
+    assert_eq!(c.get("herkunft_benoetigt_0"), None);
+    // Zucker = 500 / 800 = 62.5% > 50% → still required (rule fires for real >50%).
+    assert_eq!(c.get("herkunft_benoetigt_1"), Some(&true));
+}
+
+#[test]
 fn validation_missing_origin_for_ingredient_over_50_percent() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
@@ -36,6 +87,40 @@ fn validation_missing_origin_for_ingredient_over_50_percent() {
     let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
     assert!(!origin_messages.is_empty());
     assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten über 50%."));
+}
+
+#[test]
+fn origin_over_50_percent_skips_non_agricultural() {
+    // A non-agricultural ingredient above 50% weight must NOT require an origin (validate_origin
+    // previously ignored is_agricultural entirely).
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new("Dicarbonat", 700.0).agricultural(false).build())
+        .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    // Dicarbonat = 700/1000 = 70% > 50% but non-agricultural → no origin required.
+    assert!(output.validation_messages.get("ingredients[0][origin]").is_none(),
+        "non-agricultural >50% must not require origin, got: {:?}", output.validation_messages);
+}
+
+#[test]
+fn dicarbonat_from_db_is_non_agricultural() {
+    // Dicarbonat is now in food_db as non-agricultural → auto-detected via name lookup, so it
+    // never requires an origin even without the user explicitly marking it.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Dicarbonat", 700.0).build())
+        .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    // new_agri("Dicarbonat") looks up food_db → is_agricultural=false → no origin required at 70%.
+    assert!(output.validation_messages.get("ingredients[0][origin]").is_none(),
+        "Dicarbonat (food_db non-agricultural) must not require origin, got: {:?}", output.validation_messages);
 }
 
 #[test]

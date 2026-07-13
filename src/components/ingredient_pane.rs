@@ -1625,21 +1625,41 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             }
                         }
                     } else {
+                        // BioV states as one exclusive choice, mirroring the Knospe
+                        // leaf's non-Knospe options (Bio / Nicht-biologisch /
+                        // Nicht-landwirtschaftlich). A shared setter enforces the
+                        // exclusivity the model implies — e.g. clearing the permitted
+                        // exception when switching to Bio (the old checkboxes only hid it).
+                        let bio_cat = if edit_bio_ch() { "bio" }
+                            else if edit_nicht_landwirtschaftlich() { "nicht_lw" }
+                            else { "andere" };
+
+                        let mut set_bio_cat = move |cat: &str| {
+                            edit_bio_ch.set(cat == "bio");
+                            edit_nicht_landwirtschaftlich.set(cat == "nicht_lw");
+                            if cat != "bio" {
+                                edit_aus_umstellbetrieb.set(false); // Umstellbetrieb only under Bio
+                            }
+                            if cat != "andere" {
+                                edit_erlaubte_ausnahme_bio.set(false); // exception only under Nicht-biologisch
+                            }
+                        };
+
                         rsx! {
+                            // Radio: Bio (Bio-CH zertifiziert)
                             FormField {
                                 help: Some(t!("help.bio_ch").to_string()),
                                 label: t!("bio_labels.bio_ch").to_string(),
                                 inline_checkbox: true,
                                 input {
-                                    r#type: "checkbox",
-                                    class: "checkbox checkbox-accent",
-                                    checked: edit_bio_ch(),
-                                    onchange: move |evt| {
-                                        edit_bio_ch.set(evt.data.value() == "true");
-                                    }
+                                    r#type: "radio",
+                                    name: "bio_v_category",
+                                    class: "radio radio-primary",
+                                    checked: bio_cat == "bio",
+                                    onchange: move |_| { set_bio_cat("bio"); }
                                 }
                             }
-                            if edit_bio_ch() {
+                            if bio_cat == "bio" {
                                 br {}
                                 FormField {
                                     help: Some(t!("help.aus_umstellbetrieb").to_string()),
@@ -1655,7 +1675,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     }
                                 }
                             }
-                            if !edit_bio_ch() {
+                            // Radio: Nicht-biologisch (andere)
+                            FormField {
+                                help: Some(t!("help.andere").to_string()),
+                                label: t!("bio_labels.andere").to_string(),
+                                inline_checkbox: true,
+                                input {
+                                    r#type: "radio",
+                                    name: "bio_v_category",
+                                    class: "radio radio-primary",
+                                    checked: bio_cat == "andere",
+                                    onchange: move |_| { set_bio_cat("andere"); }
+                                }
+                            }
+                            if bio_cat == "andere" {
                                 br {}
                                 div { class: "border-t border-base-300 pt-2 mt-2",
                                     FormField {
@@ -1685,6 +1718,19 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                             }
                                         }
                                     }
+                                }
+                            }
+                            // Radio: Nicht-landwirtschaftliche Zutat
+                            FormField {
+                                help: Some(t!("help.nicht_landwirtschaftlich").to_string()),
+                                label: t!("bio_labels.nicht_landwirtschaftlich").to_string(),
+                                inline_checkbox: true,
+                                input {
+                                    r#type: "radio",
+                                    name: "bio_v_category",
+                                    class: "radio radio-primary",
+                                    checked: bio_cat == "nicht_lw",
+                                    onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }
                             }
                         }

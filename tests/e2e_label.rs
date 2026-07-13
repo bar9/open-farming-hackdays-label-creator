@@ -33,6 +33,17 @@ async fn bio_label_erdbeer_fruchtaufstrich() {
     )
     .await;
 
+    // BioV green "Bio ✓" indicator in the top-right corner (>= 95% Bio-CH).
+    assert!(
+        has_bio_qualified_badge(&c).await,
+        "expected the green Bio-qualified badge for a >=95% Bio-CH recipe"
+    );
+    // The Knospe cross logo must NOT appear on a Bio (Bio-CH) label.
+    assert!(
+        !has_bio_suisse_cross(&c).await,
+        "Bio config should not show the Knospe cross logo"
+    );
+
     assert_no_errors(&c, "bio_label_erdbeer_fruchtaufstrich").await;
     let _ = c.close().await;
 }
@@ -156,6 +167,11 @@ async fn bio_kein_bio_warning_when_no_bio() {
         !label.contains("Konfitüre extra mit weniger Zucker Bio"),
         "Sachbezeichnung should not carry the Bio suffix when no ingredient is bio. Label:\n{}",
         label
+    );
+    // No BioV green badge when the recipe does not qualify as Bio.
+    assert!(
+        !has_bio_qualified_badge(&c).await,
+        "no Bio-qualified badge expected when no ingredient is bio"
     );
 
     assert_no_errors(&c, "bio_kein_bio_warning_when_no_bio").await;

@@ -39,14 +39,18 @@ fn bio_ch_partial_sets_marketing_not_allowed() {
 }
 
 #[test]
-fn bio_ch_erlaubte_ausnahme_bio_does_not_block_sachbezeichnung() {
-    // A non-bio_ch ingredient that is a permitted non-organic exception (Annex 3 WBF)
-    // must count toward the >= 95% Bio-CH threshold rather than dragging it down.
+fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
+    // A permitted non-organic exception (Annex 3 WBF, e.g. Pektin) is NOT bio, but up to
+    // 5% of the agricultural weight is tolerated → "Bio" stays in the Sachbezeichnung.
+    // At 96% (not 100%) the exception is marked per-ingredient, not via the "Alle" legend.
     let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).erlaubte_ausnahme_bio().build())
+        .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
@@ -54,6 +58,34 @@ fn bio_ch_erlaubte_ausnahme_bio_does_not_block_sachbezeichnung() {
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
     assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
     assert_eq!(c.get("bio_marketing_not_allowed"), None);
+    assert_eq!(c.get("bio_erlaubte_ausnahme_ueber_5_prozent"), None);
+    // 96% (not 100%): per-ingredient marking, Pektin unmarked, no "Alle" legend.
+    assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
+    assert!(!output.label.contains("Pektin*"), "permitted non-bio exception must not be starred");
+    assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Label: {}", output.label);
+    assert!(!output.label.contains("Alle landwirtschaftlichen"), "not 100% → no 'Alle' legend");
+}
+
+#[test]
+fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
+    // Over the 5% tolerance the permitted exception no longer counts as bio, so the
+    // Bio-CH share drops below 95% and "Bio" is blocked, with a specific 5% hint.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("bio_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
 }
 
 #[test]
@@ -687,8 +719,29 @@ fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
 // =============================================================================
 
 #[test]
-fn bio_all_agricultural_bio_no_asterisk() {
-    // >= 95% bio_ch with Bio_ShowBioSachbezeichnung: no * on ingredients, "Alle landwirtschaftlichen" legend
+fn bio_100pct_all_bio_no_asterisk_alle_legend() {
+    // Exactly 100% bio_ch: no * on ingredients, "Alle landwirtschaftlichen" legend.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 40.0).bio_ch().build())
+        .build();
+    let output = calculator.execute(input);
+
+    // No asterisk on individual ingredients
+    assert!(!output.label.contains("Hafer*"), "100% mode should suppress individual * marking");
+    // "Alle landwirtschaftlichen" legend present
+    assert!(output.label.contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"));
+}
+
+#[test]
+fn bio_95_99_band_uses_per_ingredient_asterisk() {
+    // 96% bio_ch (Bio in Sachbezeichnung, but not all bio): per-ingredient * +
+    // "* aus biologischer Landwirtschaft", NOT the "Alle" legend (Excel Zeilen 2–4 vs. 3).
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
@@ -699,11 +752,13 @@ fn bio_all_agricultural_bio_no_asterisk() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 40.0).build())
         .build();
     let output = calculator.execute(input);
+    let c = &output.conditional_elements;
 
-    // No asterisk on individual ingredients
-    assert!(!output.label.contains("Hafer*"), "AllBio mode should suppress individual * marking");
-    // "Alle landwirtschaftlichen" legend present
-    assert!(output.label.contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"));
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true), "96% >= 95% → Bio in Sachbezeichnung");
+    assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
+    assert!(!output.label.contains("Weizenmehl*"), "non-bio ingredient not starred");
+    assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Label: {}", output.label);
+    assert!(!output.label.contains("Alle landwirtschaftlichen"), "not 100% → no 'Alle' legend");
 }
 
 #[test]
@@ -798,9 +853,14 @@ fn umstellbetrieb_legend_appended() {
 
 #[test]
 fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
-    // Single agricultural ingredient + umstellbetrieb → keep suffix + hinweis
+    // Excel Zeile 7: a single Bio-CH agricultural ingredient from a conversion farm MAY
+    // carry "Bio" + the mandatory Umstellungshinweis. Register the full Bio config rule set
+    // (incl. Bio_Knospe_EingabeIstBio) so the ** marker + legend render on the label.
     let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::Bio_Knospe_EingabeIstBio,
+    ]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio_ch().umstellbetrieb().build())
         .ingredient(IngredientBuilder::new("Salz", 50.0).agricultural(false).build())
@@ -808,9 +868,15 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    // Monoprodukt: only one agricultural leaf (Hafer), Salz is non-agricultural
-    // Umstellbetrieb keeps sachbezeichnung_suffix but adds hinweis
+    // "Bio" IS allowed for the mono-Umstellbetrieb case (was wrongly blocked before this fix).
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("bio_marketing_not_allowed"), None);
     assert_eq!(c.get("umstellbetrieb_hinweis"), Some(&true));
+    // The mandatory Umstellung declaration is printed on the label via the ** marker + legend.
+    assert!(output.label.contains("Hafer**"), "expected ** marker on Hafer; label: {}", output.label);
+    assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"),
+        "expected Umstellung legend; label: {}", output.label);
 }
 
 #[test]
@@ -828,6 +894,79 @@ fn composite_umstellbetrieb_removes_sachbezeichnung() {
     // Composite with umstellbetrieb: no sachbezeichnung_suffix
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
     assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+// =============================================================================
+// Group — BioV tri-state «Rezeptur prüfen» (bio_check_pending/ok/failed)
+// =============================================================================
+
+#[test]
+fn bio_check_pending_before_rezeptur_vollstaendig() {
+    // Not yet checked → pending, and neither ok nor failed is asserted.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+    assert_eq!(c.get("bio_check_pending"), Some(&true));
+    assert_eq!(c.get("bio_check_ok"), None);
+    assert_eq!(c.get("bio_check_failed"), None);
+}
+
+#[test]
+fn bio_check_ok_when_vollstaendig_and_qualifies() {
+    // Checked + >= 95% Bio-CH + no recipe issues → ok.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+    assert_eq!(c.get("bio_check_ok"), Some(&true));
+    assert_eq!(c.get("bio_check_pending"), None);
+    assert_eq!(c.get("bio_check_failed"), None);
+}
+
+#[test]
+fn bio_check_failed_when_vollstaendig_but_under_95() {
+    // Checked but only 60% Bio-CH → does not qualify → failed.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Weizen", 400.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+    assert_eq!(c.get("bio_check_failed"), Some(&true));
+    assert_eq!(c.get("bio_check_ok"), None);
+}
+
+#[test]
+fn bio_check_failed_when_recipe_issue_despite_qualifying() {
+    // Qualifies on percentage (100% Bio-CH) but a per-ingredient validation error is
+    // open (>50% ingredient without origin) → the check must fail, not pass.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Bio_ShowBioSachbezeichnung,
+        RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+    assert!(output.validation_messages.get("ingredients[0][origin]").is_some(),
+        "expected an open origin error; messages: {:?}", output.validation_messages);
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true), "still qualifies on percentage");
+    assert_eq!(c.get("bio_check_failed"), Some(&true));
+    assert_eq!(c.get("bio_check_ok"), None);
 }
 
 #[test]

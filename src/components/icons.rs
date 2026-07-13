@@ -315,6 +315,36 @@ pub fn UmstellungsknospeNoCross() -> Element {
     }
 }
 
+/// Umstellungsknospe (Swiss cross) pre-baked together with the Umstellungssatz
+/// text-image into a single combined PNG — logo on the left, text on the right.
+/// Used in the label preview so the mandatory sentence travels with the mark as
+/// one image (built offline via `make umstellung-assets`). No `en` arm: there is
+/// no English UI locale, so English is asset-only / not wired.
+#[component]
+pub fn UmstellungsknospeSatzRegular() -> Element {
+    let src = match rust_i18n::locale().as_ref() {
+        "fr-CH" => asset!("assets/logos/umstellungsknospe-satz-fr-CH.png"),
+        "it-CH" => asset!("assets/logos/umstellungsknospe-satz-it-CH.png"),
+        _ => asset!("assets/logos/umstellungsknospe-satz-de-CH.png"),
+    };
+    rsx! {
+        img { class: "w-52", src, alt: t!("preview.umstellungssatz").to_string() }
+    }
+}
+
+/// Import variant (no SUISSE addition) of the combined Umstellungssatz + logo image.
+#[component]
+pub fn UmstellungsknospeSatzImport() -> Element {
+    let src = match rust_i18n::locale().as_ref() {
+        "fr-CH" => asset!("assets/logos/umstellungsknospe-import-satz-fr-CH.png"),
+        "it-CH" => asset!("assets/logos/umstellungsknospe-import-satz-it-CH.png"),
+        _ => asset!("assets/logos/umstellungsknospe-import-satz-de-CH.png"),
+    };
+    rsx! {
+        img { class: "w-52", src, alt: t!("preview.umstellungssatz").to_string() }
+    }
+}
+
 /// Compact Knospe icon with Swiss cross for inline use (ingredient list).
 /// Shares viewBox with KnospeNoCrossCompact so the green bud is rendered at identical size.
 #[component]
