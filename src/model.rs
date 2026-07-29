@@ -1128,6 +1128,51 @@ pub fn ingredient_aliases() -> Vec<(String, String, i32)> {
     aliases
 }
 
+/// Alias terms that must be *declared* under their canonical name rather than
+/// as typed. Normally the label prints exactly what the user entered; this is
+/// the narrow exception required by declaration law for gluten-containing
+/// cereals, where the cereal species has to be named ("Mehl" → "Weizenmehl").
+///
+/// Driven by the `declare_as_canonical` column in `ingredient_aliases.csv` so
+/// further cases are a data change, not a code change. A missing or malformed
+/// column degrades to `false`, preserving the type-what-you-see default.
+fn declare_as_canonical_aliases() -> Vec<(String, String)> {
+    let csv = include_str!("ingredient_aliases.csv");
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(csv.as_bytes());
+
+    let mut rows: Vec<(String, String)> = Vec::new();
+    for record in rdr.records() {
+        let record = record.unwrap();
+        if record.get(3).map(|f| f.trim() == "1").unwrap_or(false) {
+            let alias = record.get(0).unwrap().to_string();
+            let canonical = record.get(1).unwrap().to_string();
+            rows.push((alias, canonical));
+        }
+    }
+    rows
+}
+
+/// Name to print on the label for an ingredient the user entered as `typed`,
+/// having picked the suggestion resolving to `canonical`.
+///
+/// Returns the canonical name only for aliases flagged `declare_as_canonical`
+/// (gluten-containing cereals). Every other alias keeps the typed term, so
+/// "Ei" stays "Ei" and never becomes "Hühnerei ganz". Already-specific entries
+/// like "Dinkelmehl" are unaffected: they are canonical food_db entries and
+/// carry no alias row.
+pub fn declaration_name(typed: &str, canonical: Option<&str>) -> String {
+    let Some(canonical) = canonical else {
+        return typed.to_string();
+    };
+    let typed_lower = typed.to_lowercase();
+    let matches_rule = declare_as_canonical_aliases().into_iter().any(|(alias, canon)| {
+        alias.to_lowercase() == typed_lower && canon == canonical
+    });
+    if matches_rule { canonical.to_string() } else { typed.to_string() }
+}
+
 /// Whether `term` exactly matches a curated alias term (case-insensitive).
 /// Used to let short common terms like "Ei" bypass the search-length minimum.
 pub fn is_curated_alias(term: &str) -> bool {
@@ -1204,4 +1249,53 @@ mod food_db_tests {
         assert_eq!(lookup_priority("Vollmilch"), 80); // existing alias to Vollmilch pasteurisiert
     }
 
+    // DEC-1: gluten-containing cereals must be declared by species. Picking the
+    // "Mehl (Weizenmehl)" suggestion has to print "Weizenmehl" on the label.
+    #[test]
+    fn declaration_name_substitutes_flour_with_cereal_species() {
+        assert_eq!(declaration_name("Mehl", Some("Weizenmehl")), "Weizenmehl");
+        // Case-insensitive on the typed term, as the input is free text.
+        assert_eq!(declaration_name("mehl", Some("Weizenmehl")), "Weizenmehl");
+    }
+
+    // The substitution is the exception, not the rule: every other curated alias
+    // still prints what the user typed. "Ei" must not become "Hühnerei ganz".
+    #[test]
+    fn declaration_name_keeps_typed_term_for_other_aliases() {
+        assert_eq!(declaration_name("Ei", Some("Hühnerei ganz")), "Ei");
+        assert_eq!(declaration_name("Butter", Some("Kochbutter")), "Butter");
+        assert_eq!(declaration_name("Rüebli", Some("Karotte")), "Rüebli");
+        assert_eq!(declaration_name("Mandeln", Some("Mandel")), "Mandeln");
+    }
+
+    // Already-specific cereals are canonical food_db entries with no alias row,
+    // so they pass through untouched.
+    #[test]
+    fn declaration_name_leaves_specific_flours_unchanged() {
+        assert_eq!(declaration_name("Dinkelmehl", None), "Dinkelmehl");
+        assert_eq!(declaration_name("Roggenmehl", None), "Roggenmehl");
+        // Free-text ingredients (no canonical) are never rewritten.
+        assert_eq!(declaration_name("Grossmutters Mehl", None), "Grossmutters Mehl");
+    }
+
+    // A typed term only resolves against its own canonical: a mismatched pair
+    // must not trigger the rule.
+    #[test]
+    fn declaration_name_requires_matching_canonical() {
+        assert_eq!(declaration_name("Mehl", Some("Roggenmehl")), "Mehl");
+    }
+
+    // The substituted name has to be a real food_db entry, otherwise the
+    // allergen/agricultural lookups behind it would silently fall back.
+    #[test]
+    fn declared_canonical_is_allergen_in_food_db() {
+        let declared = declaration_name("Mehl", Some("Weizenmehl"));
+        assert!(
+            food_db().into_iter().any(|(name, _)| name == declared),
+            "declared name '{}' must exist in food_db",
+            declared
+        );
+        // Weizenmehl is gluten-containing, so it must render bold as an allergen.
+        assert!(lookup_allergen(&declared), "'{}' must be flagged as an allergen", declared);
+    }
 }

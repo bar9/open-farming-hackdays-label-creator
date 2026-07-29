@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
 use crate::core::{Ingredient, AmountUnit};
-use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
+use crate::model::{declaration_name, food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
 use crate::shared::Validations;
@@ -422,7 +422,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     }
 
     let handle_ingredient_select = move |unified_ingredient: UnifiedIngredient| {
-        edit_name.set(unified_ingredient.name.clone());
+        // Gluten-containing cereals must be declared by species, so picking the
+        // "Mehl (Weizenmehl)" suggestion stores "Weizenmehl". Other aliases keep
+        // the typed term (see `declaration_name`).
+        edit_name.set(declaration_name(
+            &unified_ingredient.name,
+            unified_ingredient.canonical.as_deref(),
+        ));
         edit_canonical.set(unified_ingredient.canonical.clone());
         edit_category.set(unified_ingredient.category.clone());
 

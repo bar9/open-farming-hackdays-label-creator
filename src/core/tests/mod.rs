@@ -107,3 +107,4 @@ mod bio;
 mod golden;
 mod recipes;
 mod saved_ingredients;
+mod declaration_name;
