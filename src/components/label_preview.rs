@@ -467,6 +467,13 @@ pub fn LabelPreview(
                             {t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string()}
                         }
                     }
+                    // DEC-7: nicht-bio Zutat ohne Häkchen «Erlaubte nicht-biologische
+                    // Zutat» — nennt den konkreten Grund für das blockierte «Bio».
+                    if conditionals.0().get("bio_nicht_deklarierte_zutat").unwrap_or(&false) == &true {
+                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                            {t!("bio_hints.bio_nicht_deklarierte_zutat").to_string()}
+                        }
+                    }
                 }
                 // Knospe: tri-state result of the «Rezeptur prüfen» check.
                 if conditionals.0().get("knospe_check_pending").unwrap_or(&false) == &true {

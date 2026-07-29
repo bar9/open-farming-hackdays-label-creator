@@ -676,9 +676,11 @@ fn certification_body_invalid_format() {
 fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    // The 5% non-bio share must be a DECLARED permitted exception (Anhang 3 WBF);
+    // an undeclared non-bio ingredient blocks "Bio" outright (DEC-7).
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 50.0).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 50.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
@@ -686,6 +688,159 @@ fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
     // 95% bio_ch >= 95% threshold → suffix allowed
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
     assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+}
+
+// =============================================================================
+// Group — DEC-7: undeclared non-organic ingredients
+//
+// The 5% tolerance applies ONLY to declared permitted exceptions (Anhang 3 WBF).
+// Any other non-organic agricultural ingredient blocks "Bio" regardless of share:
+// «Es darf zum Beispiel nicht bis zu 5 % nicht-Bio Eier verwendet werden.»
+// =============================================================================
+
+#[test]
+fn bio_blocked_by_undeclared_non_bio_under_5_percent() {
+    // 96% bio, 4% plain conventional egg without the exception checkbox.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Ei", 40.0).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), None, "4% nicht-bio Ei darf «Bio» nicht erlauben");
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), Some(&true), "Hinweis nennt den Grund");
+    assert_eq!(c.get("bio_check_failed"), Some(&true));
+}
+
+#[test]
+fn bio_allowed_when_same_ingredient_is_declared_exception() {
+    // Identical recipe, but the 4% is declared a permitted exception → Bio allowed.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
+    assert_eq!(c.get("bio_check_ok"), Some(&true));
+}
+
+#[test]
+fn bio_still_blocked_when_declared_exception_over_5_percent() {
+    // The existing 5% ceiling keeps working, and this is NOT the undeclared case.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Mehl", 900.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 100.0).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("bio_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None, "deklariert — anderer Grund");
+}
+
+#[test]
+fn bio_non_agricultural_ingredient_does_not_block() {
+    // Salz/Wasser are not agricultural, so they are outside the bio calculus.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Salz", 40.0).agricultural(false).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+}
+
+#[test]
+fn bio_mono_umstellbetrieb_still_allowed() {
+    // Umstellbetrieb ingredients are bio-certified and handled by the conversion
+    // logic; the new check must not catch them (ticket acceptance criterion).
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().umstellbetrieb().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get("umstellbetrieb_hinweis"), Some(&true));
+}
+
+#[test]
+fn bio_blocked_by_undeclared_non_bio_inside_composite() {
+    // The offending ingredient hides inside a composite that makes no own claim.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let fuellung = IngredientBuilder::new_agri("Füllung", 400.0)
+        .children(vec![
+            IngredientBuilder::new_agri("Aprikosen", 380.0).bio_ch().build(),
+            IngredientBuilder::new_agri("Ei", 20.0).build(),
+        ])
+        .build();
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Mehl", 600.0).bio_ch().build())
+        .ingredient(fuellung)
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), Some(&true));
+    assert_eq!(c.get("bio_marketing_allowed"), None);
+}
+
+#[test]
+fn bio_composite_claiming_own_bio_quality_is_not_blocked() {
+    // A bought, certified composite carries the claim on the parent node; its
+    // children are then not second-guessed (mirrors is_bio_ch_compliant).
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let fertigmischung = IngredientBuilder::new_agri("Fertigmischung", 400.0)
+        .bio_ch()
+        .children(vec![
+            IngredientBuilder::new_agri("Aprikosen", 380.0).build(),
+            IngredientBuilder::new_agri("Ei", 20.0).build(),
+        ])
+        .build();
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Mehl", 600.0).bio_ch().build())
+        .ingredient(fertigmischung)
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // Scope of this test is the DEC-7 check only: the parent's claim shields its
+    // children from being flagged as undeclared non-bio.
+    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
+    // NOTE: `bio_marketing_allowed` is NOT asserted here. calculate_bio_ch_certified_percentage
+    // walks `leaves()` and therefore ignores a parent-level claim, while
+    // `is_bio_ch_compliant` honours it — a pre-existing divergence that predates
+    // DEC-7 and would need its own ticket.
 }
 
 #[test]
@@ -769,16 +924,18 @@ fn bio_95_99_band_uses_per_ingredient_asterisk() {
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
+    // The non-bio remainder must be a declared permitted exception, otherwise "Bio"
+    // is blocked entirely (DEC-7) — so the 95–99.99% band IS the exception case.
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 40.0).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true), "96% >= 95% → Bio in Sachbezeichnung");
     assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
-    assert!(!output.label.contains("Weizenmehl*"), "non-bio ingredient not starred");
+    assert!(!output.label.contains("Pektin*"), "non-bio ingredient not starred");
     assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Label: {}", output.label);
     assert!(!output.label.contains("Alle landwirtschaftlichen"), "not 100% → no 'Alle' legend");
 }

@@ -483,6 +483,7 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Il prodotto può essere commercializzato come prodotto biologico. Bio può figurare nella denominazione, nel nome di fantasia o liberamente sulla confezione."
   marketing_not_allowed: "Il prodotto NON può essere commercializzato come prodotto biologico perché non tutti gli ingredienti agricoli sono certificati bio. Solo alcuni ingredienti possono essere contrassegnati come biologici."
+  bio_nicht_deklarierte_zutat: "La ricetta contiene un ingrediente agricolo non biologico che non è dichiarato come eccezione ammessa. La tolleranza del 5% vale solo per gli ingredienti non biologici ammessi (allegato 3 dell'ordinanza del DEFR, p. es. la pectina) – qualsiasi altro ingrediente non biologico esclude la commercializzazione come prodotto biologico, indipendentemente dalla sua quota."
   erlaubte_ausnahme_ueber_5_prozent: "Gli ingredienti non biologici ammessi (secondo l'allegato 3 dell'ordinanza del DEFR, p. es. la pectina) non possono superare il 5% degli ingredienti agricoli. Questo limite è superato – il prodotto non può essere commercializzato come prodotto biologico."
   umstellbetrieb_mono: "Come prodotto mono proveniente da un'azienda in conversione, «Bio» può figurare nella denominazione. Indicazione obbligatoria sull'etichetta: «Prodotto nel quadro della conversione all'agricoltura biologica» (contrassegnata con ** nell'elenco degli ingredienti)."
   bio_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."

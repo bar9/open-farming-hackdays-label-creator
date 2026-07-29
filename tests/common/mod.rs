@@ -739,6 +739,8 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         BioStatus::BioKnospeImport => Some("Bio (Knospe)"),
         BioStatus::NichtLandwirtschaftlich => Some("Nicht-landwirtschaftliche Zutat"),
         BioStatus::Andere => Some("Andere"),
+        // Declared as a permitted exception below; no quality radio to pick.
+        BioStatus::ErlaubteAusnahmeBio => None,
     };
     if let Some(label) = bio_label {
         // Click the matching radio / checkbox label inside the open dialog.
@@ -749,6 +751,17 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         if let Ok(el) = c.find(Locator::XPath(&xpath)).await {
             let _ = el.click().await;
             tokio::time::sleep(Duration::from_millis(150)).await;
+        }
+    }
+    // Permitted non-organic exception («Erlaubte nicht-biologische Zutat»).
+    // Bio config shows this checkbox for non-bio agricultural ingredients; it is
+    // what keeps such a recipe eligible for «Bio» (DEC-7).
+    if matches!(ing.bio, BioStatus::ErlaubteAusnahmeBio) {
+        let xpath = "//dialog[@open]//label[contains(normalize-space(.), 'Erlaubte nicht-biologische Zutat')]//input[@type='checkbox']\
+|//dialog[@open]//*[contains(normalize-space(.), 'Erlaubte nicht-biologische Zutat')]/following::input[@type='checkbox'][1]";
+        if let Ok(el) = c.find(Locator::XPath(xpath)).await {
+            let _ = el.click().await;
+            tokio::time::sleep(Duration::from_millis(200)).await;
         }
     }
     // Knospe logo (Variante b): pick the specific Knospe variant by its caption.
