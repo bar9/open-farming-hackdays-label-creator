@@ -342,6 +342,12 @@ fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64
     (ausnahme_amount / total_agricultural_amount) * 100.0
 }
 
+/// Whether the recipe contains any agricultural ingredient that is non-organic
+/// without being declared a permitted exception (DEC-7).
+fn has_undeclared_non_bio(ingredients: &[Ingredient]) -> bool {
+    ingredients.iter().any(|i| i.has_undeclared_non_bio())
+}
+
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
     ingredients.iter()
@@ -670,6 +676,24 @@ impl Ingredient {
             return self.children.as_ref().unwrap().iter().all(|c| c.is_bio_ch_compliant());
         }
         self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false)
+    }
+
+    /// An agricultural ingredient that is neither Bio-CH certified, nor declared a
+    /// permitted non-organic exception (Anhang 3 WBF), nor from a conversion farm.
+    ///
+    /// The 5% tolerance applies ONLY to declared exceptions, so any such ingredient
+    /// rules out "Bio" regardless of its share — 4% conventional eggs do not become
+    /// acceptable just by being small (DEC-7). Mirrors the bottom-up aggregation of
+    /// `is_bio_ch_compliant`, so a composite making its own quality claim is judged
+    /// on that claim rather than on its children.
+    pub fn has_undeclared_non_bio(&self) -> bool {
+        if self.aggregates_quality_from_children() {
+            return self.children.as_ref().unwrap().iter().any(|c| c.has_undeclared_non_bio());
+        }
+        self.is_agricultural()
+            && !self.bio_ch.unwrap_or(false)
+            && !self.erlaubte_ausnahme_bio.unwrap_or(false)
+            && !self.aus_umstellbetrieb.unwrap_or(false)
     }
 
     pub fn composite_name(&self) -> String {
@@ -1513,11 +1537,22 @@ impl Calculator {
         let bio_ch_percentage = if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
             let pct = calculate_bio_ch_certified_percentage(&input.ingredients);
 
-            if pct >= 95.0 {
+            // DEC-7: the 5% tolerance covers ONLY declared permitted exceptions
+            // (Anhang 3 WBF). An agricultural ingredient that is simply non-organic
+            // (e.g. conventional eggs) rules out "Bio" no matter how small its share,
+            // so it must gate the verdict independently of the percentage.
+            let undeclared_non_bio = has_undeclared_non_bio(&input.ingredients);
+
+            if pct >= 95.0 && !undeclared_non_bio {
                 conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
                 conditionals.insert(String::from("bio_marketing_allowed"), true);
             } else {
                 conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+            }
+            // Names the concrete reason next to the generic "not allowed" hint.
+            // Guarded on non-empty: an empty recipe has nothing to complain about yet.
+            if undeclared_non_bio && !input.ingredients.is_empty() {
+                conditionals.insert(String::from("bio_nicht_deklarierte_zutat"), true);
             }
             // Erlaubte nicht-bio Zutaten (Anhang 3 WBF, z.B. Pektin) dürfen höchstens
             // 5% der landwirtschaftlichen Zutaten ausmachen; darüber ist "Bio" nicht
