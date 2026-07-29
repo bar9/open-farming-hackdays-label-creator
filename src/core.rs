@@ -1311,6 +1311,20 @@ impl Calculator {
         Calculator { rule_defs: rules }
     }
 
+    /// Swiss share of the agricultural weight, as the active configuration means it.
+    ///
+    /// In a bio context only the certified ingredients count toward "Swiss"; in
+    /// the conventional one all of them do. Both Knospe branches (the origin-rule
+    /// choice and the logo variant) have to answer this the same way, so the
+    /// choice lives here rather than being repeated at each call site.
+    fn swiss_agricultural_percentage(&self, ingredients: &[Ingredient]) -> f64 {
+        if self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio) {
+            calculate_bio_swiss_agricultural_percentage(ingredients)
+        } else {
+            calculate_swiss_agricultural_percentage(ingredients)
+        }
+    }
+
     pub fn execute(&self, input: Input) -> Output {
         // Debug logging: Show active rules
         self.log_active_rules();
@@ -1474,16 +1488,10 @@ impl Calculator {
         // Calculate percentage of Swiss agricultural ingredients for Knospe rules
         let mut actual_knospe_rule: Option<RuleDef> = None;
         if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
-            // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
-            let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
-            let swiss_percentage = if has_bio_rule {
-                calculate_bio_swiss_agricultural_percentage(&input.ingredients)
-            } else {
-                calculate_swiss_agricultural_percentage(&input.ingredients)
-            };
+            let swiss_percentage = self.swiss_agricultural_percentage(&input.ingredients);
 
             #[cfg(target_arch = "wasm32")]
-            web_sys::console::log_1(&format!("🇨🇭 Swiss agricultural percentage: {:.1}% (bio-specific: {})", swiss_percentage, has_bio_rule).into());
+            web_sys::console::log_1(&format!("🇨🇭 Swiss agricultural percentage: {:.1}%", swiss_percentage).into());
 
             if swiss_percentage >= 100.0 && has_knospe_100_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_100_Percent_CH_NoOrigin);
@@ -1525,14 +1533,8 @@ impl Calculator {
 
                 // Only show a Knospe logo if 100% of agricultural ingredients are Knospe-certified
                 if knospe_percentage >= 100.0 && !ausnahme_ueber_grenze {
-                    // Now determine which logo variant based on Swiss percentage
-                    // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
-                    let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
-                    let swiss_percentage = if has_bio_rule {
-                        calculate_bio_swiss_agricultural_percentage(&input.ingredients)
-                    } else {
-                        calculate_swiss_agricultural_percentage(&input.ingredients)
-                    };
+                    // Which logo variant depends on the Swiss share.
+                    let swiss_percentage = self.swiss_agricultural_percentage(&input.ingredients);
 
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("🇨🇭 Swiss percentage of Knospe ingredients: {:.1}%", swiss_percentage).into());
