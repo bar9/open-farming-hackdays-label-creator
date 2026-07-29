@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use crate::components::*;
 use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
 use crate::core::{Ingredient, AmountUnit};
@@ -1357,7 +1358,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
             br {}
             ConditionalDisplay {
-                path: "namensgebende_zutat".to_string(),
+                path: keys::NAMENSGEBENDE_ZUTAT.to_string(),
                 FormField {
                     help: Some(t!("help.namensgebendeZutaten").to_string()),
                     label: t!("label.namensgebendeZutat").to_string(),

@@ -7,29 +7,30 @@
 // dieser Test die Ausschlüsse über eine Matrix von Rezepturen — jede neue
 // Regel, die versehentlich beide Seiten eines Paars setzt, fällt hier auf.
 
+use crate::conditional_keys as keys;
 use super::*;
 use crate::shared::Configuration;
 
 /// Pairs that must never both be set in one output.
 const EXCLUSIVE_PAIRS: &[(&str, &str)] = &[
-    ("bio_marketing_allowed", "bio_marketing_not_allowed"),
-    ("knospe_marketing_allowed", "knospe_marketing_not_allowed"),
-    ("bio_check_ok", "bio_check_failed"),
-    ("bio_check_ok", "bio_check_pending"),
-    ("bio_check_failed", "bio_check_pending"),
-    ("knospe_check_ok", "knospe_check_failed"),
-    ("knospe_check_ok", "knospe_check_pending"),
-    ("knospe_check_failed", "knospe_check_pending"),
-    ("bio_suisse_regular", "bio_suisse_no_cross"),
+    (keys::BIO_MARKETING_ALLOWED, keys::BIO_MARKETING_NOT_ALLOWED),
+    (keys::KNOSPE_MARKETING_ALLOWED, keys::KNOSPE_MARKETING_NOT_ALLOWED),
+    (keys::BIO_CHECK_OK, keys::BIO_CHECK_FAILED),
+    (keys::BIO_CHECK_OK, keys::BIO_CHECK_PENDING),
+    (keys::BIO_CHECK_FAILED, keys::BIO_CHECK_PENDING),
+    (keys::KNOSPE_CHECK_OK, keys::KNOSPE_CHECK_FAILED),
+    (keys::KNOSPE_CHECK_OK, keys::KNOSPE_CHECK_PENDING),
+    (keys::KNOSPE_CHECK_FAILED, keys::KNOSPE_CHECK_PENDING),
+    (keys::BIO_SUISSE_REGULAR, keys::BIO_SUISSE_NO_CROSS),
 ];
 
 /// Implications: when `premise` is set, `consequence` must be set too.
 const IMPLICATIONS: &[(&str, &str)] = &[
     // A logo is only ever shown for a marketable product.
-    ("bio_suisse_regular", "knospe_marketing_allowed"),
-    ("bio_suisse_no_cross", "knospe_marketing_allowed"),
+    (keys::BIO_SUISSE_REGULAR, keys::KNOSPE_MARKETING_ALLOWED),
+    (keys::BIO_SUISSE_NO_CROSS, keys::KNOSPE_MARKETING_ALLOWED),
     // The Umstellungsknospe is a variant of a shown logo, never standalone.
-    ("knospe_umstellung_logo", "knospe_marketing_allowed"),
+    (keys::KNOSPE_UMSTELLUNG_LOGO, keys::KNOSPE_MARKETING_ALLOWED),
 ];
 
 fn check_invariants(ctx: &str, c: &std::collections::HashMap<String, bool>) {
@@ -140,28 +141,28 @@ fn every_produced_conditional_is_consumed_somewhere() {
     // no UI or test consumes is a silent contract break, so the full key set is
     // pinned here; extend the list when a new conditional gains a consumer.
     const KNOWN_CONSUMED: &[&str] = &[
-        "alternative_marking_allowed",
-        "namensgebende_zutat",
-        "manuelles_total",
-        "bio_suisse_regular",
-        "bio_suisse_no_cross",
-        "knospe_umstellung_logo",
-        "knospe_marketing_allowed",
-        "knospe_marketing_not_allowed",
-        "knospe_erlaubte_ausnahme_ueber_5_prozent",
-        "knospe_check_pending",
-        "knospe_check_ok",
-        "knospe_check_failed",
-        "bio_sachbezeichnung_suffix",
-        "bio_marketing_allowed",
-        "bio_marketing_not_allowed",
-        "bio_nicht_deklarierte_zutat",
-        "bio_erlaubte_ausnahme_ueber_5_prozent",
-        "umstellbetrieb_hinweis",
-        "bio_check_pending",
-        "bio_check_ok",
-        "bio_check_failed",
-        "herkunft_benoetigt_ueber_50_prozent",
+        keys::ALTERNATIVE_MARKING_ALLOWED,
+        keys::NAMENSGEBENDE_ZUTAT,
+        keys::MANUELLES_TOTAL,
+        keys::BIO_SUISSE_REGULAR,
+        keys::BIO_SUISSE_NO_CROSS,
+        keys::KNOSPE_UMSTELLUNG_LOGO,
+        keys::KNOSPE_MARKETING_ALLOWED,
+        keys::KNOSPE_MARKETING_NOT_ALLOWED,
+        keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT,
+        keys::KNOSPE_CHECK_PENDING,
+        keys::KNOSPE_CHECK_OK,
+        keys::KNOSPE_CHECK_FAILED,
+        keys::BIO_SACHBEZEICHNUNG_SUFFIX,
+        keys::BIO_MARKETING_ALLOWED,
+        keys::BIO_MARKETING_NOT_ALLOWED,
+        keys::BIO_NICHT_DEKLARIERTE_ZUTAT,
+        keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT,
+        keys::UMSTELLBETRIEB_HINWEIS,
+        keys::BIO_CHECK_PENDING,
+        keys::BIO_CHECK_OK,
+        keys::BIO_CHECK_FAILED,
+        keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT,
     ];
 
     for config in [Configuration::Bio, Configuration::Knospe, Configuration::Conventional] {
@@ -174,7 +175,7 @@ fn every_produced_conditional_is_consumed_somewhere() {
                 let output = calculator_for(config).execute(builder.build());
                 for key in output.conditional_elements.keys() {
                     // Per-ingredient origin flags are indexed dynamically.
-                    if key.starts_with("herkunft_benoetigt_") {
+                    if key.starts_with(keys::HERKUNFT_BENOETIGT_PREFIX) {
                         continue;
                     }
                     assert!(

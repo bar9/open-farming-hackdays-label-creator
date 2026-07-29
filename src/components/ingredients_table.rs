@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use crate::components::card_stack::{CardStack, GenesisModal};
 use crate::components::ingredient_path::IngredientPath;
 use crate::components::*;
@@ -88,7 +89,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 
             if props.ingredients.len() > 0 {
                 ConditionalDisplay {
-                    path: "manuelles_total".to_string(),
+                    path: keys::MANUELLES_TOTAL.to_string(),
                     div {
                         class: "grid grid-cols-3 gap-4",
                         div {{t!("label.total").to_string()}}

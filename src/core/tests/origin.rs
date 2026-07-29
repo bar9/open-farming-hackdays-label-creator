@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use super::*;
 
 #[test]
@@ -9,10 +10,10 @@ fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
         .build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
-    assert!(conditionals.contains_key("herkunft_benoetigt_ueber_50_prozent"));
+    assert!(conditionals.contains_key(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT));
     assert!(
         *conditionals
-            .get("herkunft_benoetigt_ueber_50_prozent")
+            .get(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT)
             .unwrap()
     );
 }
@@ -38,8 +39,8 @@ fn herkunft_benoetigt_composite_children_over_50_percent() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
     // Composite = 600 / 800 = 75% > 50% → its origin is required (top-level index 0).
-    assert_eq!(c.get("herkunft_benoetigt_0"), Some(&true));
-    assert_eq!(c.get("herkunft_benoetigt_ueber_50_prozent"), Some(&true));
+    assert_eq!(c.get(&keys::herkunft_benoetigt(0)), Some(&true));
+    assert_eq!(c.get(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT), Some(&true));
 }
 
 #[test]
@@ -61,9 +62,9 @@ fn herkunft_benoetigt_composite_under_50_percent_not_required() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
     // Composite = 300 / 800 = 37.5% < 50% → NOT required.
-    assert_eq!(c.get("herkunft_benoetigt_0"), None);
+    assert_eq!(c.get(&keys::herkunft_benoetigt(0)), None);
     // Zucker = 500 / 800 = 62.5% > 50% → still required (rule fires for real >50%).
-    assert_eq!(c.get("herkunft_benoetigt_1"), Some(&true));
+    assert_eq!(c.get(&keys::herkunft_benoetigt(1)), Some(&true));
 }
 
 #[test]
@@ -250,9 +251,9 @@ fn meat_ingredient_over_20_percent_requires_origin() {
     let label = output.label;
 
     // Meat ingredient should show origin field even though <50%
-    assert!(conditionals.contains_key("herkunft_benoetigt_0"));
+    assert!(conditionals.contains_key(&keys::herkunft_benoetigt(0)));
     // Non-meat ingredient should show origin field (>50% rule also active)
-    assert!(conditionals.contains_key("herkunft_benoetigt_1"));
+    assert!(conditionals.contains_key(&keys::herkunft_benoetigt(1)));
 
     // Both ingredients should display country on label
     assert!(label.contains("Hackfleisch (CH)"));
@@ -283,9 +284,9 @@ fn meat_rule_only_shows_origin_for_meat_ingredients() {
     let label = output.label;
 
     // Meat ingredient should show origin field
-    assert!(conditionals.contains_key("herkunft_benoetigt_0"));
+    assert!(conditionals.contains_key(&keys::herkunft_benoetigt(0)));
     // Non-meat ingredient should NOT show origin field with only meat rule
-    assert!(!conditionals.contains_key("herkunft_benoetigt_1"));
+    assert!(!conditionals.contains_key(&keys::herkunft_benoetigt(1)));
 
     // The current origin display logic shows origin for all ingredients if any origin rule is active
     // This is a limitation of the current design but the functionality still works correctly
@@ -317,9 +318,9 @@ fn meat_ingredient_under_20_percent_no_origin_required() {
     let conditionals = output.conditional_elements;
 
     // Meat ingredient under 20% should NOT show origin field
-    assert!(!conditionals.contains_key("herkunft_benoetigt_0"));
+    assert!(!conditionals.contains_key(&keys::herkunft_benoetigt(0)));
     // Non-meat ingredient should NOT show origin field (only meat rule active)
-    assert!(!conditionals.contains_key("herkunft_benoetigt_1"));
+    assert!(!conditionals.contains_key(&keys::herkunft_benoetigt(1)));
 }
 
 #[test]
@@ -383,7 +384,7 @@ fn meat_detection_comprehensive_categories() {
             );
             // Should show origin field
             assert!(
-                conditionals.contains_key("herkunft_benoetigt_0"),
+                conditionals.contains_key(&keys::herkunft_benoetigt(0)),
                 "Expected origin field for {} with category '{}'",
                 ingredient_name, category
             );
@@ -397,7 +398,7 @@ fn meat_detection_comprehensive_categories() {
             );
             // Should NOT show origin field
             assert!(
-                !conditionals.contains_key("herkunft_benoetigt_0"),
+                !conditionals.contains_key(&keys::herkunft_benoetigt(0)),
                 "Unexpected origin field for {} with category '{}'",
                 ingredient_name, category
             );
@@ -426,7 +427,7 @@ fn meat_detection_processed_meat_products() {
     let label = output.label;
 
     // Should recognize "Rohwurstware" as meat and show origin field
-    assert!(conditionals.contains_key("herkunft_benoetigt_0"));
+    assert!(conditionals.contains_key(&keys::herkunft_benoetigt(0)));
     // Should display origin on label
     assert!(label.contains("Rohwurst (CH)"));
 }

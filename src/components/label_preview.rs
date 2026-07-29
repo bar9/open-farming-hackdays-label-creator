@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use crate::components::{Amount, AmountType, Price};
 use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, UmstellungsknospeSatzRegular, UmstellungsknospeSatzImport};
 use crate::layout::DisclaimerContext;
@@ -163,9 +164,9 @@ pub fn LabelPreview(
                 // the Umstellungssatz text into one combined image (logo left, text
                 // right — see `make umstellung-assets`).
                 {
-                    let regular = conditionals.is_set("bio_suisse_regular");
-                    let no_cross = conditionals.is_set("bio_suisse_no_cross");
-                    let umstellung = conditionals.is_set("knospe_umstellung_logo");
+                    let regular = conditionals.is_set(keys::BIO_SUISSE_REGULAR);
+                    let no_cross = conditionals.is_set(keys::BIO_SUISSE_NO_CROSS);
+                    let umstellung = conditionals.is_set(keys::KNOSPE_UMSTELLUNG_LOGO);
                     // BioV (Bio-CH) shows no logo here; the green "Bio ✓" badge is the
                     // Bio counterpart of the Knospe logo and follows the same rule:
                     // it is driven by the recipe math (`bio_marketing_allowed`), not by
@@ -175,7 +176,7 @@ pub fn LabelPreview(
                     // (see `has_agricultural_ingredient` in core.rs), so the badge
                     // cannot appear on an untouched form. Knospe (`bio_suisse_*`) and
                     // Bio flags are mutually exclusive → no collision.
-                    let bio_ok = conditionals.is_set("bio_marketing_allowed");
+                    let bio_ok = conditionals.is_set(keys::BIO_MARKETING_ALLOWED);
                     if regular || no_cross {
                         rsx! {
                             div { class: "absolute top-2 right-2 flex items-center justify-end",
@@ -214,7 +215,7 @@ pub fn LabelPreview(
                         span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung").to_string()}}
                     } else {
                         {
-                            let bio_suffix = if conditionals.is_set("bio_sachbezeichnung_suffix") {
+                            let bio_suffix = if conditionals.is_set(keys::BIO_SACHBEZEICHNUNG_SUFFIX) {
                                 " Bio"
                             } else {
                                 ""
@@ -455,53 +456,53 @@ pub fn LabelPreview(
             // of the physical label (Testing 25.06.2026).
             div { class: "mx-4",
                 // BioV tri-state «Rezeptur prüfen», mirroring the Knospe check below.
-                if conditionals.is_set("bio_check_pending") {
+                if conditionals.is_set(keys::BIO_CHECK_PENDING) {
                     Hint { text: t!("bio_hints.bio_check_pending").to_string() }
                 }
-                if conditionals.is_set("bio_check_ok") {
+                if conditionals.is_set(keys::BIO_CHECK_OK) {
                     Hint { text: t!("bio_hints.marketing_allowed").to_string() }
                     // DEC-4: nur zulässig, wenn alle landwirtschaftlichen Zutaten bio sind
                     // (keine erlaubte nicht-biologische Ausnahme in der Rezeptur).
-                    if conditionals.is_set("alternative_marking_allowed") {
+                    if conditionals.is_set(keys::ALTERNATIVE_MARKING_ALLOWED) {
                         Hint { text: t!("bio_hints.alternative_marking").to_string() }
                     }
                     // Monoprodukt aus Umstellbetrieb: "Bio" allowed + mandatory Umstellungshinweis (Zeile 7).
-                    if conditionals.is_set("umstellbetrieb_hinweis") {
+                    if conditionals.is_set(keys::UMSTELLBETRIEB_HINWEIS) {
                         Hint { text: t!("bio_hints.umstellbetrieb_mono").to_string() }
                     }
                 }
-                if conditionals.is_set("bio_check_failed") {
+                if conditionals.is_set(keys::BIO_CHECK_FAILED) {
                     WarningHint { text: t!("bio_hints.bio_check_failed").to_string() }
                     // Specific reason(s) for the failure, shown under the warning.
-                    if conditionals.is_set("bio_marketing_not_allowed") {
+                    if conditionals.is_set(keys::BIO_MARKETING_NOT_ALLOWED) {
                         Hint { text: t!("bio_hints.marketing_not_allowed").to_string() }
                     }
-                    if conditionals.is_set("bio_erlaubte_ausnahme_ueber_5_prozent") {
+                    if conditionals.is_set(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT) {
                         Hint { text: t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string() }
                     }
                     // DEC-7: nicht-bio Zutat ohne Häkchen «Erlaubte nicht-biologische
                     // Zutat» — nennt den konkreten Grund für das blockierte «Bio».
-                    if conditionals.is_set("bio_nicht_deklarierte_zutat") {
+                    if conditionals.is_set(keys::BIO_NICHT_DEKLARIERTE_ZUTAT) {
                         Hint { text: t!("bio_hints.bio_nicht_deklarierte_zutat").to_string() }
                     }
                 }
                 // Knospe: tri-state result of the «Rezeptur prüfen» check.
-                if conditionals.is_set("knospe_check_pending") {
+                if conditionals.is_set(keys::KNOSPE_CHECK_PENDING) {
                     Hint { text: t!("bio_hints.knospe_check_pending").to_string() }
                 }
-                if conditionals.is_set("knospe_check_ok") {
+                if conditionals.is_set(keys::KNOSPE_CHECK_OK) {
                     Hint { text: t!("bio_hints.knospe_check_ok").to_string() }
                     // DEC-4: nur zulässig, wenn alle landwirtschaftlichen Zutaten bio sind
                     // (keine erlaubte nicht-biologische Ausnahme in der Rezeptur).
-                    if conditionals.is_set("alternative_marking_allowed") {
+                    if conditionals.is_set(keys::ALTERNATIVE_MARKING_ALLOWED) {
                         Hint { text: t!("bio_hints.alternative_marking").to_string() }
                     }
                 }
-                if conditionals.is_set("knospe_check_failed") {
+                if conditionals.is_set(keys::KNOSPE_CHECK_FAILED) {
                     WarningHint { text: t!("bio_hints.knospe_check_failed").to_string() }
                     // Concrete reason when the failure is the 5% exception cap
                     // (DEC-8), which the generic text above does not name.
-                    if conditionals.is_set("knospe_erlaubte_ausnahme_ueber_5_prozent") {
+                    if conditionals.is_set(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT) {
                         Hint { text: t!("bio_hints.knospe_erlaubte_ausnahme_ueber_5_prozent").to_string() }
                     }
                 }

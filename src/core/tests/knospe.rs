@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use super::*;
 
 // Reworked per Testing 25.06.2026: the «alle Zutaten Herkunft» rule now flags an
@@ -17,9 +18,9 @@ fn bio_knospe_alle_zutaten_herkunft_conditional() {
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
 
-    assert_eq!(conditionals.get("herkunft_benoetigt_0"), Some(&true));
-    assert_eq!(conditionals.get("herkunft_benoetigt_1"), None);
-    assert_eq!(conditionals.get("herkunft_benoetigt_ueber_50_prozent"), Some(&true));
+    assert_eq!(conditionals.get(&keys::herkunft_benoetigt(0)), Some(&true));
+    assert_eq!(conditionals.get(&keys::herkunft_benoetigt(1)), None);
+    assert_eq!(conditionals.get(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT), Some(&true));
 }
 
 #[test]
@@ -562,12 +563,12 @@ fn knospe_erlaubte_ausnahme_over_5pct_blocks_logo() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), None);
-    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("bio_suisse_regular"), None);
-    assert_eq!(c.get("bio_suisse_no_cross"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
     // The hint has to name the 5% limit, not a missing certification.
-    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
 }
 
 #[test]
@@ -584,9 +585,9 @@ fn knospe_erlaubte_ausnahme_within_5pct_keeps_logo() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_marketing_not_allowed"), None);
-    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
 }
 
 #[test]
@@ -604,8 +605,8 @@ fn knospe_erlaubte_ausnahme_exactly_5pct_keeps_logo() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
 }
 
 #[test]
@@ -624,8 +625,8 @@ fn knospe_erlaubte_ausnahme_bio_flag_counts_toward_the_same_cap() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
 }
 
 #[test]
@@ -644,8 +645,8 @@ fn knospe_erlaubte_ausnahme_over_5pct_fails_the_rezeptur_check() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_check_ok"), None);
-    assert_eq!(c.get("knospe_check_failed"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
 }
 
 #[test]
@@ -665,8 +666,8 @@ fn knospe_uncertified_nonbio_still_blocks_without_the_5pct_hint() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
 }
 
 #[test]
@@ -685,8 +686,8 @@ fn knospe_non_agricultural_exception_does_not_count() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
 }
 // --- DEC-10: «Bio» in the Sachbezeichnung for Knospe products --------------
 //
@@ -704,8 +705,8 @@ fn knospe_eligible_recipe_gets_the_bio_sachbezeichnung() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
 }
 
 #[test]
@@ -718,8 +719,8 @@ fn knospe_ineligible_recipe_gets_no_bio_sachbezeichnung() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }
 
 #[test]
@@ -734,9 +735,9 @@ fn knospe_composite_umstellung_gets_no_bio_sachbezeichnung() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true), "the logo itself is unaffected");
-    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true), "the logo itself is unaffected");
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }
 
 #[test]
@@ -750,8 +751,8 @@ fn knospe_mono_umstellung_keeps_the_bio_sachbezeichnung() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
 }
 
 #[test]
@@ -759,5 +760,5 @@ fn knospe_empty_recipe_gets_no_bio_sachbezeichnung() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let c = calculator.execute(InputBuilder::new().vollstaendig().build()).conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }

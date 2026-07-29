@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
@@ -1345,7 +1346,7 @@ impl Calculator {
         // when every agricultural ingredient is organic. With a permitted non-organic
         // exception in the recipe, only the per-ingredient *-marking is available.
         if !has_erlaubte_ausnahme(&input.ingredients) {
-            conditionals.insert(String::from("alternative_marking_allowed"), true);
+            conditionals.insert(keys::ALTERNATIVE_MARKING_ALLOWED.to_string(), true);
         }
 
         // Calculate total amount first (needed for validations)
@@ -1445,7 +1446,7 @@ impl Calculator {
         for ruleDef in &self.rule_defs {
             if let RuleDef::AP1_3_EingabeNamensgebendeZutat = ruleDef {
                 self.log_rule_processing(ruleDef, "CONDITIONAL", Some("Enabling name-giving ingredient input"));
-                conditionals.insert(String::from("namensgebende_zutat"), true);
+                conditionals.insert(keys::NAMENSGEBENDE_ZUTAT.to_string(), true);
             }
         }
         #[cfg(target_arch = "wasm32")]
@@ -1462,7 +1463,7 @@ impl Calculator {
             .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
         {
             self.log_rule_processing(&RuleDef::AP1_4_ManuelleEingabeTotal, "CONDITIONAL", Some("Enabling manual total input"));
-            conditionals.insert(String::from("manuelles_total"), true);
+            conditionals.insert(keys::MANUELLES_TOTAL.to_string(), true);
         }
 
         // Determine which ingredients require country of origin display
@@ -1511,7 +1512,7 @@ impl Calculator {
         if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
             if input.ingredients.is_empty() {
                 // No recipe yet: show the "not allowed" text as a default, no logo.
-                conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
+                conditionals.insert(keys::KNOSPE_MARKETING_NOT_ALLOWED.to_string(), true);
             } else {
                 self.log_rule_processing(&RuleDef::Knospe_ShowBioSuisseLogo, "OUTPUT", Some("Determining Bio Suisse logo display based on Knospe certification"));
 
@@ -1537,19 +1538,19 @@ impl Calculator {
 
                     if swiss_percentage >= 90.0 {
                         // Knospe with Swiss cross (>= 90% Swiss)
-                        conditionals.insert(String::from("bio_suisse_regular"), true);
+                        conditionals.insert(keys::BIO_SUISSE_REGULAR.to_string(), true);
                     } else {
                         // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
-                        conditionals.insert(String::from("bio_suisse_no_cross"), true);
+                        conditionals.insert(keys::BIO_SUISSE_NO_CROSS.to_string(), true);
                     }
                     // Umstellungs-Knospe (Testing 25.06.2026): any ingredient aus
                     // Umstellung switches the logo artwork to the Umstellungsknospe
                     // (Suisse/Import per the regular/no_cross branch above) and adds
                     // the Umstellungssatz next to it on the label preview.
                     if has_umstellbetrieb_in_tree(&input.ingredients) {
-                        conditionals.insert(String::from("knospe_umstellung_logo"), true);
+                        conditionals.insert(keys::KNOSPE_UMSTELLUNG_LOGO.to_string(), true);
                     }
-                    conditionals.insert(String::from("knospe_marketing_allowed"), true);
+                    conditionals.insert(keys::KNOSPE_MARKETING_ALLOWED.to_string(), true);
 
                     // DEC-10: analogous to Bio-V, a Knospe-eligible product carries
                     // « Bio» in the Sachbezeichnung. Umstellung follows the same rule
@@ -1558,17 +1559,17 @@ impl Calculator {
                     // next to the logo covers the conversion status either way.
                     let umstellung = has_umstellbetrieb_in_tree(&input.ingredients);
                     if !umstellung || is_mono_product(&input.ingredients) {
-                        conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
+                        conditionals.insert(keys::BIO_SACHBEZEICHNUNG_SUFFIX.to_string(), true);
                     }
                 } else {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
-                    conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
+                    conditionals.insert(keys::KNOSPE_MARKETING_NOT_ALLOWED.to_string(), true);
                 }
                 // Name the concrete reason when it is the 5% cap, not a missing
                 // certification — the generic text above would be misleading.
                 if ausnahme_ueber_grenze {
-                    conditionals.insert(String::from("knospe_erlaubte_ausnahme_ueber_5_prozent"), true);
+                    conditionals.insert(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT.to_string(), true);
                 }
             }
 
@@ -1582,7 +1583,7 @@ impl Calculator {
             if input.ignore_ingredients {
                 // no check hints
             } else if !input.rezeptur_vollstaendig {
-                conditionals.insert(String::from("knospe_check_pending"), true);
+                conditionals.insert(keys::KNOSPE_CHECK_PENDING.to_string(), true);
             } else {
                 let has_recipe_issues = validation_messages
                     .keys()
@@ -1593,9 +1594,9 @@ impl Calculator {
                     // «Rezeptur prüfen» text would contradict each other.
                     && calculate_erlaubte_ausnahme_knospe_percentage(&input.ingredients) <= 5.0;
                 if fulfils_knospe && !has_recipe_issues {
-                    conditionals.insert(String::from("knospe_check_ok"), true);
+                    conditionals.insert(keys::KNOSPE_CHECK_OK.to_string(), true);
                 } else {
-                    conditionals.insert(String::from("knospe_check_failed"), true);
+                    conditionals.insert(keys::KNOSPE_CHECK_FAILED.to_string(), true);
                 }
             }
         }
@@ -1617,22 +1618,22 @@ impl Calculator {
                 && !undeclared_non_bio
                 && has_agricultural_ingredient(&input.ingredients)
             {
-                conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
-                conditionals.insert(String::from("bio_marketing_allowed"), true);
+                conditionals.insert(keys::BIO_SACHBEZEICHNUNG_SUFFIX.to_string(), true);
+                conditionals.insert(keys::BIO_MARKETING_ALLOWED.to_string(), true);
             } else {
-                conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+                conditionals.insert(keys::BIO_MARKETING_NOT_ALLOWED.to_string(), true);
             }
             // Names the concrete reason next to the generic "not allowed" hint.
             // Guarded on non-empty: an empty recipe has nothing to complain about yet.
             if undeclared_non_bio && !input.ingredients.is_empty() {
-                conditionals.insert(String::from("bio_nicht_deklarierte_zutat"), true);
+                conditionals.insert(keys::BIO_NICHT_DEKLARIERTE_ZUTAT.to_string(), true);
             }
             // Erlaubte nicht-bio Zutaten (Anhang 3 WBF, z.B. Pektin) dürfen höchstens
             // 5% der landwirtschaftlichen Zutaten ausmachen; darüber ist "Bio" nicht
             // zulässig (> 5% ⇒ Bio-Anteil < 95%, also stets zusammen mit
             // bio_marketing_not_allowed — dieser Hinweis nennt den konkreten Grund).
             if calculate_erlaubte_ausnahme_bio_percentage(&input.ingredients) > 5.0 {
-                conditionals.insert(String::from("bio_erlaubte_ausnahme_ueber_5_prozent"), true);
+                conditionals.insert(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT.to_string(), true);
             }
             // Umstellbetrieb handling for Bio Sachbezeichnung — whole tree, so a
             // parent-claim Umstellung composite counts too.
@@ -1648,16 +1649,16 @@ impl Calculator {
                         .filter(|i| i.is_agricultural())
                         .all(|i| i.bio_ch == Some(true));
                     if mono_is_bio_ch {
-                        conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
-                        conditionals.insert(String::from("bio_marketing_allowed"), true);
-                        conditionals.remove("bio_marketing_not_allowed");
-                        conditionals.insert(String::from("umstellbetrieb_hinweis"), true);
+                        conditionals.insert(keys::BIO_SACHBEZEICHNUNG_SUFFIX.to_string(), true);
+                        conditionals.insert(keys::BIO_MARKETING_ALLOWED.to_string(), true);
+                        conditionals.remove(keys::BIO_MARKETING_NOT_ALLOWED);
+                        conditionals.insert(keys::UMSTELLBETRIEB_HINWEIS.to_string(), true);
                     }
                 } else {
                     // Composite with umstellbetrieb: remove suffix, block marketing
-                    conditionals.remove("bio_sachbezeichnung_suffix");
-                    conditionals.remove("bio_marketing_allowed");
-                    conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+                    conditionals.remove(keys::BIO_SACHBEZEICHNUNG_SUFFIX);
+                    conditionals.remove(keys::BIO_MARKETING_ALLOWED);
+                    conditionals.insert(keys::BIO_MARKETING_NOT_ALLOWED.to_string(), true);
                 }
             }
 
@@ -1671,17 +1672,17 @@ impl Calculator {
             if input.ignore_ingredients {
                 // no check hints
             } else if !input.rezeptur_vollstaendig {
-                conditionals.insert(String::from("bio_check_pending"), true);
+                conditionals.insert(keys::BIO_CHECK_PENDING.to_string(), true);
             } else {
                 let has_recipe_issues = validation_messages
                     .keys()
                     .any(|k| k.starts_with("ingredients["));
                 let fulfils_bio = !input.ingredients.is_empty()
-                    && conditionals.get("bio_marketing_allowed").copied().unwrap_or(false);
+                    && conditionals.get(keys::BIO_MARKETING_ALLOWED).copied().unwrap_or(false);
                 if fulfils_bio && !has_recipe_issues {
-                    conditionals.insert(String::from("bio_check_ok"), true);
+                    conditionals.insert(keys::BIO_CHECK_OK.to_string(), true);
                 } else {
-                    conditionals.insert(String::from("bio_check_failed"), true);
+                    conditionals.insert(keys::BIO_CHECK_FAILED.to_string(), true);
                 }
             }
 
@@ -1747,13 +1748,13 @@ impl Calculator {
                 }
 
                 if requires_herkunft {
-                    conditionals.insert(format!("herkunft_benoetigt_{}", index), true);
+                    conditionals.insert(keys::herkunft_benoetigt(index), true);
                     has_any_herkunft_required = true;
                 }
             }
 
             if has_any_herkunft_required {
-                conditionals.insert(String::from("herkunft_benoetigt_ueber_50_prozent"), true);
+                conditionals.insert(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT.to_string(), true);
             }
         }
 

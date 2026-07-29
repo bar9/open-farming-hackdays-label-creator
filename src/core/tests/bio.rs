@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use super::*;
 use crate::rules::RuleDef;
 use crate::shared::Configuration;
@@ -16,9 +17,9 @@ fn bio_ch_100_percent_sets_sachbezeichnung_suffix() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("bio_marketing_not_allowed"), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), None);
 }
 
 #[test]
@@ -31,9 +32,9 @@ fn bio_ch_partial_sets_marketing_not_allowed() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_allowed"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -52,10 +53,10 @@ fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("bio_marketing_not_allowed"), None);
-    assert_eq!(c.get("bio_erlaubte_ausnahme_ueber_5_prozent"), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), None);
+    assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
     // 96% (not 100%): per-ingredient marking, Pektin unmarked, no "Alle" legend.
     assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
     assert!(!output.label.contains("Pektin*"), "permitted non-bio exception must not be starred");
@@ -78,10 +79,10 @@ fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_allowed"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("bio_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
 }
 
 #[test]
@@ -94,10 +95,10 @@ fn bio_ch_zero_percent_shows_warning() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
     // B8: Warning must appear even when no ingredient is bio
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -112,8 +113,8 @@ fn bio_ch_with_non_agricultural_ignored() {
     let c = &output.conditional_elements;
 
     // Hafer is the only agricultural ingredient and it's 100% bio_ch
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -128,10 +129,10 @@ fn bio_ch_vs_is_bio_are_independent() {
     let c = &output.conditional_elements;
 
     // is_bio does not count as bio_ch, so bio_ch percentage is 0%
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
     // B8: Warning shown because bio_ch percentage is 0%
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -147,8 +148,8 @@ fn bio_ch_100_percent_via_full_bio_config() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
 }
 
 // =============================================================================
@@ -300,8 +301,8 @@ fn knospe_logo_regular_100_knospe_90_plus_swiss() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_suisse_regular"), Some(&true));
-    assert_eq!(c.get("bio_suisse_no_cross"), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
 }
 
 #[test]
@@ -318,8 +319,8 @@ fn knospe_logo_no_cross_100_knospe_under_90_swiss() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_suisse_regular"), None);
-    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
 }
 
 #[test]
@@ -336,8 +337,8 @@ fn knospe_no_logo_when_not_100_knospe() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_suisse_regular"), None);
-    assert_eq!(c.get("bio_suisse_no_cross"), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
 }
 
 // Umstellungs-Knospe on the label (Testing 25.06.2026): any ingredient aus
@@ -353,8 +354,8 @@ fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_suisse_regular"), Some(&true));
-    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
 }
 
 #[test]
@@ -367,8 +368,8 @@ fn knospe_umstellung_logo_import_variant() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true));
-    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
 }
 
 #[test]
@@ -379,7 +380,7 @@ fn knospe_umstellung_logo_absent_without_umstellbetrieb() {
         .build();
     let output = calculator.execute(input);
 
-    assert_eq!(output.conditional_elements.get("knospe_umstellung_logo"), None);
+    assert_eq!(output.conditional_elements.get(keys::KNOSPE_UMSTELLUNG_LOGO), None);
 }
 
 #[test]
@@ -403,7 +404,7 @@ fn knospe_umstellung_logo_from_composite_parent_claim() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
 }
 
 // Tri-state «Rezeptur prüfen» result (Testing 25.06.2026): pending before the
@@ -418,9 +419,9 @@ fn knospe_check_pending_before_recipe_marked_complete() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_check_pending"), Some(&true));
-    assert_eq!(c.get("knospe_check_ok"), None);
-    assert_eq!(c.get("knospe_check_failed"), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), None);
 }
 
 #[test]
@@ -438,9 +439,9 @@ fn knospe_check_hints_suppressed_for_einzelzutat() {
         let output = calculator.execute(builder.build());
         let c = &output.conditional_elements;
 
-        assert_eq!(c.get("knospe_check_pending"), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get("knospe_check_ok"), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get("knospe_check_failed"), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), None, "vollstaendig={vollstaendig}");
     }
 }
 
@@ -455,9 +456,9 @@ fn knospe_check_ok_when_complete_and_valid() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_check_pending"), None);
-    assert_eq!(c.get("knospe_check_ok"), Some(&true));
-    assert_eq!(c.get("knospe_check_failed"), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), None);
 }
 
 #[test]
@@ -475,8 +476,8 @@ fn knospe_check_failed_when_recipe_has_validation_issue() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_check_ok"), None);
-    assert_eq!(c.get("knospe_check_failed"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
 }
 
 #[test]
@@ -490,8 +491,8 @@ fn knospe_check_failed_when_not_fully_knospe() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_check_ok"), None);
-    assert_eq!(c.get("knospe_check_failed"), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
 }
 
 #[test]
@@ -509,10 +510,10 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_marketing_not_allowed"), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
     // A logo variant must be set (exception is non-bio so 100% Swiss of the bio share → regular).
-    assert!(c.get("bio_suisse_regular") == Some(&true) || c.get("bio_suisse_no_cross") == Some(&true));
+    assert!(c.get(keys::BIO_SUISSE_REGULAR) == Some(&true) || c.get(keys::BIO_SUISSE_NO_CROSS) == Some(&true));
 }
 
 #[test]
@@ -530,9 +531,9 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("knospe_marketing_not_allowed"), None);
-    assert!(c.get("bio_suisse_regular") == Some(&true) || c.get("bio_suisse_no_cross") == Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
+    assert!(c.get(keys::BIO_SUISSE_REGULAR) == Some(&true) || c.get(keys::BIO_SUISSE_NO_CROSS) == Some(&true));
 }
 
 #[test]
@@ -550,8 +551,8 @@ fn knospe_logo_regular_exact_90_boundary() {
     let c = &output.conditional_elements;
 
     // 90% Swiss → >= 90% → regular logo
-    assert_eq!(c.get("bio_suisse_regular"), Some(&true));
-    assert_eq!(c.get("bio_suisse_no_cross"), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
 }
 
 #[test]
@@ -569,8 +570,8 @@ fn knospe_logo_no_cross_just_under_90_boundary() {
     let c = &output.conditional_elements;
 
     // 89% Swiss → < 90% → no cross logo
-    assert_eq!(c.get("bio_suisse_regular"), None);
-    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
 }
 
 // =============================================================================
@@ -651,8 +652,8 @@ fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
     let c = &output.conditional_elements;
 
     // 95% bio_ch >= 95% threshold → suffix allowed
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
 }
 
 // =============================================================================
@@ -675,11 +676,11 @@ fn bio_blocked_by_undeclared_non_bio_under_5_percent() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_marketing_allowed"), None, "4% nicht-bio Ei darf «Bio» nicht erlauben");
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), Some(&true), "Hinweis nennt den Grund");
-    assert_eq!(c.get("bio_check_failed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None, "4% nicht-bio Ei darf «Bio» nicht erlauben");
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), Some(&true), "Hinweis nennt den Grund");
+    assert_eq!(c.get(keys::BIO_CHECK_FAILED), Some(&true));
 }
 
 #[test]
@@ -694,10 +695,10 @@ fn bio_allowed_when_same_ingredient_is_declared_exception() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
-    assert_eq!(c.get("bio_check_ok"), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None);
+    assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
 }
 
 #[test]
@@ -712,9 +713,9 @@ fn bio_still_blocked_when_declared_exception_over_5_percent() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
-    assert_eq!(c.get("bio_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None, "deklariert — anderer Grund");
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None, "deklariert — anderer Grund");
 }
 
 #[test]
@@ -729,8 +730,8 @@ fn bio_non_agricultural_ingredient_does_not_block() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -745,9 +746,9 @@ fn bio_mono_umstellbetrieb_still_allowed() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("umstellbetrieb_hinweis"), Some(&true));
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::UMSTELLBETRIEB_HINWEIS), Some(&true));
 }
 
 #[test]
@@ -768,8 +769,8 @@ fn bio_blocked_by_undeclared_non_bio_inside_composite() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
 }
 
 #[test]
@@ -794,7 +795,7 @@ fn bio_composite_claiming_own_bio_quality_is_not_blocked() {
 
     // Scope of this test is the DEC-7 check only: the parent's claim shields its
     // children from being flagged as undeclared non-bio.
-    assert_eq!(c.get("bio_nicht_deklarierte_zutat"), None);
+    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None);
     // NOTE: `bio_marketing_allowed` is NOT asserted here. calculate_bio_ch_certified_percentage
     // walks `leaves()` and therefore ignores a parent-level claim, while
     // `is_bio_ch_compliant` honours it — a pre-existing divergence that predates
@@ -812,8 +813,8 @@ fn bio_ch_94_percent_sets_marketing_not_allowed() {
     let c = &output.conditional_elements;
 
     // 94% < 95% → no suffix, marketing not allowed
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -827,8 +828,8 @@ fn bio_ch_umstellbetrieb_excluded_from_percentage() {
     let c = &output.conditional_elements;
 
     // Umstellbetrieb ingredient excluded: only 600/1000 agricultural = 60% bio_ch → not allowed
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -842,8 +843,8 @@ fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
     let c = &output.conditional_elements;
 
     // 100% bio_ch but Weizenmehl is umstellbetrieb → effective 900/1000 = 90% < 95%
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 // =============================================================================
@@ -886,7 +887,7 @@ fn bio_95_99_band_uses_per_ingredient_asterisk() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true), "96% >= 95% → Bio in Sachbezeichnung");
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true), "96% >= 95% → Bio in Sachbezeichnung");
     assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
     assert!(!output.label.contains("Pektin*"), "non-bio ingredient not starred");
     assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Label: {}", output.label);
@@ -995,10 +996,10 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
     let c = &output.conditional_elements;
 
     // "Bio" IS allowed for the mono-Umstellbetrieb case (was wrongly blocked before this fix).
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
-    assert_eq!(c.get("bio_marketing_not_allowed"), None);
-    assert_eq!(c.get("umstellbetrieb_hinweis"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), None);
+    assert_eq!(c.get(keys::UMSTELLBETRIEB_HINWEIS), Some(&true));
     // The mandatory Umstellung declaration is printed on the label via the ** marker + legend.
     assert!(output.label.contains("Hafer**"), "expected ** marker on Hafer; label: {}", output.label);
     assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"),
@@ -1017,8 +1018,8 @@ fn composite_umstellbetrieb_removes_sachbezeichnung() {
     let c = &output.conditional_elements;
 
     // Composite with umstellbetrieb: no sachbezeichnung_suffix
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 // =============================================================================
@@ -1034,9 +1035,9 @@ fn bio_check_pending_before_rezeptur_vollstaendig() {
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
-    assert_eq!(c.get("bio_check_pending"), Some(&true));
-    assert_eq!(c.get("bio_check_ok"), None);
-    assert_eq!(c.get("bio_check_failed"), None);
+    assert_eq!(c.get(keys::BIO_CHECK_PENDING), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_OK), None);
+    assert_eq!(c.get(keys::BIO_CHECK_FAILED), None);
 }
 
 // =============================================================================
@@ -1059,8 +1060,8 @@ fn alternative_marking_allowed_when_all_agricultural_are_bio() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("bio_check_ok"), Some(&true));
-    assert_eq!(c.get("alternative_marking_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
+    assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -1079,8 +1080,8 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
     let c = &output.conditional_elements;
 
     // The positive verdict must remain — only the alternative-wording hint goes.
-    assert_eq!(c.get("bio_check_ok"), Some(&true), "Rezeptur erfüllt die Bio-Anforderungen weiterhin");
-    assert_eq!(c.get("alternative_marking_allowed"), None);
+    assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true), "Rezeptur erfüllt die Bio-Anforderungen weiterhin");
+    assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
 }
 
 #[test]
@@ -1098,8 +1099,8 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_knospe() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("knospe_check_ok"), Some(&true), "Rezeptur erfüllt die Knospe-Anforderungen weiterhin");
-    assert_eq!(c.get("alternative_marking_allowed"), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), Some(&true), "Rezeptur erfüllt die Knospe-Anforderungen weiterhin");
+    assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
 }
 
 #[test]
@@ -1115,7 +1116,7 @@ fn alternative_marking_allowed_when_exception_ingredient_is_also_bio() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("alternative_marking_allowed"), Some(&true));
+    assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -1136,7 +1137,7 @@ fn alternative_marking_suppressed_for_nested_erlaubte_ausnahme() {
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
 
-    assert_eq!(c.get("alternative_marking_allowed"), None);
+    assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
 }
 
 #[test]
@@ -1155,9 +1156,9 @@ fn bio_check_hints_suppressed_for_einzelzutat() {
         let output = calculator.execute(builder.build());
         let c = &output.conditional_elements;
 
-        assert_eq!(c.get("bio_check_pending"), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get("bio_check_ok"), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get("bio_check_failed"), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get(keys::BIO_CHECK_PENDING), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get(keys::BIO_CHECK_OK), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get(keys::BIO_CHECK_FAILED), None, "vollstaendig={vollstaendig}");
     }
 }
 
@@ -1171,9 +1172,9 @@ fn bio_check_ok_when_vollstaendig_and_qualifies() {
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
-    assert_eq!(c.get("bio_check_ok"), Some(&true));
-    assert_eq!(c.get("bio_check_pending"), None);
-    assert_eq!(c.get("bio_check_failed"), None);
+    assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_PENDING), None);
+    assert_eq!(c.get(keys::BIO_CHECK_FAILED), None);
 }
 
 #[test]
@@ -1187,8 +1188,8 @@ fn bio_check_failed_when_vollstaendig_but_under_95() {
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
-    assert_eq!(c.get("bio_check_failed"), Some(&true));
-    assert_eq!(c.get("bio_check_ok"), None);
+    assert_eq!(c.get(keys::BIO_CHECK_FAILED), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_OK), None);
 }
 
 #[test]
@@ -1207,9 +1208,9 @@ fn bio_check_failed_when_recipe_issue_despite_qualifying() {
     let c = &output.conditional_elements;
     assert!(output.validation_messages.contains_key("ingredients[0][origin]"),
         "expected an open origin error; messages: {:?}", output.validation_messages);
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true), "still qualifies on percentage");
-    assert_eq!(c.get("bio_check_failed"), Some(&true));
-    assert_eq!(c.get("bio_check_ok"), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true), "still qualifies on percentage");
+    assert_eq!(c.get(keys::BIO_CHECK_FAILED), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_OK), None);
 }
 
 #[test]
@@ -1509,7 +1510,7 @@ fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
     let c = &output.conditional_elements;
 
     // 600/1000 = 60% bio_ch (umstellbetrieb excluded) → below 95% threshold
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None,
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None,
         "Umstellbetrieb child should be excluded from bio_ch %. Conditionals: {:?}", c);
 }
 
@@ -1528,10 +1529,10 @@ fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
     // The hint texts stay coupled to the button.
-    assert_eq!(c.get("bio_check_pending"), Some(&true));
-    assert_eq!(c.get("bio_check_ok"), None);
+    assert_eq!(c.get(keys::BIO_CHECK_PENDING), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_OK), None);
 }
 
 #[test]
@@ -1541,8 +1542,8 @@ fn bio_marketing_not_allowed_for_an_empty_recipe() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let c = calculator.execute(InputBuilder::new().build()).conditional_elements;
 
-    assert_eq!(c.get("bio_marketing_allowed"), None);
-    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }
 
 #[test]
@@ -1554,8 +1555,8 @@ fn bio_marketing_not_allowed_when_the_recipe_does_not_qualify() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("bio_marketing_allowed"), None);
-    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
 }
 
 #[test]
@@ -1569,9 +1570,9 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
         .build();
     let c = calculator.execute(input).conditional_elements;
 
-    assert_eq!(c.get("bio_check_ok"), Some(&true));
-    assert_eq!(c.get("bio_check_pending"), None);
-    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
+    assert_eq!(c.get(keys::BIO_CHECK_PENDING), None);
+    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
 }
 
 // --- DEC-11: wild collection under the Bio-Verordnung ----------------------
