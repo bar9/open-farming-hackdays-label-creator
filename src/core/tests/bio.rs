@@ -1316,3 +1316,68 @@ fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), None,
         "Umstellbetrieb child should be excluded from bio_ch %. Conditionals: {:?}", c);
 }
+
+// --- DEC-6: the green Bio badge follows the recipe, not the check button ----
+//
+// The badge is the Bio-V counterpart of the Knospe logo, which has always been
+// driven by the recipe math. `bio_marketing_allowed` is what the preview reads,
+// so these tests pin its behaviour before «Rezeptur prüfen» is pressed.
+
+#[test]
+fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    // Note: no .vollstaendig() — the user has not pressed the button.
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    // The hint texts stay coupled to the button.
+    assert_eq!(c.get("bio_check_pending"), Some(&true));
+    assert_eq!(c.get("bio_check_ok"), None);
+}
+
+#[test]
+fn bio_marketing_not_allowed_for_an_empty_recipe() {
+    // Guard against the badge appearing on an untouched form: an empty recipe
+    // has a vacuous 100% Bio share.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let c = calculator.execute(InputBuilder::new().build()).conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+}
+
+#[test]
+fn bio_marketing_not_allowed_when_the_recipe_does_not_qualify() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+#[test]
+fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
+    // After pressing «Rezeptur prüfen» a qualifying recipe still reports ok, so
+    // the hint texts keep their old semantics.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("bio_check_ok"), Some(&true));
+    assert_eq!(c.get("bio_check_pending"), None);
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+}

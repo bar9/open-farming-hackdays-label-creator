@@ -3,7 +3,7 @@
 // must put the Knospe logo on the label preview.
 mod common;
 
-use common::recipes::Config;
+use common::recipes::{BioStatus, Config, RecipeIngredient};
 use common::*;
 use fantoccini::Locator;
 
@@ -61,6 +61,42 @@ async fn mono_quality_selector_drives_the_knospe_logo() {
     assert!(
         has_bio_suisse_cross(&c).await,
         "Swiss Knospe must show the cross logo on the label"
+    );
+
+    let _ = c.close().await;
+}
+
+// DEC-6: the green Bio badge must follow the recipe, not the «Rezeptur prüfen»
+// button. Seeding the recipe without pressing the button is the whole point, so
+// this cannot reuse `seed_recipe_via_ui`.
+#[tokio::test]
+async fn bio_badge_appears_without_pressing_rezeptur_pruefen() {
+    let c = connect().await;
+    goto_config(&c, Config::Bio).await;
+
+    // Empty form: no badge yet.
+    assert!(
+        !has_bio_qualified_badge(&c).await,
+        "the badge must not show on an empty recipe"
+    );
+
+    set_sachbezeichnung(&c, "Haferflocken").await;
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Hafer",
+            grams: 1000.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioCh,
+        },
+    )
+    .await;
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    // Deliberately NOT pressing «Rezeptur vollständig».
+    assert!(
+        has_bio_qualified_badge(&c).await,
+        "a qualifying Bio recipe must show the badge without «Rezeptur prüfen»"
     );
 
     let _ = c.close().await;
