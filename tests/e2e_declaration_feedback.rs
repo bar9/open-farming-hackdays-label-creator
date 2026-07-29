@@ -391,3 +391,111 @@ async fn knospe_recipe_appends_bio_to_the_sachbezeichnung() {
 
     let _ = c.close().await;
 }
+
+// The genesis "Speichern und nächste Zutat" reset must clear ALL quality state.
+//
+// The three reset paths in `ingredient_pane.rs` do not list
+// `edit_aus_umstellbetrieb`/`edit_nicht_landwirtschaftlich`; the flag is cleared
+// indirectly, by the guard effect that drops Umstellbetrieb whenever no bio
+// quality is selected. That is easy to break while editing either place, so the
+// behaviour is pinned here rather than left to inspection.
+#[tokio::test]
+async fn save_and_next_clears_the_umstellbetrieb_flag() {
+    let c = connect().await;
+    goto_config(&c, Config::Bio).await;
+
+    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    // First ingredient: Bio + «Aus Umstellbetrieb».
+    if let Some(input) = first_accent_input(&c).await {
+        let _ = input.click().await;
+        let _ = input.send_keys("Hafer").await;
+        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+        let _ = input.send_keys("\u{E007}").await;
+    }
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    if let Ok(num) = c.find(Locator::Css("dialog[open] input[type='number']")).await {
+        let _ = num.click().await;
+        let _ = num.send_keys("500").await;
+    }
+    // Quality «Bio», then the Umstellbetrieb checkbox that appears under it.
+    if let Ok(el) = c
+        .find(Locator::XPath(
+            "//dialog[@open]//label[normalize-space(.)='Bio']//input[@name='bio_v_category']",
+        ))
+        .await
+    {
+        let _ = el.click().await;
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    }
+    if let Ok(el) = c
+        .find(Locator::XPath(
+            "//dialog[@open]//label[contains(normalize-space(.), 'Umstellbetrieb')]//input[@type='checkbox']",
+        ))
+        .await
+    {
+        let _ = el.click().await;
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    }
+
+    // Guard the premise: if the flag never got set, the assertion below would
+    // pass vacuously and the test would prove nothing.
+    let was_checked = c
+        .execute(
+            r##"
+            const labels = Array.from(document.querySelectorAll('dialog[open] label'));
+            const dep = labels.find(l => /Umstellbetrieb/.test(l.innerText));
+            const box = dep && dep.querySelector("input[type='checkbox']");
+            return !!box && box.checked;
+            "##,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(was_checked, "setup failed: «Aus Umstellbetrieb» was never ticked");
+
+    assert!(
+        click_button_by_text(&c, "Speichern und nächste Zutat").await,
+        "genesis save button not found"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    // Re-select «Bio» so the dependent checkbox renders again. Without this the
+    // checkbox is simply absent and a stale signal would go unnoticed.
+    if let Ok(el) = c
+        .find(Locator::XPath(
+            "//dialog[@open]//label[normalize-space(.)='Bio']//input[@name='bio_v_category']",
+        ))
+        .await
+    {
+        let _ = el.click().await;
+        tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+    }
+
+    // The next ingredient starts fresh: the checkbox must not still be ticked.
+    let still_checked = c
+        .execute(
+            r##"
+            const labels = Array.from(document.querySelectorAll('dialog[open] label'));
+            const dep = labels.find(l => /Umstellbetrieb/.test(l.innerText));
+            if (!dep) return false;            // not rendered => cannot be set
+            const box = dep.querySelector("input[type='checkbox']");
+            return !!box && box.checked;
+            "##,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    assert!(
+        !still_checked,
+        "«Aus Umstellbetrieb» leaked from the previous ingredient into the next one"
+    );
+
+    let _ = c.close().await;
+}

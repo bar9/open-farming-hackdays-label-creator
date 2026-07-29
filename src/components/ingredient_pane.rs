@@ -279,6 +279,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let goto_child = use_callback(move |child_index: usize| { goto_descendant.call(vec![child_index]); });
 
     // Enforce: aus_umstellbetrieb requires bio or bio_ch
+    // Umstellbetrieb only exists under a bio quality. This also does the work the
+    // genesis reset paths omit: they clear the quality but not this flag, so
+    // without it a conversion ingredient would leak into the next one. Pinned by
+    // `save_and_next_clears_the_umstellbetrieb_flag` in the e2e suite.
     use_effect(move || {
         if !edit_is_bio() && !edit_bio_ch() && edit_aus_umstellbetrieb() {
             edit_aus_umstellbetrieb.set(false);
@@ -580,32 +584,41 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         Some(make_ingredient(amount, allergen_status, edit_children()))
     };
 
+    // Clear every edit signal back to "blank ingredient". Genesis mode reaches
+    // this from three places (save, save-and-next, cancel); they used to spell
+    // the same 20 assignments out each time, so a newly added signal could be
+    // forgotten in one of them. Note that `edit_aus_umstellbetrieb` is cleared
+    // indirectly by the guard effect above, once the bio quality is gone.
+    let mut clear_edit_state = move || {
+        edit_name.set(String::new());
+        edit_amount.set(None);
+        edit_unit.set(AmountUnit::default());
+        edit_is_composite.set(false);
+        edit_is_namensgebend.set(false);
+        edit_children.set(None);
+        is_allergen_custom.set(false);
+        edit_category.set(None);
+        edit_origins.set(None);
+        edit_aufzucht_ort.set(None);
+        edit_schlachtungs_ort.set(None);
+        edit_fangort.set(None);
+        edit_bio_ch.set(false);
+        edit_is_bio.set(false);
+        edit_erlaubte_ausnahme_bio.set(false);
+        edit_erlaubte_ausnahme_bio_details.set(String::new());
+        edit_erlaubte_ausnahme_knospe.set(false);
+        edit_erlaubte_ausnahme_knospe_details.set(String::new());
+        edit_processing_steps.set(None);
+        edit_canonical.set(None);
+    };
+
     let mut handle_save = move |scale_all: bool| {
         if let Some(new_ingredient) = build_ingredient() {
             props.on_save.call((new_ingredient, scale_all, scaling_factor()));
 
             if props.is_genesis {
                 // Reset local state for next creation
-                edit_name.set(String::new());
-                edit_amount.set(None);
-                edit_unit.set(AmountUnit::default());
-                edit_is_composite.set(false);
-                edit_is_namensgebend.set(false);
-                edit_children.set(None);
-                is_allergen_custom.set(false);
-                edit_category.set(None);
-                edit_origins.set(None);
-                edit_aufzucht_ort.set(None);
-                edit_schlachtungs_ort.set(None);
-                edit_fangort.set(None);
-                edit_bio_ch.set(false);
-                edit_is_bio.set(false);
-                edit_erlaubte_ausnahme_bio.set(false);
-                edit_erlaubte_ausnahme_bio_details.set(String::new());
-                edit_erlaubte_ausnahme_knospe.set(false);
-                edit_erlaubte_ausnahme_knospe_details.set(String::new());
-                edit_processing_steps.set(None);
-                edit_canonical.set(None);
+                clear_edit_state();
                 wrapper_ingredients.write()[0] = Ingredient {
                     name: String::new(),
                     amount: 0.0,
@@ -640,26 +653,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             props.on_save_and_next.call((new_ingredient, false, 1.0));
 
             // Reset local state for next creation (same as handle_save genesis reset)
-            edit_name.set(String::new());
-            edit_amount.set(None);
-            edit_unit.set(AmountUnit::default());
-            edit_is_composite.set(false);
-            edit_is_namensgebend.set(false);
-            edit_children.set(None);
-            is_allergen_custom.set(false);
-            edit_category.set(None);
-            edit_origins.set(None);
-            edit_aufzucht_ort.set(None);
-            edit_schlachtungs_ort.set(None);
-            edit_fangort.set(None);
-            edit_bio_ch.set(false);
-            edit_is_bio.set(false);
-            edit_erlaubte_ausnahme_bio.set(false);
-            edit_erlaubte_ausnahme_bio_details.set(String::new());
-            edit_erlaubte_ausnahme_knospe.set(false);
-            edit_erlaubte_ausnahme_knospe_details.set(String::new());
-            edit_processing_steps.set(None);
-            edit_canonical.set(None);
+            clear_edit_state();
             wrapper_ingredients.write()[0] = Ingredient::default();
         }
     };
@@ -669,26 +663,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let mut reset_to_original = move || {
         if is_genesis {
             // In genesis mode, just clear everything
-            edit_name.set(String::new());
-            edit_amount.set(None);
-            edit_unit.set(AmountUnit::default());
-            edit_is_composite.set(false);
-            edit_is_namensgebend.set(false);
-            edit_children.set(None);
-            is_allergen_custom.set(false);
-            edit_category.set(None);
-            edit_origins.set(None);
-            edit_aufzucht_ort.set(None);
-            edit_schlachtungs_ort.set(None);
-            edit_fangort.set(None);
-            edit_bio_ch.set(false);
-            edit_is_bio.set(false);
-            edit_erlaubte_ausnahme_bio.set(false);
-            edit_erlaubte_ausnahme_bio_details.set(String::new());
-            edit_erlaubte_ausnahme_knospe.set(false);
-            edit_erlaubte_ausnahme_knospe_details.set(String::new());
-            edit_processing_steps.set(None);
-            edit_canonical.set(None);
+            clear_edit_state();
             return;
         }
         let Some(orig_ref) = ingredients.get(index) else {
