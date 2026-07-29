@@ -1521,6 +1521,16 @@ impl Calculator {
                         conditionals.insert(String::from("knospe_umstellung_logo"), true);
                     }
                     conditionals.insert(String::from("knospe_marketing_allowed"), true);
+
+                    // DEC-10: analogous to Bio-V, a Knospe-eligible product carries
+                    // « Bio» in the Sachbezeichnung. Umstellung follows the same rule
+                    // as Bio-V (Excel Zeile 7): only a Monoprodukt may claim «Bio»,
+                    // a composite conversion product may not. The Umstellungssatz
+                    // next to the logo covers the conversion status either way.
+                    let umstellung = has_umstellbetrieb_in_tree(&input.ingredients);
+                    if !umstellung || is_mono_product(&input.ingredients) {
+                        conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
+                    }
                 } else {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());

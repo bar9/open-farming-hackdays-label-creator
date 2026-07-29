@@ -348,3 +348,38 @@ async fn biov_quality_options_keep_their_order_on_every_selection() {
 
     let _ = c.close().await;
 }
+
+// DEC-10: a Knospe-eligible recipe must show « Bio» after the Sachbezeichnung,
+// as Bio-V already does.
+#[tokio::test]
+async fn knospe_recipe_appends_bio_to_the_sachbezeichnung() {
+    let c = connect().await;
+    goto_config(&c, Config::Knospe).await;
+    set_sachbezeichnung(&c, "Konfitüre").await;
+
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Himbeeren",
+            grams: 600.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioKnospe,
+        },
+    )
+    .await;
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Zucker",
+            grams: 400.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioKnospe,
+        },
+    )
+    .await;
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    assert_label_contains(&c, "Konfitüre Bio", "knospe / bio suffix").await;
+
+    let _ = c.close().await;
+}

@@ -567,3 +567,77 @@ fn wildsammlung_under_10_percent_no_marker() {
     // Bärlauch = 5% < 10% → no ° marker.
     assert!(!output.label.contains('°'), "under 10% must NOT show a ° marker; label: {}", output.label);
 }
+
+// --- DEC-10: «Bio» in the Sachbezeichnung for Knospe products --------------
+//
+// Bio-V has always appended « Bio» when the product may be marketed as organic.
+// Knospe products qualify too, so the same suffix applies — with the Bio-V rule
+// for Umstellung: only a Monoprodukt may claim «Bio» (Excel Zeile 7).
+
+#[test]
+fn knospe_eligible_recipe_gets_the_bio_sachbezeichnung() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).bio().origin(Country::CH).build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+}
+
+#[test]
+fn knospe_ineligible_recipe_gets_no_bio_sachbezeichnung() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+}
+
+#[test]
+fn knospe_composite_umstellung_gets_no_bio_sachbezeichnung() {
+    // A composite conversion product may not claim «Bio», exactly as in Bio-V.
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH)
+            .umstellbetrieb().build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).bio().origin(Country::CH).build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true), "the logo itself is unaffected");
+    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+}
+
+#[test]
+fn knospe_mono_umstellung_keeps_the_bio_sachbezeichnung() {
+    // Monoprodukt aus Umstellung: «Bio» is allowed (Excel Zeile 7).
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 1000.0).bio().origin(Country::CH)
+            .umstellbetrieb().build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("knospe_umstellung_logo"), Some(&true));
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), Some(&true));
+}
+
+#[test]
+fn knospe_empty_recipe_gets_no_bio_sachbezeichnung() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let c = calculator.execute(InputBuilder::new().vollstaendig().build()).conditional_elements;
+
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+}
