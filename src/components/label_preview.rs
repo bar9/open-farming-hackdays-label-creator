@@ -6,6 +6,41 @@ use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
 use rust_i18n::t;
 
+/// An informational hint below the label (blue box).
+///
+/// These hints are deliberately outside the white card so users can tell they
+/// are guidance, not part of the printed label. The markup was repeated eleven
+/// times; naming it keeps the styling in one place and the call sites readable.
+#[component]
+fn Hint(text: String) -> Element {
+    rsx! {
+        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded", {text} }
+    }
+}
+
+/// A warning hint below the label (amber box with a warning triangle).
+/// Used for the failing «Rezeptur prüfen» verdicts.
+#[component]
+fn WarningHint(text: String) -> Element {
+    rsx! {
+        div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
+            svg {
+                class: "w-4 h-4 shrink-0 mt-0.5",
+                fill: "none",
+                stroke: "currentColor",
+                stroke_width: "2",
+                view_box: "0 0 24 24",
+                path {
+                    stroke_linecap: "round",
+                    stroke_linejoin: "round",
+                    d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
+                }
+            }
+            span { {text} }
+        }
+    }
+}
+
 #[component]
 pub fn LabelPreview(
     label: Memo<String>,
@@ -422,103 +457,53 @@ pub fn LabelPreview(
             div { class: "mx-4",
                 // BioV tri-state «Rezeptur prüfen», mirroring the Knospe check below.
                 if conditionals.0().get("bio_check_pending").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.bio_check_pending").to_string()}
-                    }
+                    Hint { text: t!("bio_hints.bio_check_pending").to_string() }
                 }
                 if conditionals.0().get("bio_check_ok").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.marketing_allowed").to_string()}
-                    }
+                    Hint { text: t!("bio_hints.marketing_allowed").to_string() }
                     // DEC-4: nur zulässig, wenn alle landwirtschaftlichen Zutaten bio sind
                     // (keine erlaubte nicht-biologische Ausnahme in der Rezeptur).
                     if conditionals.0().get("alternative_marking_allowed").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.alternative_marking").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.alternative_marking").to_string() }
                     }
                     // Monoprodukt aus Umstellbetrieb: "Bio" allowed + mandatory Umstellungshinweis (Zeile 7).
                     if conditionals.0().get("umstellbetrieb_hinweis").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.umstellbetrieb_mono").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.umstellbetrieb_mono").to_string() }
                     }
                 }
                 if conditionals.0().get("bio_check_failed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
-                        svg {
-                            class: "w-4 h-4 shrink-0 mt-0.5",
-                            fill: "none",
-                            stroke: "currentColor",
-                            stroke_width: "2",
-                            view_box: "0 0 24 24",
-                            path {
-                                stroke_linecap: "round",
-                                stroke_linejoin: "round",
-                                d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
-                            }
-                        }
-                        span { {t!("bio_hints.bio_check_failed").to_string()} }
-                    }
+                    WarningHint { text: t!("bio_hints.bio_check_failed").to_string() }
                     // Specific reason(s) for the failure, shown under the warning.
                     if conditionals.0().get("bio_marketing_not_allowed").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.marketing_not_allowed").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.marketing_not_allowed").to_string() }
                     }
                     if conditionals.0().get("bio_erlaubte_ausnahme_ueber_5_prozent").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string() }
                     }
                     // DEC-7: nicht-bio Zutat ohne Häkchen «Erlaubte nicht-biologische
                     // Zutat» — nennt den konkreten Grund für das blockierte «Bio».
                     if conditionals.0().get("bio_nicht_deklarierte_zutat").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.bio_nicht_deklarierte_zutat").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.bio_nicht_deklarierte_zutat").to_string() }
                     }
                 }
                 // Knospe: tri-state result of the «Rezeptur prüfen» check.
                 if conditionals.0().get("knospe_check_pending").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.knospe_check_pending").to_string()}
-                    }
+                    Hint { text: t!("bio_hints.knospe_check_pending").to_string() }
                 }
                 if conditionals.0().get("knospe_check_ok").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.knospe_check_ok").to_string()}
-                    }
+                    Hint { text: t!("bio_hints.knospe_check_ok").to_string() }
                     // DEC-4: nur zulässig, wenn alle landwirtschaftlichen Zutaten bio sind
                     // (keine erlaubte nicht-biologische Ausnahme in der Rezeptur).
                     if conditionals.0().get("alternative_marking_allowed").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.alternative_marking").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.alternative_marking").to_string() }
                     }
                 }
                 if conditionals.0().get("knospe_check_failed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
-                        svg {
-                            class: "w-4 h-4 shrink-0 mt-0.5",
-                            fill: "none",
-                            stroke: "currentColor",
-                            stroke_width: "2",
-                            view_box: "0 0 24 24",
-                            path {
-                                stroke_linecap: "round",
-                                stroke_linejoin: "round",
-                                d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
-                            }
-                        }
-                        span { {t!("bio_hints.knospe_check_failed").to_string()} }
-                    }
+                    WarningHint { text: t!("bio_hints.knospe_check_failed").to_string() }
                     // Concrete reason when the failure is the 5% exception cap
                     // (DEC-8), which the generic text above does not name.
                     if conditionals.0().get("knospe_erlaubte_ausnahme_ueber_5_prozent").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.knospe_erlaubte_ausnahme_ueber_5_prozent").to_string()}
-                        }
+                        Hint { text: t!("bio_hints.knospe_erlaubte_ausnahme_ueber_5_prozent").to_string() }
                     }
                 }
             }
