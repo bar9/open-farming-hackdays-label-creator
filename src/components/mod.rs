@@ -1,4 +1,3 @@
-pub use conditional_display::ConditionalDisplay;
 pub use country_select::CountrySelect;
 pub use multi_country_select::MultiCountrySelect;
 pub use date_input::DateInput;
@@ -24,7 +23,6 @@ pub use link_share_modal::LinkShareModal;
 pub use saved_ingredients_manager::SavedIngredientsManager;
 pub use unified_ingredient_input::UnifiedIngredientInput;
 
-mod conditional_display;
 mod country_select;
 mod multi_country_select;
 mod date_input;

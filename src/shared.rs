@@ -5,24 +5,10 @@ use std::collections::HashMap;
 #[derive(Clone, Copy)]
 pub struct Validations(pub Memo<HashMap<String, Vec<String>>>);
 
-#[derive(Clone, Copy)]
-pub struct Conditionals(pub Memo<HashMap<String, bool>>);
-
-/// The typed rule-engine decisions (TD-1). New UI code should read this
-/// instead of the string-keyed `Conditionals`.
+/// The typed rule-engine decisions (TD-1). The UI reads these; the legacy
+/// string-keyed map lives on only in `Output.conditional_elements` for tests.
 #[derive(Clone, Copy)]
 pub struct VerdictsContext(pub Memo<Verdicts>);
-
-impl Conditionals {
-    /// Whether the rule engine set this conditional.
-    ///
-    /// Absent and `false` mean the same thing to every caller, so this collapses
-    /// the `get(k).unwrap_or(&false) == &true` dance that was written out at
-    /// each of the ~18 use sites in the label preview.
-    pub fn is_set(&self, key: &str) -> bool {
-        *self.0.read().get(key).unwrap_or(&false)
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Configuration {

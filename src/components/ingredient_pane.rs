@@ -1,11 +1,10 @@
-use crate::conditional_keys as keys;
 use crate::components::*;
 use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
 use crate::core::{Ingredient, AmountUnit};
 use crate::model::{db_knows_non_agricultural, declaration_name, food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
-use crate::shared::Validations;
+use crate::shared::{Validations, VerdictsContext};
 use crate::persistence::{save_composite_ingredient, get_saved_ingredients_list};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -1357,8 +1356,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             }
 
             br {}
-            ConditionalDisplay {
-                path: keys::NAMENSGEBENDE_ZUTAT.to_string(),
+            // AP1.3: only configurations with the rule offer the name-giving flag.
+            if use_context::<VerdictsContext>().0().namensgebende_zutat_input {
                 FormField {
                     help: Some(t!("help.namensgebendeZutaten").to_string()),
                     label: t!("label.namensgebendeZutat").to_string(),

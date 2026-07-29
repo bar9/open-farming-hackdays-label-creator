@@ -1,5 +1,5 @@
-use crate::conditional_keys as keys;
 use crate::components::card_stack::{CardStack, GenesisModal};
+use crate::shared::VerdictsContext;
 use crate::components::ingredient_path::IngredientPath;
 use crate::components::*;
 use crate::core::Ingredient;
@@ -87,9 +87,8 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 None,
             )}
 
-            if props.ingredients.len() > 0 {
-                ConditionalDisplay {
-                    path: keys::MANUELLES_TOTAL.to_string(),
+            // AP1.4: manual total row only when the rule enables it.
+            if props.ingredients.len() > 0 && use_context::<VerdictsContext>().0().manuelles_total_input {
                     div {
                         class: "grid grid-cols-3 gap-4",
                         div {{t!("label.total").to_string()}}
@@ -118,7 +117,6 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 
                         div {}
                     }
-                }
             }
         }
         if props.ingredients.len() > 0 {

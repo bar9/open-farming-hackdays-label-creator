@@ -1,8 +1,7 @@
-use crate::conditional_keys as keys;
 use crate::components::{Amount, AmountType, Price};
 use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, UmstellungsknospeSatzRegular, UmstellungsknospeSatzImport};
 use crate::layout::DisclaimerContext;
-use crate::shared::{Conditionals, VerdictsContext};
+use crate::shared::VerdictsContext;
 use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeVerdict};
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
@@ -143,7 +142,6 @@ pub fn LabelPreview(
         _ => rsx!("{get_base_factor()} {get_unit()}"),
     });
 
-    let conditionals = use_context::<Conditionals>();
     let verdicts = use_context::<VerdictsContext>();
     let mut disclaimer_context = use_context::<Signal<DisclaimerContext>>();
     let disclaimer_accepted = use_memo(move || disclaimer_context.read().accepted);
@@ -460,7 +458,7 @@ pub fn LabelPreview(
                 // a pair of matches instead of eleven independent flag checks.
                 {
                     let v = verdicts.0();
-                    let alternative_marking = conditionals.is_set(keys::ALTERNATIVE_MARKING_ALLOWED);
+                    let alternative_marking = v.alternative_marking_allowed;
                     rsx! {
                         // Bio-V tri-state «Rezeptur prüfen».
                         match (&v.bio_check, &v.bio) {
