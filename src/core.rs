@@ -1,6 +1,5 @@
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
-#[allow(unused_imports)]
-use crate::rules::{Rule, RuleDef};
+use crate::rules::RuleDef;
 use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
 use rust_i18n::t;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -532,6 +531,7 @@ impl Calculator {
     /// Shows all rules with their active status, type, and description
     #[cfg(target_arch = "wasm32")]
     fn log_active_rules(&self) {
+        use crate::rules::Rule;
         use js_sys::{Array, Object, Reflect};
 
         let table_data = Array::new();
@@ -574,6 +574,7 @@ impl Calculator {
     /// Debug logging method to log individual rule processing
     #[cfg(target_arch = "wasm32")]
     fn log_rule_processing(&self, rule: &RuleDef, processing_type: &str, additional_info: Option<&str>) {
+        use crate::rules::Rule;
         let info = if let Some(info) = additional_info {
             format!(" - {}", info)
         } else {
@@ -1362,14 +1363,6 @@ impl Calculator {
             .cloned()
             .unwrap_or_default();
         Calculator { rule_defs: rules }
-    }
-
-    pub fn get_rule_descriptions(&self) -> Vec<(&crate::rules::RuleDef, &'static str)> {
-        use crate::rules::Rule;
-        self.rule_defs
-            .iter()
-            .map(|rule| (rule, rule.get_description()))
-            .collect()
     }
 
     pub fn execute(&self, input: Input) -> Output {

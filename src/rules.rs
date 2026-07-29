@@ -3,7 +3,9 @@ use strum_macros::EnumIter;
 
 /// Types of rules that can be applied in the label generation process
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
+// Only read by the wasm-only rule table in the browser console
+// (`Calculator::log_active_rules`), so it is genuinely dead on native builds.
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub enum RuleType {
     /// Rules that validate form data and generate validation messages
     Validation,
@@ -14,11 +16,14 @@ pub enum RuleType {
 }
 
 /// Trait for rules that can be applied during label generation
-#[allow(dead_code)]
 pub trait Rule {
-    /// Returns the category/type of this rule
+    /// Returns the category/type of this rule.
+    /// Only used by the wasm-only debug rule table, hence dead on native.
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
     fn get_type(&self) -> RuleType;
-    /// Returns a human-readable description of what this rule does
+    /// Returns a human-readable description of what this rule does.
+    /// Only used by the wasm-only debug logging, hence dead on native.
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
     fn get_description(&self) -> &'static str;
 }
 
