@@ -9,7 +9,7 @@ fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
         .total(350.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     assert!(conditionals.contains_key(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT));
     assert!(
         *conditionals
@@ -37,7 +37,7 @@ fn herkunft_benoetigt_composite_children_over_50_percent() {
         .ingredient(IngredientBuilder::new("Zucker", 200.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
     // Composite = 600 / 800 = 75% > 50% → its origin is required (top-level index 0).
     assert_eq!(c.get(&keys::herkunft_benoetigt(0)), Some(&true));
     assert_eq!(c.get(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT), Some(&true));
@@ -60,7 +60,7 @@ fn herkunft_benoetigt_composite_under_50_percent_not_required() {
         .ingredient(IngredientBuilder::new("Zucker", 500.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
     // Composite = 300 / 800 = 37.5% < 50% → NOT required.
     assert_eq!(c.get(&keys::herkunft_benoetigt(0)), None);
     // Zucker = 500 / 800 = 62.5% > 50% → still required (rule fires for real >50%).
@@ -247,7 +247,7 @@ fn meat_ingredient_over_20_percent_requires_origin() {
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     let label = output.label;
 
     // Meat ingredient should show origin field even though <50%
@@ -280,7 +280,7 @@ fn meat_rule_only_shows_origin_for_meat_ingredients() {
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     let label = output.label;
 
     // Meat ingredient should show origin field
@@ -315,7 +315,7 @@ fn meat_ingredient_under_20_percent_no_origin_required() {
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
 
     // Meat ingredient under 20% should NOT show origin field
     assert!(!conditionals.contains_key(&keys::herkunft_benoetigt(0)));
@@ -371,8 +371,8 @@ fn meat_detection_comprehensive_categories() {
             .build();
 
         let output = calculator.execute(input);
+        let conditionals = output.conditionals();
         let validation_messages = output.validation_messages;
-        let conditionals = output.conditional_elements;
 
         if should_require_origin {
             // Should have validation error for missing origin
@@ -423,7 +423,7 @@ fn meat_detection_processed_meat_products() {
         .build();
 
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     let label = output.label;
 
     // Should recognize "Rohwurstware" as meat and show origin field

@@ -18,7 +18,7 @@ fn ap1_3_eingabe_namensgebende_zutat() {
     let calculator = calculator_with(vec![RuleDef::AP1_3_EingabeNamensgebendeZutat]);
     let input = InputBuilder::new().build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     assert!(conditionals.contains_key(keys::NAMENSGEBENDE_ZUTAT));
     assert!(*conditionals.get(keys::NAMENSGEBENDE_ZUTAT).unwrap());
 }
@@ -28,7 +28,7 @@ fn ap1_4_manuelle_eingabe_total() {
     let calculator = calculator_with(vec![RuleDef::AP1_4_ManuelleEingabeTotal]);
     let input = InputBuilder::new().build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     assert!(conditionals.contains_key(keys::MANUELLES_TOTAL));
     assert!(*conditionals.get(keys::MANUELLES_TOTAL).unwrap());
 }
@@ -44,7 +44,7 @@ fn ap1_4_manualTotalChangesPercent() {
         .total(350.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
     assert!(conditionals.contains_key(keys::MANUELLES_TOTAL));
     assert!(*conditionals.get(keys::MANUELLES_TOTAL).unwrap());
 }

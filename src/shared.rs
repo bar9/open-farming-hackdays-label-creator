@@ -6,7 +6,7 @@ use std::collections::HashMap;
 pub struct Validations(pub Memo<HashMap<String, Vec<String>>>);
 
 /// The typed rule-engine decisions (TD-1). The UI reads these; the legacy
-/// string-keyed map lives on only in `Output.conditional_elements` for tests.
+/// string-keyed view exists only as `Output::conditionals()` for the tests.
 #[derive(Clone, Copy)]
 pub struct VerdictsContext(pub Memo<Verdicts>);
 

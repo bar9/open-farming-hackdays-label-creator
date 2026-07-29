@@ -117,7 +117,7 @@ fn recipe_schoggi_cookie_bk() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
@@ -201,7 +201,7 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
@@ -283,7 +283,7 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_regular (90-99% Swiss)
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Expected bio_suisse_regular logo");
@@ -360,7 +360,7 @@ fn recipe_baerlauch_pesto_bk() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
@@ -436,7 +436,7 @@ fn recipe_baerlauch_pesto_bsk() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_regular (90-99% Swiss)
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Expected bio_suisse_regular logo");

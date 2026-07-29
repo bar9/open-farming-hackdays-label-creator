@@ -6,9 +6,10 @@
 //! `HashMap`-Kontrakt zuliess (allowed **und** not_allowed, ok **und**
 //! failed, beide Logo-Varianten), schlicht nicht mehr darstellbar.
 //!
-//! `Verdicts::to_conditionals()` bildet die Urteile auf die bisherigen
-//! Schlüssel ab. Die UI und die 90+ Test-Assertions auf der Map laufen
-//! deshalb unverändert weiter; sie sind das Sicherheitsnetz dieser Migration
+//! Die UI liest die Urteile direkt (`VerdictsContext`). Für die Test-Suite
+//! bildet `write_conditionals()` sie auf den historischen Schlüssel→Bool-
+//! Kontrakt ab (`Output::conditionals()`) — die 90+ Assertions darauf sind
+//! das dichteste Sicherheitsnetz des Projekts und bleiben bewusst bestehen
 //! (siehe `requirements/TD-1_conditionals_contract.md`).
 
 use crate::conditional_keys as keys;
@@ -103,11 +104,13 @@ pub struct Verdicts {
 }
 
 impl Verdicts {
-    /// Bildet die Urteile auf den bisherigen `conditional_elements`-Kontrakt ab.
+    /// Bildet die Urteile auf den historischen Schlüssel→Bool-Kontrakt ab.
     ///
-    /// Das ist die EINZIGE Stelle, die Urteil → Schlüssel übersetzt; die
-    /// Ausschluss-Invarianten (nie allowed und not_allowed zugleich usw.)
-    /// folgen aus der Enum-Struktur statt aus Kontrollfluss-Disziplin.
+    /// Einziger Konsument ist `Output::conditionals()`, also die Test-Suite;
+    /// zur Laufzeit liest niemand mehr Schlüssel. Das ist die EINZIGE Stelle,
+    /// die Urteil → Schlüssel übersetzt; die Ausschluss-Invarianten (nie
+    /// allowed und not_allowed zugleich usw.) folgen aus der Enum-Struktur
+    /// statt aus Kontrollfluss-Disziplin.
     pub fn write_conditionals(&self, conditionals: &mut HashMap<String, bool>) {
         match &self.bio {
             None => {}

@@ -15,7 +15,7 @@ fn bio_ch_100_percent_sets_sachbezeichnung_suffix() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
@@ -30,7 +30,7 @@ fn bio_ch_partial_sets_marketing_not_allowed() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -51,7 +51,7 @@ fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
@@ -77,7 +77,7 @@ fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -93,7 +93,7 @@ fn bio_ch_zero_percent_shows_warning() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -110,7 +110,7 @@ fn bio_ch_with_non_agricultural_ignored() {
         .ingredient(IngredientBuilder::new_agri("Salz", 500.0).build()) // Salz is non-agricultural
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Hafer is the only agricultural ingredient and it's 100% bio_ch
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -126,7 +126,7 @@ fn bio_ch_vs_is_bio_are_independent() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 500.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // is_bio does not count as bio_ch, so bio_ch percentage is 0%
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -146,7 +146,7 @@ fn bio_ch_100_percent_via_full_bio_config() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().origin(Country::CH).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
@@ -299,7 +299,7 @@ fn knospe_logo_regular_100_knospe_90_plus_swiss() {
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 100.0).bio().origin(Country::EU).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
@@ -317,7 +317,7 @@ fn knospe_logo_no_cross_100_knospe_under_90_swiss() {
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 600.0).bio().origin(Country::EU).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
@@ -335,7 +335,7 @@ fn knospe_no_logo_when_not_100_knospe() {
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 400.0).origin(Country::EU).build()) // NOT bio
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
@@ -352,7 +352,7 @@ fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio().origin(Country::CH).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
@@ -366,7 +366,7 @@ fn knospe_umstellung_logo_import_variant() {
         .ingredient(IngredientBuilder::new_agri("Rohrzucker", 600.0).bio().origin(Country::PE).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
@@ -380,7 +380,7 @@ fn knospe_umstellung_logo_absent_without_umstellbetrieb() {
         .build();
     let output = calculator.execute(input);
 
-    assert_eq!(output.conditional_elements.get(keys::KNOSPE_UMSTELLUNG_LOGO), None);
+    assert_eq!(output.conditionals().get(keys::KNOSPE_UMSTELLUNG_LOGO), None);
 }
 
 #[test]
@@ -402,7 +402,7 @@ fn knospe_umstellung_logo_from_composite_parent_claim() {
         )
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
 }
@@ -417,7 +417,7 @@ fn knospe_check_pending_before_recipe_marked_complete() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
@@ -437,7 +437,7 @@ fn knospe_check_hints_suppressed_for_einzelzutat() {
             builder = builder.vollstaendig();
         }
         let output = calculator.execute(builder.build());
-        let c = &output.conditional_elements;
+        let c = &output.conditionals();
 
         assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), None, "vollstaendig={vollstaendig}");
         assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None, "vollstaendig={vollstaendig}");
@@ -454,7 +454,7 @@ fn knospe_check_ok_when_complete_and_valid() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), None);
     assert_eq!(c.get(keys::KNOSPE_CHECK_OK), Some(&true));
@@ -474,7 +474,7 @@ fn knospe_check_failed_when_recipe_has_validation_issue() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::Import).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
     assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
@@ -489,7 +489,7 @@ fn knospe_check_failed_when_not_fully_knospe() {
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 400.0).origin(Country::EU).build()) // NOT bio
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
     assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
@@ -508,7 +508,7 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
         .ingredient(IngredientBuilder::new_agri("Nonbio", 40.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
@@ -529,7 +529,7 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
@@ -548,7 +548,7 @@ fn knospe_logo_regular_exact_90_boundary() {
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 100.0).bio().origin(Country::EU).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // 90% Swiss → >= 90% → regular logo
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
@@ -567,7 +567,7 @@ fn knospe_logo_no_cross_just_under_90_boundary() {
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 110.0).bio().origin(Country::EU).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // 89% Swiss → < 90% → no cross logo
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
@@ -649,7 +649,7 @@ fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 50.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // 95% bio_ch >= 95% threshold → suffix allowed
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -674,7 +674,7 @@ fn bio_blocked_by_undeclared_non_bio_under_5_percent() {
         .ingredient(IngredientBuilder::new_agri("Ei", 40.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None, "4% nicht-bio Ei darf «Bio» nicht erlauben");
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -693,7 +693,7 @@ fn bio_allowed_when_same_ingredient_is_declared_exception() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -711,7 +711,7 @@ fn bio_still_blocked_when_declared_exception_over_5_percent() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 100.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
@@ -728,7 +728,7 @@ fn bio_non_agricultural_ingredient_does_not_block() {
         .ingredient(IngredientBuilder::new_agri("Salz", 40.0).agricultural(false).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
@@ -744,7 +744,7 @@ fn bio_mono_umstellbetrieb_still_allowed() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().umstellbetrieb().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None);
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -767,7 +767,7 @@ fn bio_blocked_by_undeclared_non_bio_inside_composite() {
         .ingredient(fuellung)
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), Some(&true));
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -791,7 +791,7 @@ fn bio_composite_claiming_own_bio_quality_is_not_blocked() {
         .ingredient(fertigmischung)
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Scope of this test is the DEC-7 check only: the parent's claim shields its
     // children from being flagged as undeclared non-bio.
@@ -810,7 +810,7 @@ fn bio_ch_94_percent_sets_marketing_not_allowed() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 60.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // 94% < 95% → no suffix, marketing not allowed
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -825,7 +825,7 @@ fn bio_ch_umstellbetrieb_excluded_from_percentage() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Umstellbetrieb ingredient excluded: only 600/1000 agricultural = 60% bio_ch → not allowed
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -840,7 +840,7 @@ fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio_ch().umstellbetrieb().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // 100% bio_ch but Weizenmehl is umstellbetrieb → effective 900/1000 = 90% < 95%
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -885,7 +885,7 @@ fn bio_95_99_band_uses_per_ingredient_asterisk() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true), "96% >= 95% → Bio in Sachbezeichnung");
     assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
@@ -993,7 +993,7 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
         .ingredient(IngredientBuilder::new("Salz", 50.0).agricultural(false).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // "Bio" IS allowed for the mono-Umstellbetrieb case (was wrongly blocked before this fix).
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -1015,7 +1015,7 @@ fn composite_umstellbetrieb_removes_sachbezeichnung() {
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 500.0).bio_ch().umstellbetrieb().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Composite with umstellbetrieb: no sachbezeichnung_suffix
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -1034,7 +1034,7 @@ fn bio_check_pending_before_rezeptur_vollstaendig() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
     assert_eq!(c.get(keys::BIO_CHECK_PENDING), Some(&true));
     assert_eq!(c.get(keys::BIO_CHECK_OK), None);
     assert_eq!(c.get(keys::BIO_CHECK_FAILED), None);
@@ -1058,7 +1058,7 @@ fn alternative_marking_allowed_when_all_agricultural_are_bio() {
         .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), Some(&true));
@@ -1077,7 +1077,7 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // The positive verdict must remain — only the alternative-wording hint goes.
     assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true), "Rezeptur erfüllt die Bio-Anforderungen weiterhin");
@@ -1097,7 +1097,7 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_knospe() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_CHECK_OK), Some(&true), "Rezeptur erfüllt die Knospe-Anforderungen weiterhin");
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
@@ -1114,7 +1114,7 @@ fn alternative_marking_allowed_when_exception_ingredient_is_also_bio() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).bio_ch().erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), Some(&true));
 }
@@ -1135,7 +1135,7 @@ fn alternative_marking_suppressed_for_nested_erlaubte_ausnahme() {
         .ingredient(fuellung)
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
 }
@@ -1154,7 +1154,7 @@ fn bio_check_hints_suppressed_for_einzelzutat() {
             builder = builder.vollstaendig();
         }
         let output = calculator.execute(builder.build());
-        let c = &output.conditional_elements;
+        let c = &output.conditionals();
 
         assert_eq!(c.get(keys::BIO_CHECK_PENDING), None, "vollstaendig={vollstaendig}");
         assert_eq!(c.get(keys::BIO_CHECK_OK), None, "vollstaendig={vollstaendig}");
@@ -1171,7 +1171,7 @@ fn bio_check_ok_when_vollstaendig_and_qualifies() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
     assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
     assert_eq!(c.get(keys::BIO_CHECK_PENDING), None);
     assert_eq!(c.get(keys::BIO_CHECK_FAILED), None);
@@ -1187,7 +1187,7 @@ fn bio_check_failed_when_vollstaendig_but_under_95() {
         .ingredient(IngredientBuilder::new_agri("Weizen", 400.0).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
     assert_eq!(c.get(keys::BIO_CHECK_FAILED), Some(&true));
     assert_eq!(c.get(keys::BIO_CHECK_OK), None);
 }
@@ -1205,7 +1205,7 @@ fn bio_check_failed_when_recipe_issue_despite_qualifying() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
     assert!(output.validation_messages.contains_key("ingredients[0][origin]"),
         "expected an open origin error; messages: {:?}", output.validation_messages);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true), "still qualifies on percentage");
@@ -1507,7 +1507,7 @@ fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // 600/1000 = 60% bio_ch (umstellbetrieb excluded) → below 95% threshold
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None,
@@ -1527,7 +1527,7 @@ fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
     // The hint texts stay coupled to the button.
@@ -1540,7 +1540,7 @@ fn bio_marketing_not_allowed_for_an_empty_recipe() {
     // Guard against the badge appearing on an untouched form: an empty recipe
     // has a vacuous 100% Bio share.
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
-    let c = calculator.execute(InputBuilder::new().build()).conditional_elements;
+    let c = calculator.execute(InputBuilder::new().build()).conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -1553,7 +1553,7 @@ fn bio_marketing_not_allowed_when_the_recipe_does_not_qualify() {
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
@@ -1568,7 +1568,7 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true));
     assert_eq!(c.get(keys::BIO_CHECK_PENDING), None);

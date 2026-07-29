@@ -31,7 +31,7 @@ fn mono_output(config: Configuration, quality: MonoQuality) -> crate::core::Outp
 
 #[test]
 fn mono_knospe_ch_shows_the_swiss_knospe() {
-    let c = mono_output(Configuration::Knospe, MonoQuality::KnospeCh).conditional_elements;
+    let c = mono_output(Configuration::Knospe, MonoQuality::KnospeCh).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Swiss Knospe → logo with cross");
@@ -41,7 +41,7 @@ fn mono_knospe_ch_shows_the_swiss_knospe() {
 
 #[test]
 fn mono_knospe_import_shows_the_knospe_without_cross() {
-    let c = mono_output(Configuration::Knospe, MonoQuality::KnospeImport).conditional_elements;
+    let c = mono_output(Configuration::Knospe, MonoQuality::KnospeImport).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "import → logo without cross");
@@ -51,7 +51,7 @@ fn mono_knospe_import_shows_the_knospe_without_cross() {
 
 #[test]
 fn mono_umstellung_knospe_ch_shows_the_umstellungsknospe() {
-    let c = mono_output(Configuration::Knospe, MonoQuality::UmstellungKnospeCh).conditional_elements;
+    let c = mono_output(Configuration::Knospe, MonoQuality::UmstellungKnospeCh).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
@@ -62,7 +62,7 @@ fn mono_umstellung_knospe_ch_shows_the_umstellungsknospe() {
 #[test]
 fn mono_umstellung_knospe_import_shows_the_imported_umstellungsknospe() {
     let c =
-        mono_output(Configuration::Knospe, MonoQuality::UmstellungKnospeImport).conditional_elements;
+        mono_output(Configuration::Knospe, MonoQuality::UmstellungKnospeImport).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
@@ -71,7 +71,7 @@ fn mono_umstellung_knospe_import_shows_the_imported_umstellungsknospe() {
 
 #[test]
 fn mono_nicht_biologisch_shows_no_knospe() {
-    let c = mono_output(Configuration::Knospe, MonoQuality::Andere).conditional_elements;
+    let c = mono_output(Configuration::Knospe, MonoQuality::Andere).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
@@ -82,7 +82,7 @@ fn mono_nicht_biologisch_shows_no_knospe() {
 #[test]
 fn mono_bio_without_knospe_shows_no_knospe_logo() {
     // Bio-CH is not Knospe: in the Knospe instance such a product gets no logo.
-    let c = mono_output(Configuration::Knospe, MonoQuality::Bio).conditional_elements;
+    let c = mono_output(Configuration::Knospe, MonoQuality::Bio).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
@@ -93,7 +93,7 @@ fn mono_bio_without_knospe_shows_no_knospe_logo() {
 
 #[test]
 fn mono_bio_gets_the_bio_sachbezeichnung() {
-    let c = mono_output(Configuration::Bio, MonoQuality::Bio).conditional_elements;
+    let c = mono_output(Configuration::Bio, MonoQuality::Bio).conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
@@ -104,7 +104,7 @@ fn mono_bio_gets_the_bio_sachbezeichnung() {
 fn mono_bio_umstellung_gets_bio_plus_the_umstellungshinweis() {
     // Excel Zeile 7: a Monoprodukt from a conversion farm may carry «Bio» in the
     // Sachbezeichnung, together with the mandatory Umstellungshinweis.
-    let c = mono_output(Configuration::Bio, MonoQuality::BioUmstellung).conditional_elements;
+    let c = mono_output(Configuration::Bio, MonoQuality::BioUmstellung).conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
@@ -113,7 +113,7 @@ fn mono_bio_umstellung_gets_bio_plus_the_umstellungshinweis() {
 
 #[test]
 fn mono_nicht_biologisch_gets_no_bio_sachbezeichnung() {
-    let c = mono_output(Configuration::Bio, MonoQuality::Andere).conditional_elements;
+    let c = mono_output(Configuration::Bio, MonoQuality::Andere).conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -125,7 +125,7 @@ fn mono_nicht_landwirtschaftlich_makes_no_bio_claim() {
     // Salt/water: no agricultural ingredient at all, so there is nothing to
     // certify — and nothing may be claimed.
     let c = mono_output(Configuration::Bio, MonoQuality::NichtLandwirtschaftlich)
-        .conditional_elements;
+        .conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -148,7 +148,7 @@ fn mono_quality_does_not_leak_into_normal_recipes() {
     };
     let c = calculator_for(Configuration::Knospe)
         .execute(form.into())
-        .conditional_elements;
+        .conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
@@ -158,7 +158,7 @@ fn mono_quality_does_not_leak_into_normal_recipes() {
 fn mono_default_quality_claims_nothing() {
     // A user who has not chosen yet must not get an unearned Bio claim.
     assert_eq!(MonoQuality::default(), MonoQuality::Andere);
-    let c = mono_output(Configuration::Bio, MonoQuality::default()).conditional_elements;
+    let c = mono_output(Configuration::Bio, MonoQuality::default()).conditionals();
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }
 

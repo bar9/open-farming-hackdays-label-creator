@@ -216,13 +216,23 @@ pub struct Output {
     pub label: String,
     pub total_amount: f64,
     pub validation_messages: HashMap<String, Vec<String>>,
-    /// Legacy key→bool contract, derived from `verdicts`. Still consumed by
-    /// `ConditionalDisplay` paths and most tests; new UI code should read
-    /// `verdicts` directly (TD-1 Stufe 3).
-    pub conditional_elements: HashMap<String, bool>,
-    /// The typed rule-engine decisions (TD-1). Source of truth for
-    /// `conditional_elements`.
+    /// The typed rule-engine decisions (TD-1). The UI reads these directly;
+    /// the legacy key→bool view is derived on demand via [`Output::conditionals`].
     pub verdicts: Verdicts,
+}
+
+impl Output {
+    /// Legacy key→bool view of the verdicts.
+    ///
+    /// Exists for the test suite, which asserts against the flat contract
+    /// (`c.get(keys::…)`) accumulated over the project's history — a dense net
+    /// that is deliberately kept. Production code reads `verdicts`; nothing at
+    /// runtime consumes this map anymore.
+    pub fn conditionals(&self) -> HashMap<String, bool> {
+        let mut map = HashMap::new();
+        self.verdicts.write_conditionals(&mut map);
+        map
+    }
 }
 
 pub struct Calculator {
@@ -1472,7 +1482,6 @@ impl Calculator {
         };
 
         let mut validation_messages = HashMap::new();
-        let mut conditionals = HashMap::new();
 
         // DEC-4: the alternative marking wordings ("Alle landwirtschaftlichen Zutaten
         // stammen aus biologischer Landwirtschaft" / "Bio-" prefix) are only truthful
@@ -1736,7 +1745,6 @@ impl Calculator {
             manuelles_total_input,
             origin_required_indices,
         };
-        verdicts.write_conditionals(&mut conditionals);
         let verdicts_out = verdicts;
 
 
@@ -1769,7 +1777,6 @@ impl Calculator {
             web_sys::console::log_1(&"📈 Final Results".into());
             web_sys::console::log_1(&format!("✅ Label generation complete - {} ingredients processed", sorted_ingredients.len()).into());
             web_sys::console::log_1(&format!("📋 {} validation messages", validation_messages.len()).into());
-            web_sys::console::log_1(&format!("🎛️ {} conditional elements enabled", conditionals.len()).into());
             web_sys::console::log_1(&format!("⚖️ Total amount: {}g", total_amount).into());
         }
 
@@ -1843,7 +1850,6 @@ impl Calculator {
             label,
             total_amount,
             validation_messages,
-            conditional_elements: conditionals,
             verdicts: verdicts_out,
         }
     }

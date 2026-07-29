@@ -128,7 +128,7 @@ fn conditionals_are_consistent_across_the_recipe_matrix() {
                 }
                 let output = calculator_for(config).execute(builder.build());
                 let ctx = format!("{config:?} / {name} / vollstaendig={vollstaendig}");
-                check_invariants(&ctx, &output.conditional_elements);
+                check_invariants(&ctx, &output.conditionals());
             }
         }
     }
@@ -173,7 +173,7 @@ fn every_produced_conditional_is_consumed_somewhere() {
                     builder = builder.vollstaendig();
                 }
                 let output = calculator_for(config).execute(builder.build());
-                for key in output.conditional_elements.keys() {
+                for key in output.conditionals().keys() {
                     // Per-ingredient origin flags are indexed dynamically.
                     if key.starts_with(keys::HERKUNFT_BENOETIGT_PREFIX) {
                         continue;

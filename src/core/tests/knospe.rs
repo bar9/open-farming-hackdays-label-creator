@@ -16,7 +16,7 @@ fn bio_knospe_alle_zutaten_herkunft_conditional() {
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
 
     assert_eq!(conditionals.get(&keys::herkunft_benoetigt(0)), Some(&true));
     assert_eq!(conditionals.get(&keys::herkunft_benoetigt(1)), None);
@@ -561,7 +561,7 @@ fn knospe_erlaubte_ausnahme_over_5pct_blocks_logo() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
@@ -583,7 +583,7 @@ fn knospe_erlaubte_ausnahme_within_5pct_keeps_logo() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
@@ -603,7 +603,7 @@ fn knospe_erlaubte_ausnahme_exactly_5pct_keeps_logo() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 50.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
@@ -623,7 +623,7 @@ fn knospe_erlaubte_ausnahme_bio_flag_counts_toward_the_same_cap() {
         .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
@@ -643,7 +643,7 @@ fn knospe_erlaubte_ausnahme_over_5pct_fails_the_rezeptur_check() {
         .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
     assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
@@ -664,7 +664,7 @@ fn knospe_uncertified_nonbio_still_blocks_without_the_5pct_hint() {
         .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
@@ -684,7 +684,7 @@ fn knospe_non_agricultural_exception_does_not_count() {
         .ingredient(IngredientBuilder::new("Wasser", 400.0).agricultural(false).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
@@ -703,7 +703,7 @@ fn knospe_eligible_recipe_gets_the_bio_sachbezeichnung() {
         .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
         .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).bio().origin(Country::CH).build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -717,7 +717,7 @@ fn knospe_ineligible_recipe_gets_no_bio_sachbezeichnung() {
         .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
         .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -733,7 +733,7 @@ fn knospe_composite_umstellung_gets_no_bio_sachbezeichnung() {
             .umstellbetrieb().build())
         .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).bio().origin(Country::CH).build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true), "the logo itself is unaffected");
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
@@ -749,7 +749,7 @@ fn knospe_mono_umstellung_keeps_the_bio_sachbezeichnung() {
         .ingredient(IngredientBuilder::new_agri("Himbeeren", 1000.0).bio().origin(Country::CH)
             .umstellbetrieb().build())
         .build();
-    let c = calculator.execute(input).conditional_elements;
+    let c = calculator.execute(input).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
@@ -758,7 +758,7 @@ fn knospe_mono_umstellung_keeps_the_bio_sachbezeichnung() {
 #[test]
 fn knospe_empty_recipe_gets_no_bio_sachbezeichnung() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
-    let c = calculator.execute(InputBuilder::new().vollstaendig().build()).conditional_elements;
+    let c = calculator.execute(InputBuilder::new().vollstaendig().build()).conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }
