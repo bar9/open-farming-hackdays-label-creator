@@ -197,6 +197,9 @@ pub struct Input {
     pub total: Option<f64>,
     pub certification_body: Option<String>,
     pub rezeptur_vollstaendig: bool,
+    /// «Keine Zutatenliste (Einzelzutat)» — the product has no recipe at all,
+    /// so the «Rezeptur prüfen» hints must stay silent (DEC-3).
+    pub ignore_ingredients: bool,
 }
 
 impl Input {
@@ -1493,7 +1496,11 @@ impl Calculator {
             // conditionals above keep encoding the pure recipe math (logo choice).
             // Only recipe-scoped issues count — the certification body is covered
             // by the yellow placeholder on the label, not by this check.
-            if !input.rezeptur_vollstaendig {
+            // Einzelzutat/Monoprodukt («Keine Zutatenliste»): there is no recipe
+            // to check, so none of the tri-state hints apply (DEC-3).
+            if input.ignore_ingredients {
+                // no check hints
+            } else if !input.rezeptur_vollstaendig {
                 conditionals.insert(String::from("knospe_check_pending"), true);
             } else {
                 let has_recipe_issues = validation_messages
@@ -1558,7 +1565,11 @@ impl Calculator {
             // mono-Umstellbetrieb case); this layer folds in "recipe checked" +
             // per-ingredient validation, so the Bio-badge/verdict is only asserted
             // once the user has confirmed the recipe and no recipe-scoped errors remain.
-            if !input.rezeptur_vollstaendig {
+            // Einzelzutat/Monoprodukt («Keine Zutatenliste»): there is no recipe
+            // to check, so none of the tri-state hints apply (DEC-3).
+            if input.ignore_ingredients {
+                // no check hints
+            } else if !input.rezeptur_vollstaendig {
                 conditionals.insert(String::from("bio_check_pending"), true);
             } else {
                 let has_recipe_issues = validation_messages
