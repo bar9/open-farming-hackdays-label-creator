@@ -1,4 +1,5 @@
 use crate::conditional_keys as keys;
+use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeLogo, KnospeVerdict, Verdicts};
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
@@ -1326,6 +1327,133 @@ impl Calculator {
         }
     }
 
+    /// Bio-V-Urteil (Sachbezeichnung «Bio», Vermarktung). Reine Funktion der
+    /// Rezeptur; die «Rezeptur prüfen»-Schicht kommt in `decide_bio_check` dazu.
+    fn decide_bio(&self, ingredients: &[Ingredient]) -> Option<BioVerdict> {
+        if !self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
+            return None;
+        }
+
+        let pct = calculate_bio_ch_certified_percentage(ingredients);
+        // DEC-7: the 5% tolerance covers ONLY declared permitted exceptions
+        // (Anhang 3 WBF). A merely non-organic ingredient rules out «Bio»
+        // no matter how small its share.
+        let undeclared_non_bio = has_undeclared_non_bio(ingredients);
+        // DEC-2: nothing agricultural means nothing to certify.
+        let nothing_to_certify = !has_agricultural_ingredient(ingredients);
+        let umstellung = has_umstellbetrieb_in_tree(ingredients);
+
+        // Monoprodukt aus Umstellbetrieb (Excel Zeile 7): a single Bio-CH
+        // agricultural ingredient from a conversion farm MAY carry «Bio», with
+        // the mandatory Umstellungshinweis. is_bio_ch_compliant excludes
+        // Umstellbetrieb, so the share alone would say no — this case wins.
+        if umstellung && is_mono_product(ingredients) {
+            let mono_is_bio_ch = ingredients
+                .iter()
+                .flat_map(|i| i.leaves())
+                .filter(|i| i.is_agricultural())
+                .all(|i| i.bio_ch == Some(true));
+            if mono_is_bio_ch && !undeclared_non_bio {
+                return Some(BioVerdict::Allowed { umstellung_mono: true });
+            }
+        }
+
+        let qualifies = pct >= 95.0 && !undeclared_non_bio && !nothing_to_certify
+            // A composite with an Umstellbetrieb ingredient may not claim «Bio».
+            && !umstellung;
+
+        if qualifies {
+            return Some(BioVerdict::Allowed { umstellung_mono: false });
+        }
+
+        let mut reasons = vec![BioBlockReason::ShareBelow95];
+        // The concrete reasons feed their own hint texts; guarded on non-empty
+        // recipes, as an empty recipe has nothing to complain about yet.
+        if undeclared_non_bio && !ingredients.is_empty() {
+            reasons.push(BioBlockReason::UndeclaredNonBio);
+        }
+        if calculate_erlaubte_ausnahme_bio_percentage(ingredients) > 5.0 {
+            reasons.push(BioBlockReason::ExceptionOver5Percent);
+        }
+        if umstellung && !is_mono_product(ingredients) {
+            reasons.push(BioBlockReason::CompositeUmstellung);
+        }
+        if nothing_to_certify {
+            reasons.push(BioBlockReason::NothingToCertify);
+        }
+        Some(BioVerdict::NotAllowed { reasons })
+    }
+
+    /// Knospe-Urteil (Logo, Variante, «Bio»-Suffix).
+    fn decide_knospe(&self, ingredients: &[Ingredient]) -> Option<KnospeVerdict> {
+        if !self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+            return None;
+        }
+
+        if ingredients.is_empty() {
+            return Some(KnospeVerdict::NoLogo {
+                reasons: vec![KnospeBlockReason::NothingToCertify],
+            });
+        }
+
+        let knospe_percentage = calculate_knospe_certified_percentage(ingredients);
+        // Permitted non-organic exceptions count as Knospe-compliant in the
+        // percentage, so it alone cannot catch e.g. 40% Pektin. Bio Suisse caps
+        // them at 5% of the agricultural weight, same as Bio-V (DEC-8).
+        let ausnahme_ueber_grenze =
+            calculate_erlaubte_ausnahme_knospe_percentage(ingredients) > 5.0;
+        let nothing_to_certify = !has_agricultural_ingredient(ingredients);
+
+        if knospe_percentage >= 100.0 && !ausnahme_ueber_grenze && !nothing_to_certify {
+            let umstellung = has_umstellbetrieb_in_tree(ingredients);
+            let logo = KnospeLogo {
+                // Which artwork depends on the Swiss share of the certified goods.
+                swiss_cross: self.swiss_agricultural_percentage(ingredients) >= 90.0,
+                umstellung,
+            };
+            // DEC-10: « Bio» an der Sachbezeichnung, analog Bio-V. Umstellung
+            // folgt Excel Zeile 7: nur ein Monoprodukt darf «Bio» tragen.
+            let bio_suffix = !umstellung || is_mono_product(ingredients);
+            return Some(KnospeVerdict::Logo { logo, bio_suffix });
+        }
+
+        let mut reasons = Vec::new();
+        if nothing_to_certify {
+            reasons.push(KnospeBlockReason::NothingToCertify);
+        }
+        if knospe_percentage < 100.0 {
+            reasons.push(KnospeBlockReason::NotFullyCertified);
+        }
+        if ausnahme_ueber_grenze {
+            reasons.push(KnospeBlockReason::ExceptionOver5Percent);
+        }
+        Some(KnospeVerdict::NoLogo { reasons })
+    }
+
+    /// Tri-State «Rezeptur prüfen». `fulfils` ist das reine Rezeptur-Urteil des
+    /// jeweiligen Regimes; diese Schicht faltet den Button-Zustand und offene
+    /// Rezeptur-Fehler dazu. Einzelzutat-Modus (DEC-3): kein Urteil.
+    fn decide_check(
+        input: &Input,
+        validation_messages: &HashMap<String, Vec<String>>,
+        fulfils: bool,
+    ) -> Option<CheckState> {
+        if input.ignore_ingredients {
+            return None;
+        }
+        if !input.rezeptur_vollstaendig {
+            return Some(CheckState::Pending);
+        }
+        let has_recipe_issues = validation_messages
+            .keys()
+            .any(|k| k.starts_with("ingredients["));
+        if fulfils && !input.ingredients.is_empty() && !has_recipe_issues {
+            Some(CheckState::Ok)
+        } else {
+            Some(CheckState::Failed)
+        }
+    }
+
     pub fn execute(&self, input: Input) -> Output {
         // Debug logging: Show active rules
         self.log_active_rules();
@@ -1508,188 +1636,47 @@ impl Calculator {
             }
         }
 
-        // Handle Bio Suisse logo display for Knospe configuration.
-        if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
-            if input.ingredients.is_empty() {
-                // No recipe yet: show the "not allowed" text as a default, no logo.
-                conditionals.insert(keys::KNOSPE_MARKETING_NOT_ALLOWED.to_string(), true);
-            } else {
-                self.log_rule_processing(&RuleDef::Knospe_ShowBioSuisseLogo, "OUTPUT", Some("Determining Bio Suisse logo display based on Knospe certification"));
+        // Knospe: logo, variant and «Bio» suffix — decided as one typed verdict
+        // (TD-1 Stufe 2), then mapped onto the conditional keys.
+        let knospe_verdict = self.decide_knospe(&input.ingredients);
+        let knospe_check = if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+            // The check must agree with the logo gate, otherwise logo and
+            // «Rezeptur prüfen» text would contradict each other — which is
+            // exactly why both read the same verdict.
+            let fulfils = matches!(knospe_verdict, Some(KnospeVerdict::Logo { .. }));
+            Self::decide_check(&input, &validation_messages, fulfils)
+        } else {
+            None
+        };
 
-                // First check if ALL agricultural ingredients are Knospe-certified (required for any logo)
-                let knospe_percentage = calculate_knospe_certified_percentage(&input.ingredients);
-                // Permitted non-organic exceptions count as Knospe-compliant above,
-                // so the percentage alone cannot catch e.g. 40% Pektin. Bio Suisse
-                // caps them at 5% of the agricultural weight, same as Bio-V (DEC-8).
-                let ausnahme_percentage =
-                    calculate_erlaubte_ausnahme_knospe_percentage(&input.ingredients);
-                let ausnahme_ueber_grenze = ausnahme_percentage > 5.0;
 
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("🌾 Knospe certified percentage: {:.1}%", knospe_percentage).into());
-
-                // Only show a Knospe logo if 100% of agricultural ingredients are Knospe-certified
-                if knospe_percentage >= 100.0 && !ausnahme_ueber_grenze {
-                    // Which logo variant depends on the Swiss share.
-                    let swiss_percentage = self.swiss_agricultural_percentage(&input.ingredients);
-
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_1(&format!("🇨🇭 Swiss percentage of Knospe ingredients: {:.1}%", swiss_percentage).into());
-
-                    if swiss_percentage >= 90.0 {
-                        // Knospe with Swiss cross (>= 90% Swiss)
-                        conditionals.insert(keys::BIO_SUISSE_REGULAR.to_string(), true);
-                    } else {
-                        // Knospe without Swiss cross (< 90% Swiss, including 0% Swiss)
-                        conditionals.insert(keys::BIO_SUISSE_NO_CROSS.to_string(), true);
-                    }
-                    // Umstellungs-Knospe (Testing 25.06.2026): any ingredient aus
-                    // Umstellung switches the logo artwork to the Umstellungsknospe
-                    // (Suisse/Import per the regular/no_cross branch above) and adds
-                    // the Umstellungssatz next to it on the label preview.
-                    if has_umstellbetrieb_in_tree(&input.ingredients) {
-                        conditionals.insert(keys::KNOSPE_UMSTELLUNG_LOGO.to_string(), true);
-                    }
-                    conditionals.insert(keys::KNOSPE_MARKETING_ALLOWED.to_string(), true);
-
-                    // DEC-10: analogous to Bio-V, a Knospe-eligible product carries
-                    // « Bio» in the Sachbezeichnung. Umstellung follows the same rule
-                    // as Bio-V (Excel Zeile 7): only a Monoprodukt may claim «Bio»,
-                    // a composite conversion product may not. The Umstellungssatz
-                    // next to the logo covers the conversion status either way.
-                    let umstellung = has_umstellbetrieb_in_tree(&input.ingredients);
-                    if !umstellung || is_mono_product(&input.ingredients) {
-                        conditionals.insert(keys::BIO_SACHBEZEICHNUNG_SUFFIX.to_string(), true);
-                    }
-                } else {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
-                    conditionals.insert(keys::KNOSPE_MARKETING_NOT_ALLOWED.to_string(), true);
-                }
-                // Name the concrete reason when it is the 5% cap, not a missing
-                // certification — the generic text above would be misleading.
-                if ausnahme_ueber_grenze {
-                    conditionals.insert(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT.to_string(), true);
-                }
-            }
-
-            // Tri-state result of the «Rezeptur prüfen» check (Testing 25.06.2026).
-            // These drive the info text shown below the label; the marketing
-            // conditionals above keep encoding the pure recipe math (logo choice).
-            // Only recipe-scoped issues count — the certification body is covered
-            // by the yellow placeholder on the label, not by this check.
-            // Einzelzutat/Monoprodukt («Keine Zutatenliste»): there is no recipe
-            // to check, so none of the tri-state hints apply (DEC-3).
-            if input.ignore_ingredients {
-                // no check hints
-            } else if !input.rezeptur_vollstaendig {
-                conditionals.insert(keys::KNOSPE_CHECK_PENDING.to_string(), true);
-            } else {
-                let has_recipe_issues = validation_messages
-                    .keys()
-                    .any(|k| k.starts_with("ingredients["));
-                let fulfils_knospe = !input.ingredients.is_empty()
-                    && calculate_knospe_certified_percentage(&input.ingredients) >= 100.0
-                    // Same condition as the logo gate, otherwise logo and
-                    // «Rezeptur prüfen» text would contradict each other.
-                    && calculate_erlaubte_ausnahme_knospe_percentage(&input.ingredients) <= 5.0;
-                if fulfils_knospe && !has_recipe_issues {
-                    conditionals.insert(keys::KNOSPE_CHECK_OK.to_string(), true);
-                } else {
-                    conditionals.insert(keys::KNOSPE_CHECK_FAILED.to_string(), true);
-                }
-            }
-        }
-
-        // Bio-V/CH Bio: Add "Bio" to Sachbezeichnung when >= 95% Bio-CH certified
-        let bio_ch_percentage = if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
-            let pct = calculate_bio_ch_certified_percentage(&input.ingredients);
-
-            // DEC-7: the 5% tolerance covers ONLY declared permitted exceptions
-            // (Anhang 3 WBF). An agricultural ingredient that is simply non-organic
-            // (e.g. conventional eggs) rules out "Bio" no matter how small its share,
-            // so it must gate the verdict independently of the percentage.
-            let undeclared_non_bio = has_undeclared_non_bio(&input.ingredients);
-
-            // DEC-2: a product without agricultural ingredients (salt, water) has
-            // nothing to certify, so it may not carry «Bio» even though the share
-            // is vacuously 100%.
-            if pct >= 95.0
-                && !undeclared_non_bio
-                && has_agricultural_ingredient(&input.ingredients)
-            {
-                conditionals.insert(keys::BIO_SACHBEZEICHNUNG_SUFFIX.to_string(), true);
-                conditionals.insert(keys::BIO_MARKETING_ALLOWED.to_string(), true);
-            } else {
-                conditionals.insert(keys::BIO_MARKETING_NOT_ALLOWED.to_string(), true);
-            }
-            // Names the concrete reason next to the generic "not allowed" hint.
-            // Guarded on non-empty: an empty recipe has nothing to complain about yet.
-            if undeclared_non_bio && !input.ingredients.is_empty() {
-                conditionals.insert(keys::BIO_NICHT_DEKLARIERTE_ZUTAT.to_string(), true);
-            }
-            // Erlaubte nicht-bio Zutaten (Anhang 3 WBF, z.B. Pektin) dürfen höchstens
-            // 5% der landwirtschaftlichen Zutaten ausmachen; darüber ist "Bio" nicht
-            // zulässig (> 5% ⇒ Bio-Anteil < 95%, also stets zusammen mit
-            // bio_marketing_not_allowed — dieser Hinweis nennt den konkreten Grund).
-            if calculate_erlaubte_ausnahme_bio_percentage(&input.ingredients) > 5.0 {
-                conditionals.insert(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT.to_string(), true);
-            }
-            // Umstellbetrieb handling for Bio Sachbezeichnung — whole tree, so a
-            // parent-claim Umstellung composite counts too.
-            if has_umstellbetrieb_in_tree(&input.ingredients) {
-                if is_mono_product(&input.ingredients) {
-                    // Monoprodukt aus Umstellbetrieb (Excel Zeile 7): a single Bio-CH
-                    // agricultural ingredient from a conversion farm MAY carry "Bio" in
-                    // the Sachbezeichnung, with the mandatory Umstellungshinweis. Because
-                    // is_bio_ch_compliant excludes Umstellbetrieb, the percentage is 0 and
-                    // the >=95 gate never set the suffix — re-assert it for the mono case.
-                    let mono_is_bio_ch = input.ingredients.iter()
-                        .flat_map(|i| i.leaves())
-                        .filter(|i| i.is_agricultural())
-                        .all(|i| i.bio_ch == Some(true));
-                    if mono_is_bio_ch {
-                        conditionals.insert(keys::BIO_SACHBEZEICHNUNG_SUFFIX.to_string(), true);
-                        conditionals.insert(keys::BIO_MARKETING_ALLOWED.to_string(), true);
-                        conditionals.remove(keys::BIO_MARKETING_NOT_ALLOWED);
-                        conditionals.insert(keys::UMSTELLBETRIEB_HINWEIS.to_string(), true);
-                    }
-                } else {
-                    // Composite with umstellbetrieb: remove suffix, block marketing
-                    conditionals.remove(keys::BIO_SACHBEZEICHNUNG_SUFFIX);
-                    conditionals.remove(keys::BIO_MARKETING_ALLOWED);
-                    conditionals.insert(keys::BIO_MARKETING_NOT_ALLOWED.to_string(), true);
-                }
-            }
-
-            // Tri-state «Rezeptur prüfen» for BioV, mirroring the Knospe check. The
-            // marketing conditionals above encode the pure recipe math (incl. the
-            // mono-Umstellbetrieb case); this layer folds in "recipe checked" +
-            // per-ingredient validation, so the Bio-badge/verdict is only asserted
-            // once the user has confirmed the recipe and no recipe-scoped errors remain.
-            // Einzelzutat/Monoprodukt («Keine Zutatenliste»): there is no recipe
-            // to check, so none of the tri-state hints apply (DEC-3).
-            if input.ignore_ingredients {
-                // no check hints
-            } else if !input.rezeptur_vollstaendig {
-                conditionals.insert(keys::BIO_CHECK_PENDING.to_string(), true);
-            } else {
-                let has_recipe_issues = validation_messages
-                    .keys()
-                    .any(|k| k.starts_with("ingredients["));
-                let fulfils_bio = !input.ingredients.is_empty()
-                    && conditionals.get(keys::BIO_MARKETING_ALLOWED).copied().unwrap_or(false);
-                if fulfils_bio && !has_recipe_issues {
-                    conditionals.insert(keys::BIO_CHECK_OK.to_string(), true);
-                } else {
-                    conditionals.insert(keys::BIO_CHECK_FAILED.to_string(), true);
-                }
-            }
-
-            pct
+        // Bio-V: «Bio» in der Sachbezeichnung — one typed verdict (TD-1 Stufe 2).
+        // The percentage itself is still needed below for the legend variants.
+        let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung);
+        let bio_ch_percentage = if has_bio_rule {
+            calculate_bio_ch_certified_percentage(&input.ingredients)
         } else {
             0.0
         };
+        let bio_verdict = self.decide_bio(&input.ingredients);
+        let bio_check = if has_bio_rule {
+            let fulfils = matches!(bio_verdict, Some(BioVerdict::Allowed { .. }));
+            Self::decide_check(&input, &validation_messages, fulfils)
+        } else {
+            None
+        };
+
+        // Map all verdicts onto the conditional-elements contract. This is the
+        // only place where verdict → key happens; the exclusivity invariants
+        // follow from the enum structure instead of insert/remove discipline.
+        let verdicts = Verdicts {
+            bio: bio_verdict,
+            knospe: knospe_verdict,
+            bio_check,
+            knospe_check,
+        };
+        verdicts.write_conditionals(&mut conditionals);
+
 
         let has_meat_rule = self
             .rule_defs.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent);
