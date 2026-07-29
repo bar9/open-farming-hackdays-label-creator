@@ -8,8 +8,7 @@ use crate::shared::Configuration;
 
 #[test]
 fn bio_ch_100_percent_sets_sachbezeichnung_suffix() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().build())
@@ -24,8 +23,7 @@ fn bio_ch_100_percent_sets_sachbezeichnung_suffix() {
 
 #[test]
 fn bio_ch_partial_sets_marketing_not_allowed() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -43,8 +41,7 @@ fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
     // A permitted non-organic exception (Annex 3 WBF, e.g. Pektin) is NOT bio, but up to
     // 5% of the agricultural weight is tolerated → "Bio" stays in the Sachbezeichnung.
     // At 96% (not 100%) the exception is marked per-ingredient, not via the "Alle" legend.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -70,8 +67,7 @@ fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
 fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
     // Over the 5% tolerance the permitted exception no longer counts as bio, so the
     // Bio-CH share drops below 95% and "Bio" is blocked, with a specific 5% hint.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -90,8 +86,7 @@ fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
 
 #[test]
 fn bio_ch_zero_percent_shows_warning() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -108,8 +103,7 @@ fn bio_ch_zero_percent_shows_warning() {
 #[test]
 fn bio_ch_with_non_agricultural_ignored() {
     // Non-agricultural ingredients (e.g. Salz) should be excluded from the percentage calculation
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Salz", 500.0).build()) // Salz is non-agricultural
@@ -125,8 +119,7 @@ fn bio_ch_with_non_agricultural_ignored() {
 #[test]
 fn bio_ch_vs_is_bio_are_independent() {
     // is_bio (Knospe/generic bio) does NOT count toward bio_ch percentage
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio().build()) // is_bio only, not bio_ch
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 500.0).build())
@@ -164,8 +157,7 @@ fn bio_ch_100_percent_via_full_bio_config() {
 
 #[test]
 fn bio_ingredients_get_asterisk() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -178,8 +170,7 @@ fn bio_ingredients_get_asterisk() {
 
 #[test]
 fn bio_ch_ingredients_get_asterisk() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -191,8 +182,7 @@ fn bio_ch_ingredients_get_asterisk() {
 
 #[test]
 fn bio_legend_appended() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -204,8 +194,7 @@ fn bio_legend_appended() {
 
 #[test]
 fn no_bio_legend_without_bio_ingredients() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -236,8 +225,7 @@ fn bio_asterisk_not_added_without_bio_rule() {
 #[test]
 fn knospe_bio_branching_uses_bio_swiss_percentage() {
     // With Bio_Knospe_EingabeIstBio, only bio ingredients are counted for Swiss %
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
         RuleDef::Bio_Knospe_EingabeIstBio,
@@ -257,8 +245,7 @@ fn knospe_bio_branching_uses_bio_swiss_percentage() {
 #[test]
 fn knospe_bio_branching_ignores_non_bio() {
     // Non-bio ingredients excluded → can push to 100% tier
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
         RuleDef::Bio_Knospe_EingabeIstBio,
@@ -278,8 +265,7 @@ fn knospe_bio_branching_ignores_non_bio() {
 #[test]
 fn knospe_without_bio_rule_uses_all_ingredients() {
     // Without Bio_Knospe_EingabeIstBio, all agricultural ingredients are counted
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
     ]);
@@ -303,8 +289,7 @@ fn knospe_without_bio_rule_uses_all_ingredients() {
 #[test]
 fn knospe_logo_regular_100_knospe_90_plus_swiss() {
     // 100% Knospe-certified, >= 90% Swiss → bio_suisse_regular
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
@@ -322,8 +307,7 @@ fn knospe_logo_regular_100_knospe_90_plus_swiss() {
 #[test]
 fn knospe_logo_no_cross_100_knospe_under_90_swiss() {
     // 100% Knospe-certified, < 90% Swiss → bio_suisse_no_cross
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
     ]);
@@ -341,8 +325,7 @@ fn knospe_logo_no_cross_100_knospe_under_90_swiss() {
 #[test]
 fn knospe_no_logo_when_not_100_knospe() {
     // Not all agricultural ingredients are Knospe-certified → no logo at all
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
@@ -362,8 +345,7 @@ fn knospe_no_logo_when_not_100_knospe() {
 // regular/no_cross conditionals keep encoding the Suisse/Import split.
 #[test]
 fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().umstellbetrieb().origin(Country::CH).build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio().origin(Country::CH).build())
@@ -377,8 +359,7 @@ fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
 
 #[test]
 fn knospe_umstellung_logo_import_variant() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 400.0).bio().umstellbetrieb().origin(Country::CH).build())
         .ingredient(IngredientBuilder::new_agri("Rohrzucker", 600.0).bio().origin(Country::PE).build())
@@ -392,8 +373,7 @@ fn knospe_umstellung_logo_import_variant() {
 
 #[test]
 fn knospe_umstellung_logo_absent_without_umstellbetrieb() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
         .build();
@@ -406,8 +386,7 @@ fn knospe_umstellung_logo_absent_without_umstellbetrieb() {
 fn knospe_umstellung_logo_from_composite_parent_claim() {
     // A bought certified composite declared "Umstellung" as a whole carries the
     // flag on the parent node — the whole-tree helper must still see it.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new_agri("Müeslimischung", 900.0)
@@ -432,8 +411,7 @@ fn knospe_umstellung_logo_from_composite_parent_claim() {
 // part of this check (yellow label placeholder covers it).
 #[test]
 fn knospe_check_pending_before_recipe_marked_complete() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
         .build();
@@ -450,8 +428,7 @@ fn knospe_check_hints_suppressed_for_einzelzutat() {
     // DEC-3: «Keine Zutatenliste (Einzelzutat)» has no recipe to check, so the
     // tri-state hints must stay silent in the Knospe environment too.
     for vollstaendig in [false, true] {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+        let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
         let mut builder = InputBuilder::new()
             .einzelzutat()
             .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build());
@@ -469,8 +446,7 @@ fn knospe_check_hints_suppressed_for_einzelzutat() {
 
 #[test]
 fn knospe_check_ok_when_complete_and_valid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     // No certification body set: must NOT block the OK state.
     let input = InputBuilder::new()
         .vollstaendig()
@@ -486,8 +462,7 @@ fn knospe_check_ok_when_complete_and_valid() {
 
 #[test]
 fn knospe_check_failed_when_recipe_has_validation_issue() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_AlleZutatenHerkunft,
     ]);
@@ -506,8 +481,7 @@ fn knospe_check_failed_when_recipe_has_validation_issue() {
 
 #[test]
 fn knospe_check_failed_when_not_fully_knospe() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().origin(Country::CH).build())
@@ -524,8 +498,7 @@ fn knospe_check_failed_when_not_fully_knospe() {
 fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
     // A non-bio ingredient that is a permitted non-organic exception (Annex 3 WBF)
     // must not block the Knospe logo — within the 5% cap (DEC-8).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
@@ -546,8 +519,7 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
 fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
     // A non-Knospe ingredient that is a permitted Bio Suisse Part III exception
     // must not block the Knospe logo — within the 5% cap (DEC-8).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
@@ -566,8 +538,7 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
 #[test]
 fn knospe_logo_regular_exact_90_boundary() {
     // Exactly 90% Swiss → regular logo (with cross)
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
     ]);
@@ -586,8 +557,7 @@ fn knospe_logo_regular_exact_90_boundary() {
 #[test]
 fn knospe_logo_no_cross_just_under_90_boundary() {
     // 89% Swiss → no cross logo
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
     ]);
@@ -609,8 +579,7 @@ fn knospe_logo_no_cross_just_under_90_boundary() {
 
 #[test]
 fn certification_body_required() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).build())
         .build();
@@ -624,8 +593,7 @@ fn certification_body_required() {
 
 #[test]
 fn certification_body_valid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
     let input = InputBuilder::new()
         .certification_body("CH-BIO-006 (bio.inspecta AG)")
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).build())
@@ -638,8 +606,7 @@ fn certification_body_valid() {
 
 #[test]
 fn certification_body_empty_string_invalid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
     let input = InputBuilder::new()
         .certification_body("")
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).build())
@@ -654,8 +621,7 @@ fn certification_body_empty_string_invalid() {
 
 #[test]
 fn certification_body_invalid_format() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_ZertifizierungsstellePflicht]);
     let input = InputBuilder::new()
         .certification_body("BIO-123")
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).build())
@@ -674,8 +640,7 @@ fn certification_body_invalid_format() {
 
 #[test]
 fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     // The 5% non-bio share must be a DECLARED permitted exception (Anhang 3 WBF);
     // an undeclared non-bio ingredient blocks "Bio" outright (DEC-7).
     let input = InputBuilder::new()
@@ -701,8 +666,7 @@ fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
 #[test]
 fn bio_blocked_by_undeclared_non_bio_under_5_percent() {
     // 96% bio, 4% plain conventional egg without the exception checkbox.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
@@ -721,8 +685,7 @@ fn bio_blocked_by_undeclared_non_bio_under_5_percent() {
 #[test]
 fn bio_allowed_when_same_ingredient_is_declared_exception() {
     // Identical recipe, but the 4% is declared a permitted exception → Bio allowed.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
@@ -740,8 +703,7 @@ fn bio_allowed_when_same_ingredient_is_declared_exception() {
 #[test]
 fn bio_still_blocked_when_declared_exception_over_5_percent() {
     // The existing 5% ceiling keeps working, and this is NOT the undeclared case.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 900.0).bio_ch().build())
@@ -758,8 +720,7 @@ fn bio_still_blocked_when_declared_exception_over_5_percent() {
 #[test]
 fn bio_non_agricultural_ingredient_does_not_block() {
     // Salz/Wasser are not agricultural, so they are outside the bio calculus.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
@@ -776,8 +737,7 @@ fn bio_non_agricultural_ingredient_does_not_block() {
 fn bio_mono_umstellbetrieb_still_allowed() {
     // Umstellbetrieb ingredients are bio-certified and handled by the conversion
     // logic; the new check must not catch them (ticket acceptance criterion).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().umstellbetrieb().build())
@@ -793,8 +753,7 @@ fn bio_mono_umstellbetrieb_still_allowed() {
 #[test]
 fn bio_blocked_by_undeclared_non_bio_inside_composite() {
     // The offending ingredient hides inside a composite that makes no own claim.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let fuellung = IngredientBuilder::new_agri("Füllung", 400.0)
         .children(vec![
             IngredientBuilder::new_agri("Aprikosen", 380.0).bio_ch().build(),
@@ -817,8 +776,7 @@ fn bio_blocked_by_undeclared_non_bio_inside_composite() {
 fn bio_composite_claiming_own_bio_quality_is_not_blocked() {
     // A bought, certified composite carries the claim on the parent node; its
     // children are then not second-guessed (mirrors is_bio_ch_compliant).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let fertigmischung = IngredientBuilder::new_agri("Fertigmischung", 400.0)
         .bio_ch()
         .children(vec![
@@ -845,8 +803,7 @@ fn bio_composite_claiming_own_bio_quality_is_not_blocked() {
 
 #[test]
 fn bio_ch_94_percent_sets_marketing_not_allowed() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 940.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 60.0).build())
@@ -861,8 +818,7 @@ fn bio_ch_94_percent_sets_marketing_not_allowed() {
 
 #[test]
 fn bio_ch_umstellbetrieb_excluded_from_percentage() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
@@ -877,8 +833,7 @@ fn bio_ch_umstellbetrieb_excluded_from_percentage() {
 
 #[test]
 fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio_ch().umstellbetrieb().build())
@@ -898,8 +853,7 @@ fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
 #[test]
 fn bio_100pct_all_bio_no_asterisk_alle_legend() {
     // Exactly 100% bio_ch: no * on ingredients, "Alle landwirtschaftlichen" legend.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -919,8 +873,7 @@ fn bio_100pct_all_bio_no_asterisk_alle_legend() {
 fn bio_95_99_band_uses_per_ingredient_asterisk() {
     // 96% bio_ch (Bio in Sachbezeichnung, but not all bio): per-ingredient * +
     // "* aus biologischer Landwirtschaft", NOT the "Alle" legend (Excel Zeilen 2–4 vs. 3).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -943,8 +896,7 @@ fn bio_95_99_band_uses_per_ingredient_asterisk() {
 #[test]
 fn bio_partial_bio_has_asterisks_and_percentage() {
     // 60% bio_ch: * on bio ingredients, "60% der landwirtschaftlichen..." legend
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -964,8 +916,7 @@ fn bio_partial_bio_has_asterisks_and_percentage() {
 #[test]
 fn bio_no_bio_no_legend() {
     // 0% bio_ch: no legend at all
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -982,8 +933,7 @@ fn bio_no_bio_no_legend() {
 #[test]
 fn knospe_mode_asterisk_unchanged() {
     // Bio_Knospe_EingabeIstBio without Bio_ShowBioSachbezeichnung → simple * (Knospe mode)
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).build())
@@ -1003,8 +953,7 @@ fn knospe_mode_asterisk_unchanged() {
 
 #[test]
 fn umstellbetrieb_gets_double_asterisk() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
@@ -1019,8 +968,7 @@ fn umstellbetrieb_gets_double_asterisk() {
 
 #[test]
 fn umstellbetrieb_legend_appended() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).umstellbetrieb().build())
@@ -1035,8 +983,7 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
     // Excel Zeile 7: a single Bio-CH agricultural ingredient from a conversion farm MAY
     // carry "Bio" + the mandatory Umstellungshinweis. Register the full Bio config rule set
     // (incl. Bio_Knospe_EingabeIstBio) so the ** marker + legend render on the label.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
@@ -1061,8 +1008,7 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
 #[test]
 fn composite_umstellbetrieb_removes_sachbezeichnung() {
     // Multiple agricultural ingredients + umstellbetrieb → remove suffix
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Weizenmehl", 500.0).bio_ch().umstellbetrieb().build())
@@ -1082,8 +1028,7 @@ fn composite_umstellbetrieb_removes_sachbezeichnung() {
 #[test]
 fn bio_check_pending_before_rezeptur_vollstaendig() {
     // Not yet checked → pending, and neither ok nor failed is asserted.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
         .build();
@@ -1105,8 +1050,7 @@ fn bio_check_pending_before_rezeptur_vollstaendig() {
 
 #[test]
 fn alternative_marking_allowed_when_all_agricultural_are_bio() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Himbeeren", 500.0).bio_ch().build())
@@ -1124,8 +1068,7 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
     // Ticket example: Konfitüre with 5 g Pektin as a permitted non-organic
     // agricultural ingredient. Recipe still qualifies for Bio, but only the
     // *-marking per ingredient is allowed.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Himbeeren", 500.0).bio_ch().build())
@@ -1143,8 +1086,7 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
 #[test]
 fn alternative_marking_suppressed_with_erlaubte_ausnahme_knospe() {
     // Same rule in the Knospe environment (ticket: Bio-V *and* Knospe).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
@@ -1164,8 +1106,7 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_knospe() {
 fn alternative_marking_allowed_when_exception_ingredient_is_also_bio() {
     // Flag set but the ingredient IS bio-certified: it is not actually a
     // non-organic exception, so the blanket wording stays truthful.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Himbeeren", 995.0).bio_ch().build())
@@ -1180,8 +1121,7 @@ fn alternative_marking_allowed_when_exception_ingredient_is_also_bio() {
 #[test]
 fn alternative_marking_suppressed_for_nested_erlaubte_ausnahme() {
     // The exception sits inside a composite — leaves() must find it.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let fuellung = IngredientBuilder::new_agri("Füllung", 500.0)
         .children(vec![
             IngredientBuilder::new_agri("Aprikosen", 495.0).bio_ch().build(),
@@ -1205,8 +1145,7 @@ fn bio_check_hints_suppressed_for_einzelzutat() {
     // tri-state «Rezeptur prüfen» hints may appear — neither before nor after
     // the check button would have been pressed.
     for vollstaendig in [false, true] {
-        let mut calculator = setup_simple_calculator();
-        calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+        let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
         let mut builder = InputBuilder::new()
             .einzelzutat()
             .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build());
@@ -1225,8 +1164,7 @@ fn bio_check_hints_suppressed_for_einzelzutat() {
 #[test]
 fn bio_check_ok_when_vollstaendig_and_qualifies() {
     // Checked + >= 95% Bio-CH + no recipe issues → ok.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
@@ -1241,8 +1179,7 @@ fn bio_check_ok_when_vollstaendig_and_qualifies() {
 #[test]
 fn bio_check_failed_when_vollstaendig_but_under_95() {
     // Checked but only 60% Bio-CH → does not qualify → failed.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
@@ -1258,8 +1195,7 @@ fn bio_check_failed_when_vollstaendig_but_under_95() {
 fn bio_check_failed_when_recipe_issue_despite_qualifying() {
     // Qualifies on percentage (100% Bio-CH) but a per-ingredient validation error is
     // open (>50% ingredient without origin) → the check must fail, not pass.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Bio_ShowBioSachbezeichnung,
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
     ]);
@@ -1523,8 +1459,7 @@ fn composite_parent_no_asterisk_when_bio_inherited_from_children() {
 #[test]
 fn composite_mixed_bio_and_nonbio_children() {
     // Composite with mix of bio and non-bio children: only bio children get *
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_Knospe_EingabeIstBio, RuleDef::AP2_1_ZusammegesetztOutput]);
+    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio, RuleDef::AP2_1_ZusammegesetztOutput]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new_agri("Gewürzmischung", 100.0)
@@ -1551,8 +1486,7 @@ fn composite_mixed_bio_and_nonbio_children() {
 #[test]
 fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
     // Umstellbetrieb children inside composites should be excluded from bio_ch % calculation
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new_agri("Müesli", 1000.0)
@@ -1587,8 +1521,7 @@ fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
 
 #[test]
 fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     // Note: no .vollstaendig() — the user has not pressed the button.
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
@@ -1605,8 +1538,7 @@ fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
 fn bio_marketing_not_allowed_for_an_empty_recipe() {
     // Guard against the badge appearing on an untouched form: an empty recipe
     // has a vacuous 100% Bio share.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let c = calculator.execute(InputBuilder::new().build()).conditional_elements;
 
     assert_eq!(c.get("bio_marketing_allowed"), None);
@@ -1615,8 +1547,7 @@ fn bio_marketing_not_allowed_for_an_empty_recipe() {
 
 #[test]
 fn bio_marketing_not_allowed_when_the_recipe_does_not_qualify() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
         .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).build())
@@ -1631,8 +1562,7 @@ fn bio_marketing_not_allowed_when_the_recipe_does_not_qualify() {
 fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
     // After pressing «Rezeptur prüfen» a qualifying recipe still reports ok, so
     // the hint texts keep their old semantics.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())

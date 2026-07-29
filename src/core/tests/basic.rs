@@ -493,8 +493,7 @@ fn test_url_length_deep_nesting() {
 
 #[test]
 fn test_recursive_composites_with_processing_steps() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
+    let calculator = calculator_with(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Schokolade", 500.0)
@@ -515,8 +514,7 @@ fn test_recursive_composites_with_processing_steps() {
 
 #[test]
 fn test_recursive_composites_nested_processing_steps() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
+    let calculator = calculator_with(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Kuchen", 1000.0)
@@ -544,8 +542,7 @@ fn test_recursive_composites_nested_processing_steps() {
 
 #[test]
 fn test_recursive_composites_four_levels() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
+    let calculator = calculator_with(vec![crate::rules::RuleDef::AP2_1_ZusammegesetztOutput]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Torte", 1000.0)

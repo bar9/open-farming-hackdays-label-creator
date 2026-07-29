@@ -237,8 +237,7 @@ fn resolve_percentages_idempotent_on_absolute_tree() {
 
 #[test]
 fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -266,8 +265,7 @@ fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
 
 #[test]
 fn namensgebend_percent_mode_child_resolves_to_whole_product_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -294,8 +292,7 @@ fn namensgebend_percent_mode_child_resolves_to_whole_product_percent() {
 
 #[test]
 fn namensgebend_sub_ingredient_without_amount_is_flagged() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -324,8 +321,7 @@ fn namensgebend_sub_ingredient_without_amount_is_flagged() {
 
 #[test]
 fn namensgebend_validator_quiet_when_amounts_present() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);

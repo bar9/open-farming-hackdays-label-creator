@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn amount_lt_zero_invalid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
+    let calculator = calculator_with(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Hafer", 0.0).build())
@@ -18,8 +17,7 @@ fn amount_lt_zero_invalid() {
 
 #[test]
 fn amount_gt_zero_valid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
+    let calculator = calculator_with(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Hafer", 32.0).build())
         .build();
@@ -30,8 +28,7 @@ fn amount_gt_zero_valid() {
 
 #[test]
 fn multiple_validation_errors_on_single_ingredient() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_1_ZutatMengeValidierung,
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
@@ -80,8 +77,7 @@ fn multiple_validation_errors_on_single_ingredient() {
 
 #[test]
 fn stacked_validation_messages_demo() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
     ]);

@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn ap1_2_namensgebend() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_2_ProzentOutputNamensgebend]);
+    let calculator = calculator_with(vec![RuleDef::AP1_2_ProzentOutputNamensgebend]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Hafer", 300.0).build())
         .ingredient(IngredientBuilder::new("Milch", 700.0).allergen().namensgebend().build())
@@ -15,8 +14,7 @@ fn ap1_2_namensgebend() {
 
 #[test]
 fn ap1_3_eingabe_namensgebende_zutat() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_3_EingabeNamensgebendeZutat]);
+    let calculator = calculator_with(vec![RuleDef::AP1_3_EingabeNamensgebendeZutat]);
     let input = InputBuilder::new().build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
@@ -26,8 +24,7 @@ fn ap1_3_eingabe_namensgebende_zutat() {
 
 #[test]
 fn ap1_4_manuelle_eingabe_total() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_4_ManuelleEingabeTotal]);
+    let calculator = calculator_with(vec![RuleDef::AP1_4_ManuelleEingabeTotal]);
     let input = InputBuilder::new().build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
@@ -37,8 +34,7 @@ fn ap1_4_manuelle_eingabe_total() {
 
 #[test]
 fn ap1_4_manualTotalChangesPercent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP1_4_ManuelleEingabeTotal,
     ]);

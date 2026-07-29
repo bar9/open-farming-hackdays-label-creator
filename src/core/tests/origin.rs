@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Milch", 700.0).build())
         .total(350.0)
@@ -24,8 +23,7 @@ fn herkunft_benoetigt_composite_children_over_50_percent() {
     // aggregates to >50% of the product must trigger the "Herkunft benötigt" flag.
     // Before the computed_amount fix, line 1558 read the raw parent amount (0), so
     // the percentage collapsed to 0% and the flag never fired for composites.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Fruchtmischung", 0.0)
@@ -48,8 +46,7 @@ fn herkunft_benoetigt_composite_children_over_50_percent() {
 fn herkunft_benoetigt_composite_under_50_percent_not_required() {
     // Guard against a raw-amount regression: a composite aggregating to <50% must NOT
     // be flagged, while a genuine >50% sibling still is.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Fruchtmischung", 0.0)
@@ -71,8 +68,7 @@ fn herkunft_benoetigt_composite_under_50_percent_not_required() {
 
 #[test]
 fn validation_missing_origin_for_ingredient_over_50_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Milch", 700.0).build())
@@ -90,8 +86,7 @@ fn validation_missing_origin_for_ingredient_over_50_percent() {
 fn origin_over_50_percent_skips_non_agricultural() {
     // A non-agricultural ingredient above 50% weight must NOT require an origin (validate_origin
     // previously ignored is_agricultural entirely).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Dicarbonat", 700.0).agricultural(false).build())
@@ -107,8 +102,7 @@ fn origin_over_50_percent_skips_non_agricultural() {
 fn dicarbonat_from_db_is_non_agricultural() {
     // Dicarbonat is now in food_db as non-agricultural → auto-detected via name lookup, so it
     // never requires an origin even without the user explicitly marking it.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Dicarbonat", 700.0).build())
@@ -122,8 +116,7 @@ fn dicarbonat_from_db_is_non_agricultural() {
 
 #[test]
 fn import_placeholder_never_printed_verbatim() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         // CH + generic Import placeholder: CH must print, Import must be dropped.
         .ingredient(IngredientBuilder::new("Milch", 600.0).origins(vec![Country::CH, Country::Import]).build())
@@ -140,8 +133,7 @@ fn import_placeholder_never_printed_verbatim() {
 
 #[test]
 fn country_display_on_label_for_ingredients_with_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Milch", 600.0).origin(Country::CH).build())
         .ingredient(IngredientBuilder::new("Zucker", 200.0).origin(Country::EU).build())
@@ -158,8 +150,7 @@ fn country_display_on_label_for_ingredients_with_origin() {
 // OutputFormatter::format — selected Herkunft never reached the label.
 #[test]
 fn composite_parent_declared_origin_shows_on_label() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -189,8 +180,7 @@ fn composite_parent_declared_origin_shows_on_label() {
 // Composite without a parent-declared origin keeps the lowest-level-only display.
 #[test]
 fn composite_parent_without_declared_origin_shows_none() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -222,8 +212,7 @@ fn composite_parent_without_declared_origin_shows_none() {
 
 #[test]
 fn no_country_display_when_origin_not_set() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Milch", 700.0).build())
         .total(350.0)
@@ -237,8 +226,7 @@ fn no_country_display_when_origin_not_set() {
 
 #[test]
 fn meat_ingredient_over_20_percent_requires_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP7_3_HerkunftFleischUeber20Prozent
     ]);
@@ -273,8 +261,7 @@ fn meat_ingredient_over_20_percent_requires_origin() {
 
 #[test]
 fn meat_rule_only_shows_origin_for_meat_ingredients() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(
@@ -311,8 +298,7 @@ fn meat_rule_only_shows_origin_for_meat_ingredients() {
 
 #[test]
 fn meat_ingredient_under_20_percent_no_origin_required() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Speck", 150.0)
@@ -338,8 +324,7 @@ fn meat_ingredient_under_20_percent_no_origin_required() {
 
 #[test]
 fn validation_missing_origin_for_meat_ingredient_over_20_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(
@@ -362,8 +347,7 @@ fn validation_missing_origin_for_meat_ingredient_over_20_percent() {
 
 #[test]
 fn meat_detection_comprehensive_categories() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
 
     // Test the specific categories mentioned by the user
     let test_cases = vec![
@@ -423,8 +407,7 @@ fn meat_detection_comprehensive_categories() {
 
 #[test]
 fn meat_detection_processed_meat_products() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
 
     let input = InputBuilder::new()
         .vollstaendig()
@@ -451,8 +434,7 @@ fn meat_detection_processed_meat_products() {
 #[test]
 fn single_non_ch_non_eu_country_displays_on_label() {
     // L3: Individual countries like AT, FR, AL should display in the ingredients list
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
 
     let test_cases = vec![
         (Country::AT, "AT"),

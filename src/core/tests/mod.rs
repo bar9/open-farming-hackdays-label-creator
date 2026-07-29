@@ -9,6 +9,16 @@ pub(super) fn setup_simple_calculator() -> Calculator {
     Calculator { rule_defs }
 }
 
+/// Calculator with exactly the given rules active.
+///
+/// Most tests want one or two rules in isolation rather than a whole
+/// configuration; this replaces the `let mut c = setup_simple_calculator();
+/// c.registerRuleDefs(vec![..]);` pair that appeared ~140 times.
+pub(super) fn calculator_with(rule_defs: Vec<RuleDef>) -> Calculator {
+    rust_i18n::set_locale("de-CH");
+    Calculator { rule_defs }
+}
+
 pub(super) fn calculator_for(config: crate::shared::Configuration) -> Calculator {
     rust_i18n::set_locale("de-CH");
     Calculator::from_registry_config(config)
