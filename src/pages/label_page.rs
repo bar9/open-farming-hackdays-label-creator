@@ -3,7 +3,7 @@ use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::model::Country;
 use crate::layout::{CopyLinkContext, ThemeContext};
 use crate::rules::{RuleDef, RuleRegistry};
-use crate::shared::{restore_params_from_session_storage, Conditionals, Configuration, Validations};
+use crate::shared::{restore_params_from_session_storage, Conditionals, Configuration, Validations, VerdictsContext};
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
@@ -400,9 +400,11 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     let label: Memo<String> = use_memo(move || calc_output.read().label.clone());
     let validation_messages = use_memo(move || calc_output.read().validation_messages.clone());
     let conditional_display = use_memo(move || calc_output.read().conditional_elements.clone());
+    let verdicts = use_memo(move || calc_output.read().verdicts.clone());
 
     use_context_provider(|| Validations(validation_messages));
     use_context_provider(|| Conditionals(conditional_display));
+    use_context_provider(|| VerdictsContext(verdicts));
 
     // Calculate derived values for amount and price
     let get_base_factor = use_memo(move || {

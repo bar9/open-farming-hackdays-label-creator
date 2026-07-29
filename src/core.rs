@@ -217,7 +217,13 @@ pub struct Output {
     pub label: String,
     pub total_amount: f64,
     pub validation_messages: HashMap<String, Vec<String>>,
+    /// Legacy key→bool contract, derived from `verdicts`. Still consumed by
+    /// `ConditionalDisplay` paths and most tests; new UI code should read
+    /// `verdicts` directly (TD-1 Stufe 3).
     pub conditional_elements: HashMap<String, bool>,
+    /// The typed rule-engine decisions (TD-1). Source of truth for
+    /// `conditional_elements`.
+    pub verdicts: Verdicts,
 }
 
 pub struct Calculator {
@@ -1676,6 +1682,7 @@ impl Calculator {
             knospe_check,
         };
         verdicts.write_conditionals(&mut conditionals);
+        let verdicts_out = verdicts;
 
 
         let has_meat_rule = self
@@ -1851,6 +1858,7 @@ impl Calculator {
             total_amount,
             validation_messages,
             conditional_elements: conditionals,
+            verdicts: verdicts_out,
         }
     }
 }
