@@ -222,126 +222,107 @@ pub struct Calculator {
     pub(crate) rule_defs: Vec<RuleDef>,
 }
 
+/// Share (in percent) of the agricultural weight that satisfies `numerator`,
+/// out of the agricultural weight that satisfies `denominator`.
+///
+/// All the Bio/Knospe percentages are this same shape: pick a subset of the
+/// leaves, weigh it against another subset, guard the empty case. Writing it
+/// once keeps the six rules below to their actual difference — the predicates —
+/// and makes the `empty` fallback an explicit, per-rule decision rather than a
+/// detail buried in copied code.
+fn agricultural_share(
+    ingredients: &[Ingredient],
+    denominator: impl Fn(&Ingredient) -> bool,
+    numerator: impl Fn(&Ingredient) -> bool,
+    empty: f64,
+) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total: f64 = leaves
+        .iter()
+        .filter(|i| i.is_agricultural() && denominator(i))
+        .map(|i| i.amount)
+        .sum();
+
+    if total == 0.0 {
+        return empty;
+    }
+
+    let matching: f64 = leaves
+        .iter()
+        .filter(|i| i.is_agricultural() && denominator(i) && numerator(i))
+        .map(|i| i.amount)
+        .sum();
+
+    (matching / total) * 100.0
+}
+
+/// Swiss share of the agricultural weight.
 fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
-    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
-
-    let total_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    if total_agricultural_amount == 0.0 {
-        return 0.0;
-    }
-
-    let swiss_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)))
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    (swiss_agricultural_amount / total_agricultural_amount) * 100.0
+    agricultural_share(
+        ingredients,
+        |_| true,
+        |i| i.computed_origins().is_some_and(|o| o.contains(&Country::CH)),
+        0.0,
+    )
 }
 
+/// Swiss share of the *bio* agricultural weight — the Knospe logo variant is
+/// decided on the certified portion only.
 fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
-    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
-
-    let total_bio_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.computed_bio_status().unwrap_or(false))
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    if total_bio_agricultural_amount == 0.0 {
-        return 0.0;
-    }
-
-    let swiss_bio_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.computed_bio_status().unwrap_or(false))
-        .filter(|ingredient| ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)))
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    (swiss_bio_agricultural_amount / total_bio_agricultural_amount) * 100.0
+    agricultural_share(
+        ingredients,
+        |i| i.computed_bio_status().unwrap_or(false),
+        |i| i.computed_origins().is_some_and(|o| o.contains(&Country::CH)),
+        0.0,
+    )
 }
 
+/// Knospe-certified share of the agricultural weight.
+/// Empty case is 100%: with no agricultural ingredients nothing is uncertified.
+/// Callers must additionally check `has_agricultural_ingredient` before turning
+/// this into a claim (DEC-2).
 fn calculate_knospe_certified_percentage(ingredients: &[Ingredient]) -> f64 {
-    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
-
-    let total_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    if total_agricultural_amount == 0.0 {
-        return 100.0; // No agricultural ingredients means 100% compliance (only water/salt)
-    }
-
-    let knospe_certified_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.is_knospe_compliant())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    (knospe_certified_amount / total_agricultural_amount) * 100.0
+    agricultural_share(ingredients, |_| true, |i| i.is_knospe_compliant(), 100.0)
 }
 
+/// Bio-CH-certified share of the agricultural weight. Same empty-case caveat as
+/// `calculate_knospe_certified_percentage`.
 fn calculate_bio_ch_certified_percentage(ingredients: &[Ingredient]) -> f64 {
-    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
-
-    let total_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    if total_agricultural_amount == 0.0 {
-        return 100.0;
-    }
-
-    let bio_ch_certified_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| ingredient.is_bio_ch_compliant())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    (bio_ch_certified_amount / total_agricultural_amount) * 100.0
+    agricultural_share(ingredients, |_| true, |i| i.is_bio_ch_compliant(), 100.0)
 }
 
 /// Percentage (of total agricultural weight) made up of permitted non-organic
 /// exceptions (Annex 3 WBF, e.g. Pektin) that are not bio-certified. The Bio-V
 /// "Bio" Sachbezeichnung tolerates these only up to 5% of the agricultural weight.
 fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64 {
-    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+    agricultural_share(
+        ingredients,
+        |_| true,
+        |i| i.erlaubte_ausnahme_bio.unwrap_or(false) && !i.is_bio_ch_compliant(),
+        0.0,
+    )
+}
 
-    let total_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    if total_agricultural_amount == 0.0 {
-        return 0.0;
-    }
-
-    let ausnahme_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| {
-            ingredient.erlaubte_ausnahme_bio.unwrap_or(false) && !ingredient.is_bio_ch_compliant()
-        })
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    (ausnahme_amount / total_agricultural_amount) * 100.0
+/// Percentage (of total agricultural weight) made up of permitted non-organic
+/// exceptions (Annex 3 WBF / Bio Suisse Part III, e.g. Pektin) that are not
+/// themselves Knospe-certified. Bio Suisse tolerates these only up to 5% of the
+/// agricultural weight, exactly as the Bio-V rule does (DEC-8).
+fn calculate_erlaubte_ausnahme_knospe_percentage(ingredients: &[Ingredient]) -> f64 {
+    agricultural_share(
+        ingredients,
+        |_| true,
+        // Either exception flag makes an ingredient Knospe-compliant (see
+        // `is_knospe_compliant`), so both count against the 5% budget — unless
+        // the ingredient is bio-certified in its own right, in which case it is
+        // not an exception at all.
+        |i| {
+            (i.erlaubte_ausnahme_bio.unwrap_or(false)
+                || i.erlaubte_ausnahme_knospe.unwrap_or(false))
+                && !i.is_bio.unwrap_or(false)
+        },
+        0.0,
+    )
 }
 
 /// Whether the recipe contains at least one permitted non-organic agricultural
@@ -367,41 +348,6 @@ fn has_erlaubte_ausnahme(ingredients: &[Ingredient]) -> bool {
 /// without being declared a permitted exception (DEC-7).
 fn has_undeclared_non_bio(ingredients: &[Ingredient]) -> bool {
     ingredients.iter().any(|i| i.has_undeclared_non_bio())
-}
-
-/// Percentage (of total agricultural weight) made up of permitted non-organic
-/// exceptions (Annex 3 WBF / Bio Suisse Part III, e.g. Pektin) that are not
-/// themselves Knospe-certified. Bio Suisse tolerates these only up to 5% of the
-/// agricultural weight, exactly as the Bio-V rule does (DEC-8).
-fn calculate_erlaubte_ausnahme_knospe_percentage(ingredients: &[Ingredient]) -> f64 {
-    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
-
-    let total_agricultural_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    if total_agricultural_amount == 0.0 {
-        return 0.0;
-    }
-
-    // Either exception flag makes an ingredient Knospe-compliant (see
-    // `is_knospe_compliant`), so both count against the 5% budget — unless the
-    // ingredient is bio-certified in its own right, in which case it is not an
-    // exception at all.
-    let ausnahme_amount: f64 = leaves
-        .iter()
-        .filter(|ingredient| ingredient.is_agricultural())
-        .filter(|ingredient| {
-            (ingredient.erlaubte_ausnahme_bio.unwrap_or(false)
-                || ingredient.erlaubte_ausnahme_knospe.unwrap_or(false))
-                && !ingredient.is_bio.unwrap_or(false)
-        })
-        .map(|ingredient| ingredient.amount)
-        .sum();
-
-    (ausnahme_amount / total_agricultural_amount) * 100.0
 }
 
 /// The processing step that marks an ingredient as wild-collected. Stored in
