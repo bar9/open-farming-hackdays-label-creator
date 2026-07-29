@@ -68,6 +68,7 @@ label:
   preisProEinheit: Preis pro Einheit
   keinDatum: Kein Haltbarkeits-/Verbrauchdatum
   ignore_ingredients: Keine Zutatenliste (Einzelzutat)
+  mono_quality: Qualität der Einzelzutat
   total: Total
   components: Bestandteile
   actions: Aktionen
@@ -93,6 +94,8 @@ nav:
   saved_ingredients: Gespeicherte Zutaten
 
 help:
+  mono_quality: |
+    Auch ohne Zutatenliste muss deklariert werden, welche Qualität die Einzelzutat hat. Die Auswahl bestimmt, ob «Bio» in der Sachbezeichnung erscheint bzw. welche Knospe (inkl. Umstellungssatz) auf der Etikette abgebildet wird.
   ignore_ingredients: |
     Wenn der Produktname oder die Sachbezeichnung ein reines Produkt ohne weitere Zutaten bezeichnet (z.B. reiner Essig), braucht keine Zutatenliste angegeben zu werden.
   produktname: |

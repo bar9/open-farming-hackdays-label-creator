@@ -69,6 +69,7 @@ label:
   preisProEinheit: Prix par unité
   keinDatum: Pas de date de conservation/consommation
   ignore_ingredients: Pas de liste d'ingrédients (ingrédient unique)
+  mono_quality: Qualité de l'ingrédient unique
   total: Total
   components: Composants
   actions: Actions
@@ -160,6 +161,8 @@ placeholder:
   menge: Quantité
 
 help:
+  mono_quality: |
+    Même sans liste d'ingrédients, la qualité de l'ingrédient unique doit être déclarée. Ce choix détermine si «Bio» figure dans la dénomination spécifique et quel Bourgeon (y compris la mention de reconversion) apparaît sur l'étiquette.
   ignore_ingredients: |
     Si le nom du produit ou la dénomination spécifique désigne un produit pur sans autres ingrédients (p.ex. vinaigre pur), aucune liste d'ingrédients n'est nécessaire.
   produktname: |

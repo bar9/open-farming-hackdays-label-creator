@@ -68,6 +68,7 @@ label:
   preisProEinheit: Prezzo per unità
   keinDatum: Nessuna data di conservazione/consumo
   ignore_ingredients: Nessun elenco ingredienti (ingrediente singolo)
+  mono_quality: Qualità dell'ingrediente singolo
   total: Totale
   components: Componenti
   actions: Azioni
@@ -160,6 +161,8 @@ placeholder:
   menge: Quantità
 
 help:
+  mono_quality: |
+    Anche senza elenco degli ingredienti occorre dichiarare la qualità dell'ingrediente singolo. La scelta determina se «Bio» compare nella denominazione specifica e quale Gemma (inclusa la menzione di riconversione) appare sull'etichetta.
   ignore_ingredients: |
     Se il nome del prodotto o la denominazione specifica designa un prodotto puro senza altri ingredienti (es. aceto puro), non è necessario un elenco degli ingredienti.
   produktname: |

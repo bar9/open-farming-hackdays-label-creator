@@ -345,6 +345,19 @@ fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64
     (ausnahme_amount / total_agricultural_amount) * 100.0
 }
 
+/// Whether the recipe contains any agricultural ingredient at all.
+///
+/// The percentage helpers return 100% for a purely non-agricultural product
+/// (salt, water) because there is nothing that could be uncertified. That is
+/// the right answer for a *share*, but it must not be read as "certified": such
+/// a product has nothing to certify and may make no Bio/Knospe claim (DEC-2).
+fn has_agricultural_ingredient(ingredients: &[Ingredient]) -> bool {
+    ingredients
+        .iter()
+        .flat_map(|i| i.leaves())
+        .any(|i| i.is_agricultural() && i.amount > 0.0)
+}
+
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
     ingredients.iter()
@@ -1520,7 +1533,10 @@ impl Calculator {
         let bio_ch_percentage = if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
             let pct = calculate_bio_ch_certified_percentage(&input.ingredients);
 
-            if pct >= 95.0 {
+            // A product without agricultural ingredients (salt, water) has nothing
+            // to certify, so it may not carry «Bio» even though the share is
+            // vacuously 100% (DEC-2).
+            if pct >= 95.0 && has_agricultural_ingredient(&input.ingredients) {
                 conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
                 conditionals.insert(String::from("bio_marketing_allowed"), true);
             } else {
@@ -1747,6 +1763,13 @@ impl Calculator {
         // Append Wildsammlung legend if any ingredient got the ° marker
         if has_wildsammlung_marker {
             label = format!("{}<br>° {}", label, t!("bio_legend.aus_wildsammlung"));
+        }
+
+        // Einzelzutat/Monoprodukt («Keine Zutatenliste»): the declared quality is
+        // fed in as a synthetic ingredient so the Bio/Knospe rules can run, but it
+        // must never be printed — the label shows no ingredient list at all (DEC-2).
+        if input.ignore_ingredients {
+            label = String::new();
         }
 
         Output {
