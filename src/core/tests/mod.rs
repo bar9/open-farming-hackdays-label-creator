@@ -109,3 +109,4 @@ mod golden;
 mod recipes;
 mod saved_ingredients;
 mod declaration_name;
+mod mono_quality;

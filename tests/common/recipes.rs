@@ -56,6 +56,9 @@ pub enum BioStatus {
     /// («Erlaubte nicht-biologische Zutat», Annex 3 WBF, e.g. Pektin). Without
     /// this declaration DEC-7 rightly blocks «Bio».
     ErlaubteAusnahmeBio,
+    /// Bio-CH plus the «Aus biologisch zertifizierter Wildsammlung» checkbox
+    /// that the Bio-V offers since DEC-11.
+    BioChWildsammlung,
 }
 
 #[derive(Clone)]

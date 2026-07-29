@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
 use crate::core::{Ingredient, AmountUnit};
-use crate::model::{declaration_name, food_db, lookup_allergen, lookup_agricultural, Country};
+use crate::model::{db_knows_non_agricultural, declaration_name, food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
 use crate::shared::Validations;
@@ -137,6 +137,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         !food_db().iter().any(|(name, _)| name == &lookup)
     });
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
+
+    // The food DB already knows which ingredients are non-agricultural (salt,
+    // water, Dicarbonat). Treat that like the allergen flag: show it and lock it,
+    // instead of making the user guess (DEC-9). Free-text ingredients are not in
+    // the DB, so their choice stays open.
+    let db_says_non_agricultural = use_memo(move || {
+        db_knows_non_agricultural(&edit_name(), edit_canonical().as_deref())
+    });
 
     // Captured once at mount. Not reactive to `ingredients` changes so the
     // auto-save effect below can't overwrite it with the user's new value.
@@ -726,6 +734,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
         edit_nicht_landwirtschaftlich.set(!orig.is_agricultural && orig.is_bio != Some(true) && orig.bio_ch != Some(true));
     };
+
+    // Keep the locked choice in sync with the name: picking a DB ingredient that
+    // is non-agricultural sets the quality, and switching away from it releases
+    // the lock so a stale "nicht-landwirtschaftlich" cannot linger (DEC-9).
+    use_effect(move || {
+        if db_says_non_agricultural() {
+            edit_nicht_landwirtschaftlich.set(true);
+            edit_is_bio.set(false);
+            edit_bio_ch.set(false);
+            edit_aus_umstellbetrieb.set(false);
+            edit_erlaubte_ausnahme_bio.set(false);
+            edit_erlaubte_ausnahme_knospe.set(false);
+        }
+    });
 
     // Knospe config detection (used by bio section and Wildsammlung)
     let is_knospe_config = use_memo(move || {
@@ -1466,6 +1488,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "knospe",
                                     onchange: move |_| { set_bio_cat("knospe"); }
                                 }
@@ -1479,6 +1503,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "bio",
                                     onchange: move |_| { set_bio_cat("bio"); }
                                 }
@@ -1492,6 +1518,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "andere",
                                     onchange: move |_| { set_bio_cat("andere"); }
                                 }
@@ -1505,6 +1533,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "nicht_lw",
                                     onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }
@@ -1652,6 +1682,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         };
 
                         rsx! {
+                            // DEC-5: all qualities form one contiguous radio group in a
+                            // fixed order, mirroring the Knospe branch. Dependent fields
+                            // live in the block below, so selecting a quality never moves
+                            // the other options.
                             // Radio: Bio (Bio-CH zertifiziert)
                             FormField {
                                 help: Some(t!("help.bio_ch").to_string()),
@@ -1661,24 +1695,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "bio",
                                     onchange: move |_| { set_bio_cat("bio"); }
-                                }
-                            }
-                            if bio_cat == "bio" {
-                                br {}
-                                FormField {
-                                    help: Some(t!("help.aus_umstellbetrieb").to_string()),
-                                    label: t!("bio_labels.aus_umstellbetrieb").to_string(),
-                                    inline_checkbox: true,
-                                    input {
-                                        r#type: "checkbox",
-                                        class: "checkbox checkbox-accent",
-                                        checked: edit_aus_umstellbetrieb(),
-                                        onchange: move |evt| {
-                                            edit_aus_umstellbetrieb.set(evt.data.value() == "true");
-                                        }
-                                    }
                                 }
                             }
                             // Radio: Nicht-biologisch (andere)
@@ -1690,11 +1710,47 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "andere",
                                     onchange: move |_| { set_bio_cat("andere"); }
                                 }
                             }
-                            if bio_cat == "andere" {
+                            // Radio: Nicht-landwirtschaftliche Zutat
+                            FormField {
+                                help: Some(t!("help.nicht_landwirtschaftlich").to_string()),
+                                label: t!("bio_labels.nicht_landwirtschaftlich").to_string(),
+                                inline_checkbox: true,
+                                input {
+                                    r#type: "radio",
+                                    name: "bio_v_category",
+                                    class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
+                                    checked: bio_cat == "nicht_lw",
+                                    onchange: move |_| { set_bio_cat("nicht_lw"); }
+                                }
+                            }
+                            // Dependent fields, below the whole group — same layout as the
+                            // Knospe branch (separated block under the radios).
+                            if bio_cat == "bio" {
+                                br {}
+                                div { class: "border-t border-base-300 pt-2 mt-2",
+                                    FormField {
+                                        help: Some(t!("help.aus_umstellbetrieb").to_string()),
+                                        label: t!("bio_labels.aus_umstellbetrieb").to_string(),
+                                        inline_checkbox: true,
+                                        input {
+                                            r#type: "checkbox",
+                                            class: "checkbox checkbox-accent",
+                                            checked: edit_aus_umstellbetrieb(),
+                                            onchange: move |evt| {
+                                                edit_aus_umstellbetrieb.set(evt.data.value() == "true");
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if bio_cat == "andere" {
                                 br {}
                                 div { class: "border-t border-base-300 pt-2 mt-2",
                                     FormField {
@@ -1724,19 +1780,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                             }
                                         }
                                     }
-                                }
-                            }
-                            // Radio: Nicht-landwirtschaftliche Zutat
-                            FormField {
-                                help: Some(t!("help.nicht_landwirtschaftlich").to_string()),
-                                label: t!("bio_labels.nicht_landwirtschaftlich").to_string(),
-                                inline_checkbox: true,
-                                input {
-                                    r#type: "radio",
-                                    name: "bio_v_category",
-                                    class: "radio radio-primary",
-                                    checked: bio_cat == "nicht_lw",
-                                    onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }
                             }
                         }
@@ -1914,10 +1957,17 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 }
             }
             // Wildsammlung sits at the very bottom of the modal (Testing 25.06.2026,
-            // hand note 2) — only relevant when the Knospe quality is selected.
-            if is_knospe_config() && edit_is_bio() {
+            // hand note 2) — relevant for the Knospe quality and, with its own
+            // wording, for the Bio-V «Bio» quality (DEC-11).
+            if (is_knospe_config() && edit_is_bio()) || (!is_knospe_config() && edit_bio_ch()) {
                 {
                     let wildsammlung_step = "aus zertifizierter Wildsammlung";
+                    // The stored step is the same; only the label differs by regime.
+                    let wildsammlung_label = if is_knospe_config() {
+                        t!("bio_labels.wildsammlung").to_string()
+                    } else {
+                        t!("bio_labels.wildsammlung_bio").to_string()
+                    };
                     let is_wildsammlung_checked = edit_processing_steps()
                         .as_ref()
                         .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
@@ -1925,7 +1975,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         br {}
                         FormField {
                             help: Some(t!("help.wildsammlung").to_string()),
-                            label: t!("bio_labels.wildsammlung").to_string(),
+                            label: wildsammlung_label,
                             inline_checkbox: true,
                             input {
                                 r#type: "checkbox",

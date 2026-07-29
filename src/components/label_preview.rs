@@ -133,11 +133,15 @@ pub fn LabelPreview(
                     let no_cross = c.get("bio_suisse_no_cross").unwrap_or(&false) == &true;
                     let umstellung = c.get("knospe_umstellung_logo").unwrap_or(&false) == &true;
                     // BioV (Bio-CH) shows no logo here; the green "Bio ✓" badge is the
-                    // verified-compliant stamp — gated on the tri-state «Rezeptur prüfen»
-                    // result (bio_check_ok = recipe checked, qualifies, no open errors),
-                    // NOT on the raw percentage, so it never shows prematurely. Knospe
-                    // (`bio_suisse_*`) and Bio flags are mutually exclusive → no collision.
-                    let bio_ok = c.get("bio_check_ok").unwrap_or(&false) == &true;
+                    // Bio counterpart of the Knospe logo and follows the same rule:
+                    // it is driven by the recipe math (`bio_marketing_allowed`), not by
+                    // the «Rezeptur prüfen» button, so it appears as soon as the recipe
+                    // qualifies (DEC-6). The tri-state hint texts stay on the button.
+                    // An empty or purely non-agricultural recipe never sets the flag
+                    // (see `has_agricultural_ingredient` in core.rs), so the badge
+                    // cannot appear on an untouched form. Knospe (`bio_suisse_*`) and
+                    // Bio flags are mutually exclusive → no collision.
+                    let bio_ok = c.get("bio_marketing_allowed").unwrap_or(&false) == &true;
                     if regular || no_cross {
                         rsx! {
                             div { class: "absolute top-2 right-2 flex items-center justify-end",

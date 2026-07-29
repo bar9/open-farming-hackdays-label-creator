@@ -37,7 +37,7 @@ test: css
 # fails tests that pass in isolation. Serial execution is deterministic; the
 # wall-time cost is modest and e2e is excluded from CI anyway.
 e2e:
-	cargo test --test e2e_smoke --test e2e_recipes --test e2e_label --test e2e_validation --test e2e_flows --test e2e_ux -- --nocapture --test-threads=1
+	cargo test --test e2e_smoke --test e2e_recipes --test e2e_label --test e2e_validation --test e2e_flows --test e2e_ux --test e2e_mono -- --nocapture --test-threads=1
 
 e2e-ux:
 	cargo test --test e2e_ux -- --nocapture --test-threads=1

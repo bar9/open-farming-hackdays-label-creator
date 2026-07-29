@@ -405,6 +405,35 @@ fn calculate_erlaubte_ausnahme_knospe_percentage(ingredients: &[Ingredient]) -> 
     (ausnahme_amount / total_agricultural_amount) * 100.0
 }
 
+/// The processing step that marks an ingredient as wild-collected. Stored in
+/// German (as all processing steps are) and used as the lookup key.
+pub const WILDSAMMLUNG_STEP: &str = "aus zertifizierter Wildsammlung";
+
+/// Wording for wild collection, which differs by regime: Bio Suisse says «aus
+/// zertifizierter Wildsammlung», the Bio-Verordnung requires «aus biologisch
+/// zertifizierter Wildsammlung» (Abklärung BLW, DEC-11). Both the ° legend and
+/// the inline text below 10% must use the same wording.
+fn wildsammlung_wording(rules: &[RuleDef]) -> String {
+    if rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+        t!("bio_legend.aus_wildsammlung").to_string()
+    } else {
+        t!("bio_legend.aus_biologisch_zertifizierter_wildsammlung").to_string()
+    }
+}
+
+/// Whether the recipe contains any agricultural ingredient at all.
+///
+/// The percentage helpers return 100% for a purely non-agricultural product
+/// (salt, water) because there is nothing that could be uncertified. That is
+/// the right answer for a *share*, but it must not be read as "certified": such
+/// a product has nothing to certify and may make no Bio/Knospe claim (DEC-2).
+fn has_agricultural_ingredient(ingredients: &[Ingredient]) -> bool {
+    ingredients
+        .iter()
+        .flat_map(|i| i.leaves())
+        .any(|i| i.is_agricultural() && i.amount > 0.0)
+}
+
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
     ingredients.iter()
@@ -1183,7 +1212,7 @@ impl OutputFormatter {
         }
 
         // Wildsammlung °-marking when ingredient >10%
-        let wildsammlung_step = "aus zertifizierter Wildsammlung";
+        let wildsammlung_step = WILDSAMMLUNG_STEP;
         let has_wildsammlung_rule = self.RuleDefs.contains(&RuleDef::Wildsammlung_Ueber10Prozent);
         let has_wildsammlung_step = self.ingredient.processing_steps.as_ref()
             .is_some_and(|s| s.iter().any(|step| step == wildsammlung_step));
@@ -1229,7 +1258,15 @@ impl OutputFormatter {
         if let Some(steps) = &self.ingredient.processing_steps {
             let filtered: Vec<_> = steps.iter()
                 .filter(|s| !(show_wildsammlung_marker && s.as_str() == wildsammlung_step))
-                .map(|s| html_escape(s))
+                // Below the 10% threshold the step is printed inline, so it has to
+                // carry the regime's wording just like the legend does (DEC-11).
+                .map(|s| {
+                    if s.as_str() == wildsammlung_step {
+                        html_escape(&wildsammlung_wording(&self.RuleDefs))
+                    } else {
+                        html_escape(s)
+                    }
+                })
                 .collect();
             if !filtered.is_empty() {
                 let steps_text = filtered.join(", ");
@@ -1576,6 +1613,16 @@ impl Calculator {
                         conditionals.insert(String::from("knospe_umstellung_logo"), true);
                     }
                     conditionals.insert(String::from("knospe_marketing_allowed"), true);
+
+                    // DEC-10: analogous to Bio-V, a Knospe-eligible product carries
+                    // « Bio» in the Sachbezeichnung. Umstellung follows the same rule
+                    // as Bio-V (Excel Zeile 7): only a Monoprodukt may claim «Bio»,
+                    // a composite conversion product may not. The Umstellungssatz
+                    // next to the logo covers the conversion status either way.
+                    let umstellung = has_umstellbetrieb_in_tree(&input.ingredients);
+                    if !umstellung || is_mono_product(&input.ingredients) {
+                        conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
+                    }
                 } else {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
@@ -1626,7 +1673,13 @@ impl Calculator {
             // so it must gate the verdict independently of the percentage.
             let undeclared_non_bio = has_undeclared_non_bio(&input.ingredients);
 
-            if pct >= 95.0 && !undeclared_non_bio {
+            // DEC-2: a product without agricultural ingredients (salt, water) has
+            // nothing to certify, so it may not carry «Bio» even though the share
+            // is vacuously 100%.
+            if pct >= 95.0
+                && !undeclared_non_bio
+                && has_agricultural_ingredient(&input.ingredients)
+            {
                 conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
                 conditionals.insert(String::from("bio_marketing_allowed"), true);
             } else {
@@ -1824,7 +1877,7 @@ impl Calculator {
             && sorted_ingredients.iter().any(|ing| {
                 let pct = calculate_ingredient_percentage(ing.computed_amount(), total_amount);
                 pct >= 10.0 && ing.processing_steps.as_ref()
-                    .is_some_and(|s| s.iter().any(|step| step == "aus zertifizierter Wildsammlung"))
+                    .is_some_and(|s| s.iter().any(|step| step == WILDSAMMLUNG_STEP))
             });
 
         // Generiere Zutatenliste
@@ -1857,7 +1910,14 @@ impl Calculator {
 
         // Append Wildsammlung legend if any ingredient got the ° marker
         if has_wildsammlung_marker {
-            label = format!("{}<br>° {}", label, t!("bio_legend.aus_wildsammlung"));
+            label = format!("{}<br>° {}", label, wildsammlung_wording(&output_rules));
+        }
+
+        // Einzelzutat/Monoprodukt («Keine Zutatenliste»): the declared quality is
+        // fed in as a synthetic ingredient so the Bio/Knospe rules can run, but it
+        // must never be printed — the label shows no ingredient list at all (DEC-2).
+        if input.ignore_ingredients {
+            label = String::new();
         }
 
         Output {

@@ -1578,3 +1578,154 @@ fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
     assert_eq!(c.get("bio_sachbezeichnung_suffix"), None,
         "Umstellbetrieb child should be excluded from bio_ch %. Conditionals: {:?}", c);
 }
+
+// --- DEC-6: the green Bio badge follows the recipe, not the check button ----
+//
+// The badge is the Bio-V counterpart of the Knospe logo, which has always been
+// driven by the recipe math. `bio_marketing_allowed` is what the preview reads,
+// so these tests pin its behaviour before «Rezeptur prüfen» is pressed.
+
+#[test]
+fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    // Note: no .vollstaendig() — the user has not pressed the button.
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+    // The hint texts stay coupled to the button.
+    assert_eq!(c.get("bio_check_pending"), Some(&true));
+    assert_eq!(c.get("bio_check_ok"), None);
+}
+
+#[test]
+fn bio_marketing_not_allowed_for_an_empty_recipe() {
+    // Guard against the badge appearing on an untouched form: an empty recipe
+    // has a vacuous 100% Bio share.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let c = calculator.execute(InputBuilder::new().build()).conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get("bio_sachbezeichnung_suffix"), None);
+}
+
+#[test]
+fn bio_marketing_not_allowed_when_the_recipe_does_not_qualify() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("bio_marketing_allowed"), None);
+    assert_eq!(c.get("bio_marketing_not_allowed"), Some(&true));
+}
+
+#[test]
+fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
+    // After pressing «Rezeptur prüfen» a qualifying recipe still reports ok, so
+    // the hint texts keep their old semantics.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .build();
+    let c = calculator.execute(input).conditional_elements;
+
+    assert_eq!(c.get("bio_check_ok"), Some(&true));
+    assert_eq!(c.get("bio_check_pending"), None);
+    assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
+}
+
+// --- DEC-11: wild collection under the Bio-Verordnung ----------------------
+//
+// The step is stored identically in both regimes; only the printed wording
+// differs. Bio Suisse says «aus zertifizierter Wildsammlung», the Bio-V
+// requires «aus biologisch zertifizierter Wildsammlung» (Abklärung BLW).
+
+#[test]
+fn biov_wildsammlung_legend_uses_the_bio_wording() {
+    let calculator = calculator_for(crate::shared::Configuration::Bio);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio_ch()
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio_ch().build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(label.contains('°'), "15% ≥ 10% → ° marker; label: {}", label);
+    assert!(
+        label.contains("aus biologisch zertifizierter Wildsammlung"),
+        "Bio-V legend must use the «biologisch» wording; label: {}",
+        label
+    );
+}
+
+#[test]
+fn knospe_wildsammlung_legend_wording_is_unchanged() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio().origin(Country::CH)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio().origin(Country::CH).build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(label.contains('°'), "label: {}", label);
+    assert!(
+        label.contains("aus zertifizierter Wildsammlung"),
+        "Knospe wording must stay as-is; label: {}",
+        label
+    );
+    assert!(
+        !label.contains("biologisch zertifizierter Wildsammlung"),
+        "Knospe must not adopt the Bio-V wording; label: {}",
+        label
+    );
+}
+
+#[test]
+fn biov_wildsammlung_under_10_percent_prints_the_bio_wording_inline() {
+    // Below the threshold there is no ° marker; the step is printed next to the
+    // ingredient instead — and must carry the same Bio-V wording.
+    let calculator = calculator_for(crate::shared::Configuration::Bio);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0).bio_ch()
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).bio_ch().build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(!label.contains('°'), "5% < 10% → no ° marker; label: {}", label);
+    assert!(
+        label.contains("aus biologisch zertifizierter Wildsammlung"),
+        "inline step must use the Bio-V wording; label: {}",
+        label
+    );
+}
+
+#[test]
+fn knospe_wildsammlung_under_10_percent_keeps_its_wording_inline() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0).bio().origin(Country::CH)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).bio().origin(Country::CH).build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(!label.contains('°'), "label: {}", label);
+    assert!(label.contains("aus zertifizierter Wildsammlung"), "label: {}", label);
+    assert!(
+        !label.contains("biologisch zertifizierter Wildsammlung"),
+        "label: {}",
+        label
+    );
+}

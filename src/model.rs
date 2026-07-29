@@ -1173,6 +1173,23 @@ pub fn declaration_name(typed: &str, canonical: Option<&str>) -> String {
     if matches_rule { canonical.to_string() } else { typed.to_string() }
 }
 
+/// Whether the food DB positively knows this ingredient to be non-agricultural
+/// (salt, water, Dicarbonat).
+///
+/// This is the DEC-9 lock: when the database already answers the question, the
+/// quality «Nicht-landwirtschaftlich» is preselected and greyed out, exactly as
+/// the allergen flag is. A free-text ingredient is not in the DB and must stay
+/// editable, which is why membership is checked explicitly:
+/// `lookup_agricultural` alone defaults unknown names to agricultural and so
+/// cannot distinguish "known to be non-agricultural" from "unknown".
+///
+/// `typed` is what the user entered, `canonical` the resolved DB entry for a
+/// curated alias (e.g. "Mehl" → "Weizenmehl").
+pub fn db_knows_non_agricultural(typed: &str, canonical: Option<&str>) -> bool {
+    let lookup = canonical.unwrap_or(typed);
+    food_db().iter().any(|(name, _)| name == lookup) && !lookup_agricultural(lookup)
+}
+
 /// Whether `term` exactly matches a curated alias term (case-insensitive).
 /// Used to let short common terms like "Ei" bypass the search-length minimum.
 pub fn is_curated_alias(term: &str) -> bool {
@@ -1297,5 +1314,39 @@ mod food_db_tests {
         );
         // Weizenmehl is gluten-containing, so it must render bold as an allergen.
         assert!(lookup_allergen(&declared), "'{}' must be flagged as an allergen", declared);
+    }
+
+    // DEC-9: the food DB already knows which ingredients are non-agricultural,
+    // so the quality selection is preset and locked instead of guessed.
+    #[test]
+    fn db_knows_non_agricultural_for_curated_additives() {
+        assert!(db_knows_non_agricultural("Dicarbonat", None));
+        assert!(db_knows_non_agricultural("Salz", None));
+        assert!(db_knows_non_agricultural("Wasser", None));
+    }
+
+    #[test]
+    fn db_knows_non_agricultural_is_false_for_agricultural_entries() {
+        assert!(!db_knows_non_agricultural("Weizenmehl", None));
+        assert!(!db_knows_non_agricultural("Hafer", None));
+    }
+
+    // Free-text ingredients are not in the DB. They must stay editable, which is
+    // why this cannot simply be `!lookup_agricultural(...)`: that defaults
+    // unknown names to agricultural, so the DB-membership check is what carries
+    // the meaning.
+    #[test]
+    fn db_knows_non_agricultural_is_false_for_unknown_ingredients() {
+        assert!(!db_knows_non_agricultural("Grossmutters Geheimzutat", None));
+        assert!(!db_knows_non_agricultural("", None));
+    }
+
+    // A curated alias resolves through its canonical entry.
+    #[test]
+    fn db_knows_non_agricultural_follows_the_canonical_name() {
+        assert!(!db_knows_non_agricultural("Mehl", Some("Weizenmehl")));
+        // Guard the resolution direction: with a canonical present the typed
+        // term must not decide.
+        assert!(db_knows_non_agricultural("H2O", Some("Wasser")));
     }
 }
