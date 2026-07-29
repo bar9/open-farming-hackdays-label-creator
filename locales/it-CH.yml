@@ -3,7 +3,6 @@ title: Creatore | Etichettatura alimentare
 
 app:
   title: Creatore di etichette
-  version: Versione 0.4.1 del 17.07.2025
   impressum: Impronta
   release_notes: Note di rilascio
 
@@ -30,7 +29,6 @@ label:
   datumseingabe: Conservazione
   zusatzinformationen: Informazioni aggiuntive
   aufbewahrungshinweis: Indicazioni per la conservazione
-  produktionsland: Paese di produzione
   nettogewicht: Peso netto
   abtropfgewicht: Peso sgocciolato
   adresse: Indirizzo
@@ -48,18 +46,15 @@ label:
   mindestensHaltbar: Da consumarsi preferibilmente entro
   zuVerbrauchen: Da consumare entro
   zutatDetails: Dettagli dell'ingrediente
-  unterzutatBearbeiten: Modifica sotto-ingrediente
   zutat: Ingrediente
   menge: Quantità
   namensgebendeZutat: Ingrediente caratterizzante
   zusammengesetzteZutat: Ingrediente composto
   mengen_als_prozent: Inserire le quantità in percentuale
   anteil: Quota
-  computedValues: Proprietà degli ingredienti secondari
   zutatEingeben: Ingrediente (inserire o selezionare)
   namensgebend: Caratterizzante
   allergen: Allergene
-  keinAllergen: Nessun allergene
   manuellesTotal: Peso finale pesato (opzionale)
   mengenart: Volume o peso
   einheit: Unità
@@ -73,7 +68,6 @@ label:
   components: Componenti
   actions: Azioni
   saved_indicator: (Salvato)
-  allergen_indicator: (Allergene)
   rezepturVollstaendig: "Ricetta completa \u2014 verificare"
   rezepturGueltig: "Nessun errore rilevato"
   rezepturProbleme: "%{count} problema/i rilevato/i"
@@ -83,11 +77,7 @@ label:
 
 nav:
   linkKopieren: Copia link
-  konfiguration: Configurazione
-  aktiveRegeln: Regole attive
   schliessen: Chiudi
-  verhaeltnisseBeibehalten: Mantenere le proporzioni
-  anpassen: Adattare
   hinzufuegen: Aggiungi ingrediente
   speichern: Salvare
   speichernUndNaechste: Salva e prossimo ingrediente
@@ -95,18 +85,12 @@ nav:
   saved_ingredients: Ingredienti salvati
 
 preview:
-  etikettenVorschau: Anteprima etichetta
   zutaten: "Ingredienti:"
-  haltbarkeit: Conservazione
   nettogewicht: Peso netto
   abtropfgewicht: Peso sgocciolato
-  hergestelltInDer: Prodotto nel
-  hergestelltIn: Prodotto in
   tel: "Tel: %{phone}"
   email: "E-Mail: %{email}"
   website: "Sito web: %{website}"
-  preisPro: "Prezzo per %{amount}%{unit}"
-  preisTotal: Prezzo totale
   produktnameSachbezeichnung: Nome del prodotto / Denominazione specifica
   bio_zertifizierung: "Certificazione bio: %{body}"
   bio_zertifizierungsstelle: Ente di certificazione bio
@@ -145,9 +129,6 @@ placeholder:
     
     dopo l'apertura consumare entro x giorni
   aufbewahrungshinweis: es. conservare al fresco e al buio a max. 5°C
-  produktionsland: Svizzera
-  nettogewicht: 300g o 500ml
-  abtropfgewicht: 200g
   name: Fattoria modello Huber
   adresse: Via test 1
   plz: CH-4001
@@ -155,10 +136,7 @@ placeholder:
   telefon: 079 123 45 67
   email: fattoria@qualita.ch
   website: fattoria.qualita.ch
-  preisProX: 4.00 CHF
-  preisTotal: 12.00 CHF
   zutatName: Lamponi
-  menge: Quantità
 
 help:
   mono_quality: |
@@ -263,7 +241,6 @@ help:
     Prezzo dell'unità di vendita
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
-  bio_transitional: Indica se questo ingrediente proviene da un'azienda in conversione
   aus_umstellbetrieb: Ingrediente da un'azienda in conversione all'agricoltura biologica. Contrassegnato con ** sull'etichetta.
   wildsammlung: Ingrediente da raccolta selvatica certificata. Contrassegnato con ° sull'etichetta se >10% del totale.
   nicht_landwirtschaftlich: "Ingrediente non agricolo (es. acqua, sale, colture, certi additivi). Non considerato nei calcoli bio."
@@ -280,7 +257,6 @@ help:
     ingredienti non Gemma (ad es. pectina, alcuni additivi). Gli ingredienti semplici come
     farina, pepe ecc. devono essere certificati Gemma.
   bio_knospe: Indica se questo ingrediente è certificato secondo gli standard Gemma di Bio Suisse (origine svizzera, fissa su CH)
-  bio_knospe_import: Ingrediente certificato Gemma d'importazione. Paese d'origine liberamente selezionabile (predefinito «Import»).
   bio_ch: Indica se questo ingrediente è certificato secondo l'ordinanza bio svizzera (ma non Gemma)
   verarbeitungsschritte: |
     Selezionate le fasi di lavorazione che si applicano a questo prodotto.
@@ -312,8 +288,6 @@ messages:
   no_saved_ingredients: Nessun ingrediente salvato
   ingredient_saved_successfully: "'%{name}' è stato salvato con successo"
   error_generic: "Errore: %{error}"
-  category_loading: Caricamento categoria...
-  category_display: "Categoria: %{category}"
   please_enter_amount: Inserisci una quantità
   scaling_factor: "Fattore: ×%{factor} (prima: %{before}g → dopo: %{after}g)"
 
@@ -323,17 +297,12 @@ errors:
   attempted_to_navigate: 'log:\nTentativo di navigare verso: %{route}'
   localstorage_unavailable: LocalStorage non disponibile
   localstorage_save_failed: Errore durante il salvataggio in LocalStorage
-  localstorage_clear_failed: Errore durante l'eliminazione da LocalStorage
   parse_saved_ingredients_failed: "Errore nell'analisi degli ingredienti salvati: %{error}"
-  api_request_failed: "Errore nell'invio della richiesta: %{error}"
-  api_parse_failed: "Errore nell'analisi della risposta: %{error}"
 
 validation:
   amount_greater_than_zero: La quantità deve essere maggiore di 0.
   origin_required_over_50_percent: Il paese di origine è richiesto per gli ingredienti superiori al 50%.
-  origin_required_name_giving: Il paese di origine è richiesto per gli ingredienti caratterizzanti.
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
-  origin_required_knospe: Il paese di origine è richiesto per tutti gli ingredienti (requisito Gemma).
   origin_required_import_knospe: Il paese di origine è richiesto per gli ingredienti con Gemma Import quando la Gemma Import appare sull'etichetta.
   namensgebend_amount_required: Per l'ingrediente che dà il nome al prodotto occorre indicare la quantità affinché la percentuale appaia sull'etichetta.
   origin_single_level: L'origine è definita su più livelli di questo ingrediente. Indicarla su un solo livello e rimuovere l'altra.
@@ -377,12 +346,9 @@ warnings:
   data_loss_on_switch: I tuoi dati andranno persi se passi a un altro standard
 
 date_prefixes:
-  best_before: Da consumarsi preferibilmente entro
-  use_by: Da consumare entro
 
 buttons:
   close: chiudi
-  back: Indietro
   delete: Elimina
   save_to_storage: Memorizza
   save_and_transfer: Regola tutte le quantità
@@ -406,14 +372,11 @@ version:
 
 cross_level:
   defined_on_subingredients: "Definito tramite i sotto-ingredienti:"
-  goto: Apri
-  clear: Rimuovi
 origin:
   herkunft: Origine
   aufzucht: Allevamento
   schlachtung: Macellazione
   fangort: Luogo di cattura
-  switzerland_parentheses: "[Svizzera]"
   birthplace: "Luogo di nascita: %{country}"
   slaughtered_in: "Macellato in: %{country}"
   add_country: Aggiungi paese
@@ -431,7 +394,6 @@ bio_legend:
 
 bio_labels:
   bio_knospe: Bio (Gemma)
-  bio_knospe_import: Bio (Gemma) Import
   quality: Qualità
   knospe: Gemma
   umstellungsknospe: Gemma di riconversione
@@ -462,15 +424,12 @@ bio_hints:
   bio_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
   bio_check_failed: "La ricetta inserita è incompleta o non soddisfa i requisiti Bio. Si prega di verificare i dati inseriti."
   alternative_marking: "Nota: Oltre alla marcatura *, sono ammesse anche le seguenti varianti: «Tutti gli ingredienti agricoli provengono dall'agricoltura biologica» oppure il prefisso «Bio-» davanti ai singoli ingredienti."
-  knospe_marketing_allowed: "Il prodotto soddisfa i requisiti Gemma e può essere commercializzato con il logo Bio Suisse Gemma."
-  knospe_marketing_not_allowed: "Il prodotto NON soddisfa i requisiti Gemma perché non tutti gli ingredienti agricoli sono certificati Gemma. Il logo Gemma non può essere utilizzato."
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Gli ingredienti non biologici ammessi (p. es. la pectina) non possono superare il 5% degli ingredienti agricoli. Questo limite è superato – il logo Gemma non può essere utilizzato e il prodotto non può essere commercializzato con la Gemma."
 
   knospe_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
   knospe_check_ok: "La ricetta inserita soddisfa i requisiti della Gemma e il prodotto può essere commercializzato con la Gemma."
   knospe_check_failed: "La ricetta inserita è incompleta o non soddisfa i requisiti della Gemma. Si prega di verificare i dati inseriti."
 umstellbetrieb:
-  hinweis: "Prodotto nell'ambito della conversione all'agricoltura biologica"
 
 weight_units:
   mg: mg
