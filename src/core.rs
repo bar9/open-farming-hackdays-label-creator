@@ -1447,10 +1447,6 @@ impl Calculator {
                 self.log_rule_processing(ruleDef, "CONDITIONAL", Some("Enabling name-giving ingredient input"));
                 conditionals.insert(String::from("namensgebende_zutat"), true);
             }
-            if let RuleDef::Bio_Knospe_EingabeIstBio = ruleDef {
-                self.log_rule_processing(ruleDef, "CONDITIONAL", Some("Enabling bio certification input"));
-                conditionals.insert(String::from("is_bio_eingabe"), true);
-            }
         }
         #[cfg(target_arch = "wasm32")]
         web_sys::console::log_1(&format!("🎛️ Conditional elements: {} enabled", conditionals.len()).into());
