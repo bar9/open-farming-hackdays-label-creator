@@ -89,6 +89,7 @@ impl InputBuilder {
     pub fn ingredient(mut self, ing: Ingredient) -> Self { self.0.ingredients.push(ing); self }
     pub fn total(mut self, t: f64) -> Self { self.0.total = Some(t); self }
     pub fn vollstaendig(mut self) -> Self { self.0.rezeptur_vollstaendig = true; self }
+    pub fn einzelzutat(mut self) -> Self { self.0.ignore_ingredients = true; self }
     pub fn certification_body(mut self, body: &str) -> Self { self.0.certification_body = Some(body.to_string()); self }
     pub fn build(self) -> Input { self.0 }
 }

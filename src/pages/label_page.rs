@@ -102,6 +102,7 @@ impl From<Form> for Input {
                 Some(val.certification_body)
             },
             rezeptur_vollstaendig: val.rezeptur_vollstaendig,
+            ignore_ingredients: val.ignore_ingredients,
         }
     }
 }
