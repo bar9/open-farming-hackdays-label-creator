@@ -460,6 +460,7 @@ bio_legend:
   x_prozent_bio: "%{percentage}% des ingrédients agricoles sont issus de la production biologique"
   aus_umstellung: en conversion vers l'agriculture biologique
   aus_wildsammlung: issu de cueillette sauvage certifiée
+  aus_biologisch_zertifizierter_wildsammlung: issu de cueillette sauvage certifiée biologique
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)
@@ -479,6 +480,7 @@ bio_labels:
   erlaubte_ausnahme_details_note: Note interne uniquement – n'apparaît pas sur l'étiquette.
   aus_umstellbetrieb: En conversion
   wildsammlung: Issu de cueillette sauvage certifiée
+  wildsammlung_bio: Issu de cueillette sauvage certifiée biologique
   nicht_landwirtschaftlich: Non agricole
   andere: Non biologique
   knospe_icon_ch: Certifié Bourgeon (origine suisse)

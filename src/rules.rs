@@ -129,7 +129,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn ≥ 95% Bio-CH zertifiziert",
             RuleDef::Bio_AllAgriAreBio => "Bio-V: Alle landwirtschaftlichen Zutaten sind bio — kein individueller * Stern",
             RuleDef::Bio_PartialBioMarking => "Bio-V: Teilweise bio — individueller * Stern und Prozentangabe in Legende",
-            RuleDef::Wildsammlung_Ueber10Prozent => "L11/B15: Kennzeichnung mit ° für Zutaten aus zertifizierter Wildsammlung wenn >10% Anteil",
+            RuleDef::Wildsammlung_Ueber10Prozent => "L11/B15: Kennzeichnung mit ° für Zutaten aus (biologisch) zertifizierter Wildsammlung wenn >10% Anteil",
         }
     }
 }
@@ -187,6 +187,9 @@ impl RuleRegistry {
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
                 RuleDef::Bio_ShowBioSachbezeichnung,
+                // Wild collection exists under the Bio-Verordnung too, with its own
+                // wording («aus biologisch zertifizierter Wildsammlung», DEC-11).
+                RuleDef::Wildsammlung_Ueber10Prozent,
             ],
         );
 

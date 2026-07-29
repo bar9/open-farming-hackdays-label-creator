@@ -345,6 +345,22 @@ fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64
     (ausnahme_amount / total_agricultural_amount) * 100.0
 }
 
+/// The processing step that marks an ingredient as wild-collected. Stored in
+/// German (as all processing steps are) and used as the lookup key.
+pub const WILDSAMMLUNG_STEP: &str = "aus zertifizierter Wildsammlung";
+
+/// Wording for wild collection, which differs by regime: Bio Suisse says «aus
+/// zertifizierter Wildsammlung», the Bio-Verordnung requires «aus biologisch
+/// zertifizierter Wildsammlung» (Abklärung BLW, DEC-11). Both the ° legend and
+/// the inline text below 10% must use the same wording.
+fn wildsammlung_wording(rules: &[RuleDef]) -> String {
+    if rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+        t!("bio_legend.aus_wildsammlung").to_string()
+    } else {
+        t!("bio_legend.aus_biologisch_zertifizierter_wildsammlung").to_string()
+    }
+}
+
 /// Whether the recipe contains any agricultural ingredient at all.
 ///
 /// The percentage helpers return 100% for a purely non-agricultural product
@@ -1118,7 +1134,7 @@ impl OutputFormatter {
         }
 
         // Wildsammlung °-marking when ingredient >10%
-        let wildsammlung_step = "aus zertifizierter Wildsammlung";
+        let wildsammlung_step = WILDSAMMLUNG_STEP;
         let has_wildsammlung_rule = self.RuleDefs.contains(&RuleDef::Wildsammlung_Ueber10Prozent);
         let has_wildsammlung_step = self.ingredient.processing_steps.as_ref()
             .is_some_and(|s| s.iter().any(|step| step == wildsammlung_step));
@@ -1164,7 +1180,15 @@ impl OutputFormatter {
         if let Some(steps) = &self.ingredient.processing_steps {
             let filtered: Vec<_> = steps.iter()
                 .filter(|s| !(show_wildsammlung_marker && s.as_str() == wildsammlung_step))
-                .map(|s| html_escape(s))
+                // Below the 10% threshold the step is printed inline, so it has to
+                // carry the regime's wording just like the legend does (DEC-11).
+                .map(|s| {
+                    if s.as_str() == wildsammlung_step {
+                        html_escape(&wildsammlung_wording(&self.RuleDefs))
+                    } else {
+                        html_escape(s)
+                    }
+                })
                 .collect();
             if !filtered.is_empty() {
                 let steps_text = filtered.join(", ");
@@ -1729,7 +1753,7 @@ impl Calculator {
             && sorted_ingredients.iter().any(|ing| {
                 let pct = calculate_ingredient_percentage(ing.computed_amount(), total_amount);
                 pct >= 10.0 && ing.processing_steps.as_ref()
-                    .is_some_and(|s| s.iter().any(|step| step == "aus zertifizierter Wildsammlung"))
+                    .is_some_and(|s| s.iter().any(|step| step == WILDSAMMLUNG_STEP))
             });
 
         // Generiere Zutatenliste
@@ -1762,7 +1786,7 @@ impl Calculator {
 
         // Append Wildsammlung legend if any ingredient got the ° marker
         if has_wildsammlung_marker {
-            label = format!("{}<br>° {}", label, t!("bio_legend.aus_wildsammlung"));
+            label = format!("{}<br>° {}", label, wildsammlung_wording(&output_rules));
         }
 
         // Einzelzutat/Monoprodukt («Keine Zutatenliste»): the declared quality is

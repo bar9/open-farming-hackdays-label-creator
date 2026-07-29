@@ -1908,10 +1908,17 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 }
             }
             // Wildsammlung sits at the very bottom of the modal (Testing 25.06.2026,
-            // hand note 2) — only relevant when the Knospe quality is selected.
-            if is_knospe_config() && edit_is_bio() {
+            // hand note 2) — relevant for the Knospe quality and, with its own
+            // wording, for the Bio-V «Bio» quality (DEC-11).
+            if (is_knospe_config() && edit_is_bio()) || (!is_knospe_config() && edit_bio_ch()) {
                 {
                     let wildsammlung_step = "aus zertifizierter Wildsammlung";
+                    // The stored step is the same; only the label differs by regime.
+                    let wildsammlung_label = if is_knospe_config() {
+                        t!("bio_labels.wildsammlung").to_string()
+                    } else {
+                        t!("bio_labels.wildsammlung_bio").to_string()
+                    };
                     let is_wildsammlung_checked = edit_processing_steps()
                         .as_ref()
                         .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
@@ -1919,7 +1926,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         br {}
                         FormField {
                             help: Some(t!("help.wildsammlung").to_string()),
-                            label: t!("bio_labels.wildsammlung").to_string(),
+                            label: wildsammlung_label,
                             inline_checkbox: true,
                             input {
                                 r#type: "checkbox",

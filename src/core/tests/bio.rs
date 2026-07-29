@@ -1381,3 +1381,89 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
     assert_eq!(c.get("bio_check_pending"), None);
     assert_eq!(c.get("bio_marketing_allowed"), Some(&true));
 }
+
+// --- DEC-11: wild collection under the Bio-Verordnung ----------------------
+//
+// The step is stored identically in both regimes; only the printed wording
+// differs. Bio Suisse says «aus zertifizierter Wildsammlung», the Bio-V
+// requires «aus biologisch zertifizierter Wildsammlung» (Abklärung BLW).
+
+#[test]
+fn biov_wildsammlung_legend_uses_the_bio_wording() {
+    let calculator = calculator_for(crate::shared::Configuration::Bio);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio_ch()
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio_ch().build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(label.contains('°'), "15% ≥ 10% → ° marker; label: {}", label);
+    assert!(
+        label.contains("aus biologisch zertifizierter Wildsammlung"),
+        "Bio-V legend must use the «biologisch» wording; label: {}",
+        label
+    );
+}
+
+#[test]
+fn knospe_wildsammlung_legend_wording_is_unchanged() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio().origin(Country::CH)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio().origin(Country::CH).build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(label.contains('°'), "label: {}", label);
+    assert!(
+        label.contains("aus zertifizierter Wildsammlung"),
+        "Knospe wording must stay as-is; label: {}",
+        label
+    );
+    assert!(
+        !label.contains("biologisch zertifizierter Wildsammlung"),
+        "Knospe must not adopt the Bio-V wording; label: {}",
+        label
+    );
+}
+
+#[test]
+fn biov_wildsammlung_under_10_percent_prints_the_bio_wording_inline() {
+    // Below the threshold there is no ° marker; the step is printed next to the
+    // ingredient instead — and must carry the same Bio-V wording.
+    let calculator = calculator_for(crate::shared::Configuration::Bio);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0).bio_ch()
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).bio_ch().build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(!label.contains('°'), "5% < 10% → no ° marker; label: {}", label);
+    assert!(
+        label.contains("aus biologisch zertifizierter Wildsammlung"),
+        "inline step must use the Bio-V wording; label: {}",
+        label
+    );
+}
+
+#[test]
+fn knospe_wildsammlung_under_10_percent_keeps_its_wording_inline() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0).bio().origin(Country::CH)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).bio().origin(Country::CH).build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(!label.contains('°'), "label: {}", label);
+    assert!(label.contains("aus zertifizierter Wildsammlung"), "label: {}", label);
+    assert!(
+        !label.contains("biologisch zertifizierter Wildsammlung"),
+        "label: {}",
+        label
+    );
+}

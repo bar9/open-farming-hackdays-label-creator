@@ -734,7 +734,7 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
     // separate "Bio (Knospe) Import" radio.
     let bio_label = match ing.bio {
         BioStatus::Conventional => None,
-        BioStatus::BioCh => Some("Bio"),
+        BioStatus::BioCh | BioStatus::BioChWildsammlung => Some("Bio"),
         BioStatus::BioKnospe => Some("Bio (Knospe)"),
         BioStatus::BioKnospeImport => Some("Bio (Knospe)"),
         BioStatus::NichtLandwirtschaftlich => Some("Nicht-landwirtschaftliche Zutat"),
@@ -749,6 +749,15 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         if let Ok(el) = c.find(Locator::XPath(&xpath)).await {
             let _ = el.click().await;
             tokio::time::sleep(Duration::from_millis(150)).await;
+        }
+    }
+    // Wild collection (Bio-V wording since DEC-11); the checkbox only appears
+    // once the «Bio» quality is selected above.
+    if matches!(ing.bio, BioStatus::BioChWildsammlung) {
+        let xpath = "//dialog[@open]//label[contains(normalize-space(.), 'Wildsammlung')]//input[@type='checkbox']";
+        if let Ok(el) = c.find(Locator::XPath(xpath)).await {
+            let _ = el.click().await;
+            tokio::time::sleep(Duration::from_millis(200)).await;
         }
     }
     // Knospe logo (Variante b): pick the specific Knospe variant by its caption.

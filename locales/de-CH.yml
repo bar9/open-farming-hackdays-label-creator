@@ -691,6 +691,7 @@ bio_legend:
   x_prozent_bio: "%{percentage}% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"
   aus_umstellung: aus Umstellung auf biologische Landwirtschaft
   aus_wildsammlung: aus zertifizierter Wildsammlung
+  aus_biologisch_zertifizierter_wildsammlung: aus biologisch zertifizierter Wildsammlung
 
 bio_labels:
   bio_knospe: Bio (Knospe)
@@ -710,6 +711,7 @@ bio_labels:
   erlaubte_ausnahme_details_note: Nur interne Notiz – erscheint nicht auf der Etikette.
   aus_umstellbetrieb: Aus Umstellbetrieb
   wildsammlung: Aus zertifizierter Wildsammlung
+  wildsammlung_bio: Aus biologisch zertifizierter Wildsammlung
   nicht_landwirtschaftlich: Nicht-landwirtschaftlich
   andere: Nicht-biologisch
   knospe_icon_ch: Knospe-zertifiziert (Schweizer Herkunft)

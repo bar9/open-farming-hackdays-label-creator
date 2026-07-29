@@ -52,6 +52,9 @@ pub enum BioStatus {
     NichtLandwirtschaftlich,
     /// "Andere" / non-bio agricultural (Knospe config).
     Andere,
+    /// Bio-CH plus the «Aus biologisch zertifizierter Wildsammlung» checkbox
+    /// that the Bio-V offers since DEC-11.
+    BioChWildsammlung,
 }
 
 #[derive(Clone)]

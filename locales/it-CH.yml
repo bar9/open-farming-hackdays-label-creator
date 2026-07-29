@@ -459,6 +459,7 @@ bio_legend:
   x_prozent_bio: "%{percentage}% degli ingredienti agricoli provengono da produzione biologica"
   aus_umstellung: in conversione all'agricoltura biologica
   aus_wildsammlung: da raccolta selvatica certificata
+  aus_biologisch_zertifizierter_wildsammlung: da raccolta selvatica biologica certificata
 
 bio_labels:
   bio_knospe: Bio (Gemma)
@@ -478,6 +479,7 @@ bio_labels:
   erlaubte_ausnahme_details_note: Solo nota interna – non appare sull'etichetta.
   aus_umstellbetrieb: Da azienda in conversione
   wildsammlung: Da raccolta selvatica certificata
+  wildsammlung_bio: Da raccolta selvatica biologica certificata
   nicht_landwirtschaftlich: Non agricolo
   andere: Non biologico
   knospe_icon_ch: Certificato Gemma (origine svizzera)

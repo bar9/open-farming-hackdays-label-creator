@@ -101,3 +101,43 @@ async fn bio_badge_appears_without_pressing_rezeptur_pruefen() {
 
     let _ = c.close().await;
 }
+
+// DEC-11: the Bio-V «Bio» quality must offer wild collection, with the
+// Bio-Verordnung wording, and it must end up on the label.
+#[tokio::test]
+async fn biov_offers_wildsammlung_with_the_bio_wording() {
+    let c = connect().await;
+    goto_config(&c, Config::Bio).await;
+    set_sachbezeichnung(&c, "Bärlauchpesto").await;
+
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Bärlauch",
+            grams: 150.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioChWildsammlung,
+        },
+    )
+    .await;
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Rapsöl",
+            grams: 850.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioCh,
+        },
+    )
+    .await;
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    assert_label_contains(
+        &c,
+        "aus biologisch zertifizierter Wildsammlung",
+        "biov / wildsammlung legend",
+    )
+    .await;
+
+    let _ = c.close().await;
+}
