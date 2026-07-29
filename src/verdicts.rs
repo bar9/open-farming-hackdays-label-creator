@@ -90,6 +90,16 @@ pub struct Verdicts {
     pub knospe: Option<KnospeVerdict>,
     pub bio_check: Option<CheckState>,
     pub knospe_check: Option<CheckState>,
+    /// DEC-4: die pauschalen Kennzeichnungsvarianten sind nur zulässig, wenn
+    /// keine erlaubte nicht-biologische Ausnahme in der Rezeptur ist.
+    pub alternative_marking_allowed: bool,
+    /// AP1.3: Eingabefeld für die namensgebende Zutat anzeigen.
+    pub namensgebende_zutat_input: bool,
+    /// AP1.4: manuelles Total-Eingabefeld anzeigen.
+    pub manuelles_total_input: bool,
+    /// AP7.1/Fleisch: Indizes der Zutaten, die eine Herkunftsangabe brauchen.
+    /// Leer = keine. Ersetzt die dynamische `herkunft_benoetigt_{i}`-Familie.
+    pub origin_required_indices: Vec<usize>,
 }
 
 impl Verdicts {
@@ -176,6 +186,22 @@ impl Verdicts {
                 CheckState::Failed => keys::KNOSPE_CHECK_FAILED,
             };
             conditionals.insert(key.to_string(), true);
+        }
+
+        if self.alternative_marking_allowed {
+            conditionals.insert(keys::ALTERNATIVE_MARKING_ALLOWED.to_string(), true);
+        }
+        if self.namensgebende_zutat_input {
+            conditionals.insert(keys::NAMENSGEBENDE_ZUTAT.to_string(), true);
+        }
+        if self.manuelles_total_input {
+            conditionals.insert(keys::MANUELLES_TOTAL.to_string(), true);
+        }
+        for &index in &self.origin_required_indices {
+            conditionals.insert(keys::herkunft_benoetigt(index), true);
+        }
+        if !self.origin_required_indices.is_empty() {
+            conditionals.insert(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT.to_string(), true);
         }
     }
 }

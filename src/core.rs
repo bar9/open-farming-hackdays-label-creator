@@ -1,4 +1,3 @@
-use crate::conditional_keys as keys;
 use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeLogo, KnospeVerdict, Verdicts};
 use crate::model::{lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
@@ -1479,9 +1478,7 @@ impl Calculator {
         // stammen aus biologischer Landwirtschaft" / "Bio-" prefix) are only truthful
         // when every agricultural ingredient is organic. With a permitted non-organic
         // exception in the recipe, only the per-ingredient *-marking is available.
-        if !has_erlaubte_ausnahme(&input.ingredients) {
-            conditionals.insert(keys::ALTERNATIVE_MARKING_ALLOWED.to_string(), true);
-        }
+        let alternative_marking_allowed = !has_erlaubte_ausnahme(&input.ingredients);
 
         // Calculate total amount first (needed for validations)
         let mut total_amount = input.ingredients.iter().map(|x| x.computed_amount()).sum();
@@ -1574,17 +1571,9 @@ impl Calculator {
             }
         }
 
-        // conditionals
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&"🎛️ Conditional Display Rules".into());
-        for ruleDef in &self.rule_defs {
-            if let RuleDef::AP1_3_EingabeNamensgebendeZutat = ruleDef {
-                self.log_rule_processing(ruleDef, "CONDITIONAL", Some("Enabling name-giving ingredient input"));
-                conditionals.insert(keys::NAMENSGEBENDE_ZUTAT.to_string(), true);
-            }
-        }
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&format!("🎛️ Conditional elements: {} enabled", conditionals.len()).into());
+        let namensgebende_zutat_input = self
+            .rule_defs
+            .contains(&RuleDef::AP1_3_EingabeNamensgebendeZutat);
 
         let mut sorted_ingredients = input.ingredients.clone();
         sorted_ingredients.sort_by(|y, x| {
@@ -1593,12 +1582,9 @@ impl Calculator {
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
-        if self
-            .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
-        {
-            self.log_rule_processing(&RuleDef::AP1_4_ManuelleEingabeTotal, "CONDITIONAL", Some("Enabling manual total input"));
-            conditionals.insert(keys::MANUELLES_TOTAL.to_string(), true);
-        }
+        let manuelles_total_input = self
+            .rule_defs
+            .contains(&RuleDef::AP1_4_ManuelleEingabeTotal);
 
         // Determine which ingredients require country of origin display
         #[cfg(target_arch = "wasm32")]
@@ -1672,24 +1658,13 @@ impl Calculator {
             None
         };
 
-        // Map all verdicts onto the conditional-elements contract. This is the
-        // only place where verdict → key happens; the exclusivity invariants
-        // follow from the enum structure instead of insert/remove discipline.
-        let verdicts = Verdicts {
-            bio: bio_verdict,
-            knospe: knospe_verdict,
-            bio_check,
-            knospe_check,
-        };
-        verdicts.write_conditionals(&mut conditionals);
-        let verdicts_out = verdicts;
 
 
         let has_meat_rule = self
             .rule_defs.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent);
 
+        let mut origin_required_indices: Vec<usize> = Vec::new();
         if has_50_percent_rule || has_bio_knospe_rule || has_meat_rule {
-            let mut has_any_herkunft_required = false;
             #[cfg(target_arch = "wasm32")]
             web_sys::console::log_1(&"🌍 Analyzing origin requirements for each ingredient:".into());
 
@@ -1742,17 +1717,28 @@ impl Calculator {
                 }
 
                 if requires_herkunft {
-                    conditionals.insert(keys::herkunft_benoetigt(index), true);
-                    has_any_herkunft_required = true;
+                    origin_required_indices.push(index);
                 }
-            }
-
-            if has_any_herkunft_required {
-                conditionals.insert(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT.to_string(), true);
             }
         }
 
-        // End origin requirement logging
+        // All decisions are made — assemble the typed verdicts and derive the
+        // legacy key→bool contract from them. This is the only place where
+        // verdict → key happens; the exclusivity invariants follow from the
+        // enum structure instead of insert/remove discipline.
+        let verdicts = Verdicts {
+            bio: bio_verdict,
+            knospe: knospe_verdict,
+            bio_check,
+            knospe_check,
+            alternative_marking_allowed,
+            namensgebende_zutat_input,
+            manuelles_total_input,
+            origin_required_indices,
+        };
+        verdicts.write_conditionals(&mut conditionals);
+        let verdicts_out = verdicts;
+
 
         // Prepare rule_defs for OutputFormatter, including the specific Knospe rule
         let mut output_rules = self.rule_defs.clone();
