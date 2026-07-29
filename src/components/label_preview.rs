@@ -426,8 +426,12 @@ pub fn LabelPreview(
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.marketing_allowed").to_string()}
                     }
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.alternative_marking").to_string()}
+                    // DEC-4: nur zulässig, wenn alle landwirtschaftlichen Zutaten bio sind
+                    // (keine erlaubte nicht-biologische Ausnahme in der Rezeptur).
+                    if conditionals.0().get("alternative_marking_allowed").unwrap_or(&false) == &true {
+                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                            {t!("bio_hints.alternative_marking").to_string()}
+                        }
                     }
                     // Monoprodukt aus Umstellbetrieb: "Bio" allowed + mandatory Umstellungshinweis (Zeile 7).
                     if conditionals.0().get("umstellbetrieb_hinweis").unwrap_or(&false) == &true {
@@ -474,8 +478,12 @@ pub fn LabelPreview(
                     div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
                         {t!("bio_hints.knospe_check_ok").to_string()}
                     }
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.alternative_marking").to_string()}
+                    // DEC-4: nur zulässig, wenn alle landwirtschaftlichen Zutaten bio sind
+                    // (keine erlaubte nicht-biologische Ausnahme in der Rezeptur).
+                    if conditionals.0().get("alternative_marking_allowed").unwrap_or(&false) == &true {
+                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                            {t!("bio_hints.alternative_marking").to_string()}
+                        }
                     }
                 }
                 if conditionals.0().get("knospe_check_failed").unwrap_or(&false) == &true {

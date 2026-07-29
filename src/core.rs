@@ -345,6 +345,25 @@ fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64
     (ausnahme_amount / total_agricultural_amount) * 100.0
 }
 
+/// Whether the recipe contains at least one permitted non-organic agricultural
+/// ingredient (Annex 3 WBF / Bio Suisse Part III, e.g. Pektin).
+///
+/// Such a recipe is NOT 100% organic-agricultural, so only the per-ingredient
+/// *-marking is legally available; the blanket wordings ("Alle landwirtschaftlichen
+/// Zutaten stammen aus biologischer Landwirtschaft" / the "Bio-" prefix) would be
+/// untrue (DEC-4).
+fn has_erlaubte_ausnahme(ingredients: &[Ingredient]) -> bool {
+    ingredients
+        .iter()
+        .flat_map(|i| i.leaves())
+        .filter(|i| i.is_agricultural())
+        .any(|i| {
+            (i.erlaubte_ausnahme_bio.unwrap_or(false)
+                || i.erlaubte_ausnahme_knospe.unwrap_or(false))
+                && !i.is_bio_ch_compliant()
+        })
+}
+
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
     ingredients.iter()
@@ -1271,6 +1290,14 @@ impl Calculator {
 
         let mut validation_messages = HashMap::new();
         let mut conditionals = HashMap::new();
+
+        // DEC-4: the alternative marking wordings ("Alle landwirtschaftlichen Zutaten
+        // stammen aus biologischer Landwirtschaft" / "Bio-" prefix) are only truthful
+        // when every agricultural ingredient is organic. With a permitted non-organic
+        // exception in the recipe, only the per-ingredient *-marking is available.
+        if !has_erlaubte_ausnahme(&input.ingredients) {
+            conditionals.insert(String::from("alternative_marking_allowed"), true);
+        }
 
         // Calculate total amount first (needed for validations)
         let mut total_amount = input.ingredients.iter().map(|x| x.computed_amount()).sum();

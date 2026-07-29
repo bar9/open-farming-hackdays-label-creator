@@ -937,6 +937,111 @@ fn bio_check_pending_before_rezeptur_vollstaendig() {
     assert_eq!(c.get("bio_check_failed"), None);
 }
 
+// =============================================================================
+// Group — DEC-4: alternative_marking_allowed
+//
+// The blanket wordings («Alle landwirtschaftlichen Zutaten stammen aus
+// biologischer Landwirtschaft» / «Bio-» prefix) are only truthful when EVERY
+// agricultural ingredient is organic. A permitted non-organic exception
+// (Anhang 3 WBF, e.g. Pektin) leaves only the per-ingredient *-marking.
+// =============================================================================
+
+#[test]
+fn alternative_marking_allowed_when_all_agricultural_are_bio() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 500.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("bio_check_ok"), Some(&true));
+    assert_eq!(c.get("alternative_marking_allowed"), Some(&true));
+}
+
+#[test]
+fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
+    // Ticket example: Konfitüre with 5 g Pektin as a permitted non-organic
+    // agricultural ingredient. Recipe still qualifies for Bio, but only the
+    // *-marking per ingredient is allowed.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 500.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    // The positive verdict must remain — only the alternative-wording hint goes.
+    assert_eq!(c.get("bio_check_ok"), Some(&true), "Rezeptur erfüllt die Bio-Anforderungen weiterhin");
+    assert_eq!(c.get("alternative_marking_allowed"), None);
+}
+
+#[test]
+fn alternative_marking_suppressed_with_erlaubte_ausnahme_knospe() {
+    // Same rule in the Knospe environment (ticket: Bio-V *and* Knospe).
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 995.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_check_ok"), Some(&true), "Rezeptur erfüllt die Knospe-Anforderungen weiterhin");
+    assert_eq!(c.get("alternative_marking_allowed"), None);
+}
+
+#[test]
+fn alternative_marking_allowed_when_exception_ingredient_is_also_bio() {
+    // Flag set but the ingredient IS bio-certified: it is not actually a
+    // non-organic exception, so the blanket wording stays truthful.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 995.0).bio_ch().build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).bio_ch().erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("alternative_marking_allowed"), Some(&true));
+}
+
+#[test]
+fn alternative_marking_suppressed_for_nested_erlaubte_ausnahme() {
+    // The exception sits inside a composite — leaves() must find it.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let fuellung = IngredientBuilder::new_agri("Füllung", 500.0)
+        .children(vec![
+            IngredientBuilder::new_agri("Aprikosen", 495.0).bio_ch().build(),
+            IngredientBuilder::new_agri("Pektin", 5.0).erlaubte_ausnahme_bio().build(),
+        ])
+        .build();
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
+        .ingredient(fuellung)
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("alternative_marking_allowed"), None);
+}
+
 #[test]
 fn bio_check_hints_suppressed_for_einzelzutat() {
     // DEC-3: «Keine Zutatenliste (Einzelzutat)» has no recipe, so none of the
