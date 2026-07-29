@@ -252,3 +252,99 @@ async fn custom_ingredient_keeps_the_quality_editable() {
 
     let _ = c.close().await;
 }
+
+// DEC-5: in Bio-V the qualities must form one contiguous radio group whose
+// order never changes, with dependent fields below it — like Knospe. This
+// asserts the actual DOM order before and after each selection, which is the
+// only way to catch "the options jump around".
+#[tokio::test]
+async fn biov_quality_options_keep_their_order_on_every_selection() {
+    let c = connect().await;
+    goto_config(&c, Config::Bio).await;
+
+    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    if let Some(input) = first_accent_input(&c).await {
+        let _ = input.click().await;
+        let _ = input.send_keys("Hafer").await;
+        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+        let _ = input.send_keys("\u{E007}").await;
+    }
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    // Document order of the quality labels.
+    let order_script = r##"
+        const radios = Array.from(document.querySelectorAll("dialog[open] input[name='bio_v_category']"));
+        return radios.map(r => {
+            const l = r.closest('label');
+            return l ? l.innerText.trim() : '';
+        }).join('|');
+        "##;
+
+    let baseline = c
+        .execute(order_script, vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    assert!(
+        baseline.matches('|').count() == 2,
+        "expected exactly three Bio-V qualities, got: {}",
+        baseline
+    );
+
+    // Select each quality in turn; the order must never change.
+    for label in ["Bio", "Nicht-biologisch", "Nicht-landwirtschaftlich"] {
+        let xpath = format!(
+            "//dialog[@open]//label[normalize-space(.)='{}']//input[@name='bio_v_category']",
+            label
+        );
+        if let Ok(el) = c.find(Locator::XPath(&xpath)).await {
+            let _ = el.click().await;
+            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+        }
+        let now = c
+            .execute(order_script, vec![])
+            .await
+            .ok()
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+            .unwrap_or_default();
+        assert_eq!(
+            now, baseline,
+            "quality order changed after selecting «{}»",
+            label
+        );
+    }
+
+    // Dependent fields must sit BELOW the whole group: with «Bio» selected, the
+    // Umstellbetrieb checkbox must come after the last quality radio.
+    let xpath = "//dialog[@open]//label[normalize-space(.)='Bio']//input[@name='bio_v_category']";
+    if let Ok(el) = c.find(Locator::XPath(xpath)).await {
+        let _ = el.click().await;
+        tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+    }
+    let dependent_is_below = c
+        .execute(
+            r##"
+            const radios = Array.from(document.querySelectorAll("dialog[open] input[name='bio_v_category']"));
+            const last = radios[radios.length - 1];
+            const labels = Array.from(document.querySelectorAll('dialog[open] label'));
+            const dep = labels.find(l => /Umstellbetrieb/.test(l.innerText));
+            if (!last || !dep) return false;
+            // DOCUMENT_POSITION_FOLLOWING === 4
+            return (last.compareDocumentPosition(dep) & 4) !== 0;
+            "##,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(
+        dependent_is_below,
+        "the Umstellbetrieb checkbox must appear below the whole quality group"
+    );
+
+    let _ = c.close().await;
+}
