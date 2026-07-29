@@ -22,7 +22,6 @@ pub use certification_body_select::CertificationBodySelect;
 pub use impressum::Impressum;
 pub use link_share_modal::LinkShareModal;
 pub use saved_ingredients_manager::SavedIngredientsManager;
-pub use ingredient_symbols::IngredientSymbolsCompact;
 pub use unified_ingredient_input::UnifiedIngredientInput;
 
 mod conditional_display;
@@ -50,7 +49,6 @@ mod certification_body_select;
 mod impressum;
 mod link_share_modal;
 mod saved_ingredients_manager;
-mod ingredient_symbols;
 mod unified_ingredient_input;
 pub mod ingredient_path;
 pub mod ingredient_pane;
