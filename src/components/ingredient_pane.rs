@@ -171,6 +171,56 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         }
     });
 
+    // All three Ingredient constructors in this pane (live sync, "merken",
+    // save) differ only in amount, allergen flag and children — the other 17
+    // quality/origin fields are identical. Building them in one place keeps the
+    // three from drifting: a new field on `Ingredient` wired up in only two of
+    // three spots is exactly the bug this shape prevents.
+    let make_ingredient = move |amount: f64,
+                                is_allergen: bool,
+                                children: Option<Vec<Ingredient>>| {
+        // Alias names ("Mehl") aren't in food_db; resolve flags via the canonical.
+        let canonical = edit_canonical();
+        let lookup_name = canonical.clone().unwrap_or(edit_name());
+        Ingredient {
+            name: edit_name(),
+            amount,
+            unit: edit_unit(),
+            is_allergen,
+            is_namensgebend: Some(edit_is_namensgebend()),
+            sub_components: None,
+            children,
+            origins: edit_origins(),
+            is_agricultural: if edit_nicht_landwirtschaftlich() {
+                false
+            } else {
+                lookup_agricultural(&lookup_name)
+            },
+            is_bio: Some(edit_is_bio()),
+            category: edit_category(),
+            aufzucht_ort: edit_aufzucht_ort(),
+            schlachtungs_ort: edit_schlachtungs_ort(),
+            fangort: edit_fangort(),
+            bio_ch: Some(edit_bio_ch()),
+            erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
+            erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() {
+                None
+            } else {
+                Some(edit_erlaubte_ausnahme_bio_details())
+            },
+            erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
+            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() {
+                None
+            } else {
+                Some(edit_erlaubte_ausnahme_knospe_details())
+            },
+            processing_steps: edit_processing_steps(),
+            aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
+            override_children: None,
+            canonical,
+        }
+    };
+
     // Wrapper ingredients signal for SubIngredientsTable
     let mut wrapper_ingredients = use_signal(|| {
         vec![Ingredient {
@@ -245,31 +295,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             } else {
                 None
             };
-            wrapper_ingredients.write()[0] = Ingredient {
-                name: edit_name(),
-                amount: edit_amount().unwrap_or(0.0),
-                unit: edit_unit(),
-                is_allergen: is_allergen_custom(),
-                is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: None,
-                children: children_to_use,
-                origins: edit_origins(),
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { let typed = edit_name(); lookup_agricultural(&edit_canonical().unwrap_or(typed)) },
-                is_bio: Some(edit_is_bio()),
-                category: edit_category(),
-                aufzucht_ort: edit_aufzucht_ort(),
-                schlachtungs_ort: edit_schlachtungs_ort(),
-                fangort: edit_fangort(),
-                bio_ch: Some(edit_bio_ch()),
-                erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
-                erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
-                erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-                erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-                processing_steps: edit_processing_steps(),
-                aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                override_children: None,
-                canonical: edit_canonical(),
-            };
+            wrapper_ingredients.write()[0] = make_ingredient(
+                edit_amount().unwrap_or(0.0),
+                is_allergen_custom(),
+                children_to_use,
+            );
         } else {
             wrapper_ingredients.write()[0].children = None;
         }
@@ -477,31 +507,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let handle_save_to_storage = move |_| {
         if edit_is_composite() && edit_children().is_some() {
-            let ingredient_to_save = Ingredient {
-                name: edit_name(),
-                amount: 100.0,
-                unit: edit_unit(),
-                is_allergen: is_allergen_custom(),
-                is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: None,
-                children: edit_children(),
-                origins: edit_origins(),
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { let typed = edit_name(); lookup_agricultural(&edit_canonical().unwrap_or(typed)) },
-                is_bio: Some(edit_is_bio()),
-                category: edit_category(),
-                aufzucht_ort: edit_aufzucht_ort(),
-                schlachtungs_ort: edit_schlachtungs_ort(),
-                fangort: edit_fangort(),
-                bio_ch: Some(edit_bio_ch()),
-                erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
-                erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
-                erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-                erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-                processing_steps: edit_processing_steps(),
-                aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                override_children: None,
-                canonical: edit_canonical(),
-            };
+            // Saved composites are stored normalised to 100 units.
+            let ingredient_to_save =
+                make_ingredient(100.0, is_allergen_custom(), edit_children());
 
             match save_composite_ingredient(&ingredient_to_save) {
                 Ok(_) => {
@@ -559,9 +567,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         };
 
         // Alias names ("Mehl") aren't in food_db; resolve flags via the canonical.
-        let canonical = edit_canonical();
-        let typed = edit_name();
-        let lookup_name = canonical.clone().unwrap_or(typed);
+        // A curated entry's allergen status comes from the DB, a free-text one
+        // from whatever the user ticked.
+        let lookup_name = edit_canonical().unwrap_or(edit_name());
         let in_database = food_db().iter().any(|(name, _)| name == &lookup_name);
         let allergen_status = if in_database {
             lookup_allergen(&lookup_name)
@@ -569,31 +577,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             is_allergen_custom()
         };
 
-        Some(Ingredient {
-            name: edit_name(),
-            amount,
-            unit: edit_unit(),
-            is_allergen: allergen_status,
-            is_namensgebend: Some(edit_is_namensgebend()),
-            sub_components: None,
-            children: edit_children(),
-            origins: edit_origins(),
-            is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&lookup_name) },
-            is_bio: Some(edit_is_bio()),
-            category: edit_category(),
-            aufzucht_ort: edit_aufzucht_ort(),
-            schlachtungs_ort: edit_schlachtungs_ort(),
-            fangort: edit_fangort(),
-            bio_ch: Some(edit_bio_ch()),
-            erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
-            erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
-            erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-            processing_steps: edit_processing_steps(),
-            aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-            override_children: None,
-            canonical,
-        })
+        Some(make_ingredient(amount, allergen_status, edit_children()))
     };
 
     let mut handle_save = move |scale_all: bool| {
