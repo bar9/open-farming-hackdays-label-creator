@@ -1,6 +1,14 @@
-// Manual DEC-2 smoke check via WebDriver: the mono-product quality selector
-// must appear when «Keine Zutatenliste» is ticked, and picking the Swiss Knospe
-// must put the Knospe logo on the label preview.
+// Browser-level checks for the Declarino feedback round (DEC tickets).
+//
+// These cover behaviour that only exists in the assembled UI — a selector
+// appearing, a control being locked, DOM order staying put — which the
+// core-level tests cannot see. One file per ticket would fragment a suite whose
+// per-test cost is dominated by browser startup, so they live together and each
+// test names its ticket.
+//
+// Run serially against a running `make dev` + chromedriver, like the other e2e
+// suites: `cargo test --test e2e_declaration_feedback -- --test-threads=1`.
+
 mod common;
 
 use common::recipes::{BioStatus, Config, RecipeIngredient};
