@@ -1,6 +1,6 @@
 # TD-1: Der Regel-Kontrakt `conditional_elements: HashMap<String, bool>`
 
-Status: Stufen 0–3 umgesetzt · Datum: 2026-07-29 · Anlass: Analyse nach der DEC-Feedbackrunde
+Status: vollständig umgesetzt (Stufen 0–3 + Restschuld) · Datum: 2026-07-29 · Anlass: Analyse nach der DEC-Feedbackrunde
 
 > **Umsetzungsstand** (Branch `td/conditionals-contract`):
 > - Stufe 0 ✅ `conditional_invariants.rs` (Matrix-Invarianten + Konsumenten-Pinning), `is_bio_eingabe` entfernt
@@ -8,7 +8,11 @@ Status: Stufen 0–3 umgesetzt · Datum: 2026-07-29 · Anlass: Analyse nach der 
 > - Stufe 2 ✅ `verdicts.rs` (BioVerdict/KnospeVerdict/CheckState); `decide_bio/decide_knospe/decide_check` in core.rs; `write_conditionals()` als einzige Urteil→Schlüssel-Stelle; `remove()`-Manöver entfällt; execute() 543→398 Zeilen
 > - Stufe 3 ✅ `Output.verdicts` + `VerdictsContext`; `label_preview.rs` liest die Urteile (Logo/Badge, «Bio»-Suffix, Hinweis-Sektion als matches); von 15 `is_set`-Abfragen bleibt eine (`alternative_marking_allowed`)
 >
-> **Verbleibende Restschuld:** `alternative_marking_allowed` als eigenes Urteil modellieren; `ConditionalDisplay`-Pfade (`namensgebende_zutat`, `manuelles_total`, `herkunft_benoetigt_*`) auf Typen umstellen; danach kann die HashMap aus `Output` fallen und `write_conditionals` wird testinterner Adapter.
+> **Restschuld abgetragen** (Commits `701ecb0`, `578b46a`, `bcec6c0`):
+> - `alternative_marking_allowed`, `namensgebende_zutat_input`, `manuelles_total_input` und `origin_required_indices` sind Felder auf `Verdicts`; `execute()` enthält keinen einzigen `conditionals.insert` mehr.
+> - `ConditionalDisplay`, der `Conditionals`-Kontext und `is_set()` sind gelöscht; die UI liest ausschliesslich den `VerdictsContext`.
+> - `Output` trägt nur noch `verdicts`. Die historische Schlüssel→Bool-Sicht existiert als `Output::conditionals()`, on demand abgeleitet und ausschliesslich von der Test-Suite benutzt (97 Assertions als bewusst erhaltenes Sicherheitsnetz).
+> - `execute()`: 543 → 383 Zeilen. Zur Laufzeit existiert kein String-Schlüssel mehr.
 
 ## Befund
 
