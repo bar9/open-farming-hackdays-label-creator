@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
 use crate::core::{Ingredient, AmountUnit};
-use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
+use crate::model::{db_knows_non_agricultural, food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
 use crate::shared::Validations;
@@ -137,6 +137,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         !food_db().iter().any(|(name, _)| name == &lookup)
     });
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
+
+    // The food DB already knows which ingredients are non-agricultural (salt,
+    // water, Dicarbonat). Treat that like the allergen flag: show it and lock it,
+    // instead of making the user guess (DEC-9). Free-text ingredients are not in
+    // the DB, so their choice stays open.
+    let db_says_non_agricultural = use_memo(move || {
+        db_knows_non_agricultural(&edit_name(), edit_canonical().as_deref())
+    });
 
     // Captured once at mount. Not reactive to `ingredients` changes so the
     // auto-save effect below can't overwrite it with the user's new value.
@@ -720,6 +728,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
         edit_nicht_landwirtschaftlich.set(!orig.is_agricultural && orig.is_bio != Some(true) && orig.bio_ch != Some(true));
     };
+
+    // Keep the locked choice in sync with the name: picking a DB ingredient that
+    // is non-agricultural sets the quality, and switching away from it releases
+    // the lock so a stale "nicht-landwirtschaftlich" cannot linger (DEC-9).
+    use_effect(move || {
+        if db_says_non_agricultural() {
+            edit_nicht_landwirtschaftlich.set(true);
+            edit_is_bio.set(false);
+            edit_bio_ch.set(false);
+            edit_aus_umstellbetrieb.set(false);
+            edit_erlaubte_ausnahme_bio.set(false);
+            edit_erlaubte_ausnahme_knospe.set(false);
+        }
+    });
 
     // Knospe config detection (used by bio section and Wildsammlung)
     let is_knospe_config = use_memo(move || {
@@ -1460,6 +1482,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "knospe",
                                     onchange: move |_| { set_bio_cat("knospe"); }
                                 }
@@ -1473,6 +1497,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "bio",
                                     onchange: move |_| { set_bio_cat("bio"); }
                                 }
@@ -1486,6 +1512,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "andere",
                                     onchange: move |_| { set_bio_cat("andere"); }
                                 }
@@ -1499,6 +1527,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "nicht_lw",
                                     onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }
@@ -1655,6 +1685,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "bio",
                                     onchange: move |_| { set_bio_cat("bio"); }
                                 }
@@ -1684,6 +1716,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "andere",
                                     onchange: move |_| { set_bio_cat("andere"); }
                                 }
@@ -1729,6 +1763,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "nicht_lw",
                                     onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }

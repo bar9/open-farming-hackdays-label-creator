@@ -141,3 +141,114 @@ async fn biov_offers_wildsammlung_with_the_bio_wording() {
 
     let _ = c.close().await;
 }
+
+// DEC-9: the food DB already knows Dicarbonat/Salz/Wasser are non-agricultural.
+// The quality must be preselected AND locked, like the allergen checkbox.
+#[tokio::test]
+async fn db_non_agricultural_ingredient_locks_the_quality() {
+    let c = connect().await;
+    goto_config(&c, Config::Knospe).await;
+
+    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    // Type a DB ingredient that is flagged non-agricultural.
+    if let Some(input) = first_accent_input(&c).await {
+        let _ = input.click().await;
+        let _ = input.send_keys("Dicarbonat").await;
+        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+        let _ = input.send_keys("\u{E007}").await; // Enter
+    }
+    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+
+    let state = c
+        .execute(
+            r##"
+            const radios = Array.from(document.querySelectorAll("dialog[open] input[name='bio_category']"));
+            const rows = radios.map(r => {
+                const label = r.closest('label');
+                return {
+                    text: label ? label.innerText.trim() : '',
+                    checked: r.checked,
+                    disabled: r.disabled,
+                };
+            });
+            return JSON.stringify(rows);
+            "##,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+
+    assert!(
+        state.contains("Nicht-landwirtschaftlich"),
+        "quality options not rendered: {}",
+        state
+    );
+    // Every option must be locked, and the non-agricultural one preselected.
+    assert!(
+        !state.contains("\"disabled\":false"),
+        "quality radios must be disabled for a DB non-agricultural ingredient: {}",
+        state
+    );
+    let checked_non_agri = c
+        .execute(
+            r##"
+            const radios = Array.from(document.querySelectorAll("dialog[open] input[name='bio_category']"));
+            const checked = radios.find(r => r.checked);
+            if (!checked) return false;
+            const label = checked.closest('label');
+            return !!label && /Nicht-landwirtschaftlich/.test(label.innerText);
+            "##,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(
+        checked_non_agri,
+        "«Nicht-landwirtschaftlich» must be preselected: {}",
+        state
+    );
+
+    let _ = c.close().await;
+}
+
+// The counterpart: a free-text ingredient is not in the DB, so the choice must
+// stay editable.
+#[tokio::test]
+async fn custom_ingredient_keeps_the_quality_editable() {
+    let c = connect().await;
+    goto_config(&c, Config::Knospe).await;
+
+    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    if let Some(input) = first_accent_input(&c).await {
+        let _ = input.click().await;
+        let _ = input.send_keys("Grossmutters Geheimzutat").await;
+        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+        let _ = input.send_keys("\u{E007}").await;
+    }
+    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+
+    let any_enabled = c
+        .execute(
+            r##"
+            const radios = Array.from(document.querySelectorAll("dialog[open] input[name='bio_category']"));
+            return radios.length > 0 && radios.every(r => !r.disabled);
+            "##,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    assert!(any_enabled, "a free-text ingredient must keep its quality editable");
+
+    let _ = c.close().await;
+}
