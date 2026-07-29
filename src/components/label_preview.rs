@@ -132,12 +132,13 @@ pub fn LabelPreview(
                     let regular = c.get("bio_suisse_regular").unwrap_or(&false) == &true;
                     let no_cross = c.get("bio_suisse_no_cross").unwrap_or(&false) == &true;
                     let umstellung = c.get("knospe_umstellung_logo").unwrap_or(&false) == &true;
-                    // BioV (Bio-CH) shows no logo here; the green "Bio ✓" badge is the
-                    // verified-compliant stamp — gated on the tri-state «Rezeptur prüfen»
-                    // result (bio_check_ok = recipe checked, qualifies, no open errors),
-                    // NOT on the raw percentage, so it never shows prematurely. Knospe
+                    // BioV (Bio-CH) shows no logo here; the green "Bio ✓" badge is its
+                    // equivalent and follows the same rule as the Knospe logo above: it
+                    // reflects the recipe math directly and is NOT coupled to the
+                    // «Rezeptur prüfen» button (Testing 20.07.2026, nla). The tri-state
+                    // check keeps driving the info texts below the label. Knospe
                     // (`bio_suisse_*`) and Bio flags are mutually exclusive → no collision.
-                    let bio_ok = c.get("bio_check_ok").unwrap_or(&false) == &true;
+                    let bio_ok = c.get("bio_marketing_allowed").unwrap_or(&false) == &true;
                     if regular || no_cross {
                         rsx! {
                             div { class: "absolute top-2 right-2 flex items-center justify-end",
@@ -463,6 +464,13 @@ pub fn LabelPreview(
                             {t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string()}
                         }
                     }
+                    // Nicht deklarierte nicht-bio Zutat (Testing 20.07.2026): nennt den
+                    // konkreten Grund, warum die Rezeptur die Bio-Anforderungen verfehlt.
+                    if conditionals.0().get("bio_nicht_erlaubte_zutat").unwrap_or(&false) == &true {
+                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                            {t!("bio_hints.nicht_erlaubte_zutat").to_string()}
+                        }
+                    }
                 }
                 // Knospe: tri-state result of the «Rezeptur prüfen» check.
                 if conditionals.0().get("knospe_check_pending").unwrap_or(&false) == &true {
@@ -493,6 +501,13 @@ pub fn LabelPreview(
                             }
                         }
                         span { {t!("bio_hints.knospe_check_failed").to_string()} }
+                    }
+                    // Konkreter Grund: erlaubte nicht-bio Zutaten über der 5%-Grenze
+                    // (Testing 20.07.2026, gleiche Regel wie bei der Bio-Verordnung).
+                    if conditionals.0().get("knospe_erlaubte_ausnahme_ueber_5_prozent").unwrap_or(&false) == &true {
+                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                            {t!("bio_hints.knospe_erlaubte_ausnahme_ueber_5_prozent").to_string()}
+                        }
                     }
                 }
             }

@@ -457,6 +457,7 @@ bio_legend:
   x_prozent_bio: "%{percentage}% des ingrédients agricoles sont issus de la production biologique"
   aus_umstellung: en conversion vers l'agriculture biologique
   aus_wildsammlung: issu de cueillette sauvage certifiée
+  aus_wildsammlung_biov: issu de cueillette sauvage biologique certifiée
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)
@@ -476,6 +477,7 @@ bio_labels:
   erlaubte_ausnahme_details_note: Note interne uniquement – n'apparaît pas sur l'étiquette.
   aus_umstellbetrieb: En conversion
   wildsammlung: Issu de cueillette sauvage certifiée
+  wildsammlung_biov: Issu de cueillette sauvage biologique certifiée
   nicht_landwirtschaftlich: Non agricole
   andere: Non biologique
   knospe_icon_ch: Certifié Bourgeon (origine suisse)
@@ -485,6 +487,8 @@ bio_hints:
   marketing_allowed: "Le produit peut être commercialisé comme produit bio. Bio peut figurer dans la dénomination, le nom de fantaisie ou librement sur l'emballage."
   marketing_not_allowed: "Le produit ne peut PAS être commercialisé comme produit bio car tous les ingrédients agricoles ne sont pas certifiés bio. Seuls certains ingrédients peuvent être désignés comme biologiques."
   erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (selon l'annexe 3 de l'ordonnance du DEFR, p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le produit ne peut pas être commercialisé comme produit bio."
+  nicht_erlaubte_zutat: "Les ingrédients non biologiques ne peuvent être utilisés que s'ils figurent à l'annexe 3 de l'ordonnance du DEFR (p. ex. la pectine) et sont marqués comme «Ingrédient non biologique autorisé». La recette contient un ingrédient non biologique non marqué – le produit ne peut pas être commercialisé comme produit bio."
+  knospe_erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (selon l'annexe 3 de l'ordonnance du DEFR, p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le produit ne peut pas être commercialisé avec le Bourgeon."
   umstellbetrieb_mono: "En tant que produit mono issu d'une exploitation en reconversion, «Bio» peut figurer dans la dénomination. Mention obligatoire sur l'étiquette : «Produit dans le cadre de la reconversion à l'agriculture biologique» (marquée par ** dans la liste des ingrédients)."
   bio_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
   bio_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences Bio. Veuillez vérifier la saisie."

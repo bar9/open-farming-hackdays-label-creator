@@ -197,6 +197,9 @@ pub struct Input {
     pub total: Option<f64>,
     pub certification_body: Option<String>,
     pub rezeptur_vollstaendig: bool,
+    /// «Keine Zutatenliste (Einzelzutat)» — the product has no recipe at all,
+    /// so the «Rezeptur prüfen» hints must stay silent (DEC-3).
+    pub ignore_ingredients: bool,
 }
 
 impl Input {
@@ -340,6 +343,21 @@ fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64
         .sum();
 
     (ausnahme_amount / total_agricultural_amount) * 100.0
+}
+
+/// Any agricultural ingredient that is neither bio-certified nor declared a
+/// permitted non-organic exception (Annex 3 WBF). The 5% tolerance applies ONLY
+/// to declared exceptions such as Pektin — a plain non-organic ingredient (e.g.
+/// konventionelle Eier) blocks "Bio" at ANY share (Testing 20.07.2026, nla).
+/// `aus_umstellbetrieb` ingredients are bio-certified (in conversion) and judged
+/// by the separate Umstellbetrieb rules, so `bio_ch` is read raw here rather than
+/// through `is_bio_ch_compliant`.
+fn has_unpermitted_non_bio_ch(ingredients: &[Ingredient]) -> bool {
+    ingredients
+        .iter()
+        .flat_map(|i| i.leaves())
+        .filter(|i| i.is_agricultural())
+        .any(|i| i.bio_ch != Some(true) && i.erlaubte_ausnahme_bio != Some(true))
 }
 
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
@@ -1146,9 +1164,18 @@ impl OutputFormatter {
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps
         if let Some(steps) = &self.ingredient.processing_steps {
+            let knospe_wording = self.RuleDefs.contains(&RuleDef::Knospe_ShowBioSuisseLogo);
             let filtered: Vec<_> = steps.iter()
                 .filter(|s| !(show_wildsammlung_marker && s.as_str() == wildsammlung_step))
-                .map(|s| html_escape(s))
+                .map(|s| {
+                    // Unter der Bio-Verordnung heisst der Schritt "aus biologisch
+                    // zertifizierter Wildsammlung" (gleiche Quelle wie die Legende).
+                    if s.as_str() == wildsammlung_step && !knospe_wording {
+                        html_escape(&t!("bio_legend.aus_wildsammlung_biov"))
+                    } else {
+                        html_escape(s)
+                    }
+                })
                 .collect();
             if !filtered.is_empty() {
                 let steps_text = filtered.join(", ");
@@ -1449,11 +1476,21 @@ impl Calculator {
                 // First check if ALL agricultural ingredients are Knospe-certified (required for any logo)
                 let knospe_percentage = calculate_knospe_certified_percentage(&input.ingredients);
 
+                // Erlaubte nicht-biologische Zutaten (Anhang 3 WBF, z.B. Pektin) zählen
+                // zwar als Knospe-konform, dürfen aber — wie bei der Bio-Verordnung —
+                // höchstens 5% der landwirtschaftlichen Zutaten ausmachen
+                // (Testing 20.07.2026, nla).
+                let ausnahme_ueber_5_prozent =
+                    calculate_erlaubte_ausnahme_bio_percentage(&input.ingredients) > 5.0;
+                if ausnahme_ueber_5_prozent {
+                    conditionals.insert(String::from("knospe_erlaubte_ausnahme_ueber_5_prozent"), true);
+                }
+
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("🌾 Knospe certified percentage: {:.1}%", knospe_percentage).into());
 
                 // Only show a Knospe logo if 100% of agricultural ingredients are Knospe-certified
-                if knospe_percentage >= 100.0 {
+                if knospe_percentage >= 100.0 && !ausnahme_ueber_5_prozent {
                     // Now determine which logo variant based on Swiss percentage
                     // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
                     let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
@@ -1481,6 +1518,17 @@ impl Calculator {
                         conditionals.insert(String::from("knospe_umstellung_logo"), true);
                     }
                     conditionals.insert(String::from("knospe_marketing_allowed"), true);
+
+                    // "Bio" an die Sachbezeichnung anhängen, sobald das Produkt mit der
+                    // Knospe vermarktet werden darf — analog zur Bio-Verordnung
+                    // (Testing 20.07.2026, nla). Umstellungsprodukte: wie dort darf nur
+                    // das Monoprodukt "Bio" tragen; der Umstellungssatz steht bereits
+                    // neben der Umstellungsknospe.
+                    if !has_umstellbetrieb_in_tree(&input.ingredients)
+                        || is_mono_product(&input.ingredients)
+                    {
+                        conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
+                    }
                 } else {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
@@ -1493,14 +1541,20 @@ impl Calculator {
             // conditionals above keep encoding the pure recipe math (logo choice).
             // Only recipe-scoped issues count — the certification body is covered
             // by the yellow placeholder on the label, not by this check.
-            if !input.rezeptur_vollstaendig {
+            // Einzelzutat/Monoprodukt («Keine Zutatenliste»): there is no recipe to
+            // check, so none of the tri-state hints apply (DEC-3).
+            if input.ignore_ingredients {
+                // no check hints
+            } else if !input.rezeptur_vollstaendig {
                 conditionals.insert(String::from("knospe_check_pending"), true);
             } else {
                 let has_recipe_issues = validation_messages
                     .keys()
                     .any(|k| k.starts_with("ingredients["));
-                let fulfils_knospe = !input.ingredients.is_empty()
-                    && calculate_knospe_certified_percentage(&input.ingredients) >= 100.0;
+                let fulfils_knospe = conditionals
+                    .get("knospe_marketing_allowed")
+                    .copied()
+                    .unwrap_or(false);
                 if fulfils_knospe && !has_recipe_issues {
                     conditionals.insert(String::from("knospe_check_ok"), true);
                 } else {
@@ -1513,11 +1567,24 @@ impl Calculator {
         let bio_ch_percentage = if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
             let pct = calculate_bio_ch_certified_percentage(&input.ingredients);
 
-            if pct >= 95.0 {
+            // Nicht deklarierte nicht-bio Zutaten (Testing 20.07.2026, nla): die
+            // 5%-Toleranz gilt NUR für erlaubte Ausnahmen nach Anhang 3 WBF. Eine
+            // beliebige nicht-bio Zutat (z.B. konventionelle Eier) schliesst "Bio"
+            // unabhängig von ihrem Anteil aus.
+            let nicht_erlaubte_zutat = has_unpermitted_non_bio_ch(&input.ingredients);
+
+            // Ohne Zutaten gibt es noch kein Bio-Verdikt — die Prozentrechnung
+            // liefert für die leere Rezeptur 100% (nur Wasser/Salz-Fall).
+            if input.ingredients.is_empty() {
+                conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+            } else if pct >= 95.0 && !nicht_erlaubte_zutat {
                 conditionals.insert(String::from("bio_sachbezeichnung_suffix"), true);
                 conditionals.insert(String::from("bio_marketing_allowed"), true);
             } else {
                 conditionals.insert(String::from("bio_marketing_not_allowed"), true);
+            }
+            if nicht_erlaubte_zutat && !input.ingredients.is_empty() {
+                conditionals.insert(String::from("bio_nicht_erlaubte_zutat"), true);
             }
             // Erlaubte nicht-bio Zutaten (Anhang 3 WBF, z.B. Pektin) dürfen höchstens
             // 5% der landwirtschaftlichen Zutaten ausmachen; darüber ist "Bio" nicht
@@ -1558,7 +1625,10 @@ impl Calculator {
             // mono-Umstellbetrieb case); this layer folds in "recipe checked" +
             // per-ingredient validation, so the Bio-badge/verdict is only asserted
             // once the user has confirmed the recipe and no recipe-scoped errors remain.
-            if !input.rezeptur_vollstaendig {
+            // Einzelzutat/Monoprodukt («Keine Zutatenliste»): no recipe, no check (DEC-3).
+            if input.ignore_ingredients {
+                // no check hints
+            } else if !input.rezeptur_vollstaendig {
                 conditionals.insert(String::from("bio_check_pending"), true);
             } else {
                 let has_recipe_issues = validation_messages
@@ -1733,9 +1803,17 @@ impl Calculator {
             label = format!("{}<br>** {}", label, t!("bio_legend.aus_umstellung"));
         }
 
-        // Append Wildsammlung legend if any ingredient got the ° marker
+        // Append Wildsammlung legend if any ingredient got the ° marker. Bio Suisse
+        // says "aus zertifizierter Wildsammlung"; unter der Bio-Verordnung lautet der
+        // Text "aus biologisch zertifizierter Wildsammlung" (Testing 20.07.2026, nla,
+        // gestützt auf die Auskunft von Luana Cresta/BLW).
         if has_wildsammlung_marker {
-            label = format!("{}<br>° {}", label, t!("bio_legend.aus_wildsammlung"));
+            let legend = if self.rule_defs.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
+                t!("bio_legend.aus_wildsammlung")
+            } else {
+                t!("bio_legend.aus_wildsammlung_biov")
+            };
+            label = format!("{}<br>° {}", label, legend);
         }
 
         Output {

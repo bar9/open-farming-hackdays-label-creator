@@ -446,6 +446,28 @@ fn knospe_check_pending_before_recipe_marked_complete() {
 }
 
 #[test]
+fn knospe_check_hints_suppressed_for_einzelzutat() {
+    // DEC-3: «Keine Zutatenliste (Einzelzutat)» has no recipe to check, so the
+    // tri-state hints must stay silent in the Knospe environment too.
+    for vollstaendig in [false, true] {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
+        let mut builder = InputBuilder::new()
+            .einzelzutat()
+            .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build());
+        if vollstaendig {
+            builder = builder.vollstaendig();
+        }
+        let output = calculator.execute(builder.build());
+        let c = &output.conditional_elements;
+
+        assert_eq!(c.get("knospe_check_pending"), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get("knospe_check_ok"), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get("knospe_check_failed"), None, "vollstaendig={vollstaendig}");
+    }
+}
+
+#[test]
 fn knospe_check_ok_when_complete_and_valid() {
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
@@ -913,6 +935,28 @@ fn bio_check_pending_before_rezeptur_vollstaendig() {
     assert_eq!(c.get("bio_check_pending"), Some(&true));
     assert_eq!(c.get("bio_check_ok"), None);
     assert_eq!(c.get("bio_check_failed"), None);
+}
+
+#[test]
+fn bio_check_hints_suppressed_for_einzelzutat() {
+    // DEC-3: «Keine Zutatenliste (Einzelzutat)» has no recipe, so none of the
+    // tri-state «Rezeptur prüfen» hints may appear — neither before nor after
+    // the check button would have been pressed.
+    for vollstaendig in [false, true] {
+        let mut calculator = setup_simple_calculator();
+        calculator.registerRuleDefs(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+        let mut builder = InputBuilder::new()
+            .einzelzutat()
+            .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build());
+        if vollstaendig {
+            builder = builder.vollstaendig();
+        }
+        let output = calculator.execute(builder.build());
+        let c = &output.conditional_elements;
+        assert_eq!(c.get("bio_check_pending"), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get("bio_check_ok"), None, "vollstaendig={vollstaendig}");
+        assert_eq!(c.get("bio_check_failed"), None, "vollstaendig={vollstaendig}");
+    }
 }
 
 #[test]

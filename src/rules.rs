@@ -187,6 +187,9 @@ impl RuleRegistry {
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
                 RuleDef::Bio_ShowBioSachbezeichnung,
+                // Wildsammlung gibt es auch unter der Bio-Verordnung, dort mit dem
+                // Zusatz "biologisch" (Testing 20.07.2026, nla).
+                RuleDef::Wildsammlung_Ueber10Prozent,
             ],
         );
 

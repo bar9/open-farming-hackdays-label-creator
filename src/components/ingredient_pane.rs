@@ -138,6 +138,15 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     });
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
 
+    // food_db knows which entries are non-agricultural (Wasser, Salz, Dicarbonat).
+    // That fact is presented like the allergen flag — preselected and greyed out —
+    // instead of leaving it to the user (Testing 20.07.2026, nla).
+    let db_non_agricultural = use_memo(move || {
+        let typed = edit_name();
+        let lookup = edit_canonical().unwrap_or(typed);
+        food_db().iter().any(|(name, _)| name == &lookup) && !lookup_agricultural(&lookup)
+    });
+
     // Captured once at mount. Not reactive to `ingredients` changes so the
     // auto-save effect below can't overwrite it with the user's new value.
     let original_amount = use_signal(|| original_ingredient.computed_amount());
