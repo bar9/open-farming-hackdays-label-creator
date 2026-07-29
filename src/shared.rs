@@ -7,6 +7,17 @@ pub struct Validations(pub Memo<HashMap<String, Vec<String>>>);
 #[derive(Clone, Copy)]
 pub struct Conditionals(pub Memo<HashMap<String, bool>>);
 
+impl Conditionals {
+    /// Whether the rule engine set this conditional.
+    ///
+    /// Absent and `false` mean the same thing to every caller, so this collapses
+    /// the `get(k).unwrap_or(&false) == &true` dance that was written out at
+    /// each of the ~18 use sites in the label preview.
+    pub fn is_set(&self, key: &str) -> bool {
+        *self.0.read().get(key).unwrap_or(&false)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Configuration {
     Conventional,
