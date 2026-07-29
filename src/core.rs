@@ -370,6 +370,41 @@ fn has_undeclared_non_bio(ingredients: &[Ingredient]) -> bool {
     ingredients.iter().any(|i| i.has_undeclared_non_bio())
 }
 
+/// Percentage (of total agricultural weight) made up of permitted non-organic
+/// exceptions (Annex 3 WBF / Bio Suisse Part III, e.g. Pektin) that are not
+/// themselves Knospe-certified. Bio Suisse tolerates these only up to 5% of the
+/// agricultural weight, exactly as the Bio-V rule does (DEC-8).
+fn calculate_erlaubte_ausnahme_knospe_percentage(ingredients: &[Ingredient]) -> f64 {
+    let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    let total_agricultural_amount: f64 = leaves
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    if total_agricultural_amount == 0.0 {
+        return 0.0;
+    }
+
+    // Either exception flag makes an ingredient Knospe-compliant (see
+    // `is_knospe_compliant`), so both count against the 5% budget — unless the
+    // ingredient is bio-certified in its own right, in which case it is not an
+    // exception at all.
+    let ausnahme_amount: f64 = leaves
+        .iter()
+        .filter(|ingredient| ingredient.is_agricultural())
+        .filter(|ingredient| {
+            (ingredient.erlaubte_ausnahme_bio.unwrap_or(false)
+                || ingredient.erlaubte_ausnahme_knospe.unwrap_or(false))
+                && !ingredient.is_bio.unwrap_or(false)
+        })
+        .map(|ingredient| ingredient.amount)
+        .sum();
+
+    (ausnahme_amount / total_agricultural_amount) * 100.0
+}
+
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
     ingredients.iter()
@@ -1502,12 +1537,18 @@ impl Calculator {
 
                 // First check if ALL agricultural ingredients are Knospe-certified (required for any logo)
                 let knospe_percentage = calculate_knospe_certified_percentage(&input.ingredients);
+                // Permitted non-organic exceptions count as Knospe-compliant above,
+                // so the percentage alone cannot catch e.g. 40% Pektin. Bio Suisse
+                // caps them at 5% of the agricultural weight, same as Bio-V (DEC-8).
+                let ausnahme_percentage =
+                    calculate_erlaubte_ausnahme_knospe_percentage(&input.ingredients);
+                let ausnahme_ueber_grenze = ausnahme_percentage > 5.0;
 
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("🌾 Knospe certified percentage: {:.1}%", knospe_percentage).into());
 
                 // Only show a Knospe logo if 100% of agricultural ingredients are Knospe-certified
-                if knospe_percentage >= 100.0 {
+                if knospe_percentage >= 100.0 && !ausnahme_ueber_grenze {
                     // Now determine which logo variant based on Swiss percentage
                     // Use bio-specific calculation if Bio_Knospe_EingabeIstBio rule is active
                     let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_Knospe_EingabeIstBio);
@@ -1540,6 +1581,11 @@ impl Calculator {
                     web_sys::console::log_1(&format!("⚠️ Not all ingredients are Knospe-certified ({:.1}%), no logo will be shown", knospe_percentage).into());
                     conditionals.insert(String::from("knospe_marketing_not_allowed"), true);
                 }
+                // Name the concrete reason when it is the 5% cap, not a missing
+                // certification — the generic text above would be misleading.
+                if ausnahme_ueber_grenze {
+                    conditionals.insert(String::from("knospe_erlaubte_ausnahme_ueber_5_prozent"), true);
+                }
             }
 
             // Tri-state result of the «Rezeptur prüfen» check (Testing 25.06.2026).
@@ -1558,7 +1604,10 @@ impl Calculator {
                     .keys()
                     .any(|k| k.starts_with("ingredients["));
                 let fulfils_knospe = !input.ingredients.is_empty()
-                    && calculate_knospe_certified_percentage(&input.ingredients) >= 100.0;
+                    && calculate_knospe_certified_percentage(&input.ingredients) >= 100.0
+                    // Same condition as the logo gate, otherwise logo and
+                    // «Rezeptur prüfen» text would contradict each other.
+                    && calculate_erlaubte_ausnahme_knospe_percentage(&input.ingredients) <= 5.0;
                 if fulfils_knospe && !has_recipe_issues {
                     conditionals.insert(String::from("knospe_check_ok"), true);
                 } else {

@@ -492,6 +492,7 @@ bio_hints:
   alternative_marking: "Remarque : En plus du marquage *, les variantes suivantes sont également autorisées : «Tous les ingrédients agricoles proviennent de l'agriculture biologique» ou le préfixe «Bio-» devant chaque ingrédient."
   knospe_marketing_allowed: "Le produit remplit les exigences Bourgeon et peut être commercialisé avec le logo Bio Suisse Bourgeon."
   knospe_marketing_not_allowed: "Le produit ne remplit PAS les exigences Bourgeon car tous les ingrédients agricoles ne sont pas certifiés Bourgeon. Le logo Bourgeon ne peut pas être utilisé."
+  knospe_erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le logo Bourgeon ne peut pas être utilisé et le produit ne peut pas être commercialisé avec le Bourgeon."
 
   knospe_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
   knospe_check_ok: "La recette saisie satisfait aux exigences du Bourgeon et le produit peut être commercialisé avec le Bourgeon."

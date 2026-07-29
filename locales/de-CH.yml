@@ -723,6 +723,7 @@ bio_hints:
   alternative_marking: "Hinweis: Neben der *-Kennzeichnung sind auch folgende Varianten zulässig: «Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft» oder der Präfix «Bio-» vor den einzelnen Zutaten."
   knospe_marketing_allowed: "Das Produkt erfüllt die Knospe-Anforderungen und darf mit dem Bio Suisse Knospe-Logo vermarktet werden."
   knospe_marketing_not_allowed: "Das Produkt erfüllt die Knospe-Anforderungen NICHT, da nicht alle landwirtschaftlichen Zutaten Knospe-zertifiziert sind. Das Knospe-Logo darf nicht verwendet werden."
+  knospe_erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Knospe-Logo darf nicht verwendet und das Produkt nicht mit der Knospe vermarktet werden."
 
   knospe_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
   knospe_check_ok: "Die Rezeptur-Eingabe erfüllt die Knospe-Anforderungen und das Produkt darf mit der Knospe vermarktet werden."

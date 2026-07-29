@@ -523,15 +523,15 @@ fn knospe_check_failed_when_not_fully_knospe() {
 #[test]
 fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
     // A non-bio ingredient that is a permitted non-organic exception (Annex 3 WBF)
-    // must not block the Knospe logo.
+    // must not block the Knospe logo — within the 5% cap (DEC-8).
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 960.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Nonbio", 40.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
@@ -545,15 +545,15 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
 #[test]
 fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
     // A non-Knospe ingredient that is a permitted Bio Suisse Part III exception
-    // must not block the Knospe logo.
+    // must not block the Knospe logo — within the 5% cap (DEC-8).
     let mut calculator = setup_simple_calculator();
     calculator.registerRuleDefs(vec![
         RuleDef::Knospe_ShowBioSuisseLogo,
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 960.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
