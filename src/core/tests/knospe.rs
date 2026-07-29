@@ -567,3 +567,157 @@ fn wildsammlung_under_10_percent_no_marker() {
     // Bärlauch = 5% < 10% → no ° marker.
     assert!(!output.label.contains('°'), "under 10% must NOT show a ° marker; label: {}", output.label);
 }
+
+// --- DEC-8: 5% cap on permitted non-organic ingredients (Pektin) ---------
+//
+// Permitted exceptions count as Knospe-compliant, so the certified percentage
+// stays at 100% no matter how much Pektin is in the recipe. Bio Suisse caps
+// them at 5% of the agricultural weight, exactly like the Bio-V rule.
+
+#[test]
+fn knospe_erlaubte_ausnahme_over_5pct_blocks_logo() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), None);
+    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("bio_suisse_regular"), None);
+    assert_eq!(c.get("bio_suisse_no_cross"), None);
+    // The hint has to name the 5% limit, not a missing certification.
+    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_within_5pct_keeps_logo() {
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 960.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_marketing_not_allowed"), None);
+    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_exactly_5pct_keeps_logo() {
+    // Boundary: "höchstens 5%" includes exactly 5%.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 950.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 50.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_bio_flag_counts_toward_the_same_cap() {
+    // Both exception flags make an ingredient Knospe-compliant, so both must
+    // count against the 5% budget.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), Some(&true));
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_over_5pct_fails_the_rezeptur_check() {
+    // Logo gate and «Rezeptur prüfen» text must agree; otherwise the label says
+    // "erfüllt die Anforderungen" while no logo is shown.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_check_ok"), None);
+    assert_eq!(c.get("knospe_check_failed"), Some(&true));
+}
+
+#[test]
+fn knospe_uncertified_nonbio_still_blocks_without_the_5pct_hint() {
+    // Existing behaviour (unchanged): a non-bio ingredient without the exception
+    // checkbox blocks the logo — but the reason is the missing certification, so
+    // the 5% hint must NOT appear.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_not_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+}
+
+#[test]
+fn knospe_non_agricultural_exception_does_not_count() {
+    // Only agricultural ingredients enter the percentage; water/salt must not
+    // push a recipe over the cap.
+    let mut calculator = setup_simple_calculator();
+    calculator.registerRuleDefs(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new("Wasser", 400.0).agricultural(false).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditional_elements;
+
+    assert_eq!(c.get("knospe_marketing_allowed"), Some(&true));
+    assert_eq!(c.get("knospe_erlaubte_ausnahme_ueber_5_prozent"), None);
+}

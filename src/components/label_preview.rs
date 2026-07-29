@@ -494,6 +494,13 @@ pub fn LabelPreview(
                         }
                         span { {t!("bio_hints.knospe_check_failed").to_string()} }
                     }
+                    // Concrete reason when the failure is the 5% exception cap
+                    // (DEC-8), which the generic text above does not name.
+                    if conditionals.0().get("knospe_erlaubte_ausnahme_ueber_5_prozent").unwrap_or(&false) == &true {
+                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
+                            {t!("bio_hints.knospe_erlaubte_ausnahme_ueber_5_prozent").to_string()}
+                        }
+                    }
                 }
             }
             } // end if disclaimer_accepted
