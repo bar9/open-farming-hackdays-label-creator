@@ -45,7 +45,7 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
     rsx! {
         select {
             oninput: move |evt| props.date_prefix.set(evt.data.value()),
-            class: "select w-full max-w-xs select-bordered bg-base-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-200",
+            class: "select w-full max-w-xs select-bordered bg-base-200",
             value: "{props.date_prefix}",
             option {
                 value: "{t!(\"label.mindestensHaltbar\").to_string()}",
@@ -68,7 +68,7 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
                 oninput: move |evt| {
                     ymd_date.set(evt.data.value());
                 },
-                class: "input input-bordered w-full bg-base-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-200", r#type: "date", value: "{ymd_date}"
+                class: "input input-bordered w-full bg-base-200", r#type: "date", value: "{ymd_date}"
             }
         }
     }

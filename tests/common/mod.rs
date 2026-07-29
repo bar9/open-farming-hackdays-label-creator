@@ -6,7 +6,7 @@
 // Selector strategy (no data-testid in production code):
 //   1. placeholder text (i18n-translated German strings)
 //   2. visible button text via XPath
-//   3. daisyUI class names (.input-accent, .btn-info, ...)
+//   3. daisyUI class names (.input-bordered, .btn-info, ...)
 //   4. position (:nth-of-type) as last resort
 
 #![allow(dead_code)]
@@ -137,9 +137,9 @@ pub async fn click_button_by_text(c: &Client, text: &str) -> bool {
     }
 }
 
-/// First input with the daisyUI accent class (used as the genesis ingredient input).
+/// First input with the daisyUI bordered class (used as the genesis ingredient input).
 pub async fn first_accent_input(c: &Client) -> Option<Element> {
-    c.find(Locator::Css("input.input-accent")).await.ok()
+    c.find(Locator::Css("input.input-bordered")).await.ok()
 }
 
 /// First text input on the page (used as product title heuristic).
@@ -202,7 +202,7 @@ pub async fn open_add_ingredient(c: &Client) -> bool {
 
 /// Add a simple ingredient via the genesis modal:
 /// - open modal
-/// - type name in the .input-accent input
+/// - type name in the .input-bordered input
 /// - press Enter to commit as custom ingredient
 /// - try to fill amount in a numeric input
 /// - click a Save / "Speichern und nächste" / "Speichern" button

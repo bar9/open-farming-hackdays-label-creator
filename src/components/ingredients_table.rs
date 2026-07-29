@@ -139,7 +139,7 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                             input {
                                 r#type: "number",
                                 placeholder: t!("label.manuellesTotal").to_string(),
-                                class: "input input-accent w-full",
+                                class: "input input-bordered w-full",
                                 min: "0",
                                 onchange: move |evt| {
                                     if let Ok(amount) = evt.data.value().parse::<f64>() {
@@ -356,7 +356,7 @@ fn render_ingredient_tree(
                             if depth == 0 {
                                 button {
                                     class: "btn btn-outline join-item",
-                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
                                     onclick: {
                                         let mut root_ingredients = root_ingredients;
                                         move |_| {

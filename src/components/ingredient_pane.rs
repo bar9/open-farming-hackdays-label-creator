@@ -979,7 +979,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                 input {
                                     r#type: "number",
                                     placeholder: t!("placeholders.amount_in_grams").to_string(),
-                                    class: "input input-accent flex-1",
+                                    class: "input input-bordered flex-1",
                                     min: "0",
                                     step: "any",
                                     oninput: move |evt| {
@@ -1034,7 +1034,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     div { class: "flex gap-2",
                                         input {
                                             r#type: "number",
-                                            class: "input input-accent flex-1",
+                                            class: "input input-bordered flex-1",
                                             value: "{total}",
                                             disabled: true,
                                         }
@@ -1311,7 +1311,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             input {
                                 r#type: "number",
                                 placeholder: t!("placeholders.amount_in_grams").to_string(),
-                                class: "input input-accent flex-1",
+                                class: "input input-bordered flex-1",
                                 min: "0",
                                 step: "any",
                                 oninput: move |evt| {
