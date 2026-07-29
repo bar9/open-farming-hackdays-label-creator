@@ -39,17 +39,17 @@ fn calculate_swiss_agricultural_percentage_with_non_agricultural() {
 #[test]
 fn test_agricultural_lookup() {
     // Test agricultural ingredients
-    assert_eq!(lookup_agricultural("Hafer"), true);
-    assert_eq!(lookup_agricultural("Weizenmehl"), true);
-    assert_eq!(lookup_agricultural("Olivenöl"), true);
-    assert_eq!(lookup_agricultural("Milch"), true);
+    assert!(lookup_agricultural("Hafer"));
+    assert!(lookup_agricultural("Weizenmehl"));
+    assert!(lookup_agricultural("Olivenöl"));
+    assert!(lookup_agricultural("Milch"));
 
     // Test non-agricultural ingredients
-    assert_eq!(lookup_agricultural("Salz"), false);
-    assert_eq!(lookup_agricultural("Wasser"), false);
+    assert!(!lookup_agricultural("Salz"));
+    assert!(!lookup_agricultural("Wasser"));
 
     // Test unknown ingredient (should default to true)
-    assert_eq!(lookup_agricultural("UnknownIngredient"), true);
+    assert!(lookup_agricultural("UnknownIngredient"));
 }
 
 #[test]
@@ -343,7 +343,7 @@ fn namensgebend_validator_quiet_when_amounts_present() {
         .build();
     let output = calculator.execute(input);
     assert!(
-        output.validation_messages.get("ingredients[0][amount]").is_none(),
+        !output.validation_messages.contains_key("ingredients[0][amount]"),
         "weighted namensgebend child must not be flagged. Messages: {:?}",
         output.validation_messages
     );

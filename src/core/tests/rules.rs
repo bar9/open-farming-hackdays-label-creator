@@ -20,8 +20,8 @@ fn ap1_3_eingabe_namensgebende_zutat() {
     let input = InputBuilder::new().build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
-    assert!(conditionals.get("namensgebende_zutat").is_some());
-    assert_eq!(true, *conditionals.get("namensgebende_zutat").unwrap());
+    assert!(conditionals.contains_key("namensgebende_zutat"));
+    assert!(*conditionals.get("namensgebende_zutat").unwrap());
 }
 
 #[test]
@@ -31,8 +31,8 @@ fn ap1_4_manuelle_eingabe_total() {
     let input = InputBuilder::new().build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
-    assert!(conditionals.get("manuelles_total").is_some());
-    assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
+    assert!(conditionals.contains_key("manuelles_total"));
+    assert!(*conditionals.get("manuelles_total").unwrap());
 }
 
 #[test]
@@ -48,6 +48,6 @@ fn ap1_4_manualTotalChangesPercent() {
         .build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
-    assert!(conditionals.get("manuelles_total").is_some());
-    assert_eq!(true, *conditionals.get("manuelles_total").unwrap());
+    assert!(conditionals.contains_key("manuelles_total"));
+    assert!(*conditionals.get("manuelles_total").unwrap());
 }

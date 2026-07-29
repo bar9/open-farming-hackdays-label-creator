@@ -10,7 +10,7 @@ fn amount_lt_zero_invalid() {
         .build();
     let output = calculator.execute(input);
     let validation_messages = output.validation_messages;
-    assert!(validation_messages.get("ingredients[0][amount]").is_some());
+    assert!(validation_messages.contains_key("ingredients[0][amount]"));
     let amount_messages = validation_messages.get("ingredients[0][amount]").unwrap();
     assert!(!amount_messages.is_empty());
     assert!(amount_messages.iter().any(|m| m == "Die Menge muss grösser als 0 sein."));
@@ -25,7 +25,7 @@ fn amount_gt_zero_valid() {
         .build();
     let output = calculator.execute(input);
     let validation_messages = output.validation_messages;
-    assert!(validation_messages.get("ingredients[0][amount]").map_or(true, |v| v.is_empty()));
+    assert!(validation_messages.get("ingredients[0][amount]").is_none_or(|v| v.is_empty()));
 }
 
 #[test]

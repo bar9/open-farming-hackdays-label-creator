@@ -633,7 +633,7 @@ fn certification_body_valid() {
     let output = calculator.execute(input);
 
     // Valid certification body → no validation error for this field
-    assert!(output.validation_messages.get("certification_body").is_none());
+    assert!(!output.validation_messages.contains_key("certification_body"));
 }
 
 #[test]
@@ -1269,7 +1269,7 @@ fn bio_check_failed_when_recipe_issue_despite_qualifying() {
         .build();
     let output = calculator.execute(input);
     let c = &output.conditional_elements;
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_some(),
+    assert!(output.validation_messages.contains_key("ingredients[0][origin]"),
         "expected an open origin error; messages: {:?}", output.validation_messages);
     assert_eq!(c.get("bio_marketing_allowed"), Some(&true), "still qualifies on percentage");
     assert_eq!(c.get("bio_check_failed"), Some(&true));

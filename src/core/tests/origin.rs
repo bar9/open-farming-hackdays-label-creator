@@ -10,11 +10,8 @@ fn ap7_1_herkunft_benoetigt_ueber_50_prozent() {
         .build();
     let output = calculator.execute(input);
     let conditionals = output.conditional_elements;
-    assert!(conditionals
-        .get("herkunft_benoetigt_ueber_50_prozent")
-        .is_some());
-    assert_eq!(
-        true,
+    assert!(conditionals.contains_key("herkunft_benoetigt_ueber_50_prozent"));
+    assert!(
         *conditionals
             .get("herkunft_benoetigt_ueber_50_prozent")
             .unwrap()
@@ -83,7 +80,7 @@ fn validation_missing_origin_for_ingredient_over_50_percent() {
         .build();
     let output = calculator.execute(input);
     let validation_messages = output.validation_messages;
-    assert!(validation_messages.get("ingredients[0][origin]").is_some());
+    assert!(validation_messages.contains_key("ingredients[0][origin]"));
     let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
     assert!(!origin_messages.is_empty());
     assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten über 50%."));
@@ -102,7 +99,7 @@ fn origin_over_50_percent_skips_non_agricultural() {
         .build();
     let output = calculator.execute(input);
     // Dicarbonat = 700/1000 = 70% > 50% but non-agricultural → no origin required.
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_none(),
+    assert!(!output.validation_messages.contains_key("ingredients[0][origin]"),
         "non-agricultural >50% must not require origin, got: {:?}", output.validation_messages);
 }
 
@@ -119,7 +116,7 @@ fn dicarbonat_from_db_is_non_agricultural() {
         .build();
     let output = calculator.execute(input);
     // new_agri("Dicarbonat") looks up food_db → is_agricultural=false → no origin required at 70%.
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_none(),
+    assert!(!output.validation_messages.contains_key("ingredients[0][origin]"),
         "Dicarbonat (food_db non-agricultural) must not require origin, got: {:?}", output.validation_messages);
 }
 
@@ -265,9 +262,9 @@ fn meat_ingredient_over_20_percent_requires_origin() {
     let label = output.label;
 
     // Meat ingredient should show origin field even though <50%
-    assert!(conditionals.get("herkunft_benoetigt_0").is_some());
+    assert!(conditionals.contains_key("herkunft_benoetigt_0"));
     // Non-meat ingredient should show origin field (>50% rule also active)
-    assert!(conditionals.get("herkunft_benoetigt_1").is_some());
+    assert!(conditionals.contains_key("herkunft_benoetigt_1"));
 
     // Both ingredients should display country on label
     assert!(label.contains("Hackfleisch (CH)"));
@@ -299,9 +296,9 @@ fn meat_rule_only_shows_origin_for_meat_ingredients() {
     let label = output.label;
 
     // Meat ingredient should show origin field
-    assert!(conditionals.get("herkunft_benoetigt_0").is_some());
+    assert!(conditionals.contains_key("herkunft_benoetigt_0"));
     // Non-meat ingredient should NOT show origin field with only meat rule
-    assert!(conditionals.get("herkunft_benoetigt_1").is_none());
+    assert!(!conditionals.contains_key("herkunft_benoetigt_1"));
 
     // The current origin display logic shows origin for all ingredients if any origin rule is active
     // This is a limitation of the current design but the functionality still works correctly
@@ -334,9 +331,9 @@ fn meat_ingredient_under_20_percent_no_origin_required() {
     let conditionals = output.conditional_elements;
 
     // Meat ingredient under 20% should NOT show origin field
-    assert!(conditionals.get("herkunft_benoetigt_0").is_none());
+    assert!(!conditionals.contains_key("herkunft_benoetigt_0"));
     // Non-meat ingredient should NOT show origin field (only meat rule active)
-    assert!(conditionals.get("herkunft_benoetigt_1").is_none());
+    assert!(!conditionals.contains_key("herkunft_benoetigt_1"));
 }
 
 #[test]
@@ -357,7 +354,7 @@ fn validation_missing_origin_for_meat_ingredient_over_20_percent() {
     let validation_messages = output.validation_messages;
 
     // Should have validation error for missing origin on meat ingredient
-    assert!(validation_messages.get("ingredients[0][origin]").is_some());
+    assert!(validation_messages.contains_key("ingredients[0][origin]"));
     let origin_messages = validation_messages.get("ingredients[0][origin]").unwrap();
     assert!(!origin_messages.is_empty());
     assert!(origin_messages.iter().any(|m| m == "Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
@@ -396,13 +393,13 @@ fn meat_detection_comprehensive_categories() {
             // Should have validation error for missing origin
             let origin_messages = validation_messages.get("ingredients[0][origin]");
             assert!(
-                origin_messages.map_or(false, |v| !v.is_empty()),
+                origin_messages.is_some_and(|v| !v.is_empty()),
                 "Expected validation error for {} with category '{}'",
                 ingredient_name, category
             );
             // Should show origin field
             assert!(
-                conditionals.get("herkunft_benoetigt_0").is_some(),
+                conditionals.contains_key("herkunft_benoetigt_0"),
                 "Expected origin field for {} with category '{}'",
                 ingredient_name, category
             );
@@ -410,13 +407,13 @@ fn meat_detection_comprehensive_categories() {
             // Should NOT have validation error
             let origin_messages = validation_messages.get("ingredients[0][origin]");
             assert!(
-                origin_messages.map_or(true, |v| v.is_empty()),
+                origin_messages.is_none_or(|v| v.is_empty()),
                 "Unexpected validation error for {} with category '{}'",
                 ingredient_name, category
             );
             // Should NOT show origin field
             assert!(
-                conditionals.get("herkunft_benoetigt_0").is_none(),
+                !conditionals.contains_key("herkunft_benoetigt_0"),
                 "Unexpected origin field for {} with category '{}'",
                 ingredient_name, category
             );
@@ -446,7 +443,7 @@ fn meat_detection_processed_meat_products() {
     let label = output.label;
 
     // Should recognize "Rohwurstware" as meat and show origin field
-    assert!(conditionals.get("herkunft_benoetigt_0").is_some());
+    assert!(conditionals.contains_key("herkunft_benoetigt_0"));
     // Should display origin on label
     assert!(label.contains("Rohwurst (CH)"));
 }

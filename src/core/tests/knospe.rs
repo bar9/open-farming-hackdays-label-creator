@@ -76,8 +76,8 @@ fn bio_knospe_non_agricultural_never_requires_origin() {
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_some());
-    assert!(output.validation_messages.get("ingredients[1][origin]").is_none(),
+    assert!(output.validation_messages.contains_key("ingredients[0][origin]"));
+    assert!(!output.validation_messages.contains_key("ingredients[1][origin]"),
         "non-agricultural ingredient must not require origin, got: {:?}", output.validation_messages);
 }
 
@@ -98,9 +98,9 @@ fn knospe_under90_non_agricultural_never_requires_origin_even_when_mono() {
     let output = calculator.execute(input);
 
     // Hafer is the single agricultural leaf (mono) and carries a real origin → satisfied.
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_none());
+    assert!(!output.validation_messages.contains_key("ingredients[0][origin]"));
     // Dicarbonat is non-agricultural → never flagged, even though the product is mono.
-    assert!(output.validation_messages.get("ingredients[1][origin]").is_none(),
+    assert!(!output.validation_messages.contains_key("ingredients[1][origin]"),
         "non-agricultural ingredient must not require origin even in a mono product, got: {:?}",
         output.validation_messages);
 }

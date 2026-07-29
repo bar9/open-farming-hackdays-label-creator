@@ -25,7 +25,9 @@ check-rust: css
 	cargo check
 
 lint: css
-	cargo clippy -- -D warnings
+	# --all-targets so warnings in tests are caught too; they used to
+	# accumulate invisibly because only the binary was linted.
+	cargo clippy --all-targets -- -D warnings
 
 test: css
 	cargo test --bins --test locale_parity
