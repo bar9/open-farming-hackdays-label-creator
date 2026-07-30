@@ -67,7 +67,7 @@ pub fn SplitLayout() -> Element {
             class: "min-h-screen flex flex-col",
             "data-theme": "{theme_context.read().theme}",
             header {
-                class: "bg-base-200 p-4",
+                class: "bg-base-200 p-4 border border-bottom border-base-300",
                 div {
                     class: "flex justify-between items-center",
                     div {

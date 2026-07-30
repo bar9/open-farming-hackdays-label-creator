@@ -175,7 +175,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                                     div { class: "flex items-center gap-2 justify-end",
                                         input {
                                             r#type: "number",
-                                            class: "input input-accent input-sm w-20",
+                                            class: "input input-bordered input-sm w-20",
                                             min: "0",
                                             step: "any",
                                             value: "{child.amount}",
@@ -208,7 +208,7 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                             td {
                                 button {
                                     class: "btn btn-square btn-sm",
-                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
+                                    dangerous_inner_html: r###"<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>"###,
                                     onclick: move |_| {
                                         delete_callback(props.index, key);
                                     },

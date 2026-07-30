@@ -153,7 +153,7 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
         div { class: "relative w-full",
             input {
                 r#type: "text",
-                class: "input input-accent w-full",
+                class: "input input-bordered w-full",
                 placeholder: if props.placeholder.is_empty() {
                     t!("placeholder.ingredient_name").to_string()
                 } else {

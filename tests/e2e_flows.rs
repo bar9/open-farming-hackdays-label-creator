@@ -196,7 +196,7 @@ async fn saved_composite_recall_name_appears_in_label() {
         }
         tokio::time::sleep(std::time::Duration::from_millis(300)).await;
     }
-    let input = input_el.expect("genesis ingredient input (input.input-accent) never appeared");
+    let input = input_el.expect("genesis ingredient input (input.input-bordered) never appeared");
     let _ = input.click().await;
     let _ = input.send_keys("Salz").await;
     // Poll for the saved-ingredient suggestion to appear. Saved suggestions now
