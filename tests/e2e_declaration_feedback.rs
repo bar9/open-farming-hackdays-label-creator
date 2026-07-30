@@ -499,3 +499,37 @@ async fn save_and_next_clears_the_umstellbetrieb_flag() {
 
     let _ = c.close().await;
 }
+
+// The mono-product quality selector belongs to Bio and Knospe only. In
+// CH-Lebensmittelrecht there is no bio/knospe quality to declare, so enabling
+// «Keine Zutatenliste» there must NOT surface the selector.
+#[tokio::test]
+async fn mono_quality_selector_hidden_in_lebensmittelrecht() {
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+
+    // Tick «Keine Zutatenliste (Einzelzutat)».
+    let toggled = c
+        .find(Locator::XPath(
+            "//label[contains(normalize-space(.), 'Keine Zutatenliste')]//input[@type='checkbox']",
+        ))
+        .await;
+    let toggled = match toggled {
+        Ok(el) => el.click().await.is_ok(),
+        Err(_) => false,
+    };
+    assert!(toggled, "could not find the «Keine Zutatenliste» checkbox");
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    // No quality selector must appear in CH-Lebensmittelrecht.
+    let has_selector = c
+        .find(Locator::XPath("//input[@name='mono_quality']"))
+        .await
+        .is_ok();
+    assert!(
+        !has_selector,
+        "mono-product quality selector must not appear in CH-Lebensmittelrecht"
+    );
+
+    let _ = c.close().await;
+}

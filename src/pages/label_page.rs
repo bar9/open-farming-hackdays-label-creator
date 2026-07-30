@@ -512,7 +512,10 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                         }
                         // Einzelzutat/Monoprodukt: no recipe, but the quality of the
                         // single ingredient still drives Bio/Knospe on the label (DEC-2).
-                        if ignore_ingredients() {
+                        // Only the Bio and Knospe configurations have a quality to
+                        // declare; CH-Lebensmittelrecht has none, so the selector
+                        // stays hidden there (has_cert is exactly Bio|Knospe).
+                        if ignore_ingredients() && has_cert {
                             FormField {
                                 label: t!("label.mono_quality").to_string(),
                                 help: Some(t!("help.mono_quality").to_string()),
