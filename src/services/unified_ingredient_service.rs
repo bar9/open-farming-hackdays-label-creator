@@ -201,7 +201,15 @@ pub async fn search_unified(query: &str, lang: &str) -> Result<Vec<UnifiedIngred
 
     // Try to match local ingredients with BLV results
     for local_name in local_results {
-        if let Some((index, blv_match)) = find_best_blv_match(&local_name, &blv_results) {
+        // Non-agricultural staples (Wasser, Salz, Dicarbonat) are not a BLV food
+        // category. Their only fuzzy BLV matches are unrelated foods that merely
+        // mention the word (e.g. "…ohne Salz" → "Gemüse gekocht"), so merging
+        // would paste a misleading "→ Kategorie" hint under an ingredient that
+        // is already locked to «Nicht-landwirtschaftlich». Keep them local and
+        // category-less instead.
+        if !lookup_agricultural(&local_name) {
+            unified.push(UnifiedIngredient::from_local(local_name));
+        } else if let Some((index, blv_match)) = find_best_blv_match(&local_name, &blv_results) {
             unified.push(UnifiedIngredient::merge(local_name, blv_match));
             used_blv_indices.push(index);
         } else {
@@ -440,6 +448,28 @@ mod tests {
             find_best_blv_match("Weizenmehl", &results).unwrap().1.food_name,
             "Weizenmehl, hell"
         );
+    }
+
+    // Non-agricultural staples (Wasser, Salz, Dicarbonat) must never inherit a
+    // BLV food category: their only fuzzy matches are unrelated foods that merely
+    // mention the word (e.g. "…ohne Salz" → "Gemüse gekocht"). A category hint
+    // there is misleading under an ingredient already locked to
+    // «Nicht-landwirtschaftlich», so `merge` must be skipped for them.
+    #[test]
+    fn non_agricultural_locals_never_inherit_a_category() {
+        for name in ["Salz", "Wasser", "Dicarbonat"] {
+            assert!(
+                !lookup_agricultural(name),
+                "{name} is expected to be non-agricultural in food_db"
+            );
+            // What the search loop builds for a non-agricultural local entry.
+            let unified = UnifiedIngredient::from_local(name.to_string());
+            assert_eq!(
+                unified.category, None,
+                "{name} must have no category hint"
+            );
+            assert_eq!(unified.is_agricultural, Some(false));
+        }
     }
 
     // Query "mehl": curated alias first, boosted canonical second, uncurated
