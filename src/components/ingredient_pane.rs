@@ -474,10 +474,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_canonical.set(unified_ingredient.canonical.clone());
         edit_category.set(unified_ingredient.category.clone());
 
-        if let Some(category) = &unified_ingredient.category {
-            web_sys::console::log_1(&format!("Ingredient '{}' category: {}", unified_ingredient.name, category).into());
-        }
-
         if let Some(is_allergen) = unified_ingredient.is_allergen {
             is_allergen_custom.set(is_allergen);
         }
