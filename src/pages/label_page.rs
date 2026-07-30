@@ -1,8 +1,9 @@
 use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
+use crate::model::Country;
 use crate::layout::{CopyLinkContext, ThemeContext};
 use crate::rules::{RuleDef, RuleRegistry};
-use crate::shared::{restore_params_from_session_storage, Conditionals, Configuration, Validations};
+use crate::shared::{restore_params_from_session_storage, Configuration, Validations, VerdictsContext};
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,90 @@ fn to_query_string<T: serde::Serialize>(value: &T) -> Result<String, serde_qs::E
     qs_config().serialize_string(value)
 }
 
+/// Quality of an Einzelzutat/Monoprodukt («Keine Zutatenliste»).
+///
+/// Without a recipe there is no ingredient to carry the bio flags, yet the
+/// label still has to state whether the single ingredient is Bio, Knospe,
+/// Umstellung or conventional (DEC-2). This mirrors the leaf-level quality
+/// choice of the ingredient pane; `synthetic_ingredient` turns it back into a
+/// normal `Ingredient` so every existing rule applies unchanged.
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug, Default)]
+pub enum MonoQuality {
+    /// Not declared yet, or explicitly conventional.
+    #[default]
+    Andere,
+    /// Bio-CH certified (Bio-V) — the «Bio» Sachbezeichnung case.
+    Bio,
+    /// Bio-CH certified, from a conversion farm (Umstellung), Bio-V.
+    BioUmstellung,
+    /// Knospe, Swiss origin.
+    KnospeCh,
+    /// Knospe, imported.
+    KnospeImport,
+    /// Umstellungsknospe, Swiss origin.
+    UmstellungKnospeCh,
+    /// Umstellungsknospe, imported.
+    UmstellungKnospeImport,
+    /// Non-agricultural single ingredient (salt, water).
+    NichtLandwirtschaftlich,
+}
+
+impl MonoQuality {
+    /// Whether this variant is a Knospe (incl. Umstellungsknospe) choice, which
+    /// only the Knospe configuration offers.
+    pub fn is_knospe(&self) -> bool {
+        matches!(
+            self,
+            MonoQuality::KnospeCh
+                | MonoQuality::KnospeImport
+                | MonoQuality::UmstellungKnospeCh
+                | MonoQuality::UmstellungKnospeImport
+        )
+    }
+
+    /// The single ingredient a mono product implies, so the calculator can run
+    /// its normal Bio/Knospe percentage math. `name` stays empty: the label
+    /// prints no ingredient list in this mode, only logos and the
+    /// Sachbezeichnung suffix depend on the quality.
+    pub fn synthetic_ingredient(&self) -> Ingredient {
+        let mut ing = Ingredient::from_name_amount(String::new(), 100.0);
+        ing.is_agricultural = !matches!(self, MonoQuality::NichtLandwirtschaftlich);
+        match self {
+            MonoQuality::Andere | MonoQuality::NichtLandwirtschaftlich => {}
+            MonoQuality::Bio => {
+                ing.bio_ch = Some(true);
+            }
+            MonoQuality::BioUmstellung => {
+                ing.bio_ch = Some(true);
+                ing.aus_umstellbetrieb = Some(true);
+            }
+            MonoQuality::KnospeCh => {
+                ing.is_bio = Some(true);
+                ing.bio_ch = Some(true);
+                ing.origins = Some(vec![Country::CH]);
+            }
+            MonoQuality::KnospeImport => {
+                ing.is_bio = Some(true);
+                ing.bio_ch = Some(true);
+                ing.origins = Some(vec![Country::Import]);
+            }
+            MonoQuality::UmstellungKnospeCh => {
+                ing.is_bio = Some(true);
+                ing.bio_ch = Some(true);
+                ing.aus_umstellbetrieb = Some(true);
+                ing.origins = Some(vec![Country::CH]);
+            }
+            MonoQuality::UmstellungKnospeImport => {
+                ing.is_bio = Some(true);
+                ing.bio_ch = Some(true);
+                ing.aus_umstellbetrieb = Some(true);
+                ing.origins = Some(vec![Country::Import]);
+            }
+        }
+        ing
+    }
+}
+
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Form {
     #[serde(default = "default_version")]
@@ -28,6 +113,9 @@ pub struct Form {
     pub ingredients: Vec<Ingredient>,
     #[serde(default)]
     pub ignore_ingredients: bool,
+    /// Quality of the single ingredient when `ignore_ingredients` is set (DEC-2).
+    #[serde(default)]
+    pub mono_quality: MonoQuality,
     #[serde(default)]
     pub product_title: String,
     #[serde(default)]
@@ -93,8 +181,16 @@ fn default_date_prefix() -> String {
 
 impl From<Form> for Input {
     fn from(val: Form) -> Self {
+        // Einzelzutat/Monoprodukt: there is no recipe, but the declared quality
+        // still has to drive the Bio/Knospe rules. Feeding it in as a single
+        // synthetic ingredient keeps all of core.rs unchanged (DEC-2).
+        let ingredients = if val.ignore_ingredients {
+            vec![val.mono_quality.synthetic_ingredient()]
+        } else {
+            val.ingredients
+        };
         Input {
-            ingredients: val.ingredients,
+            ingredients,
             total: val.manual_total,
             certification_body: if val.certification_body.is_empty() {
                 None
@@ -102,6 +198,7 @@ impl From<Form> for Input {
                 Some(val.certification_body)
             },
             rezeptur_vollstaendig: val.rezeptur_vollstaendig,
+            ignore_ingredients: val.ignore_ingredients,
         }
     }
 }
@@ -112,6 +209,7 @@ impl Default for Form {
             v: 2,
             ingredients: Vec::new(),
             ignore_ingredients: false,
+            mono_quality: MonoQuality::default(),
             product_title: String::new(),
             product_subtitle: String::new(),
             additional_info: String::new(),
@@ -175,6 +273,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     });
 
     let mut ignore_ingredients = use_signal(|| false);
+    let mut mono_quality = use_signal(|| initial_form.read().mono_quality);
     let mut rezeptur_vollstaendig = use_signal(|| initial_form.read().rezeptur_vollstaendig);
     let mut ingredients: Signal<Vec<Ingredient>> =
         use_signal(|| initial_form.read().ingredients.clone());
@@ -207,6 +306,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         // only carry ingredient data still populate the form.
         if !url_params.read().is_empty() {
             ignore_ingredients.set(form_data.ignore_ingredients);
+            mono_quality.set(form_data.mono_quality);
             rezeptur_vollstaendig.set(form_data.rezeptur_vollstaendig);
             ingredients.set(form_data.ingredients.clone());
             product_title.set(form_data.product_title.clone());
@@ -239,6 +339,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         v: 2,
         ingredients: ingredients(),
         ignore_ingredients: ignore_ingredients(),
+        mono_quality: mono_quality(),
         product_title: product_title(),
         product_subtitle: product_subtitle(),
         additional_info: additional_info(),
@@ -298,10 +399,10 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     });
     let label: Memo<String> = use_memo(move || calc_output.read().label.clone());
     let validation_messages = use_memo(move || calc_output.read().validation_messages.clone());
-    let conditional_display = use_memo(move || calc_output.read().conditional_elements.clone());
+    let verdicts = use_memo(move || calc_output.read().verdicts.clone());
 
     use_context_provider(|| Validations(validation_messages));
-    use_context_provider(|| Conditionals(conditional_display));
+    use_context_provider(|| VerdictsContext(verdicts));
 
     // Calculate derived values for amount and price
     let get_base_factor = use_memo(move || {
@@ -406,6 +507,19 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                                 inline_checkbox: true,
                                 CheckboxInput {
                                     bound_value: ignore_ingredients
+                                }
+                            }
+                        }
+                        // Einzelzutat/Monoprodukt: no recipe, but the quality of the
+                        // single ingredient still drives Bio/Knospe on the label (DEC-2).
+                        if ignore_ingredients() {
+                            FormField {
+                                label: t!("label.mono_quality").to_string(),
+                                help: Some(t!("help.mono_quality").to_string()),
+                                required: true,
+                                MonoQualitySelect {
+                                    quality: mono_quality,
+                                    configuration: configuration
                                 }
                             }
                         }

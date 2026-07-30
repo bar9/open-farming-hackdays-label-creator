@@ -39,17 +39,17 @@ fn calculate_swiss_agricultural_percentage_with_non_agricultural() {
 #[test]
 fn test_agricultural_lookup() {
     // Test agricultural ingredients
-    assert_eq!(lookup_agricultural("Hafer"), true);
-    assert_eq!(lookup_agricultural("Weizenmehl"), true);
-    assert_eq!(lookup_agricultural("Olivenöl"), true);
-    assert_eq!(lookup_agricultural("Milch"), true);
+    assert!(lookup_agricultural("Hafer"));
+    assert!(lookup_agricultural("Weizenmehl"));
+    assert!(lookup_agricultural("Olivenöl"));
+    assert!(lookup_agricultural("Milch"));
 
     // Test non-agricultural ingredients
-    assert_eq!(lookup_agricultural("Salz"), false);
-    assert_eq!(lookup_agricultural("Wasser"), false);
+    assert!(!lookup_agricultural("Salz"));
+    assert!(!lookup_agricultural("Wasser"));
 
     // Test unknown ingredient (should default to true)
-    assert_eq!(lookup_agricultural("UnknownIngredient"), true);
+    assert!(lookup_agricultural("UnknownIngredient"));
 }
 
 #[test]
@@ -237,8 +237,7 @@ fn resolve_percentages_idempotent_on_absolute_tree() {
 
 #[test]
 fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -266,8 +265,7 @@ fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
 
 #[test]
 fn namensgebend_percent_mode_child_resolves_to_whole_product_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -294,8 +292,7 @@ fn namensgebend_percent_mode_child_resolves_to_whole_product_percent() {
 
 #[test]
 fn namensgebend_sub_ingredient_without_amount_is_flagged() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -324,8 +321,7 @@ fn namensgebend_sub_ingredient_without_amount_is_flagged() {
 
 #[test]
 fn namensgebend_validator_quiet_when_amounts_present() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_2_ProzentOutputNamensgebend,
         RuleDef::AP2_1_ZusammegesetztOutput,
     ]);
@@ -343,7 +339,7 @@ fn namensgebend_validator_quiet_when_amounts_present() {
         .build();
     let output = calculator.execute(input);
     assert!(
-        output.validation_messages.get("ingredients[0][amount]").is_none(),
+        !output.validation_messages.contains_key("ingredients[0][amount]"),
         "weighted namensgebend child must not be flagged. Messages: {:?}",
         output.validation_messages
     );

@@ -1,11 +1,14 @@
+use crate::verdicts::Verdicts;
 use dioxus::prelude::*;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
 pub struct Validations(pub Memo<HashMap<String, Vec<String>>>);
 
+/// The typed rule-engine decisions (TD-1). The UI reads these; the legacy
+/// string-keyed view exists only as `Output::conditionals()` for the tests.
 #[derive(Clone, Copy)]
-pub struct Conditionals(pub Memo<HashMap<String, bool>>);
+pub struct VerdictsContext(pub Memo<Verdicts>);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Configuration {

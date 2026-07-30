@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use super::*;
 
 // Reworked per Testing 25.06.2026: the «alle Zutaten Herkunft» rule now flags an
@@ -5,8 +6,7 @@ use super::*;
 // country AND the label output is the Import-Knospe.
 #[test]
 fn bio_knospe_alle_zutaten_herkunft_conditional() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
         // Import-Knospe without a country → origin required
@@ -16,17 +16,16 @@ fn bio_knospe_alle_zutaten_herkunft_conditional() {
         .total(1000.0)
         .build();
     let output = calculator.execute(input);
-    let conditionals = output.conditional_elements;
+    let conditionals = output.conditionals();
 
-    assert_eq!(conditionals.get("herkunft_benoetigt_0"), Some(&true));
-    assert_eq!(conditionals.get("herkunft_benoetigt_1"), None);
-    assert_eq!(conditionals.get("herkunft_benoetigt_ueber_50_prozent"), Some(&true));
+    assert_eq!(conditionals.get(&keys::herkunft_benoetigt(0)), Some(&true));
+    assert_eq!(conditionals.get(&keys::herkunft_benoetigt(1)), None);
+    assert_eq!(conditionals.get(keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT), Some(&true));
 }
 
 #[test]
 fn bio_knospe_validation_missing_origin_for_import_knospe() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).bio().origin(Country::CH).build())
@@ -48,8 +47,7 @@ fn bio_knospe_no_origin_error_when_ch_knospe_logo_shows() {
     // Import-Knospe ingredient without a country, but ≥90% Swiss share → the
     // label shows the CH-Knospe, so no origin error is raised (plan assumption,
     // recorded in the Herkunft-Problemanalyse for Mirjam).
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio().origin(Country::CH).build())
@@ -66,8 +64,7 @@ fn bio_knospe_no_origin_error_when_ch_knospe_logo_shows() {
 fn bio_knospe_non_agricultural_never_requires_origin() {
     // Dicarbonat case (Testing 25.06.2026): non-agricultural ingredients must
     // never be asked for an origin.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Rohrzucker", 900.0).bio().origin(Country::Import).build())
@@ -76,8 +73,8 @@ fn bio_knospe_non_agricultural_never_requires_origin() {
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_some());
-    assert!(output.validation_messages.get("ingredients[1][origin]").is_none(),
+    assert!(output.validation_messages.contains_key("ingredients[0][origin]"));
+    assert!(!output.validation_messages.contains_key("ingredients[1][origin]"),
         "non-agricultural ingredient must not require origin, got: {:?}", output.validation_messages);
 }
 
@@ -87,8 +84,7 @@ fn knospe_under90_non_agricultural_never_requires_origin_even_when_mono() {
     // Monoprodukt short-circuit in should_show_origin_knospe_under90 used to return true for
     // EVERY origin-less ingredient — flagging a non-agricultural additive (Dicarbonat) too,
     // even after the user correctly marked it "Nicht-landwirtschaftlich".
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).origin(Country::EU).build())
@@ -98,17 +94,16 @@ fn knospe_under90_non_agricultural_never_requires_origin_even_when_mono() {
     let output = calculator.execute(input);
 
     // Hafer is the single agricultural leaf (mono) and carries a real origin → satisfied.
-    assert!(output.validation_messages.get("ingredients[0][origin]").is_none());
+    assert!(!output.validation_messages.contains_key("ingredients[0][origin]"));
     // Dicarbonat is non-agricultural → never flagged, even though the product is mono.
-    assert!(output.validation_messages.get("ingredients[1][origin]").is_none(),
+    assert!(!output.validation_messages.contains_key("ingredients[1][origin]"),
         "non-agricultural ingredient must not require origin even in a mono product, got: {:?}",
         output.validation_messages);
 }
 
 #[test]
 fn bio_knospe_country_display_on_label_for_all_ingredients() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Milch", 300.0).origin(Country::CH).build())
         .ingredient(IngredientBuilder::new("Zucker", 200.0).origin(Country::EU).build())
@@ -126,8 +121,7 @@ fn bio_knospe_country_display_on_label_for_all_ingredients() {
 fn bio_knospe_no_origin_error_for_plain_ingredients_without_knospe() {
     // Plain (non-Knospe) ingredients without origins are no longer flagged by
     // the reworked rule — only Import-Knospe ingredients are.
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Milch", 300.0).build())
@@ -143,8 +137,7 @@ fn bio_knospe_no_origin_error_for_plain_ingredients_without_knospe() {
 
 #[test]
 fn bio_knospe_no_validation_errors_when_all_have_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_AlleZutatenHerkunft]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Milch", 300.0).origin(Country::CH).build())
         .ingredient(IngredientBuilder::new("Zucker", 200.0).origin(Country::EU).build())
@@ -158,8 +151,7 @@ fn bio_knospe_no_validation_errors_when_all_have_origin() {
 
 #[test]
 fn knospe_100_percent_ch_no_origin_display() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
     ]);
@@ -178,8 +170,7 @@ fn knospe_100_percent_ch_no_origin_display() {
 
 #[test]
 fn knospe_90_99_percent_ch_show_origin_for_swiss() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
     ]);
@@ -201,8 +192,7 @@ fn knospe_90_99_percent_ch_show_origin_for_swiss() {
 
 #[test]
 fn knospe_under_90_percent_ch_no_special_rules() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
     ]);
@@ -222,8 +212,7 @@ fn knospe_under_90_percent_ch_no_special_rules() {
 
 #[test]
 fn knospe_under_90_percent_ch_namensgebende_always_shows_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
     ]);
     let input = InputBuilder::new()
@@ -243,8 +232,7 @@ fn knospe_under_90_percent_ch_namensgebende_always_shows_origin() {
 #[test]
 fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_origin() {
     // This test demonstrates that name-giving ingredients show origin even with low percentage
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
     ]);
     let input = InputBuilder::new()
@@ -263,8 +251,7 @@ fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_orig
 
 #[test]
 fn knospe_under_90_validation_eggs_over_10_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 850.0).origin(Country::EU).build())
@@ -285,8 +272,7 @@ fn knospe_under_90_validation_eggs_over_10_percent() {
 
 #[test]
 fn knospe_under_90_validation_honey_over_10_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 850.0).origin(Country::EU).build())
@@ -307,8 +293,7 @@ fn knospe_under_90_validation_honey_over_10_percent() {
 
 #[test]
 fn knospe_under_90_validation_dairy_always_requires_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).origin(Country::EU).build())
@@ -333,8 +318,7 @@ fn knospe_under_90_validation_dairy_always_requires_origin() {
 // `effective_category()` must fall back to the curated food_db category.
 #[test]
 fn knospe_under_90_butter_without_api_category_shows_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).origin(Country::EU).build())
         .ingredient(
@@ -352,8 +336,7 @@ fn knospe_under_90_butter_without_api_category_shows_origin() {
 
 #[test]
 fn knospe_under_90_validation_butter_without_api_category_requires_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).origin(Country::EU).build())
@@ -373,8 +356,7 @@ fn knospe_under_90_validation_butter_without_api_category_requires_origin() {
 
 #[test]
 fn knospe_under_90_validation_meat_always_requires_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 970.0).origin(Country::EU).build())
@@ -395,8 +377,7 @@ fn knospe_under_90_validation_meat_always_requires_origin() {
 
 #[test]
 fn knospe_under_90_validation_fish_over_10_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 850.0).origin(Country::EU).build())
@@ -417,8 +398,7 @@ fn knospe_under_90_validation_fish_over_10_percent() {
 
 #[test]
 fn knospe_under_90_validation_insects_always_requires_origin() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Hafer", 970.0).origin(Country::EU).build())
@@ -439,8 +419,7 @@ fn knospe_under_90_validation_insects_always_requires_origin() {
 
 #[test]
 fn knospe_under_90_validation_plant_over_50_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(
@@ -461,8 +440,7 @@ fn knospe_under_90_validation_plant_over_50_percent() {
 
 #[test]
 fn knospe_under_90_validation_monoproduct() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Olivenöl", 1000.0).build())
@@ -527,8 +505,7 @@ fn knospe_composite_parent_origin_only_on_lowest_level() {
 
 #[test]
 fn wildsammlung_marker_and_legend_over_10_percent() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
+    let calculator = calculator_with(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0)
             .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
@@ -543,8 +520,7 @@ fn wildsammlung_marker_and_legend_over_10_percent() {
 #[test]
 fn wildsammlung_exactly_10_percent_shows_marker() {
     // Boundary: exactly 10% must show — Excel Zeile 12 says "grösser/gleich 10 %".
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
+    let calculator = calculator_with(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Bärlauch", 100.0)
             .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
@@ -556,8 +532,7 @@ fn wildsammlung_exactly_10_percent_shows_marker() {
 
 #[test]
 fn wildsammlung_under_10_percent_no_marker() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
+    let calculator = calculator_with(vec![RuleDef::Wildsammlung_Ueber10Prozent]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0)
             .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
@@ -566,4 +541,224 @@ fn wildsammlung_under_10_percent_no_marker() {
     let output = calculator.execute(input);
     // Bärlauch = 5% < 10% → no ° marker.
     assert!(!output.label.contains('°'), "under 10% must NOT show a ° marker; label: {}", output.label);
+}
+
+// --- DEC-8: 5% cap on permitted non-organic ingredients (Pektin) ---------
+//
+// Permitted exceptions count as Knospe-compliant, so the certified percentage
+// stays at 100% no matter how much Pektin is in the recipe. Bio Suisse caps
+// them at 5% of the agricultural weight, exactly like the Bio-V rule.
+
+#[test]
+fn knospe_erlaubte_ausnahme_over_5pct_blocks_logo() {
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), None);
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
+    // The hint has to name the 5% limit, not a missing certification.
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_within_5pct_keeps_logo() {
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 960.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_exactly_5pct_keeps_logo() {
+    // Boundary: "höchstens 5%" includes exactly 5%.
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 950.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 50.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_bio_flag_counts_toward_the_same_cap() {
+    // Both exception flags make an ingredient Knospe-compliant, so both must
+    // count against the 5% budget.
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Nonbio", 400.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
+}
+
+#[test]
+fn knospe_erlaubte_ausnahme_over_5pct_fails_the_rezeptur_check() {
+    // Logo gate and «Rezeptur prüfen» text must agree; otherwise the label says
+    // "erfüllt die Anforderungen" while no logo is shown.
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None);
+    assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), Some(&true));
+}
+
+#[test]
+fn knospe_uncertified_nonbio_still_blocks_without_the_5pct_hint() {
+    // Existing behaviour (unchanged): a non-bio ingredient without the exception
+    // checkbox blocks the logo — but the reason is the missing certification, so
+    // the 5% hint must NOT appear.
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
+}
+
+#[test]
+fn knospe_non_agricultural_exception_does_not_count() {
+    // Only agricultural ingredients enter the percentage; water/salt must not
+    // push a recipe over the cap.
+    let calculator = calculator_with(vec![
+        RuleDef::Knospe_ShowBioSuisseLogo,
+        RuleDef::Knospe_100_Percent_CH_NoOrigin,
+    ]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new("Wasser", 400.0).agricultural(false).erlaubte_ausnahme_knospe().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::KNOSPE_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
+}
+// --- DEC-10: «Bio» in the Sachbezeichnung for Knospe products --------------
+//
+// Bio-V has always appended « Bio» when the product may be marketed as organic.
+// Knospe products qualify too, so the same suffix applies — with the Bio-V rule
+// for Umstellung: only a Monoprodukt may claim «Bio» (Excel Zeile 7).
+
+#[test]
+fn knospe_eligible_recipe_gets_the_bio_sachbezeichnung() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).bio().origin(Country::CH).build())
+        .build();
+    let c = calculator.execute(input).conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+}
+
+#[test]
+fn knospe_ineligible_recipe_gets_no_bio_sachbezeichnung() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build())
+        .build();
+    let c = calculator.execute(input).conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+}
+
+#[test]
+fn knospe_composite_umstellung_gets_no_bio_sachbezeichnung() {
+    // A composite conversion product may not claim «Bio», exactly as in Bio-V.
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 600.0).bio().origin(Country::CH)
+            .umstellbetrieb().build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 400.0).bio().origin(Country::CH).build())
+        .build();
+    let c = calculator.execute(input).conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true), "the logo itself is unaffected");
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
+}
+
+#[test]
+fn knospe_mono_umstellung_keeps_the_bio_sachbezeichnung() {
+    // Monoprodukt aus Umstellung: «Bio» is allowed (Excel Zeile 7).
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Himbeeren", 1000.0).bio().origin(Country::CH)
+            .umstellbetrieb().build())
+        .build();
+    let c = calculator.execute(input).conditionals();
+
+    assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), Some(&true));
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true));
+}
+
+#[test]
+fn knospe_empty_recipe_gets_no_bio_sachbezeichnung() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let c = calculator.execute(InputBuilder::new().vollstaendig().build()).conditionals();
+
+    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }

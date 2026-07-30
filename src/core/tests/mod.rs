@@ -9,6 +9,16 @@ pub(super) fn setup_simple_calculator() -> Calculator {
     Calculator { rule_defs }
 }
 
+/// Calculator with exactly the given rules active.
+///
+/// Most tests want one or two rules in isolation rather than a whole
+/// configuration; this replaces the `let mut c = setup_simple_calculator();
+/// c.registerRuleDefs(vec![..]);` pair that appeared ~140 times.
+pub(super) fn calculator_with(rule_defs: Vec<RuleDef>) -> Calculator {
+    rust_i18n::set_locale("de-CH");
+    Calculator { rule_defs }
+}
+
 pub(super) fn calculator_for(config: crate::shared::Configuration) -> Calculator {
     rust_i18n::set_locale("de-CH");
     Calculator::from_registry_config(config)
@@ -89,6 +99,7 @@ impl InputBuilder {
     pub fn ingredient(mut self, ing: Ingredient) -> Self { self.0.ingredients.push(ing); self }
     pub fn total(mut self, t: f64) -> Self { self.0.total = Some(t); self }
     pub fn vollstaendig(mut self) -> Self { self.0.rezeptur_vollstaendig = true; self }
+    pub fn einzelzutat(mut self) -> Self { self.0.ignore_ingredients = true; self }
     pub fn certification_body(mut self, body: &str) -> Self { self.0.certification_body = Some(body.to_string()); self }
     pub fn build(self) -> Input { self.0 }
 }
@@ -107,3 +118,6 @@ mod bio;
 mod golden;
 mod recipes;
 mod saved_ingredients;
+mod declaration_name;
+mod mono_quality;
+mod conditional_invariants;

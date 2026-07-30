@@ -3,7 +3,6 @@ title: Creator | Lebensmittelkennzeichnung
 
 app:
   title: Declarino
-  version: Version 0.4.1 vom 17.07.2025
   impressum: Impressum
   release_notes: Release Notes
 
@@ -29,7 +28,6 @@ label:
   datumseingabe: Haltbarkeit
   zusatzinformationen: Zusatzinformationen
   aufbewahrungshinweis: Aufbewahrungshinweis
-  produktionsland: Produktionsland
   nettogewicht: Nettogewicht
   saved_ingredients: Gespeicherte Zutaten
   abtropfgewicht: Abtropfgewicht
@@ -48,18 +46,15 @@ label:
   mindestensHaltbar: Mindestens haltbar bis
   zuVerbrauchen: Zu verbrauchen bis
   zutatDetails: Details
-  unterzutatBearbeiten: Unterzutat bearbeiten
   zutat: Zutat
   menge: Menge
   namensgebendeZutat: Namensgebende Zutat
   zusammengesetzteZutat: Zusammengesetzte Zutat
   mengen_als_prozent: Mengen als Prozent erfassen
   anteil: Anteil
-  computedValues: Eigenschaften der Unterzutaten
   zutatEingeben: Zutat (eingeben oder auswählen)
   namensgebend: Namensgebend
   allergen: Allergen
-  keinAllergen: Kein Allergen
   manuellesTotal: Gewogenes Endgewicht (optional)
   mengenart: Volumen oder Gewicht
   einheit: Einheit
@@ -68,11 +63,11 @@ label:
   preisProEinheit: Preis pro Einheit
   keinDatum: Kein Haltbarkeits-/Verbrauchdatum
   ignore_ingredients: Keine Zutatenliste (Einzelzutat)
+  mono_quality: Qualität der Einzelzutat
   total: Total
   components: Bestandteile
   actions: Aktionen
   saved_indicator: (Gespeichert)
-  allergen_indicator: (Allergen)
   rezepturVollstaendig: "Rezeptur vollständig \u2014 überprüfen"
   rezepturGueltig: "Keine Fehler gefunden"
   rezepturProbleme: "%{count} Problem(e) gefunden"
@@ -81,11 +76,7 @@ label:
 
 nav:
   linkKopieren: Link kopieren
-  konfiguration: Konfiguration
-  aktiveRegeln: Aktive Regeln
   schliessen: Schliessen
-  verhaeltnisseBeibehalten: Verhältnisse beibehalten
-  anpassen: Anpassen
   hinzufuegen: Zutat hinzufügen
   speichern: Speichern
   speichernUndNaechste: Speichern und nächste Zutat
@@ -93,6 +84,8 @@ nav:
   saved_ingredients: Gespeicherte Zutaten
 
 help:
+  mono_quality: |
+    Auch ohne Zutatenliste muss deklariert werden, welche Qualität die Einzelzutat hat. Die Auswahl bestimmt, ob «Bio» in der Sachbezeichnung erscheint bzw. welche Knospe (inkl. Umstellungssatz) auf der Etikette abgebildet wird.
   ignore_ingredients: |
     Wenn der Produktname oder die Sachbezeichnung ein reines Produkt ohne weitere Zutaten bezeichnet (z.B. reiner Essig), braucht keine Zutatenliste angegeben zu werden.
   produktname: |
@@ -204,9 +197,7 @@ help:
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
 
   bio_knospe: Gibt an, ob diese Zutat nach Bio Suisse Knospe-Standards zertifiziert ist (Schweizer Herkunft, fix auf CH)
-  bio_knospe_import: Knospe-zertifizierte Zutat aus Import. Herkunftsland frei wählbar (Standard "Import").
   bio_ch: Gibt an, ob diese Zutat nach Schweizer Bio-Verordnung (aber nicht Knospe) zertifiziert ist
-  bio_transitional: Gibt an, ob diese Zutat aus einem Umstellbetrieb stammt
   aus_umstellbetrieb: Zutat stammt aus einem Betrieb, der auf biologische Landwirtschaft umstellt. Wird auf dem Etikett mit ** gekennzeichnet.
   wildsammlung: Zutat stammt aus zertifizierter Wildsammlung. Wird auf dem Etikett mit ° gekennzeichnet wenn >10% Anteil.
   nicht_landwirtschaftlich: "Nicht-landwirtschaftliche Zutat (z.B. Wasser, Salz, Kulturen, gewisse Zusatzstoffe). Wird bei Bio-Berechnungen nicht berücksichtigt."
@@ -251,9 +242,6 @@ placeholder:
     
     nach dem Öffnen innert x Tagen konsumieren
   aufbewahrungshinweis: z.B. dunkel und kühl bei max. 5°C lagern
-  produktionsland: Schweiz
-  nettogewicht: 300g oder 500ml
-  abtropfgewicht: 200g
   name: Hubers Musterhof
   adresse: Teststrasse 1
   plz: CH-4001
@@ -261,25 +249,16 @@ placeholder:
   telefon: 079 123 45 67
   email: hof@qualitaet.ch
   website: hof.qualitaet.ch
-  preisProX: 4.00 CHF
-  preisTotal: 12.00 CHF
   zutatName: Himbeeren
-  menge: Menge
 
 
 preview:
-  etikettenVorschau: Etiketten Vorschau
   zutaten: "Zutaten:"
-  haltbarkeit: Haltbarkeit
   nettogewicht: Nettogewicht
   abtropfgewicht: Abtropfgewicht
-  hergestelltInDer: Hergestellt in der
-  hergestelltIn: Hergestellt in
   tel: "Tel: %{phone}"
   email: "E-Mail: %{email}"
   website: "Website: %{website}"
-  preisPro: "Preis pro %{amount}%{unit}"
-  preisTotal: Preis total
   produktnameSachbezeichnung: Produktname / Sachbezeichnung
   bio_zertifizierung: "Bio-Zertifizierung: %{body}"
   bio_zertifizierungsstelle: Bio-Zertifizierungsstelle
@@ -316,42 +295,8 @@ messages:
   no_saved_ingredients: Keine gespeicherten Zutaten vorhanden
   ingredient_saved_successfully: "'%{name}' wurde erfolgreich gespeichert"
   error_generic: "Fehler: %{error}"
-  category_loading: Kategorie wird geladen...
-  category_display: "Kategorie: %{category}"
   please_enter_amount: Bitte Menge eingeben
   scaling_factor: "Faktor: ×%{factor} (vorher: %{before}g → neu: %{after}g)"
-
-category_selector:
-  title: Kategorie auswählen
-  fetch_button: Kategorie suchen
-  fetching: Suche läuft...
-  suggestions_count: "%{count} Vorschläge gefunden"
-  suggestions_available: "%{count} Vorschläge verfügbar"
-  select_category: Auswählen
-  filter_placeholder: Vorschläge filtern...
-  no_matches: Keine passenden Ergebnisse
-  no_category: Keine Kategorie
-  cancel: Abbrechen
-
-symbols:
-  allergen_tooltip: Allergen
-  allergen_unknown: Allergen-Status unbekannt
-  meat_tooltip: Fleisch
-  meat_unknown: Fleisch-Status unbekannt
-  fish_tooltip: Fisch
-  fish_unknown: Fisch-Status unbekannt
-  dairy_tooltip: Milchprodukt
-  dairy_unknown: Milchprodukt-Status unbekannt
-  egg_tooltip: Ei
-  egg_unknown: Ei-Status unbekannt
-  honey_tooltip: Honig
-  honey_unknown: Honig-Status unbekannt
-  plant_tooltip: Pflanzlich
-  plant_unknown: Pflanzlich-Status unbekannt
-  agricultural_tooltip: Landwirtschaftlich
-  agricultural_unknown: Landwirtschaftlich-Status unbekannt
-  bio_tooltip: Bio-zertifiziert
-  bio_unknown: Bio-Status unbekannt
 
 errors:
   page_not_found: Seite nicht gefunden
@@ -359,17 +304,12 @@ errors:
   attempted_to_navigate: 'log:\nversucht zu navigieren zu: %{route}'
   localstorage_unavailable: LocalStorage ist nicht verfügbar
   localstorage_save_failed: Fehler beim Speichern in LocalStorage
-  localstorage_clear_failed: Fehler beim Löschen aus LocalStorage
   parse_saved_ingredients_failed: "Fehler beim Parsen der gespeicherten Zutaten: %{error}"
-  api_request_failed: "Fehler beim Senden der Anfrage: %{error}"
-  api_parse_failed: "Fehler beim Parsen der Antwort: %{error}"
 
 validation:
   amount_greater_than_zero: Die Menge muss grösser als 0 sein.
   origin_required_over_50_percent: Herkunftsland ist erforderlich für Zutaten über 50%.
-  origin_required_name_giving: Herkunftsland ist erforderlich für namensgebende Zutaten.
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
-  origin_required_knospe: Herkunftsland ist erforderlich für alle Zutaten (Knospe Anforderung).
   origin_required_import_knospe: Herkunftsland ist erforderlich für Zutaten mit Import-Knospe, wenn die Import-Knospe auf der Etikette erscheint.
   namensgebend_amount_required: Für die namensgebende Unterzutat muss eine Menge erfasst werden, damit der Prozentwert auf der Etikette erscheint.
   origin_single_level: Herkunft ist auf mehreren Ebenen dieser Zutat definiert. Bitte nur auf einer Ebene angeben und die andere entfernen.
@@ -662,19 +602,14 @@ warnings:
   data_loss_on_switch: Ihre Daten gehen verloren, wenn Sie in einen anderen Standard wechseln
 
 date_prefixes:
-  best_before: Mindestens haltbar bis
-  use_by: Zu verbrauchen bis
 
 cross_level:
   defined_on_subingredients: "Über Unterzutaten definiert:"
-  goto: Öffnen
-  clear: Entfernen
 origin:
   herkunft: Herkunft
   aufzucht: Aufzucht
   schlachtung: Schlachtung
   fangort: Fangort
-  switzerland_parentheses: "[Schweiz]"
   birthplace: "Geburtsort: %{country}"
   slaughtered_in: "Geschlachtet in: %{country}"
   add_country: Land hinzufügen
@@ -688,10 +623,10 @@ bio_legend:
   x_prozent_bio: "%{percentage}% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"
   aus_umstellung: aus Umstellung auf biologische Landwirtschaft
   aus_wildsammlung: aus zertifizierter Wildsammlung
+  aus_biologisch_zertifizierter_wildsammlung: aus biologisch zertifizierter Wildsammlung
 
 bio_labels:
   bio_knospe: Bio (Knospe)
-  bio_knospe_import: Bio (Knospe) Import
   quality: Qualität
   knospe: Knospe
   umstellungsknospe: Umstellungsknospe
@@ -707,6 +642,7 @@ bio_labels:
   erlaubte_ausnahme_details_note: Nur interne Notiz – erscheint nicht auf der Etikette.
   aus_umstellbetrieb: Aus Umstellbetrieb
   wildsammlung: Aus zertifizierter Wildsammlung
+  wildsammlung_bio: Aus biologisch zertifizierter Wildsammlung
   nicht_landwirtschaftlich: Nicht-landwirtschaftlich
   andere: Nicht-biologisch
   knospe_icon_ch: Knospe-zertifiziert (Schweizer Herkunft)
@@ -715,23 +651,21 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."
   marketing_not_allowed: "Das Produkt darf NICHT als Bio-Produkt vermarktet werden, da nicht alle landwirtschaftlichen Zutaten bio-zertifiziert sind. Es dürfen nur einzelne Zutaten als biologisch gekennzeichnet werden."
+  bio_nicht_deklarierte_zutat: "Die Rezeptur enthält eine nicht-biologische landwirtschaftliche Zutat, die nicht als erlaubte Ausnahme deklariert ist. Die 5%-Toleranz gilt nur für erlaubte nicht-biologische Zutaten (Anhang 3 der WBF-Verordnung, z.B. Pektin) – jede andere nicht-biologische Zutat schliesst die Vermarktung als Bio-Produkt unabhängig von ihrem Anteil aus."
   erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (gemäss Anhang 3 der WBF-Verordnung, z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Produkt darf nicht als Bio-Produkt vermarktet werden."
   umstellbetrieb_mono: "Als Monoprodukt aus einem Umstellbetrieb darf «Bio» in der Sachbezeichnung stehen. Pflichthinweis auf der Etikette: «Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft» (im Zutatenverzeichnis mit ** gekennzeichnet)."
   bio_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
   bio_check_failed: "Die Rezeptur-Eingabe ist unvollständig oder erfüllt die Bio-Anforderungen nicht. Bitte überprüfe die Eingabe."
   alternative_marking: "Hinweis: Neben der *-Kennzeichnung sind auch folgende Varianten zulässig: «Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft» oder der Präfix «Bio-» vor den einzelnen Zutaten."
-  knospe_marketing_allowed: "Das Produkt erfüllt die Knospe-Anforderungen und darf mit dem Bio Suisse Knospe-Logo vermarktet werden."
-  knospe_marketing_not_allowed: "Das Produkt erfüllt die Knospe-Anforderungen NICHT, da nicht alle landwirtschaftlichen Zutaten Knospe-zertifiziert sind. Das Knospe-Logo darf nicht verwendet werden."
+  knospe_erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Knospe-Logo darf nicht verwendet und das Produkt nicht mit der Knospe vermarktet werden."
 
   knospe_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
   knospe_check_ok: "Die Rezeptur-Eingabe erfüllt die Knospe-Anforderungen und das Produkt darf mit der Knospe vermarktet werden."
   knospe_check_failed: "Die Rezeptur-Eingabe ist unvollständig oder erfüllt die Knospe-Anforderungen nicht. Bitte überprüfe die Eingabe."
 umstellbetrieb:
-  hinweis: "Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft"
 
 buttons:
   close: schliessen
-  back: Zurück
   delete: Löschen
   save_to_storage: Merken
   save_and_transfer: Alle Mengen anpassen

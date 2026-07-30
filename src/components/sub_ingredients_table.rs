@@ -1,6 +1,6 @@
 use crate::components::*;
 use crate::core::{AmountUnit, Ingredient};
-use crate::model::{lookup_allergen, lookup_agricultural};
+use crate::model::{declaration_name, lookup_allergen, lookup_agricultural};
 use crate::persistence::get_saved_ingredients_list;
 use crate::services::{UnifiedIngredient, IngredientSource};
 use dioxus::prelude::*;
@@ -123,7 +123,9 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                     let allergen_status = unified_ingredient.is_allergen.unwrap_or_else(|| lookup_allergen(&lookup_name));
 
                     let new_child = Ingredient {
-                        name: ingredient_name.clone(),
+                        // Gluten-containing cereals are declared by species
+                        // ("Mehl" → "Weizenmehl"); other aliases stay as typed.
+                        name: declaration_name(&ingredient_name, canonical.as_deref()),
                         is_allergen: allergen_status,
                         is_agricultural: lookup_agricultural(&lookup_name),
                         canonical,

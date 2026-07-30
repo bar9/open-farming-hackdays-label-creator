@@ -8,6 +8,10 @@ pub struct ProcessingRule {
     pub step_de: String,
     pub step_fr: String,
     pub applies_to: Option<String>,
+    /// Mirrors the CSV column. Nothing preselects default steps today (the only
+    /// row marked `true` is "pasteurisiert"); the field is kept so the struct
+    /// stays a faithful image of `processing_rules.csv` and deserialisation does
+    /// not have to ignore a column.
     pub is_default: bool,
 }
 
@@ -73,15 +77,6 @@ pub fn get_biosuisse_category_from_blv(blv_category: &str) -> Option<(String, St
         }
     }
     None
-}
-
-/// Gibt Default-Verarbeitungsschritte für eine Kategorie zurück
-pub fn get_default_steps(hauptgruppe: &str, untergruppe: &str) -> Vec<String> {
-    get_steps_for_category(hauptgruppe, untergruppe)
-        .into_iter()
-        .filter(|r| r.is_default)
-        .map(|r| r.step_de)
-        .collect()
 }
 
 /// Prüft ob für eine BLV-Kategorie Verarbeitungsschritte verfügbar sind

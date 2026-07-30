@@ -1,47 +1,12 @@
 use crate::components::card_stack::{CardStack, GenesisModal};
+use crate::shared::VerdictsContext;
 use crate::components::ingredient_path::IngredientPath;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::rules::RuleDef;
-use crate::services::{UnifiedIngredient, IngredientSource};
-use crate::category_service::*;
 use dioxus::prelude::*;
 use rust_i18n::t;
 use std::collections::HashMap;
-
-/// Convert an Ingredient to UnifiedIngredient for display purposes
-fn ingredient_to_unified(ingredient: &Ingredient) -> UnifiedIngredient {
-    let (is_meat, is_fish, is_dairy, is_egg, is_honey, is_plant) = if let Some(ref category) = ingredient.category {
-        (
-            Some(is_meat_category(category)),
-            Some(is_fish_category(category)),
-            Some(is_dairy_category(category)),
-            Some(is_egg_category(category)),
-            Some(is_honey_category(category)),
-            Some(is_plant_category(category)),
-        )
-    } else {
-        (None, None, None, None, None, None)
-    };
-
-    UnifiedIngredient {
-        name: ingredient.name.clone(),
-        canonical: ingredient.canonical.clone(),
-        priority: 0,
-        category: ingredient.category.clone(),
-        origin: ingredient.origins.as_ref().and_then(|o| o.first().cloned()),
-        is_allergen: Some(ingredient.is_allergen),
-        is_agricultural: Some(ingredient.is_agricultural),
-        is_meat,
-        is_fish,
-        is_dairy,
-        is_egg,
-        is_honey,
-        is_plant,
-        is_bio: ingredient.is_bio,
-        source: IngredientSource::Local,
-    }
-}
 
 #[derive(Props, Clone, PartialEq)]
 pub struct IngredientsTableProps {
@@ -122,9 +87,8 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 None,
             )}
 
-            if props.ingredients.len() > 0 {
-                ConditionalDisplay {
-                    path: "manuelles_total".to_string(),
+            // AP1.4: manual total row only when the rule enables it.
+            if props.ingredients.len() > 0 && use_context::<VerdictsContext>().0().manuelles_total_input {
                     div {
                         class: "grid grid-cols-3 gap-4",
                         div {{t!("label.total").to_string()}}
@@ -153,7 +117,6 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
 
                         div {}
                     }
-                }
             }
         }
         if props.ingredients.len() > 0 {
@@ -268,7 +231,6 @@ fn render_ingredient_tree(
             let computed_origins = ingr.computed_origins();
             let computed_amount = ingr.computed_amount();
             let unit_key = ingr.computed_unit().translation_key().to_string();
-            let unified = ingredient_to_unified(&ingr);
             let children = ingr.children.clone();
             let children_for_recurse = children.clone();
             let full_path_for_children = full_path.clone();
@@ -321,9 +283,6 @@ fn render_ingredient_tree(
                                 }
                                 if is_namensgebend { " ({t!(\"label.namensgebend\").to_string()})" }
                             }
-                        }
-                        IngredientSymbolsCompact {
-                            ingredient: unified
                         }
                     }
                     div {

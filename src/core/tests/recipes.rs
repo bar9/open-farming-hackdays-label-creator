@@ -1,3 +1,4 @@
+use crate::conditional_keys as keys;
 use super::*;
 use crate::shared::Configuration;
 
@@ -116,11 +117,11 @@ fn recipe_schoggi_cookie_bk() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
-    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true), "Expected bio_suisse_no_cross logo");
-    assert_eq!(c.get("bio_suisse_regular"), None, "Should NOT have bio_suisse_regular logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None, "Should NOT have bio_suisse_regular logo");
 
     // Origin display per Excel "Herkunft muss angegeben werden":
     // Butter: Ja → show (CH)
@@ -200,11 +201,11 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
-    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true), "Expected bio_suisse_no_cross logo");
-    assert_eq!(c.get("bio_suisse_regular"), None, "Should NOT have bio_suisse_regular logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None, "Should NOT have bio_suisse_regular logo");
 
     // Origin display per Excel:
     // Butter: Ja → show (CH)
@@ -282,11 +283,11 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_regular (90-99% Swiss)
-    assert_eq!(c.get("bio_suisse_regular"), Some(&true), "Expected bio_suisse_regular logo");
-    assert_eq!(c.get("bio_suisse_no_cross"), None, "Should NOT have bio_suisse_no_cross logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Expected bio_suisse_regular logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None, "Should NOT have bio_suisse_no_cross logo");
 
     // Origin display per Excel (90-99% rule: show origin for Swiss agricultural ingredients):
     // Weizenmehl: Ja* → show (CH)
@@ -359,11 +360,11 @@ fn recipe_baerlauch_pesto_bk() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
-    assert_eq!(c.get("bio_suisse_no_cross"), Some(&true), "Expected bio_suisse_no_cross logo");
-    assert_eq!(c.get("bio_suisse_regular"), None, "Should NOT have bio_suisse_regular logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None, "Should NOT have bio_suisse_regular logo");
 
     // Origin display per Excel:
     // Bärlauch: Ja → show (CH) — namensgebende Zutat (name-giving ingredient of "Bärlauch Pesto")
@@ -435,11 +436,11 @@ fn recipe_baerlauch_pesto_bsk() {
         .build();
 
     let output = calculator.execute(input);
-    let c = &output.conditional_elements;
+    let c = &output.conditionals();
 
     // Logo: bio_suisse_regular (90-99% Swiss)
-    assert_eq!(c.get("bio_suisse_regular"), Some(&true), "Expected bio_suisse_regular logo");
-    assert_eq!(c.get("bio_suisse_no_cross"), None, "Should NOT have bio_suisse_no_cross logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Expected bio_suisse_regular logo");
+    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None, "Should NOT have bio_suisse_no_cross logo");
 
     // Origin display per Excel (90-99% rule: show origin for Swiss agricultural ingredients only):
     // Rapsöl: Ja* → show (CH)

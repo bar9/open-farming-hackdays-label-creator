@@ -1,0 +1,18 @@
+# Normalize all text files to LF in the repository.
+# Prevents CRLF churn when contributors have core.autocrlf=true (Windows/WSL default).
+* text=auto eol=lf
+
+# Explicit binary markers (never touch these)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.wasm binary
+*.xlsx binary
+*.zip binary

@@ -2484,7 +2484,6 @@ dependencies = [
  "tracing",
  "urlencoding",
  "wasm-bindgen",
- "wasm-bindgen-futures",
  "web-sys",
 ]
 

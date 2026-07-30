@@ -3,7 +3,6 @@ title: Créateur | Étiquetage alimentaire
 
 app:
   title: Créateur d'étiquettes
-  version: Version 0.4.1 du 17.07.2025
   impressum: Mentions légales
   release_notes: Notes de version
 
@@ -31,7 +30,6 @@ label:
   datumseingabe: Conservation
   zusatzinformationen: Informations supplémentaires
   aufbewahrungshinweis: Conseils de conservation
-  produktionsland: Pays de production
   nettogewicht: Poids net
   abtropfgewicht: Poids égoutté
   adresse: Adresse
@@ -49,18 +47,15 @@ label:
   mindestensHaltbar: À consommer de préférence avant
   zuVerbrauchen: À consommer jusqu'au
   zutatDetails: Détails de l'ingrédient
-  unterzutatBearbeiten: Modifier le sous-ingrédient
   zutat: Ingrédient
   menge: Quantité
   namensgebendeZutat: Ingrédient caractéristique
   zusammengesetzteZutat: Ingrédient composé
   mengen_als_prozent: Saisir les quantités en pourcentage
   anteil: Proportion
-  computedValues: Propriétés des sous-ingrédients
   zutatEingeben: Ingrédient (saisir ou sélectionner)
   namensgebend: Caractéristique
   allergen: Allergène
-  keinAllergen: Pas d'allergène
   manuellesTotal: Poids final pesé (optionnel)
   mengenart: Volume ou poids
   einheit: Unité
@@ -69,11 +64,11 @@ label:
   preisProEinheit: Prix par unité
   keinDatum: Pas de date de conservation/consommation
   ignore_ingredients: Pas de liste d'ingrédients (ingrédient unique)
+  mono_quality: Qualité de l'ingrédient unique
   total: Total
   components: Composants
   actions: Actions
   saved_indicator: (Enregistré)
-  allergen_indicator: (Allergène)
   rezepturVollstaendig: "Recette complète \u2014 vérifier"
   rezepturGueltig: "Aucune erreur trouv\u00e9e"
   rezepturProbleme: "%{count} probl\u00e8me(s) d\u00e9tect\u00e9(s)"
@@ -82,11 +77,7 @@ label:
 
 nav:
   linkKopieren: Copier le lien
-  konfiguration: Configuration
-  aktiveRegeln: Règles actives
   schliessen: Fermer
-  verhaeltnisseBeibehalten: Conserver les proportions
-  anpassen: Adapter
   hinzufuegen: Ajouter un ingrédient
   speichern: Sauvegarder
   speichernUndNaechste: Sauvegarder et ingrédient suivant
@@ -94,18 +85,12 @@ nav:
   saved_ingredients: Ingrédients enregistrés
 
 preview:
-  etikettenVorschau: Aperçu de l'étiquette
   zutaten: "Ingrédients:"
-  haltbarkeit: Conservation
   nettogewicht: Poids net
   abtropfgewicht: Poids égoutté
-  hergestelltInDer: Fabriqué dans le
-  hergestelltIn: Fabriqué en
   tel: "Tél: %{phone}"
   email: "E-Mail: %{email}"
   website: "Site web: %{website}"
-  preisPro: "Prix par %{amount}%{unit}"
-  preisTotal: Prix total
   produktnameSachbezeichnung: Nom du produit / Dénomination spécifique
   bio_zertifizierung: "Certification bio: %{body}"
   bio_zertifizierungsstelle: Organisme de certification bio
@@ -144,9 +129,6 @@ placeholder:
     
     après ouverture, consommer dans les x jours
   aufbewahrungshinweis: p.ex. conserver au frais et à l'obscurité à max. 5°C
-  produktionsland: Suisse
-  nettogewicht: 300g ou 500ml
-  abtropfgewicht: 200g
   name: Ferme modèle Huber
   adresse: Rue test 1
   plz: CH-4001
@@ -154,12 +136,11 @@ placeholder:
   telefon: 079 123 45 67
   email: ferme@qualite.ch
   website: ferme.qualite.ch
-  preisProX: 4.00 CHF
-  preisTotal: 12.00 CHF
   zutatName: Framboises
-  menge: Quantité
 
 help:
+  mono_quality: |
+    Même sans liste d'ingrédients, la qualité de l'ingrédient unique doit être déclarée. Ce choix détermine si «Bio» figure dans la dénomination spécifique et quel Bourgeon (y compris la mention de reconversion) apparaît sur l'étiquette.
   ignore_ingredients: |
     Si le nom du produit ou la dénomination spécifique désigne un produit pur sans autres ingrédients (p.ex. vinaigre pur), aucune liste d'ingrédients n'est nécessaire.
   produktname: |
@@ -265,9 +246,7 @@ help:
     Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
 
   bio_knospe: Indique si cet ingrédient est certifié selon les normes Bio Suisse Bourgeon (origine suisse, fixée à CH)
-  bio_knospe_import: Ingrédient certifié Bourgeon importé. Pays d'origine librement sélectionnable (par défaut «Import»).
   bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
-  bio_transitional: Indique si cet ingrédient provient d'une exploitation en reconversion
   aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
   wildsammlung: Ingrédient issu de cueillette sauvage certifiée. Marqué ° sur l'étiquette si >10% du total.
   nicht_landwirtschaftlich: "Ingrédient non agricole (p.ex. eau, sel, cultures, certains additifs). Non pris en compte dans les calculs bio."
@@ -310,42 +289,8 @@ messages:
   no_saved_ingredients: Aucun ingrédient enregistré
   ingredient_saved_successfully: "'%{name}' a été enregistré avec succès"
   error_generic: "Erreur: %{error}"
-  category_loading: Chargement de la catégorie...
-  category_display: "Catégorie: %{category}"
   please_enter_amount: Veuillez entrer une quantité
   scaling_factor: "Facteur: ×%{factor} (avant: %{before}g → après: %{after}g)"
-
-category_selector:
-  title: Sélectionner une catégorie
-  fetch_button: Rechercher une catégorie
-  fetching: Recherche en cours...
-  suggestions_count: "%{count} suggestions trouvées"
-  suggestions_available: "%{count} suggestions disponibles"
-  select_category: Sélectionner
-  filter_placeholder: Filtrer les suggestions...
-  no_matches: Aucun résultat correspondant
-  no_category: Aucune catégorie
-  cancel: Annuler
-
-symbols:
-  allergen_tooltip: Allergène
-  allergen_unknown: Statut allergène inconnu
-  meat_tooltip: Viande
-  meat_unknown: Statut viande inconnu
-  fish_tooltip: Poisson
-  fish_unknown: Statut poisson inconnu
-  dairy_tooltip: Produit laitier
-  dairy_unknown: Statut produit laitier inconnu
-  egg_tooltip: Œuf
-  egg_unknown: Statut œuf inconnu
-  honey_tooltip: Miel
-  honey_unknown: Statut miel inconnu
-  plant_tooltip: Végétal
-  plant_unknown: Statut végétal inconnu
-  agricultural_tooltip: Agricole
-  agricultural_unknown: Statut agricole inconnu
-  bio_tooltip: Bio-certifié
-  bio_unknown: Statut bio inconnu
 
 errors:
   page_not_found: Page non trouvée
@@ -353,17 +298,12 @@ errors:
   attempted_to_navigate: 'log:\nTentative de navigation vers: %{route}'
   localstorage_unavailable: LocalStorage n'est pas disponible
   localstorage_save_failed: Erreur lors de l'enregistrement dans LocalStorage
-  localstorage_clear_failed: Erreur lors de la suppression de LocalStorage
   parse_saved_ingredients_failed: "Erreur lors de l'analyse des ingrédients enregistrés: %{error}"
-  api_request_failed: "Erreur lors de l'envoi de la requête: %{error}"
-  api_parse_failed: "Erreur lors de l'analyse de la réponse: %{error}"
 
 validation:
   amount_greater_than_zero: La quantité doit être supérieure à 0.
   origin_required_over_50_percent: Le pays d'origine est requis pour les ingrédients de plus de 50%.
-  origin_required_name_giving: Le pays d'origine est requis pour les ingrédients caractéristiques.
   origin_required_meat_over_20: Le pays d'origine est requis pour les ingrédients de viande de plus de 20%.
-  origin_required_knospe: Le pays d'origine est requis pour tous les ingrédients (exigence Bourgeon).
   origin_required_import_knospe: Le pays d'origine est requis pour les ingrédients avec Bourgeon Import lorsque le Bourgeon Import figure sur l'étiquette.
   namensgebend_amount_required: La quantité de l'ingrédient qui donne son nom au produit doit être saisie afin que le pourcentage figure sur l'étiquette.
   origin_single_level: L'origine est définie à plusieurs niveaux de cet ingrédient. Veuillez ne l'indiquer qu'à un seul niveau et supprimer l'autre.
@@ -407,12 +347,9 @@ warnings:
   data_loss_on_switch: Vos données seront perdues si vous passez à une autre norme
 
 date_prefixes:
-  best_before: À consommer de préférence avant
-  use_by: À consommer jusqu'au
 
 buttons:
   close: fermer
-  back: Retour
   delete: Supprimer
   save_to_storage: Mémoriser
   save_and_transfer: Ajuster toutes les quantités
@@ -436,14 +373,11 @@ version:
 
 cross_level:
   defined_on_subingredients: "Défini via les sous-ingrédients :"
-  goto: Ouvrir
-  clear: Supprimer
 origin:
   herkunft: Origine
   aufzucht: Élevage
   schlachtung: Abattage
   fangort: Lieu de capture
-  switzerland_parentheses: "[Suisse]"
   birthplace: "Lieu de naissance: %{country}"
   slaughtered_in: "Abattu en: %{country}"
   add_country: Ajouter un pays
@@ -457,10 +391,10 @@ bio_legend:
   x_prozent_bio: "%{percentage}% des ingrédients agricoles sont issus de la production biologique"
   aus_umstellung: en conversion vers l'agriculture biologique
   aus_wildsammlung: issu de cueillette sauvage certifiée
+  aus_biologisch_zertifizierter_wildsammlung: issu de cueillette sauvage certifiée biologique
 
 bio_labels:
   bio_knospe: Bio (Bourgeon)
-  bio_knospe_import: Bio (Bourgeon) Import
   quality: Qualité
   knospe: Bourgeon
   umstellungsknospe: Bourgeon de reconversion
@@ -476,6 +410,7 @@ bio_labels:
   erlaubte_ausnahme_details_note: Note interne uniquement – n'apparaît pas sur l'étiquette.
   aus_umstellbetrieb: En conversion
   wildsammlung: Issu de cueillette sauvage certifiée
+  wildsammlung_bio: Issu de cueillette sauvage certifiée biologique
   nicht_landwirtschaftlich: Non agricole
   andere: Non biologique
   knospe_icon_ch: Certifié Bourgeon (origine suisse)
@@ -484,19 +419,18 @@ bio_labels:
 bio_hints:
   marketing_allowed: "Le produit peut être commercialisé comme produit bio. Bio peut figurer dans la dénomination, le nom de fantaisie ou librement sur l'emballage."
   marketing_not_allowed: "Le produit ne peut PAS être commercialisé comme produit bio car tous les ingrédients agricoles ne sont pas certifiés bio. Seuls certains ingrédients peuvent être désignés comme biologiques."
+  bio_nicht_deklarierte_zutat: "La recette contient un ingrédient agricole non biologique qui n'est pas déclaré comme exception autorisée. La tolérance de 5% ne s'applique qu'aux ingrédients non biologiques autorisés (annexe 3 de l'ordonnance du DEFR, p. ex. la pectine) – tout autre ingrédient non biologique exclut la commercialisation comme produit bio, quelle que soit sa part."
   erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (selon l'annexe 3 de l'ordonnance du DEFR, p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le produit ne peut pas être commercialisé comme produit bio."
   umstellbetrieb_mono: "En tant que produit mono issu d'une exploitation en reconversion, «Bio» peut figurer dans la dénomination. Mention obligatoire sur l'étiquette : «Produit dans le cadre de la reconversion à l'agriculture biologique» (marquée par ** dans la liste des ingrédients)."
   bio_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
   bio_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences Bio. Veuillez vérifier la saisie."
   alternative_marking: "Remarque : En plus du marquage *, les variantes suivantes sont également autorisées : «Tous les ingrédients agricoles proviennent de l'agriculture biologique» ou le préfixe «Bio-» devant chaque ingrédient."
-  knospe_marketing_allowed: "Le produit remplit les exigences Bourgeon et peut être commercialisé avec le logo Bio Suisse Bourgeon."
-  knospe_marketing_not_allowed: "Le produit ne remplit PAS les exigences Bourgeon car tous les ingrédients agricoles ne sont pas certifiés Bourgeon. Le logo Bourgeon ne peut pas être utilisé."
+  knospe_erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le logo Bourgeon ne peut pas être utilisé et le produit ne peut pas être commercialisé avec le Bourgeon."
 
   knospe_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
   knospe_check_ok: "La recette saisie satisfait aux exigences du Bourgeon et le produit peut être commercialisé avec le Bourgeon."
   knospe_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences du Bourgeon. Veuillez vérifier la saisie."
 umstellbetrieb:
-  hinweis: "Produit dans le cadre de la conversion à l'agriculture biologique"
 
 weight_units:
   mg: mg

@@ -1,21 +1,21 @@
-alias,canonical,priority
-Eier,Hühnerei ganz,100
-Ei,Hühnerei ganz,90
-Eigelb,Hühnereigelb,80
-Eiweiss,Eiweiss,50
-Butter,Kochbutter,100
-Rahm,Vollrahm,100
-Sahne,Vollrahm,80
-Schlagrahm,Vollrahm,70
-Schlagsahne,Vollrahm,60
-Milch,Vollmilch pasteurisiert,90
-Vollmilch,Vollmilch pasteurisiert,80
-Magermilch,Magermilch UHT,70
-Quark,Magerquark,80
-Joghurt,Joghurt nature,100
-Jogurt,Joghurt nature,90
-Rüebli,Karotte,90
-Möhre,Karotte,70
-Peterli,Petersilie,90
-Mehl,Weizenmehl,90
-Mandeln,Mandel,90
+alias,canonical,priority,declare_as_canonical
+Eier,Hühnerei ganz,100,0
+Ei,Hühnerei ganz,90,0
+Eigelb,Hühnereigelb,80,0
+Eiweiss,Eiweiss,50,0
+Butter,Kochbutter,100,0
+Rahm,Vollrahm,100,0
+Sahne,Vollrahm,80,0
+Schlagrahm,Vollrahm,70,0
+Schlagsahne,Vollrahm,60,0
+Milch,Vollmilch pasteurisiert,90,0
+Vollmilch,Vollmilch pasteurisiert,80,0
+Magermilch,Magermilch UHT,70,0
+Quark,Magerquark,80,0
+Joghurt,Joghurt nature,100,0
+Jogurt,Joghurt nature,90,0
+Rüebli,Karotte,90,0
+Möhre,Karotte,70,0
+Peterli,Petersilie,90,0
+Mehl,Weizenmehl,90,1
+Mandeln,Mandel,90,0

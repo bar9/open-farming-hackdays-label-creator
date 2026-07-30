@@ -52,6 +52,13 @@ pub enum BioStatus {
     NichtLandwirtschaftlich,
     /// "Andere" / non-bio agricultural (Knospe config).
     Andere,
+    /// Non-bio agricultural ingredient declared a permitted exception
+    /// («Erlaubte nicht-biologische Zutat», Annex 3 WBF, e.g. Pektin). Without
+    /// this declaration DEC-7 rightly blocks «Bio».
+    ErlaubteAusnahmeBio,
+    /// Bio-CH plus the «Aus biologisch zertifizierter Wildsammlung» checkbox
+    /// that the Bio-V offers since DEC-11.
+    BioChWildsammlung,
 }
 
 #[derive(Clone)]
@@ -88,7 +95,7 @@ pub const ERDBEER_FRUCHTAUFSTRICH: Recipe = Recipe {
         RecipeIngredient { name: "Erdbeere",     grams: 200.0, origin: Some("CH"), bio: BioStatus::BioCh },
         RecipeIngredient { name: "Zucker",       grams: 140.0, origin: Some("DE"), bio: BioStatus::BioCh },
         RecipeIngredient { name: "Zitronensaft", grams: 8.0,   origin: Some("IT"), bio: BioStatus::BioCh },
-        RecipeIngredient { name: "Pektin",       grams: 2.0,   origin: None,        bio: BioStatus::Conventional },
+        RecipeIngredient { name: "Pektin",       grams: 2.0,   origin: None,        bio: BioStatus::ErlaubteAusnahmeBio },
     ],
 };
 

@@ -2,15 +2,14 @@ use super::*;
 
 #[test]
 fn amount_lt_zero_invalid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
+    let calculator = calculator_with(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Hafer", 0.0).build())
         .build();
     let output = calculator.execute(input);
     let validation_messages = output.validation_messages;
-    assert!(validation_messages.get("ingredients[0][amount]").is_some());
+    assert!(validation_messages.contains_key("ingredients[0][amount]"));
     let amount_messages = validation_messages.get("ingredients[0][amount]").unwrap();
     assert!(!amount_messages.is_empty());
     assert!(amount_messages.iter().any(|m| m == "Die Menge muss grösser als 0 sein."));
@@ -18,20 +17,18 @@ fn amount_lt_zero_invalid() {
 
 #[test]
 fn amount_gt_zero_valid() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
+    let calculator = calculator_with(vec![RuleDef::AP1_1_ZutatMengeValidierung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Hafer", 32.0).build())
         .build();
     let output = calculator.execute(input);
     let validation_messages = output.validation_messages;
-    assert!(validation_messages.get("ingredients[0][amount]").map_or(true, |v| v.is_empty()));
+    assert!(validation_messages.get("ingredients[0][amount]").is_none_or(|v| v.is_empty()));
 }
 
 #[test]
 fn multiple_validation_errors_on_single_ingredient() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP1_1_ZutatMengeValidierung,
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
@@ -80,8 +77,7 @@ fn multiple_validation_errors_on_single_ingredient() {
 
 #[test]
 fn stacked_validation_messages_demo() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
         RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
     ]);

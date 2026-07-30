@@ -3,86 +3,86 @@ use super::super::*;
 #[test]
 fn test_is_fish_category() {
     // Test official BLV API fish categories
-    assert_eq!(is_fish_category("Fisch"), true);
-    assert_eq!(is_fish_category("Meeresfische"), true);
-    assert_eq!(is_fish_category("Süsswasserfische"), true);
-    assert_eq!(is_fish_category("Meeresfrüchte, Krusten- und Schalentiere"), true);
+    assert!(is_fish_category("Fisch"));
+    assert!(is_fish_category("Meeresfische"));
+    assert!(is_fish_category("Süsswasserfische"));
+    assert!(is_fish_category("Meeresfrüchte, Krusten- und Schalentiere"));
 
     // Test generic fish terms
-    assert_eq!(is_fish_category("Lachs"), true);
-    assert_eq!(is_fish_category("Thunfisch"), true);
-    assert_eq!(is_fish_category("Forelle"), true);
+    assert!(is_fish_category("Lachs"));
+    assert!(is_fish_category("Thunfisch"));
+    assert!(is_fish_category("Forelle"));
 
     // Test English terms
-    assert_eq!(is_fish_category("fish"), true);
-    assert_eq!(is_fish_category("salmon"), true);
-    assert_eq!(is_fish_category("seafood"), true);
+    assert!(is_fish_category("fish"));
+    assert!(is_fish_category("salmon"));
+    assert!(is_fish_category("seafood"));
 
     // Test case insensitive matching
-    assert_eq!(is_fish_category("FISCH"), true);
-    assert_eq!(is_fish_category("meeresfische"), true);
+    assert!(is_fish_category("FISCH"));
+    assert!(is_fish_category("meeresfische"));
 
     // Test non-fish categories
-    assert_eq!(is_fish_category("Rind"), false);
-    assert_eq!(is_fish_category("Getreide"), false);
-    assert_eq!(is_fish_category("Milchprodukte"), false);
-    assert_eq!(is_fish_category("Gemüse"), false);
+    assert!(!is_fish_category("Rind"));
+    assert!(!is_fish_category("Getreide"));
+    assert!(!is_fish_category("Milchprodukte"));
+    assert!(!is_fish_category("Gemüse"));
 }
 
 #[test]
 fn test_is_beef_category() {
     // Test beef categories
-    assert_eq!(is_beef_category("Rind"), true);
-    assert_eq!(is_beef_category("Rindfleisch"), true);
-    assert_eq!(is_beef_category("RIND"), true);
-    assert_eq!(is_beef_category("beef"), true);
-    assert_eq!(is_beef_category("Kalb; Rind; Schwein"), true);
+    assert!(is_beef_category("Rind"));
+    assert!(is_beef_category("Rindfleisch"));
+    assert!(is_beef_category("RIND"));
+    assert!(is_beef_category("beef"));
+    assert!(is_beef_category("Kalb; Rind; Schwein"));
 
     // Test non-beef categories
-    assert_eq!(is_beef_category("Schwein"), false);
-    assert_eq!(is_beef_category("Geflügel"), false);
-    assert_eq!(is_beef_category("Lamm, Schaf"), false);
-    assert_eq!(is_beef_category("Brühwurstware"), false);
-    assert_eq!(is_beef_category("Getreide"), false);
+    assert!(!is_beef_category("Schwein"));
+    assert!(!is_beef_category("Geflügel"));
+    assert!(!is_beef_category("Lamm, Schaf"));
+    assert!(!is_beef_category("Brühwurstware"));
+    assert!(!is_beef_category("Getreide"));
 }
 
 #[test]
 fn test_is_meat_category_with_api_categories() {
     // Test official BLV API categories for meat
-    assert_eq!(is_meat_category("Fleisch und Innereien"), true);
-    assert_eq!(is_meat_category("Rind"), true);
-    assert_eq!(is_meat_category("Schwein"), true);
-    assert_eq!(is_meat_category("Kalb"), true);
-    assert_eq!(is_meat_category("Geflügel"), true);
-    assert_eq!(is_meat_category("Lamm, Schaf"), true);
-    assert_eq!(is_meat_category("Wild"), true);
+    assert!(is_meat_category("Fleisch und Innereien"));
+    assert!(is_meat_category("Rind"));
+    assert!(is_meat_category("Schwein"));
+    assert!(is_meat_category("Kalb"));
+    assert!(is_meat_category("Geflügel"));
+    assert!(is_meat_category("Lamm, Schaf"));
+    assert!(is_meat_category("Wild"));
 
     // Test processed meat categories
-    assert_eq!(is_meat_category("Brühwurstware"), true);
-    assert_eq!(is_meat_category("Kochwurstware"), true);
+    assert!(is_meat_category("Brühwurstware"));
+    assert!(is_meat_category("Kochwurstware"));
 
     // Test combined categories (semicolon-separated)
-    assert_eq!(is_meat_category("Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"), true);
-    assert_eq!(is_meat_category("Kalb; Rind; Schwein; Geflügel"), true);
-    assert_eq!(is_meat_category("Kalb; Lamm, Schaf; Schwein"), true);
+    assert!(is_meat_category("Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"));
+    assert!(is_meat_category("Kalb; Rind; Schwein; Geflügel"));
+    assert!(is_meat_category("Kalb; Lamm, Schaf; Schwein"));
 
     // Test non-meat categories
-    assert_eq!(is_meat_category("Getreide"), false);
-    assert_eq!(is_meat_category("Milchprodukte"), false);
-    assert_eq!(is_meat_category("Gemüse"), false);
-    assert_eq!(is_meat_category("Früchte"), false);
-    assert_eq!(is_meat_category("Gewürze"), false);
+    assert!(!is_meat_category("Getreide"));
+    assert!(!is_meat_category("Milchprodukte"));
+    assert!(!is_meat_category("Gemüse"));
+    assert!(!is_meat_category("Früchte"));
+    assert!(!is_meat_category("Gewürze"));
 
     // Test case insensitive matching
-    assert_eq!(is_meat_category("RIND"), true);
-    assert_eq!(is_meat_category("schwein"), true);
-    assert_eq!(is_meat_category("Fleisch Und Innereien"), true);
+    assert!(is_meat_category("RIND"));
+    assert!(is_meat_category("schwein"));
+    assert!(is_meat_category("Fleisch Und Innereien"));
 
     // Test fallback terms
-    assert_eq!(is_meat_category("Hackfleisch"), true);
-    assert_eq!(is_meat_category("Bratwurst"), true);
-    assert_eq!(is_meat_category("meat"), true);
-    assert_eq!(is_meat_category("beef"), true);
+    assert!(is_meat_category("Hackfleisch"));
+    assert!(is_meat_category("Bratwurst"));
+    assert!(is_meat_category("meat"));
+    assert!(is_meat_category("beef"));
 }
 
 #[test]

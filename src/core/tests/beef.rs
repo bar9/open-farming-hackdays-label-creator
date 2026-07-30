@@ -2,8 +2,7 @@ use super::*;
 
 #[test]
 fn beef_origin_display_shows_geburtsort() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![RuleDef::AP7_4_RindfleischHerkunftDetails]);
+    let calculator = calculator_with(vec![RuleDef::AP7_4_RindfleischHerkunftDetails]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new("Rindfleisch", 500.0)
@@ -54,8 +53,7 @@ fn test_beef_with_swiss_conventional_rules() {
 
 #[test]
 fn test_beef_origin_validation_and_display() {
-    let mut calculator = setup_simple_calculator();
-    calculator.registerRuleDefs(vec![
+    let calculator = calculator_with(vec![
         RuleDef::AP7_4_RindfleischHerkunftDetails,
     ]);
 

@@ -3,7 +3,9 @@ use strum_macros::EnumIter;
 
 /// Types of rules that can be applied in the label generation process
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
+// Only read by the wasm-only rule table in the browser console
+// (`Calculator::log_active_rules`), so it is genuinely dead on native builds.
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub enum RuleType {
     /// Rules that validate form data and generate validation messages
     Validation,
@@ -14,11 +16,14 @@ pub enum RuleType {
 }
 
 /// Trait for rules that can be applied during label generation
-#[allow(dead_code)]
 pub trait Rule {
-    /// Returns the category/type of this rule
+    /// Returns the category/type of this rule.
+    /// Only used by the wasm-only debug rule table, hence dead on native.
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
     fn get_type(&self) -> RuleType;
-    /// Returns a human-readable description of what this rule does
+    /// Returns a human-readable description of what this rule does.
+    /// Only used by the wasm-only debug logging, hence dead on native.
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
     fn get_description(&self) -> &'static str;
 }
 
@@ -129,7 +134,7 @@ impl Rule for RuleDef {
             RuleDef::Bio_ShowBioSachbezeichnung => "Zeigt Bio in Sachbezeichnung wenn ≥ 95% Bio-CH zertifiziert",
             RuleDef::Bio_AllAgriAreBio => "Bio-V: Alle landwirtschaftlichen Zutaten sind bio — kein individueller * Stern",
             RuleDef::Bio_PartialBioMarking => "Bio-V: Teilweise bio — individueller * Stern und Prozentangabe in Legende",
-            RuleDef::Wildsammlung_Ueber10Prozent => "L11/B15: Kennzeichnung mit ° für Zutaten aus zertifizierter Wildsammlung wenn >10% Anteil",
+            RuleDef::Wildsammlung_Ueber10Prozent => "L11/B15: Kennzeichnung mit ° für Zutaten aus (biologisch) zertifizierter Wildsammlung wenn >10% Anteil",
         }
     }
 }
@@ -187,6 +192,9 @@ impl RuleRegistry {
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
                 RuleDef::Bio_ShowBioSachbezeichnung,
+                // Wild collection exists under the Bio-Verordnung too, with its own
+                // wording («aus biologisch zertifizierter Wildsammlung», DEC-11).
+                RuleDef::Wildsammlung_Ueber10Prozent,
             ],
         );
 

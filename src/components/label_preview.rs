@@ -1,10 +1,46 @@
 use crate::components::{Amount, AmountType, Price};
 use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, UmstellungsknospeSatzRegular, UmstellungsknospeSatzImport};
 use crate::layout::DisclaimerContext;
-use crate::shared::Conditionals;
+use crate::shared::VerdictsContext;
+use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeVerdict};
 use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
 use rust_i18n::t;
+
+/// An informational hint below the label (blue box).
+///
+/// These hints are deliberately outside the white card so users can tell they
+/// are guidance, not part of the printed label. The markup was repeated eleven
+/// times; naming it keeps the styling in one place and the call sites readable.
+#[component]
+fn Hint(text: String) -> Element {
+    rsx! {
+        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded", {text} }
+    }
+}
+
+/// A warning hint below the label (amber box with a warning triangle).
+/// Used for the failing «Rezeptur prüfen» verdicts.
+#[component]
+fn WarningHint(text: String) -> Element {
+    rsx! {
+        div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
+            svg {
+                class: "w-4 h-4 shrink-0 mt-0.5",
+                fill: "none",
+                stroke: "currentColor",
+                stroke_width: "2",
+                view_box: "0 0 24 24",
+                path {
+                    stroke_linecap: "round",
+                    stroke_linejoin: "round",
+                    d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
+                }
+            }
+            span { {text} }
+        }
+    }
+}
 
 #[component]
 pub fn LabelPreview(
@@ -106,7 +142,7 @@ pub fn LabelPreview(
         _ => rsx!("{get_base_factor()} {get_unit()}"),
     });
 
-    let conditionals = use_context::<Conditionals>();
+    let verdicts = use_context::<VerdictsContext>();
     let mut disclaimer_context = use_context::<Signal<DisclaimerContext>>();
     let disclaimer_accepted = use_memo(move || disclaimer_context.read().accepted);
 
@@ -128,44 +164,43 @@ pub fn LabelPreview(
                 // the Umstellungssatz text into one combined image (logo left, text
                 // right — see `make umstellung-assets`).
                 {
-                    let c = conditionals.0();
-                    let regular = c.get("bio_suisse_regular").unwrap_or(&false) == &true;
-                    let no_cross = c.get("bio_suisse_no_cross").unwrap_or(&false) == &true;
-                    let umstellung = c.get("knospe_umstellung_logo").unwrap_or(&false) == &true;
-                    // BioV (Bio-CH) shows no logo here; the green "Bio ✓" badge is the
-                    // verified-compliant stamp — gated on the tri-state «Rezeptur prüfen»
-                    // result (bio_check_ok = recipe checked, qualifies, no open errors),
-                    // NOT on the raw percentage, so it never shows prematurely. Knospe
-                    // (`bio_suisse_*`) and Bio flags are mutually exclusive → no collision.
-                    let bio_ok = c.get("bio_check_ok").unwrap_or(&false) == &true;
-                    if regular || no_cross {
-                        rsx! {
-                            div { class: "absolute top-2 right-2 flex items-center justify-end",
-                                if umstellung && regular {
-                                    UmstellungsknospeSatzRegular {}
-                                } else if umstellung {
-                                    UmstellungsknospeSatzImport {}
-                                } else {
-                                    div { class: "w-16 shrink-0",
-                                        if regular {
-                                            BioSuisseRegular {}
-                                        } else {
-                                            BioSuisseNoCross {}
+                    // TD-1 Stufe 3: the artwork follows the typed Knospe verdict
+                    // directly. Logo variant and Umstellung are one value, so the
+                    // impossible combinations (both variants, Umstellung without a
+                    // logo) are gone by construction. The green "Bio ✓" badge is
+                    // the Bio-V counterpart: driven by the recipe verdict, not the
+                    // «Rezeptur prüfen» button (DEC-6). Knospe and Bio verdicts
+                    // never coexist (different configurations) → no collision.
+                    let v = verdicts.0();
+                    match (&v.knospe, &v.bio) {
+                        (Some(KnospeVerdict::Logo { logo, .. }), _) => {
+                            let logo = *logo;
+                            rsx! {
+                                div { class: "absolute top-2 right-2 flex items-center justify-end",
+                                    if logo.umstellung && logo.swiss_cross {
+                                        UmstellungsknospeSatzRegular {}
+                                    } else if logo.umstellung {
+                                        UmstellungsknospeSatzImport {}
+                                    } else {
+                                        div { class: "w-16 shrink-0",
+                                            if logo.swiss_cross {
+                                                BioSuisseRegular {}
+                                            } else {
+                                                BioSuisseNoCross {}
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    } else if bio_ok {
-                        rsx! {
+                        (_, Some(BioVerdict::Allowed { .. })) => rsx! {
                             div { class: "absolute top-2 right-2",
                                 span { class: "badge badge-success gap-1",
                                     {t!("badges.bio_qualified").to_string()}
                                 }
                             }
-                        }
-                    } else {
-                        rsx! {}
+                        },
+                        _ => rsx! {},
                     }
                 }
 
@@ -176,11 +211,13 @@ pub fn LabelPreview(
                         span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung").to_string()}}
                     } else {
                         {
-                            let bio_suffix = if conditionals.0().get("bio_sachbezeichnung_suffix").unwrap_or(&false) == &true {
-                                " Bio"
-                            } else {
-                                ""
-                            };
+                            // « Bio» after the Sachbezeichnung: granted by either
+                            // regime's verdict (Bio-V allowed, or a Knospe logo whose
+                            // bio_suffix flag is set — DEC-10).
+                            let v = verdicts.0();
+                            let suffix_allowed = matches!(v.bio, Some(BioVerdict::Allowed { .. }))
+                                || matches!(v.knospe, Some(KnospeVerdict::Logo { bio_suffix: true, .. }));
+                            let bio_suffix = if suffix_allowed { " Bio" } else { "" };
                             if !(*product_title.read()).is_empty() {
                                 rsx! {
                                     h3 { class: "text-2xl", "{product_title}" }
@@ -416,83 +453,68 @@ pub fn LabelPreview(
             // deliberately outside the white card so users see they are not part
             // of the physical label (Testing 25.06.2026).
             div { class: "mx-4",
-                // BioV tri-state «Rezeptur prüfen», mirroring the Knospe check below.
-                if conditionals.0().get("bio_check_pending").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.bio_check_pending").to_string()}
-                    }
-                }
-                if conditionals.0().get("bio_check_ok").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.marketing_allowed").to_string()}
-                    }
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.alternative_marking").to_string()}
-                    }
-                    // Monoprodukt aus Umstellbetrieb: "Bio" allowed + mandatory Umstellungshinweis (Zeile 7).
-                    if conditionals.0().get("umstellbetrieb_hinweis").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.umstellbetrieb_mono").to_string()}
+                // TD-1 Stufe 3: the whole hint section is one function of the
+                // typed verdicts. Which hints show, and why, is now readable as
+                // a pair of matches instead of eleven independent flag checks.
+                {
+                    let v = verdicts.0();
+                    let alternative_marking = v.alternative_marking_allowed;
+                    rsx! {
+                        // Bio-V tri-state «Rezeptur prüfen».
+                        match (&v.bio_check, &v.bio) {
+                            (Some(CheckState::Pending), _) => rsx! {
+                                Hint { text: t!("bio_hints.bio_check_pending").to_string() }
+                            },
+                            (Some(CheckState::Ok), bio) => rsx! {
+                                Hint { text: t!("bio_hints.marketing_allowed").to_string() }
+                                // DEC-4: only truthful when every agricultural
+                                // ingredient is organic.
+                                if alternative_marking {
+                                    Hint { text: t!("bio_hints.alternative_marking").to_string() }
+                                }
+                                // Monoprodukt aus Umstellbetrieb: mandatory hint (Zeile 7).
+                                if matches!(bio, Some(BioVerdict::Allowed { umstellung_mono: true })) {
+                                    Hint { text: t!("bio_hints.umstellbetrieb_mono").to_string() }
+                                }
+                            },
+                            (Some(CheckState::Failed), bio) => rsx! {
+                                WarningHint { text: t!("bio_hints.bio_check_failed").to_string() }
+                                // The verdict's reasons name what exactly blocks «Bio».
+                                if let Some(BioVerdict::NotAllowed { reasons }) = bio {
+                                    Hint { text: t!("bio_hints.marketing_not_allowed").to_string() }
+                                    if reasons.contains(&BioBlockReason::ExceptionOver5Percent) {
+                                        Hint { text: t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string() }
+                                    }
+                                    // DEC-7: undeclared non-bio ingredient.
+                                    if reasons.contains(&BioBlockReason::UndeclaredNonBio) {
+                                        Hint { text: t!("bio_hints.bio_nicht_deklarierte_zutat").to_string() }
+                                    }
+                                }
+                            },
+                            (None, _) => rsx! {},
                         }
-                    }
-                }
-                if conditionals.0().get("bio_check_failed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
-                        svg {
-                            class: "w-4 h-4 shrink-0 mt-0.5",
-                            fill: "none",
-                            stroke: "currentColor",
-                            stroke_width: "2",
-                            view_box: "0 0 24 24",
-                            path {
-                                stroke_linecap: "round",
-                                stroke_linejoin: "round",
-                                d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
-                            }
+                        // Knospe tri-state «Rezeptur prüfen».
+                        match (&v.knospe_check, &v.knospe) {
+                            (Some(CheckState::Pending), _) => rsx! {
+                                Hint { text: t!("bio_hints.knospe_check_pending").to_string() }
+                            },
+                            (Some(CheckState::Ok), _) => rsx! {
+                                Hint { text: t!("bio_hints.knospe_check_ok").to_string() }
+                                if alternative_marking {
+                                    Hint { text: t!("bio_hints.alternative_marking").to_string() }
+                                }
+                            },
+                            (Some(CheckState::Failed), knospe) => rsx! {
+                                WarningHint { text: t!("bio_hints.knospe_check_failed").to_string() }
+                                // DEC-8: name the 5% cap when that is the reason.
+                                if let Some(KnospeVerdict::NoLogo { reasons }) = knospe {
+                                    if reasons.contains(&KnospeBlockReason::ExceptionOver5Percent) {
+                                        Hint { text: t!("bio_hints.knospe_erlaubte_ausnahme_ueber_5_prozent").to_string() }
+                                    }
+                                }
+                            },
+                            (None, _) => rsx! {},
                         }
-                        span { {t!("bio_hints.bio_check_failed").to_string()} }
-                    }
-                    // Specific reason(s) for the failure, shown under the warning.
-                    if conditionals.0().get("bio_marketing_not_allowed").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.marketing_not_allowed").to_string()}
-                        }
-                    }
-                    if conditionals.0().get("bio_erlaubte_ausnahme_ueber_5_prozent").unwrap_or(&false) == &true {
-                        div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                            {t!("bio_hints.erlaubte_ausnahme_ueber_5_prozent").to_string()}
-                        }
-                    }
-                }
-                // Knospe: tri-state result of the «Rezeptur prüfen» check.
-                if conditionals.0().get("knospe_check_pending").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.knospe_check_pending").to_string()}
-                    }
-                }
-                if conditionals.0().get("knospe_check_ok").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.knospe_check_ok").to_string()}
-                    }
-                    div { class: "mt-2 p-2 bg-info/30 text-base-content text-xs rounded",
-                        {t!("bio_hints.alternative_marking").to_string()}
-                    }
-                }
-                if conditionals.0().get("knospe_check_failed").unwrap_or(&false) == &true {
-                    div { class: "mt-2 p-2 bg-warning/40 text-base-content text-xs rounded flex items-start gap-2",
-                        svg {
-                            class: "w-4 h-4 shrink-0 mt-0.5",
-                            fill: "none",
-                            stroke: "currentColor",
-                            stroke_width: "2",
-                            view_box: "0 0 24 24",
-                            path {
-                                stroke_linecap: "round",
-                                stroke_linejoin: "round",
-                                d: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z",
-                            }
-                        }
-                        span { {t!("bio_hints.knospe_check_failed").to_string()} }
                     }
                 }
             }

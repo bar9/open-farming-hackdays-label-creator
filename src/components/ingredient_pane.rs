@@ -1,10 +1,10 @@
 use crate::components::*;
 use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
 use crate::core::{Ingredient, AmountUnit};
-use crate::model::{food_db, lookup_allergen, lookup_agricultural, Country};
+use crate::model::{db_knows_non_agricultural, declaration_name, food_db, lookup_allergen, lookup_agricultural, Country};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
-use crate::shared::Validations;
+use crate::shared::{Validations, VerdictsContext};
 use crate::persistence::{save_composite_ingredient, get_saved_ingredients_list};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -138,6 +138,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     });
     let mut is_allergen_custom = use_signal(|| original_ingredient.is_allergen);
 
+    // The food DB already knows which ingredients are non-agricultural (salt,
+    // water, Dicarbonat). Treat that like the allergen flag: show it and lock it,
+    // instead of making the user guess (DEC-9). Free-text ingredients are not in
+    // the DB, so their choice stays open.
+    let db_says_non_agricultural = use_memo(move || {
+        db_knows_non_agricultural(&edit_name(), edit_canonical().as_deref())
+    });
+
     // Captured once at mount. Not reactive to `ingredients` changes so the
     // auto-save effect below can't overwrite it with the user's new value.
     let original_amount = use_signal(|| original_ingredient.computed_amount());
@@ -162,6 +170,56 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             1.0
         }
     });
+
+    // All three Ingredient constructors in this pane (live sync, "merken",
+    // save) differ only in amount, allergen flag and children — the other 17
+    // quality/origin fields are identical. Building them in one place keeps the
+    // three from drifting: a new field on `Ingredient` wired up in only two of
+    // three spots is exactly the bug this shape prevents.
+    let make_ingredient = move |amount: f64,
+                                is_allergen: bool,
+                                children: Option<Vec<Ingredient>>| {
+        // Alias names ("Mehl") aren't in food_db; resolve flags via the canonical.
+        let canonical = edit_canonical();
+        let lookup_name = canonical.clone().unwrap_or(edit_name());
+        Ingredient {
+            name: edit_name(),
+            amount,
+            unit: edit_unit(),
+            is_allergen,
+            is_namensgebend: Some(edit_is_namensgebend()),
+            sub_components: None,
+            children,
+            origins: edit_origins(),
+            is_agricultural: if edit_nicht_landwirtschaftlich() {
+                false
+            } else {
+                lookup_agricultural(&lookup_name)
+            },
+            is_bio: Some(edit_is_bio()),
+            category: edit_category(),
+            aufzucht_ort: edit_aufzucht_ort(),
+            schlachtungs_ort: edit_schlachtungs_ort(),
+            fangort: edit_fangort(),
+            bio_ch: Some(edit_bio_ch()),
+            erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
+            erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() {
+                None
+            } else {
+                Some(edit_erlaubte_ausnahme_bio_details())
+            },
+            erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
+            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() {
+                None
+            } else {
+                Some(edit_erlaubte_ausnahme_knospe_details())
+            },
+            processing_steps: edit_processing_steps(),
+            aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
+            override_children: None,
+            canonical,
+        }
+    };
 
     // Wrapper ingredients signal for SubIngredientsTable
     let mut wrapper_ingredients = use_signal(|| {
@@ -221,6 +279,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let goto_child = use_callback(move |child_index: usize| { goto_descendant.call(vec![child_index]); });
 
     // Enforce: aus_umstellbetrieb requires bio or bio_ch
+    // Umstellbetrieb only exists under a bio quality. This also does the work the
+    // genesis reset paths omit: they clear the quality but not this flag, so
+    // without it a conversion ingredient would leak into the next one. Pinned by
+    // `save_and_next_clears_the_umstellbetrieb_flag` in the e2e suite.
     use_effect(move || {
         if !edit_is_bio() && !edit_bio_ch() && edit_aus_umstellbetrieb() {
             edit_aus_umstellbetrieb.set(false);
@@ -237,31 +299,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             } else {
                 None
             };
-            wrapper_ingredients.write()[0] = Ingredient {
-                name: edit_name(),
-                amount: edit_amount().unwrap_or(0.0),
-                unit: edit_unit(),
-                is_allergen: is_allergen_custom(),
-                is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: None,
-                children: children_to_use,
-                origins: edit_origins(),
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { let typed = edit_name(); lookup_agricultural(&edit_canonical().unwrap_or(typed)) },
-                is_bio: Some(edit_is_bio()),
-                category: edit_category(),
-                aufzucht_ort: edit_aufzucht_ort(),
-                schlachtungs_ort: edit_schlachtungs_ort(),
-                fangort: edit_fangort(),
-                bio_ch: Some(edit_bio_ch()),
-                erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
-                erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
-                erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-                erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-                processing_steps: edit_processing_steps(),
-                aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                override_children: None,
-                canonical: edit_canonical(),
-            };
+            wrapper_ingredients.write()[0] = make_ingredient(
+                edit_amount().unwrap_or(0.0),
+                is_allergen_custom(),
+                children_to_use,
+            );
         } else {
             wrapper_ingredients.write()[0].children = None;
         }
@@ -422,7 +464,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     }
 
     let handle_ingredient_select = move |unified_ingredient: UnifiedIngredient| {
-        edit_name.set(unified_ingredient.name.clone());
+        // Gluten-containing cereals must be declared by species, so picking the
+        // "Mehl (Weizenmehl)" suggestion stores "Weizenmehl". Other aliases keep
+        // the typed term (see `declaration_name`).
+        edit_name.set(declaration_name(
+            &unified_ingredient.name,
+            unified_ingredient.canonical.as_deref(),
+        ));
         edit_canonical.set(unified_ingredient.canonical.clone());
         edit_category.set(unified_ingredient.category.clone());
 
@@ -463,31 +511,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let handle_save_to_storage = move |_| {
         if edit_is_composite() && edit_children().is_some() {
-            let ingredient_to_save = Ingredient {
-                name: edit_name(),
-                amount: 100.0,
-                unit: edit_unit(),
-                is_allergen: is_allergen_custom(),
-                is_namensgebend: Some(edit_is_namensgebend()),
-                sub_components: None,
-                children: edit_children(),
-                origins: edit_origins(),
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { let typed = edit_name(); lookup_agricultural(&edit_canonical().unwrap_or(typed)) },
-                is_bio: Some(edit_is_bio()),
-                category: edit_category(),
-                aufzucht_ort: edit_aufzucht_ort(),
-                schlachtungs_ort: edit_schlachtungs_ort(),
-                fangort: edit_fangort(),
-                bio_ch: Some(edit_bio_ch()),
-                erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
-                erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
-                erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-                erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-                processing_steps: edit_processing_steps(),
-                aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-                override_children: None,
-                canonical: edit_canonical(),
-            };
+            // Saved composites are stored normalised to 100 units.
+            let ingredient_to_save =
+                make_ingredient(100.0, is_allergen_custom(), edit_children());
 
             match save_composite_ingredient(&ingredient_to_save) {
                 Ok(_) => {
@@ -545,9 +571,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         };
 
         // Alias names ("Mehl") aren't in food_db; resolve flags via the canonical.
-        let canonical = edit_canonical();
-        let typed = edit_name();
-        let lookup_name = canonical.clone().unwrap_or(typed);
+        // A curated entry's allergen status comes from the DB, a free-text one
+        // from whatever the user ticked.
+        let lookup_name = edit_canonical().unwrap_or(edit_name());
         let in_database = food_db().iter().any(|(name, _)| name == &lookup_name);
         let allergen_status = if in_database {
             lookup_allergen(&lookup_name)
@@ -555,31 +581,35 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             is_allergen_custom()
         };
 
-        Some(Ingredient {
-            name: edit_name(),
-            amount,
-            unit: edit_unit(),
-            is_allergen: allergen_status,
-            is_namensgebend: Some(edit_is_namensgebend()),
-            sub_components: None,
-            children: edit_children(),
-            origins: edit_origins(),
-            is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&lookup_name) },
-            is_bio: Some(edit_is_bio()),
-            category: edit_category(),
-            aufzucht_ort: edit_aufzucht_ort(),
-            schlachtungs_ort: edit_schlachtungs_ort(),
-            fangort: edit_fangort(),
-            bio_ch: Some(edit_bio_ch()),
-            erlaubte_ausnahme_bio: Some(edit_erlaubte_ausnahme_bio()),
-            erlaubte_ausnahme_bio_details: if edit_erlaubte_ausnahme_bio_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_bio_details()) },
-            erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() { None } else { Some(edit_erlaubte_ausnahme_knospe_details()) },
-            processing_steps: edit_processing_steps(),
-            aus_umstellbetrieb: Some(edit_aus_umstellbetrieb()),
-            override_children: None,
-            canonical,
-        })
+        Some(make_ingredient(amount, allergen_status, edit_children()))
+    };
+
+    // Clear every edit signal back to "blank ingredient". Genesis mode reaches
+    // this from three places (save, save-and-next, cancel); they used to spell
+    // the same 20 assignments out each time, so a newly added signal could be
+    // forgotten in one of them. Note that `edit_aus_umstellbetrieb` is cleared
+    // indirectly by the guard effect above, once the bio quality is gone.
+    let mut clear_edit_state = move || {
+        edit_name.set(String::new());
+        edit_amount.set(None);
+        edit_unit.set(AmountUnit::default());
+        edit_is_composite.set(false);
+        edit_is_namensgebend.set(false);
+        edit_children.set(None);
+        is_allergen_custom.set(false);
+        edit_category.set(None);
+        edit_origins.set(None);
+        edit_aufzucht_ort.set(None);
+        edit_schlachtungs_ort.set(None);
+        edit_fangort.set(None);
+        edit_bio_ch.set(false);
+        edit_is_bio.set(false);
+        edit_erlaubte_ausnahme_bio.set(false);
+        edit_erlaubte_ausnahme_bio_details.set(String::new());
+        edit_erlaubte_ausnahme_knospe.set(false);
+        edit_erlaubte_ausnahme_knospe_details.set(String::new());
+        edit_processing_steps.set(None);
+        edit_canonical.set(None);
     };
 
     let mut handle_save = move |scale_all: bool| {
@@ -588,26 +618,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
             if props.is_genesis {
                 // Reset local state for next creation
-                edit_name.set(String::new());
-                edit_amount.set(None);
-                edit_unit.set(AmountUnit::default());
-                edit_is_composite.set(false);
-                edit_is_namensgebend.set(false);
-                edit_children.set(None);
-                is_allergen_custom.set(false);
-                edit_category.set(None);
-                edit_origins.set(None);
-                edit_aufzucht_ort.set(None);
-                edit_schlachtungs_ort.set(None);
-                edit_fangort.set(None);
-                edit_bio_ch.set(false);
-                edit_is_bio.set(false);
-                edit_erlaubte_ausnahme_bio.set(false);
-                edit_erlaubte_ausnahme_bio_details.set(String::new());
-                edit_erlaubte_ausnahme_knospe.set(false);
-                edit_erlaubte_ausnahme_knospe_details.set(String::new());
-                edit_processing_steps.set(None);
-                edit_canonical.set(None);
+                clear_edit_state();
                 wrapper_ingredients.write()[0] = Ingredient {
                     name: String::new(),
                     amount: 0.0,
@@ -642,26 +653,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             props.on_save_and_next.call((new_ingredient, false, 1.0));
 
             // Reset local state for next creation (same as handle_save genesis reset)
-            edit_name.set(String::new());
-            edit_amount.set(None);
-            edit_unit.set(AmountUnit::default());
-            edit_is_composite.set(false);
-            edit_is_namensgebend.set(false);
-            edit_children.set(None);
-            is_allergen_custom.set(false);
-            edit_category.set(None);
-            edit_origins.set(None);
-            edit_aufzucht_ort.set(None);
-            edit_schlachtungs_ort.set(None);
-            edit_fangort.set(None);
-            edit_bio_ch.set(false);
-            edit_is_bio.set(false);
-            edit_erlaubte_ausnahme_bio.set(false);
-            edit_erlaubte_ausnahme_bio_details.set(String::new());
-            edit_erlaubte_ausnahme_knospe.set(false);
-            edit_erlaubte_ausnahme_knospe_details.set(String::new());
-            edit_processing_steps.set(None);
-            edit_canonical.set(None);
+            clear_edit_state();
             wrapper_ingredients.write()[0] = Ingredient::default();
         }
     };
@@ -671,26 +663,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let mut reset_to_original = move || {
         if is_genesis {
             // In genesis mode, just clear everything
-            edit_name.set(String::new());
-            edit_amount.set(None);
-            edit_unit.set(AmountUnit::default());
-            edit_is_composite.set(false);
-            edit_is_namensgebend.set(false);
-            edit_children.set(None);
-            is_allergen_custom.set(false);
-            edit_category.set(None);
-            edit_origins.set(None);
-            edit_aufzucht_ort.set(None);
-            edit_schlachtungs_ort.set(None);
-            edit_fangort.set(None);
-            edit_bio_ch.set(false);
-            edit_is_bio.set(false);
-            edit_erlaubte_ausnahme_bio.set(false);
-            edit_erlaubte_ausnahme_bio_details.set(String::new());
-            edit_erlaubte_ausnahme_knospe.set(false);
-            edit_erlaubte_ausnahme_knospe_details.set(String::new());
-            edit_processing_steps.set(None);
-            edit_canonical.set(None);
+            clear_edit_state();
             return;
         }
         let Some(orig_ref) = ingredients.get(index) else {
@@ -720,6 +693,20 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
         edit_nicht_landwirtschaftlich.set(!orig.is_agricultural && orig.is_bio != Some(true) && orig.bio_ch != Some(true));
     };
+
+    // Keep the locked choice in sync with the name: picking a DB ingredient that
+    // is non-agricultural sets the quality, and switching away from it releases
+    // the lock so a stale "nicht-landwirtschaftlich" cannot linger (DEC-9).
+    use_effect(move || {
+        if db_says_non_agricultural() {
+            edit_nicht_landwirtschaftlich.set(true);
+            edit_is_bio.set(false);
+            edit_bio_ch.set(false);
+            edit_aus_umstellbetrieb.set(false);
+            edit_erlaubte_ausnahme_bio.set(false);
+            edit_erlaubte_ausnahme_knospe.set(false);
+        }
+    });
 
     // Knospe config detection (used by bio section and Wildsammlung)
     let is_knospe_config = use_memo(move || {
@@ -1369,8 +1356,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             }
 
             br {}
-            ConditionalDisplay {
-                path: "namensgebende_zutat".to_string(),
+            // AP1.3: only configurations with the rule offer the name-giving flag.
+            if use_context::<VerdictsContext>().0().namensgebende_zutat_input {
                 FormField {
                     help: Some(t!("help.namensgebendeZutaten").to_string()),
                     label: t!("label.namensgebendeZutat").to_string(),
@@ -1460,6 +1447,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "knospe",
                                     onchange: move |_| { set_bio_cat("knospe"); }
                                 }
@@ -1473,6 +1462,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "bio",
                                     onchange: move |_| { set_bio_cat("bio"); }
                                 }
@@ -1486,6 +1477,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "andere",
                                     onchange: move |_| { set_bio_cat("andere"); }
                                 }
@@ -1499,6 +1492,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "nicht_lw",
                                     onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }
@@ -1646,6 +1641,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         };
 
                         rsx! {
+                            // DEC-5: all qualities form one contiguous radio group in a
+                            // fixed order, mirroring the Knospe branch. Dependent fields
+                            // live in the block below, so selecting a quality never moves
+                            // the other options.
                             // Radio: Bio (Bio-CH zertifiziert)
                             FormField {
                                 help: Some(t!("help.bio_ch").to_string()),
@@ -1655,24 +1654,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "bio",
                                     onchange: move |_| { set_bio_cat("bio"); }
-                                }
-                            }
-                            if bio_cat == "bio" {
-                                br {}
-                                FormField {
-                                    help: Some(t!("help.aus_umstellbetrieb").to_string()),
-                                    label: t!("bio_labels.aus_umstellbetrieb").to_string(),
-                                    inline_checkbox: true,
-                                    input {
-                                        r#type: "checkbox",
-                                        class: "checkbox checkbox-accent",
-                                        checked: edit_aus_umstellbetrieb(),
-                                        onchange: move |evt| {
-                                            edit_aus_umstellbetrieb.set(evt.data.value() == "true");
-                                        }
-                                    }
                                 }
                             }
                             // Radio: Nicht-biologisch (andere)
@@ -1684,11 +1669,47 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                     r#type: "radio",
                                     name: "bio_v_category",
                                     class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
                                     checked: bio_cat == "andere",
                                     onchange: move |_| { set_bio_cat("andere"); }
                                 }
                             }
-                            if bio_cat == "andere" {
+                            // Radio: Nicht-landwirtschaftliche Zutat
+                            FormField {
+                                help: Some(t!("help.nicht_landwirtschaftlich").to_string()),
+                                label: t!("bio_labels.nicht_landwirtschaftlich").to_string(),
+                                inline_checkbox: true,
+                                input {
+                                    r#type: "radio",
+                                    name: "bio_v_category",
+                                    class: "radio radio-primary",
+                                    // Locked when the food DB already answers this (DEC-9).
+                                    disabled: db_says_non_agricultural(),
+                                    checked: bio_cat == "nicht_lw",
+                                    onchange: move |_| { set_bio_cat("nicht_lw"); }
+                                }
+                            }
+                            // Dependent fields, below the whole group — same layout as the
+                            // Knospe branch (separated block under the radios).
+                            if bio_cat == "bio" {
+                                br {}
+                                div { class: "border-t border-base-300 pt-2 mt-2",
+                                    FormField {
+                                        help: Some(t!("help.aus_umstellbetrieb").to_string()),
+                                        label: t!("bio_labels.aus_umstellbetrieb").to_string(),
+                                        inline_checkbox: true,
+                                        input {
+                                            r#type: "checkbox",
+                                            class: "checkbox checkbox-accent",
+                                            checked: edit_aus_umstellbetrieb(),
+                                            onchange: move |evt| {
+                                                edit_aus_umstellbetrieb.set(evt.data.value() == "true");
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if bio_cat == "andere" {
                                 br {}
                                 div { class: "border-t border-base-300 pt-2 mt-2",
                                     FormField {
@@ -1718,19 +1739,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                             }
                                         }
                                     }
-                                }
-                            }
-                            // Radio: Nicht-landwirtschaftliche Zutat
-                            FormField {
-                                help: Some(t!("help.nicht_landwirtschaftlich").to_string()),
-                                label: t!("bio_labels.nicht_landwirtschaftlich").to_string(),
-                                inline_checkbox: true,
-                                input {
-                                    r#type: "radio",
-                                    name: "bio_v_category",
-                                    class: "radio radio-primary",
-                                    checked: bio_cat == "nicht_lw",
-                                    onchange: move |_| { set_bio_cat("nicht_lw"); }
                                 }
                             }
                         }
@@ -1908,10 +1916,17 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 }
             }
             // Wildsammlung sits at the very bottom of the modal (Testing 25.06.2026,
-            // hand note 2) — only relevant when the Knospe quality is selected.
-            if is_knospe_config() && edit_is_bio() {
+            // hand note 2) — relevant for the Knospe quality and, with its own
+            // wording, for the Bio-V «Bio» quality (DEC-11).
+            if (is_knospe_config() && edit_is_bio()) || (!is_knospe_config() && edit_bio_ch()) {
                 {
                     let wildsammlung_step = "aus zertifizierter Wildsammlung";
+                    // The stored step is the same; only the label differs by regime.
+                    let wildsammlung_label = if is_knospe_config() {
+                        t!("bio_labels.wildsammlung").to_string()
+                    } else {
+                        t!("bio_labels.wildsammlung_bio").to_string()
+                    };
                     let is_wildsammlung_checked = edit_processing_steps()
                         .as_ref()
                         .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
@@ -1919,7 +1934,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         br {}
                         FormField {
                             help: Some(t!("help.wildsammlung").to_string()),
-                            label: t!("bio_labels.wildsammlung").to_string(),
+                            label: wildsammlung_label,
                             inline_checkbox: true,
                             input {
                                 r#type: "checkbox",
