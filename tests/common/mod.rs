@@ -137,9 +137,13 @@ pub async fn click_button_by_text(c: &Client, text: &str) -> bool {
     }
 }
 
-/// First input with the daisyUI bordered class (used as the genesis ingredient input).
+/// The genesis ingredient input. Since the styling unification every input is
+/// `.input-bordered`, so the class alone no longer identifies it — a bare
+/// `input.input-bordered` matches the product-title field first and the tests
+/// type into the wrong box. Scope to the open dialog, where the ingredient
+/// input is the first bordered input.
 pub async fn first_accent_input(c: &Client) -> Option<Element> {
-    c.find(Locator::Css("input.input-bordered")).await.ok()
+    c.find(Locator::Css("dialog[open] input.input-bordered")).await.ok()
 }
 
 /// First text input on the page (used as product title heuristic).
