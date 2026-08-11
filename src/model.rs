@@ -516,6 +516,79 @@ impl Country {
         }
     }
 
+    /// All selectable countries in UI order: regions first, then ISO countries.
+    pub const ISO_COUNTRIES: [Country; 248] = [
+        Country::AD, Country::AE, Country::AF, Country::AG, Country::AI, Country::AL, Country::AM, Country::AO,
+        Country::AQ, Country::AR, Country::AS, Country::AT, Country::AU, Country::AW, Country::AX, Country::AZ,
+        Country::BA, Country::BB, Country::BD, Country::BE, Country::BF, Country::BG, Country::BH, Country::BI,
+        Country::BJ, Country::BL, Country::BM, Country::BN, Country::BO, Country::BQ, Country::BR, Country::BS,
+        Country::BT, Country::BV, Country::BW, Country::BY, Country::BZ, Country::CA, Country::CC, Country::CD,
+        Country::CF, Country::CG, Country::CI, Country::CK, Country::CL, Country::CM, Country::CN, Country::CO,
+        Country::CR, Country::CU, Country::CV, Country::CW, Country::CX, Country::CY, Country::CZ, Country::DE,
+        Country::DJ, Country::DK, Country::DM, Country::DO, Country::DZ, Country::EC, Country::EE, Country::EG,
+        Country::EH, Country::ER, Country::ES, Country::ET, Country::FI, Country::FJ, Country::FK, Country::FM,
+        Country::FO, Country::FR, Country::GA, Country::GB, Country::GD, Country::GE, Country::GF, Country::GG,
+        Country::GH, Country::GI, Country::GL, Country::GM, Country::GN, Country::GP, Country::GQ, Country::GR,
+        Country::GS, Country::GT, Country::GU, Country::GW, Country::GY, Country::HK, Country::HM, Country::HN,
+        Country::HR, Country::HT, Country::HU, Country::ID, Country::IE, Country::IL, Country::IM, Country::IN,
+        Country::IO, Country::IQ, Country::IR, Country::IS, Country::IT, Country::JE, Country::JM, Country::JO,
+        Country::JP, Country::KE, Country::KG, Country::KH, Country::KI, Country::KM, Country::KN, Country::KP,
+        Country::KR, Country::KW, Country::KY, Country::KZ, Country::LA, Country::LB, Country::LC, Country::LI,
+        Country::LK, Country::LR, Country::LS, Country::LT, Country::LU, Country::LV, Country::LY, Country::MA,
+        Country::MC, Country::MD, Country::ME, Country::MF, Country::MG, Country::MH, Country::MK, Country::ML,
+        Country::MM, Country::MN, Country::MO, Country::MP, Country::MQ, Country::MR, Country::MS, Country::MT,
+        Country::MU, Country::MV, Country::MW, Country::MX, Country::MY, Country::MZ, Country::NA, Country::NC,
+        Country::NE, Country::NF, Country::NG, Country::NI, Country::NL, Country::NO, Country::NP, Country::NR,
+        Country::NU, Country::NZ, Country::OM, Country::PA, Country::PE, Country::PF, Country::PG, Country::PH,
+        Country::PK, Country::PL, Country::PM, Country::PN, Country::PR, Country::PS, Country::PT, Country::PW,
+        Country::PY, Country::QA, Country::RE, Country::RO, Country::RS, Country::RU, Country::RW, Country::SA,
+        Country::SB, Country::SC, Country::SD, Country::SE, Country::SG, Country::SH, Country::SI, Country::SJ,
+        Country::SK, Country::SL, Country::SM, Country::SN, Country::SO, Country::SR, Country::SS, Country::ST,
+        Country::SV, Country::SX, Country::SY, Country::SZ, Country::TC, Country::TD, Country::TF, Country::TG,
+        Country::TH, Country::TJ, Country::TK, Country::TL, Country::TM, Country::TN, Country::TO, Country::TR,
+        Country::TT, Country::TV, Country::TW, Country::TZ, Country::UA, Country::UG, Country::UM, Country::US,
+        Country::UY, Country::UZ, Country::VA, Country::VC, Country::VE, Country::VG, Country::VI, Country::VN,
+        Country::VU, Country::WF, Country::WS, Country::YE, Country::YT, Country::ZA, Country::ZM, Country::ZW,
+    ];
+
+    /// Parse an ISO code (or the special `CH`/`EU`/`NoOriginRequired` values) into a `Country`.
+    pub fn from_code(code: &str) -> Option<Country> {
+        match code {
+            "CH" => Some(Country::CH),
+            "EU" => Some(Country::EU),
+            "Import" => Some(Country::Import),
+            "NoOriginRequired" => Some(Country::NoOriginRequired),
+            _ => Country::ISO_COUNTRIES
+                .iter()
+                .find(|c| c.country_code() == code)
+                .cloned(),
+        }
+    }
+
+    /// Translation key for this country's name under the `countries.*` namespace.
+    pub fn i18n_key(&self) -> String {
+        match self {
+            Country::CH => "countries.switzerland".to_string(),
+            Country::NoOriginRequired => "countries.no_origin_required".to_string(),
+            Country::Import => "countries.import".to_string(),
+            other => format!("countries.{}", other.country_code()),
+        }
+    }
+
+    /// Country name in the active locale, falling back to the German name when
+    /// the locale file has no entry (e.g. fr-CH/it-CH only translate a subset).
+    pub fn localized_name(&self) -> String {
+        let key = self.i18n_key();
+        let translated = rust_i18n::t!(&key).to_string();
+        // rust-i18n returns the key itself (or "<locale>.<key>") when a key is
+        // missing, so both shapes mean "not translated".
+        if translated == key || translated.ends_with(&format!(".{key}")) {
+            self.display_name().to_string()
+        } else {
+            translated
+        }
+    }
+
     pub fn country_code(&self) -> &'static str {
         match self {
             Country::CH => "CH",
@@ -1348,5 +1421,71 @@ mod food_db_tests {
         // Guard the resolution direction: with a canonical present the typed
         // term must not decide.
         assert!(db_knows_non_agricultural("H2O", Some("Wasser")));
+    }
+}
+
+// The country dropdowns render `localized_name()`, so every enum variant must
+// have a `countries.*` entry in de-CH; otherwise the UI would show a raw key.
+#[cfg(test)]
+mod country_i18n_tests {
+    use super::Country;
+
+    fn de_ch_country_keys() -> std::collections::HashSet<String> {
+        let yml = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/locales/de-CH.yml"))
+            .expect("de-CH.yml must be readable");
+        let block = yml
+            .split("\ncountries:\n")
+            .nth(1)
+            .expect("de-CH.yml must have a countries section");
+        block
+            .lines()
+            .take_while(|l| l.starts_with("  ") || l.trim().is_empty())
+            .filter_map(|l| l.trim().split(':').next().map(|k| k.trim_matches('"').to_string()))
+            .filter(|k| !k.is_empty())
+            .collect()
+    }
+
+    #[test]
+    fn every_country_has_a_de_ch_translation_key() {
+        let keys = de_ch_country_keys();
+        let mut missing: Vec<String> = Vec::new();
+        for country in Country::ISO_COUNTRIES
+            .iter()
+            .chain([Country::CH, Country::EU, Country::NoOriginRequired, Country::Import].iter())
+        {
+            let key = country.i18n_key();
+            let leaf = key.trim_start_matches("countries.");
+            if !keys.contains(leaf) {
+                missing.push(leaf.to_string());
+            }
+        }
+        assert!(missing.is_empty(), "countries.* keys missing in de-CH.yml: {missing:?}");
+    }
+
+    #[test]
+    fn localized_name_never_leaks_a_translation_key() {
+        for country in Country::ISO_COUNTRIES.iter() {
+            let name = country.localized_name();
+            assert!(
+                !name.contains("countries."),
+                "{country:?} rendered the raw key: {name}"
+            );
+            assert!(!name.is_empty(), "{country:?} rendered an empty name");
+        }
+    }
+
+    #[test]
+    fn from_code_round_trips_every_country() {
+        for country in Country::ISO_COUNTRIES.iter() {
+            assert_eq!(
+                Country::from_code(country.country_code()).as_ref(),
+                Some(country),
+                "round-trip failed for {country:?}"
+            );
+        }
+        assert_eq!(Country::from_code("CH"), Some(Country::CH));
+        assert_eq!(Country::from_code("EU"), Some(Country::EU));
+        assert_eq!(Country::from_code("NoOriginRequired"), Some(Country::NoOriginRequired));
+        assert_eq!(Country::from_code(""), None);
     }
 }

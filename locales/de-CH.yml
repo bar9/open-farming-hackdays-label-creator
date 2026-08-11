@@ -254,6 +254,7 @@ placeholder:
 
 preview:
   zutaten: "Zutaten:"
+  bio_suffix: " Bio"
   nettogewicht: Nettogewicht
   abtropfgewicht: Abtropfgewicht
   tel: "Tel: %{phone}"
@@ -335,6 +336,7 @@ themes:
 countries:
   switzerland: Schweiz
   no_origin_required: Keine Herkunftsangabe benötigt
+  import: Import
   EU: EU
   AD: Andorra
   AE: Vereinigte Arabische Emirate
@@ -647,6 +649,8 @@ bio_labels:
   andere: Nicht-biologisch
   knospe_icon_ch: Knospe-zertifiziert (Schweizer Herkunft)
   knospe_icon_no_cross: Knospe-zertifiziert (ausländische Herkunft)
+  umstellungsknospe_icon_ch: Umstellungsknospe (Schweizer Herkunft)
+  umstellungsknospe_icon_no_cross: Umstellungsknospe (ausländische Herkunft)
 
 bio_hints:
   marketing_allowed: "Das Produkt darf als Bio-Produkt vermarktet werden. Bio darf in der Sachbezeichnung, im Phantasienamen oder frei auf der Verpackung stehen."

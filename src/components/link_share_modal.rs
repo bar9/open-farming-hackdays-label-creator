@@ -98,7 +98,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 }
                 Err(e) => {
                     tracing::error!("Failed to shorten URL: {:?}", e);
-                    shorten_error.set(Some("URL konnte nicht gekürzt werden. Bitte den vollständigen Link verwenden.".to_string()));
+                    shorten_error.set(Some(t!("link_shorten_error").to_string()));
                     // Reset button on error
                     show_shorten_button.set(true);
                 }

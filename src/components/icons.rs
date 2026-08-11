@@ -298,7 +298,7 @@ pub fn UmstellungsknospeRegular() -> Element {
         _ => asset!("assets/logos/umstellungsknospe-de-CH.png"),
     };
     rsx! {
-        img { class: "w-16", src, alt: "Umstellungsknospe" }
+        img { class: "w-16", src, alt: t!("bio_labels.umstellungsknospe_icon_ch").to_string() }
     }
 }
 
@@ -311,7 +311,7 @@ pub fn UmstellungsknospeNoCross() -> Element {
         _ => asset!("assets/logos/umstellungsknospe-import-de-CH.png"),
     };
     rsx! {
-        img { class: "w-16", src, alt: "Umstellungsknospe Import" }
+        img { class: "w-16", src, alt: t!("bio_labels.umstellungsknospe_icon_no_cross").to_string() }
     }
 }
 

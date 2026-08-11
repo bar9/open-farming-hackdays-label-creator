@@ -217,7 +217,7 @@ pub fn LabelPreview(
                             let v = verdicts.0();
                             let suffix_allowed = matches!(v.bio, Some(BioVerdict::Allowed { .. }))
                                 || matches!(v.knospe, Some(KnospeVerdict::Logo { bio_suffix: true, .. }));
-                            let bio_suffix = if suffix_allowed { " Bio" } else { "" };
+                            let bio_suffix = if suffix_allowed { t!("preview.bio_suffix").to_string() } else { String::new() };
                             if !(*product_title.read()).is_empty() {
                                 rsx! {
                                     h3 { class: "text-2xl", "{product_title}" }
