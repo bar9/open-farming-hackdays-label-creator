@@ -5,7 +5,7 @@ use rust_i18n::t;
 
 // "Unterstützt durch" state shows the Open Farming Hackdays wordmark only.
 // Uses `currentColor`, so the wrapper's text color drives fill/stroke.
-const OFH_LOGO_SVG: &str = r##"<svg class="h-16 md:h-20 w-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 461 150" fill="none">
+const OFH_LOGO_SVG: &str = r##"<svg class="h-10 md:h-12 w-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 461 150" fill="none">
   <g class="logo-shape">
     <path d="M72.7517 81.4695C71.7336 77.3047 66.8099 68.9752 55.2596 68.9752M72.7517 71.7517C74.2325 66.9391 79.9151 57.4248 90.7991 57.8691M72.7517 59.8126C71.5485 55.6479 66.3657 47.3183 55.2596 47.3183M72.7517 50.6501C73.8623 46.0226 79.0266 36.7675 90.7991 36.7675M72.7517 37.8781C71.1783 33.8059 65.4772 25.7169 55.2596 25.9391" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
     <path d="M90.7991 15.3882C84.1354 15.3882 72.7517 18.1648 72.7517 35.9345V92.0203" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
@@ -395,8 +395,23 @@ pub fn SplashScreen() -> Element {
                                     class: "min-h-24 flex items-center justify-center",
                                     if show_supporters() {
                                         div {
-                                            class: "flex items-center justify-center text-base-content transition-opacity duration-700 {op}",
-                                            dangerous_inner_html: OFH_LOGO_SVG,
+                                            class: "flex flex-wrap items-center justify-around gap-x-8 gap-y-3 max-w-5xl w-full mx-auto",
+                                            div {
+                                                class: "text-base-content transition-opacity duration-700 {op}",
+                                                dangerous_inner_html: OFH_LOGO_SVG,
+                                            }
+                                            img {
+                                                src: asset!("assets/logos/blw.png"),
+                                                alt: "Bundesamt für Landwirtschaft BLW",
+                                                class: "h-9 md:h-11 w-auto object-contain transition-opacity duration-700 {op}",
+                                                style: "transition-delay: 120ms",
+                                            }
+                                            img {
+                                                src: asset!("assets/logos/innovation-booster.png"),
+                                                alt: "Innovation Booster Swiss Food Ecosystems, powered by Innosuisse",
+                                                class: "h-14 md:h-16 w-auto object-contain transition-opacity duration-700 {op}",
+                                                style: "transition-delay: 240ms",
+                                            }
                                         }
                                     } else {
                                         div {
@@ -438,6 +453,11 @@ pub fn SplashScreen() -> Element {
                         to: Route::Faq {},
                         class: "link link-blue hover:link-primary",
                         {t!("app.faq").to_string()}
+                    }
+                    Link {
+                        to: Route::Support {},
+                        class: "link link-blue hover:link-primary",
+                        {t!("app.support").to_string()}
                     }
                     Link {
                         to: Route::Impressum {},
