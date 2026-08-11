@@ -214,3 +214,112 @@ async fn footer_links_to_the_faq_page() {
 
     let _ = c.close().await;
 }
+
+/// The "support us" page renders its translated text and the TWINT QR code in
+/// every language. The QR code itself is language independent (the TWINT code
+/// PDF ships three identical cut-outs), so only the copy around it changes.
+#[tokio::test]
+async fn support_page_renders_qr_and_translations_in_every_language() {
+    let c = connect().await;
+
+    let expected = [
+        ("de-CH", "Unterstütze Declarino", "TWINT"),
+        ("fr-CH", "Soutenir Declarino", "TWINT"),
+        ("it-CH", "Sostieni Declarino", "TWINT"),
+    ];
+
+    for (locale, title, twint) in expected {
+        goto_with_locale(&c, locale, "support").await;
+        let body = c
+            .find(Locator::Css("body"))
+            .await
+            .expect("body")
+            .text()
+            .await
+            .expect("body text");
+
+        assert!(
+            body.contains(title),
+            "{locale} support page is missing the title {title:?}"
+        );
+        assert!(
+            body.contains(twint),
+            "{locale} support page never mentions {twint}"
+        );
+        assert!(
+            !body.contains("support."),
+            "{locale} support page leaked a raw translation key"
+        );
+
+        // The QR image must be present, loaded, and linked to the TWINT payment URL.
+        let qr_ok = c
+            .execute(
+                "const i = document.querySelector('img[src*=\"twint-qr\"]');\
+                 return !!i && i.complete && i.naturalWidth > 0;",
+                vec![],
+            )
+            .await
+            .expect("query qr image");
+        assert_eq!(
+            qr_ok.as_bool(),
+            Some(true),
+            "{locale} support page does not show a loaded TWINT QR code"
+        );
+
+        let linked = c
+            .execute(
+                "return Array.from(document.querySelectorAll('a')).some(a => (a.getAttribute('href')||'').includes('twint.ch'));",
+                vec![],
+            )
+            .await
+            .expect("query twint link");
+        assert_eq!(
+            linked.as_bool(),
+            Some(true),
+            "{locale} support page has no TWINT link fallback"
+        );
+    }
+
+    assert_no_errors(&c, "support page").await;
+    goto_with_locale(&c, "de-CH", "support").await;
+    let _ = c.close().await;
+}
+
+/// The support link must exist on both footers (splash screen and the app
+/// layout) and navigate to the support route.
+#[tokio::test]
+async fn footer_links_to_the_support_page() {
+    let c = connect().await;
+
+    for route in ["", "lebensmittelrecht"] {
+        goto_with_locale(&c, "de-CH", route).await;
+        let found = c
+            .execute(
+                "return Array.from(document.querySelectorAll('footer a')).some(a => (a.getAttribute('href')||'').endsWith('/support'));",
+                vec![],
+            )
+            .await
+            .expect("query footer links");
+        assert_eq!(
+            found.as_bool(),
+            Some(true),
+            "route {route:?} has no footer link to /support"
+        );
+    }
+
+    goto_with_locale(&c, "de-CH", "").await;
+    c.execute(
+        "Array.from(document.querySelectorAll('footer a')).find(a => (a.getAttribute('href')||'').endsWith('/support')).click();",
+        vec![],
+    )
+    .await
+    .expect("click support link");
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+    let url = c.current_url().await.expect("current url");
+    assert!(
+        url.as_str().ends_with("/support"),
+        "clicking the footer link did not open the support page, landed on {url}"
+    );
+
+    let _ = c.close().await;
+}

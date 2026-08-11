@@ -7,6 +7,7 @@ use crate::pages::impressum::Impressum;
 #[cfg(not(feature = "hidebio"))]
 use crate::pages::knospe::Knospe;
 use crate::pages::splash_screen::SplashScreen;
+use crate::pages::support::Support;
 use crate::pages::swiss::Swiss;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -32,6 +33,9 @@ pub enum Route {
 
         #[route("/faq")]
         Faq {},
+
+        #[route("/support")]
+        Support {},
 
         #[route("/")]
         SplashScreen {},

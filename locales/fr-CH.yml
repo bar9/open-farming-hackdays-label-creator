@@ -6,6 +6,7 @@ app:
   impressum: Mentions légales
   release_notes: Notes de version
   faq: FAQ
+  support: Nous soutenir
 
 routes:
   swiss: Droit alimentaire CH
@@ -697,6 +698,14 @@ volume_units:
   cl: cl
   dl: dl
   l: l
+
+support:
+  title: Soutenir Declarino
+  intro: Declarino est un projet d'utilité publique et gratuit pour toi. Avec un don, tu soutiens son développement continu.
+  qr_hint: Scanne le code QR avec l'application TWINT pour faire un don du montant de ton choix.
+  qr_alt: Code QR TWINT pour soutenir Declarino
+  twint_link: Ouvrir TWINT dans le navigateur
+  thanks: Merci beaucoup pour ton soutien !
 
 faq:
   title: Questions fréquentes

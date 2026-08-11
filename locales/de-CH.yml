@@ -6,6 +6,7 @@ app:
   impressum: Impressum
   release_notes: Release Notes
   faq: FAQ
+  support: Unterstützen
 
 routes:
   swiss: CH-Lebensmittelrecht
@@ -703,6 +704,14 @@ volume_units:
   cl: cl
   dl: dl
   l: l
+
+support:
+  title: Unterstütze Declarino
+  intro: Declarino ist ein gemeinnütziges Projekt und für dich kostenlos. Mit einer Spende unterstützt du die laufende Weiterentwicklung.
+  qr_hint: Scanne den QR-Code mit der TWINT-App, um einen Betrag deiner Wahl zu spenden.
+  qr_alt: TWINT QR-Code zur Unterstützung von Declarino
+  twint_link: TWINT im Browser öffnen
+  thanks: Herzlichen Dank für deine Unterstützung!
 
 faq:
   title: Häufige Fragen

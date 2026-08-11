@@ -7,3 +7,4 @@ pub mod swiss;
 
 pub mod impressum;
 pub mod faq;
+pub mod support;

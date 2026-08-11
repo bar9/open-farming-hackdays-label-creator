@@ -409,7 +409,7 @@ pub fn SplashScreen() -> Element {
                                             img {
                                                 src: asset!("assets/logos/innovation-booster.png"),
                                                 alt: "Innovation Booster Swiss Food Ecosystems, powered by Innosuisse",
-                                                class: "h-14 md:h-16 w-auto object-contain transition-opacity duration-700 {op}",
+                                                class: "h-12 md:h-14 w-auto object-contain transition-opacity duration-700 {op}",
                                                 style: "transition-delay: 240ms",
                                             }
                                         }
