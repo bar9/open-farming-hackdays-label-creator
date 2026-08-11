@@ -129,3 +129,88 @@ async fn dropdowns_never_render_raw_translation_keys() {
     goto_with_locale(&c, "de-CH", "lebensmittelrecht").await;
     let _ = c.close().await;
 }
+
+/// The FAQ page is reachable from the footer, renders its content from the
+/// locale files, and follows the Impressum layout.
+#[tokio::test]
+async fn faq_page_renders_from_the_locales_in_every_language() {
+    let c = connect().await;
+
+    let expected = [
+        ("de-CH", "Häufige Fragen", "Ersetzt Declarino eine rechtliche Beratung?"),
+        ("fr-CH", "Questions fréquentes", "Declarino remplace-t-il un conseil juridique ?"),
+        ("it-CH", "Domande frequenti", "Declarino sostituisce una consulenza legale?"),
+    ];
+
+    for (locale, title, first_question) in expected {
+        goto_with_locale(&c, locale, "faq").await;
+        let body = c
+            .find(Locator::Css("body"))
+            .await
+            .expect("body")
+            .text()
+            .await
+            .expect("body text");
+
+        assert!(body.contains(title), "{locale} FAQ is missing the title {title:?}");
+        assert!(
+            body.contains(first_question),
+            "{locale} FAQ is missing its first question {first_question:?}"
+        );
+        // Both example answers must be present, so questions and answers stay paired.
+        assert!(
+            body.matches("Declarino").count() >= 2,
+            "{locale} FAQ seems to render only part of the entries"
+        );
+        assert!(
+            !body.contains("faq.") && !body.contains("nav."),
+            "{locale} FAQ leaked a raw translation key"
+        );
+    }
+
+    assert_no_errors(&c, "faq page").await;
+    goto_with_locale(&c, "de-CH", "faq").await;
+    let _ = c.close().await;
+}
+
+/// The footer link must exist on both footers (splash screen and the app
+/// layout) and point at the FAQ route.
+#[tokio::test]
+async fn footer_links_to_the_faq_page() {
+    let c = connect().await;
+
+    for route in ["", "lebensmittelrecht"] {
+        goto_with_locale(&c, "de-CH", route).await;
+        // Links rendered by the router are <a href>; read them via JS so both
+        // the Link component and plain anchors are covered.
+        let found = c
+            .execute(
+                "return Array.from(document.querySelectorAll('footer a')).some(a => (a.getAttribute('href')||'').endsWith('/faq'));",
+                vec![],
+            )
+            .await
+            .expect("query footer links");
+        assert_eq!(
+            found.as_bool(),
+            Some(true),
+            "route {route:?} has no footer link to /faq"
+        );
+    }
+
+    // Clicking it actually navigates.
+    goto_with_locale(&c, "de-CH", "").await;
+    c.execute(
+        "Array.from(document.querySelectorAll('footer a')).find(a => (a.getAttribute('href')||'').endsWith('/faq')).click();",
+        vec![],
+    )
+    .await
+    .expect("click faq link");
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+    let url = c.current_url().await.expect("current url");
+    assert!(
+        url.as_str().ends_with("/faq"),
+        "clicking the footer link did not open the FAQ, landed on {url}"
+    );
+
+    let _ = c.close().await;
+}

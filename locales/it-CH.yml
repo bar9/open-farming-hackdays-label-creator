@@ -5,6 +5,7 @@ app:
   title: Creatore di etichette
   impressum: Impronta
   release_notes: Note di rilascio
+  faq: FAQ
 
 routes:
   swiss: Diritto alimentare CH
@@ -83,6 +84,7 @@ nav:
   speichernUndNaechste: Salva e prossimo ingrediente
   bearbeiten: Modifica
   saved_ingredients: Ingredienti salvati
+  zurueck: Indietro
 
 preview:
   zutaten: "Ingredienti:"
@@ -694,6 +696,19 @@ volume_units:
   cl: cl
   dl: dl
   l: l
+
+faq:
+  title: Domande frequenti
+  intro: Risposte alle domande più frequenti su Declarino e sull'etichettatura delle derrate alimentari.
+  # Le domande e le risposte sono abbinate tramite l'indice:
+  # questions[0] corrisponde a answers[0]. Entrambe le liste devono quindi avere
+  # la stessa lunghezza e lo stesso ordine in tutti i file di lingua.
+  questions:
+    - Declarino sostituisce una consulenza legale?
+    - Le mie ricette vengono salvate su un server?
+  answers:
+    - No. Declarino ti aiuta a creare un'etichetta, ma non pretende di essere completo e non sostituisce una verifica legale. La responsabilità della correttezza della dichiarazione spetta a chi immette la derrata alimentare sul mercato.
+    - No. Declarino funziona interamente nel tuo browser. I tuoi dati vengono salvati solo localmente e nel link che generi con «Copia link». Chi dispone di questo link vede la ricetta in esso contenuta.
 
 impressum: |
   # Impronta, Protezione dei dati

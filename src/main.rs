@@ -15,6 +15,7 @@ mod api;
 pub mod conditional_keys;
 pub mod verdicts;
 mod category_service;
+pub mod faq;
 mod components;
 pub mod core;
 mod model;

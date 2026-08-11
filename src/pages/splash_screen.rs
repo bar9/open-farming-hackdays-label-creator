@@ -435,6 +435,11 @@ pub fn SplashScreen() -> Element {
                         }
                     }
                     Link {
+                        to: Route::Faq {},
+                        class: "link link-blue hover:link-primary",
+                        {t!("app.faq").to_string()}
+                    }
+                    Link {
                         to: Route::Impressum {},
                         class: "link link-blue hover:link-primary",
                         {t!("app.impressum").to_string()}

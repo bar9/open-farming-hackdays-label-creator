@@ -5,6 +5,7 @@ app:
   title: Declarino
   impressum: Impressum
   release_notes: Release Notes
+  faq: FAQ
 
 routes:
   swiss: CH-Lebensmittelrecht
@@ -82,6 +83,7 @@ nav:
   speichernUndNaechste: Speichern und nächste Zutat
   bearbeiten: Bearbeiten
   saved_ingredients: Gespeicherte Zutaten
+  zurueck: Zurück
 
 help:
   mono_quality: |
@@ -701,6 +703,19 @@ volume_units:
   cl: cl
   dl: dl
   l: l
+
+faq:
+  title: Häufige Fragen
+  intro: Antworten auf die häufigsten Fragen rund um Declarino und die Kennzeichnung von Lebensmitteln.
+  # Fragen und Antworten werden paarweise über den Index zugeordnet:
+  # questions[0] gehört zu answers[0]. Beide Listen müssen darum in allen
+  # Sprachdateien gleich lang sein und in derselben Reihenfolge stehen.
+  questions:
+    - Ersetzt Declarino eine rechtliche Beratung?
+    - Werden meine Rezepturen auf einem Server gespeichert?
+  answers:
+    - Nein. Declarino unterstützt dich beim Erstellen einer Etikette, erhebt aber keinen Anspruch auf Vollständigkeit und ersetzt keine rechtliche Prüfung. Die Verantwortung für die Richtigkeit der Deklaration liegt bei der Person, die das Lebensmittel in Verkehr bringt.
+    - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Link kopieren» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur.
 
 impressum: |
   # Impressum, Datenschutz

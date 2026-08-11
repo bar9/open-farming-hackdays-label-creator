@@ -6,3 +6,4 @@ pub mod label_page;
 pub mod swiss;
 
 pub mod impressum;
+pub mod faq;

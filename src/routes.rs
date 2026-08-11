@@ -2,6 +2,7 @@ use crate::layout::FullLayout;
 use crate::layout::SplitLayout;
 #[cfg(not(feature = "hidebio"))]
 use crate::pages::bio::Bio;
+use crate::pages::faq::Faq;
 use crate::pages::impressum::Impressum;
 #[cfg(not(feature = "hidebio"))]
 use crate::pages::knospe::Knospe;
@@ -28,6 +29,9 @@ pub enum Route {
         #[end_layout]
         #[route("/impressum")]
         Impressum {},
+
+        #[route("/faq")]
+        Faq {},
 
         #[route("/")]
         SplashScreen {},

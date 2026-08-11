@@ -5,6 +5,7 @@ app:
   title: Créateur d'étiquettes
   impressum: Mentions légales
   release_notes: Notes de version
+  faq: FAQ
 
 routes:
   swiss: Droit alimentaire CH
@@ -83,6 +84,7 @@ nav:
   speichernUndNaechste: Sauvegarder et ingrédient suivant
   bearbeiten: Modifier
   saved_ingredients: Ingrédients enregistrés
+  zurueck: Retour
 
 preview:
   zutaten: "Ingrédients:"
@@ -695,6 +697,19 @@ volume_units:
   cl: cl
   dl: dl
   l: l
+
+faq:
+  title: Questions fréquentes
+  intro: Réponses aux questions les plus fréquentes sur Declarino et l'étiquetage des denrées alimentaires.
+  # Les questions et les réponses sont associées par leur index :
+  # questions[0] correspond à answers[0]. Les deux listes doivent donc avoir la
+  # même longueur et le même ordre dans tous les fichiers de langue.
+  questions:
+    - Declarino remplace-t-il un conseil juridique ?
+    - Mes recettes sont-elles enregistrées sur un serveur ?
+  answers:
+    - Non. Declarino t'aide à créer une étiquette, mais ne prétend pas être exhaustif et ne remplace pas un examen juridique. La responsabilité de l'exactitude de la déclaration incombe à la personne qui met la denrée alimentaire sur le marché.
+    - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Copier le lien ». Toute personne disposant de ce lien voit la recette qu'il contient.
 
 impressum: |
   # Mentions légales, Protection des données
