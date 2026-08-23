@@ -15,7 +15,11 @@ target/
 node_modules
 .cargo
 .idea
-assets
+
+# Only the Tailwind build output is generated; the rest of assets/ (logos,
+# SVGs, QR codes) is source and must stay tracked. A blanket `assets` rule
+# silently dropped new asset files from commits.
+assets/tailwind.css
 
 # Added by cargo
 
