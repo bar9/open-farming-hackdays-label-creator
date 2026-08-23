@@ -8,6 +8,12 @@ on:
     branches:
       - main
 
+# Keep in sync with the other workflows and with the dioxus version in
+# Cargo.toml. DX_SHA256 is the sha256 of the linux-gnu release tarball.
+env:
+  DX_VERSION: v0.7.10
+  DX_SHA256: 4363e4ed2a3f1eb7f4d38d2d59aed59ce43271c44c16b425e92c89a64761fbe7
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -35,7 +41,8 @@ jobs:
 
       - name: Install Dioxus CLI
         run: |
-          wget -q https://github.com/DioxusLabs/dioxus/releases/download/v0.7.3/dx-x86_64-unknown-linux-gnu.tar.gz
+          wget -q "https://github.com/DioxusLabs/dioxus/releases/download/${DX_VERSION}/dx-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${DX_SHA256}  dx-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c
           tar -xzf dx-x86_64-unknown-linux-gnu.tar.gz
           chmod +x dx
           sudo mv dx /usr/local/bin/
