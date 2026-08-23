@@ -50,6 +50,13 @@ jobs:
       - name: Tailwind CSS Generation
         run: npx @tailwindcss/cli -i input.css -o assets/tailwind.css
 
+      # The cargo cache restores target/, and dx appends every build's
+      # content-hashed wasm/js into web/public/assets without pruning. Stale
+      # artifacts otherwise pile up and get published (seen locally: 290 MB
+      # of public/ for a 4.4 MB site).
+      - name: Clear stale build output
+        run: rm -rf ./target/dx/open-farming-hackdays-label-creator/release/web/public
+
       - name: Build with Dioxus
         run: dx build --release
 

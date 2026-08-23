@@ -38,6 +38,12 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 inherits = "dev"
 opt-level = 1
 
+# wasm-bindgen emits DWARF sections that make wasm-opt abort with
+# "compile unit size was incorrect", so the release wasm shipped
+# unoptimized (~4.4 MB). Stripping debug info lets wasm-opt run.
+[profile.release]
+strip = "debuginfo"
+
 [profile.server-dev]
 inherits = "dev"
 

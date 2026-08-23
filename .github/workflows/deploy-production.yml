@@ -55,6 +55,13 @@ jobs:
           sed -i 's/base_path = "open-farming-hackdays-label-creator"/base_path = ""/' Dioxus.toml
           echo "Updated Dioxus.toml base_path for production deployment"
 
+      # The cargo cache restores target/, and dx appends every build's
+      # content-hashed wasm/js into web/public/assets without pruning. Stale
+      # artifacts otherwise pile up and get published (seen locally: 290 MB
+      # of public/ for a 4.4 MB site).
+      - name: Clear stale build output
+        run: rm -rf ./target/dx/open-farming-hackdays-label-creator/release/web/public
+
       - name: Build with Dioxus (Production - hidebio feature)
         run: dx build --release --features hidebio
 
