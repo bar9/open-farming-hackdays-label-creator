@@ -49,11 +49,15 @@ jobs:
       - name: Cargo check
         run: cargo check
 
+      # --all-targets to match `make lint`: without it, warnings in tests are
+      # invisible to CI and accumulate.
       - name: Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
+      # Matches `make test`. locale_parity guards the three locale files
+      # against drift and is the only non-e2e integration test.
       - name: Cargo test
-        run: cargo test --bins
+        run: cargo test --bins --test locale_parity
 
       - name: Dioxus build
         run: dx build --release
