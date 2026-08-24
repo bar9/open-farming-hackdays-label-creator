@@ -63,6 +63,7 @@ label:
   gewicht: Gewicht
   volumen: Volumen
   preisProEinheit: Preis pro Einheit
+  anzahlEier: Anzahl Eier
   keinDatum: Kein Haltbarkeits-/Verbrauchdatum
   ignore_ingredients: Keine Zutatenliste (Einzelzutat)
   mono_quality: Qualität der Einzelzutat
@@ -189,6 +190,10 @@ help:
   plz: |
     Ergänzen Sie CH- (Schweiz) oder FL- (Liechtenstein) vor der PLZ, um die Angabe des Produktionslandes sicherzustellen.
 
+  anzahlEier: |
+    **Anzahl Eier**
+    Bei Eiern wird die Stückzahl deklariert statt eines Grundpreises pro Gewicht.
+
   preisProX: |
     **Grundpreis (optional)**
     Preis pro %{unit}.
@@ -278,6 +283,7 @@ units:
   percent: "%"
   chf: CHF
   chfPro: "CHF pro "
+  stueck: Stück
 
 link_share_title: Link teilen
 link_type_full: Vollständiger Link

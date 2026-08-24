@@ -63,6 +63,13 @@ pub struct AmountPriceProps {
     volume_unit: Signal<String>,
     amount: Signal<Amount>,
     price: Signal<Price>,
+    /// Sachbezeichnung names eggs, so the pack is declared by count: the
+    /// Grundpreis field becomes «Anzahl Eier» in «Stück» and Abtropfgewicht
+    /// does not apply (DEC-13).
+    #[props(default = false)]
+    is_egg_pack: bool,
+    /// Number of eggs, used only in egg mode.
+    egg_count: Signal<Option<usize>>,
 }
 
 /// Is responsible for reactively rendering amount & price fields
@@ -75,6 +82,17 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
     let mut amount = props.amount;
     let price = props.price;
     let mut is_pristine = use_signal(|| true);
+
+    // Switching to an egg Sachbezeichnung hides the Abtropfgewicht field
+    // (DEC-13). Drop any value already entered, otherwise it would linger in
+    // the model and keep printing on the label with no field to clear it.
+    use_effect(move || {
+        if props.is_egg_pack {
+            if let Amount::Double(x, Some(_)) = amount() {
+                amount.set(Amount::Double(x, None));
+            }
+        }
+    });
     let invalid_class = use_memo(move || {
         if is_pristine() {
             ""
@@ -346,7 +364,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                 }
             }
             if *props.amount_type.read() == AmountType::Weight {
-                if has_abtropfgewicht() {
+                if has_abtropfgewicht() && !props.is_egg_pack {
                     FormField {
                         required: true,
                         label: t!("label.nettogewicht").to_string(),
@@ -432,25 +450,29 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             }
                         }
                     }
-                    FormField {
-                        label: t!("label.abtropfgewicht").to_string(),
-                        help: Some(t!("help.abtropfgewicht").to_string()),
-                        label { class: "btn btn-circle swap swap-rotate",
-                            input {
-                                r#type: "checkbox",
-                                checked: has_abtropfgewicht(),
-                                oninput: move |evt| {
-                                    has_abtropfgewicht.set(evt.checked());
-                                    if !evt.checked() {
-                                        // Clear abtropfgewicht when hiding the field
-                                        match amount() {
-                                            Amount::Single(x) => amount.set(Amount::Single(x)),
-                                            Amount::Double(x, _) => amount.set(Amount::Double(x, None)),
+                    // Abtropfgewicht does not apply to a pack of eggs (DEC-13),
+                    // so the toggle that reveals the field is hidden too.
+                    if !props.is_egg_pack {
+                        FormField {
+                            label: t!("label.abtropfgewicht").to_string(),
+                            help: Some(t!("help.abtropfgewicht").to_string()),
+                            label { class: "btn btn-circle swap swap-rotate",
+                                input {
+                                    r#type: "checkbox",
+                                    checked: has_abtropfgewicht(),
+                                    oninput: move |evt| {
+                                        has_abtropfgewicht.set(evt.checked());
+                                        if !evt.checked() {
+                                            // Clear abtropfgewicht when hiding the field
+                                            match amount() {
+                                                Amount::Single(x) => amount.set(Amount::Single(x)),
+                                                Amount::Double(x, _) => amount.set(Amount::Double(x, None)),
+                                            }
                                         }
                                     }
                                 }
+                                icons::DashedPlus {}
                             }
-                            icons::DashedPlus {}
                         }
                     }
                 }
@@ -481,7 +503,60 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
             }
         }
         FieldGroup2{
-            if is_einheitsgroesse() {
+            if props.is_egg_pack {
+                // DEC-13: eggs are sold by the piece, so the Grundpreis slot
+                // carries the count instead of a price per 100 g.
+                FormField {
+                    help: Some(t!("help.anzahlEier").to_string()),
+                    label: t!("label.anzahlEier").to_string(),
+                    div {
+                        class: "flex flex-row items-center gap-2",
+                        input {
+                            class: "input input-bordered bg-base-200 w-1/2",
+                            r#type: "number",
+                            min: "0",
+                            step: "1",
+                            placeholder: "6",
+                            value: (*props.egg_count.read()).map(|v| v.to_string()).unwrap_or_default(),
+                            oninput: move |evt| {
+                                let raw = evt.data.value();
+                                let mut egg_count = props.egg_count;
+                                if raw.trim().is_empty() {
+                                    egg_count.set(None);
+                                } else if let Ok(parsed) = usize::from_str(raw.trim()) {
+                                    egg_count.set(Some(parsed));
+                                }
+                            }
+                        }
+                        span {
+                            class: "badge",
+                            {t!("units.stueck").to_string()}
+                        }
+                    }
+                }
+                // Only the Grundpreis slot is repurposed; the Detailpreis of the
+                // pack stays available and unchanged.
+                FormField {
+                    help: Some(t!("help.preisTotal").to_string()),
+                    label: t!("label.preisTotal").to_string(),
+                    div{
+                        class: "flex flex-row items-center gap-2",
+                        input {
+                            class: "input input-bordered bg-base-200 w-1/2",
+                            r#type: "number",
+                            step: "any",
+                            placeholder: "12.00",
+                            value: price_input_1(),
+                            oninput: move |evt| price_input_1.set(evt.data.value()),
+                            onblur: move |_evt| {set_price_1(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().get_value_tuple().1));}
+                        }
+                        span {
+                            class: "badge",
+                            {t!("units.chf").to_string()}
+                        }
+                    }
+                }
+            } else if is_einheitsgroesse() {
                 FormField {
                     help: Some(t!("help.preisProEinheit").to_string()),
                     label: t!("label.preisProEinheit").to_string(),

@@ -98,7 +98,7 @@ async fn biov_wildsammlung_is_grouped_with_the_other_checkboxes() {
     // And visually adjacent rather than pushed to the bottom of the modal.
     let gap = wildsammlung_gap(&c).await;
     assert!(
-        gap >= 0.0 && gap < 40.0,
+        (0.0..40.0).contains(&gap),
         "Wildsammlung should sit next to the previous checkbox, gap was {}px",
         gap
     );

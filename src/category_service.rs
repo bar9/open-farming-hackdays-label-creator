@@ -106,6 +106,38 @@ pub fn is_egg_category(category: &str) -> bool {
     category_lower.contains("egg")
 }
 
+/// Is this Sachbezeichnung a plain pack of eggs (DEC-13)?
+///
+/// Deliberately much stricter than `is_egg_category`: that one answers "does
+/// this ingredient contain egg" for the origin rules, where a substring match
+/// is what you want. Here a false positive would silently relabel the
+/// Grundpreis field of an unrelated product, so only the whole Sachbezeichnung
+/// counts — «Eier», «Ei» and the French/Italian equivalents, optionally with a
+/// qualifier like «Eier aus Freilandhaltung». Compounds such as «Eierlikör»,
+/// «Eiernudeln» or «Eiweiss» are sold by weight and must not match.
+pub fn is_egg_sachbezeichnung(sachbezeichnung: &str) -> bool {
+    // Only the first word decides; a trailing qualifier ("Eier aus
+    // Freilandhaltung", "Uova bio") is still a pack of eggs.
+    let first = sachbezeichnung
+        .trim()
+        .split([' ', ',', '-', '/'])
+        .find(|w| !w.is_empty())
+        .unwrap_or("")
+        .to_lowercase();
+
+    matches!(
+        first.as_str(),
+        // de: Ei/Eier, plus the common "Frischei(er)" spelling.
+        "ei" | "eier" | "frischei" | "frischeier"
+        // fr: œuf/œufs, also written oeuf/oeufs.
+        | "oeuf" | "oeufs" | "œuf" | "œufs"
+        // it: uovo/uova.
+        | "uovo" | "uova"
+        // en, for completeness with the other detectors here.
+        | "egg" | "eggs"
+    )
+}
+
 /// Check if a category represents honey
 pub fn is_honey_category(category: &str) -> bool {
     let category_lower = category.to_lowercase();
@@ -262,4 +294,33 @@ mod tests {
         assert!(!is_plant_category("Milch"));
     }
 
+    // DEC-13: a pack of eggs is declared by count, so the Sachbezeichnung
+    // switches the Grundpreis field to «Anzahl Eier».
+    #[test]
+    fn egg_sachbezeichnung_matches_plain_egg_packs() {
+        assert!(is_egg_sachbezeichnung("Eier"));
+        assert!(is_egg_sachbezeichnung("Ei"));
+        assert!(is_egg_sachbezeichnung("eier"));
+        assert!(is_egg_sachbezeichnung("  Eier  "));
+        // Qualifiers keep it a pack of eggs.
+        assert!(is_egg_sachbezeichnung("Eier aus Freilandhaltung"));
+        assert!(is_egg_sachbezeichnung("Eier, Bio"));
+        assert!(is_egg_sachbezeichnung("Frischeier"));
+        // fr / it
+        assert!(is_egg_sachbezeichnung("\u{152}ufs"));
+        assert!(is_egg_sachbezeichnung("Oeufs de poules \u{e9}lev\u{e9}es en plein air"));
+        assert!(is_egg_sachbezeichnung("Uova"));
+    }
+
+    #[test]
+    fn egg_sachbezeichnung_ignores_products_merely_containing_egg() {
+        // Sold by weight \u{2014} must keep the normal Grundpreis/Abtropfgewicht.
+        assert!(!is_egg_sachbezeichnung("Eierlik\u{f6}r"));
+        assert!(!is_egg_sachbezeichnung("Eiernudeln"));
+        assert!(!is_egg_sachbezeichnung("Eiweiss"));
+        assert!(!is_egg_sachbezeichnung("Eiersalat"));
+        assert!(!is_egg_sachbezeichnung("Teigwaren mit Ei"));
+        assert!(!is_egg_sachbezeichnung(""));
+        assert!(!is_egg_sachbezeichnung("Konfit\u{fc}re"));
+    }
 }

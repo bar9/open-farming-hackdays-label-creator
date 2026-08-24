@@ -66,6 +66,10 @@ pub fn LabelPreview(
     volume_unit: Signal<String>,
     amount: Signal<Amount>,
     price: Signal<Price>,
+    /// Number of eggs for egg packs; shown instead of a weight Grundpreis
+    /// on the label (DEC-13).
+    #[props(default)]
+    egg_count: Option<Signal<Option<usize>>>,
     ignore_ingredients: Signal<bool>,
     // Optional calculated values from AmountPrice component
     calculated_amount: Option<Memo<(bool, usize)>>,
@@ -298,6 +302,20 @@ pub fn LabelPreview(
                             }
                         },
                         _ => rsx! {}
+                    }
+                }
+                {
+                    // DEC-13: egg packs declare a piece count next to the weight.
+                    match egg_count.and_then(|c| *c.read()) {
+                        Some(count) => rsx! {
+                            div {
+                                span {
+                                    class: "text-sm",
+                                    "{count} " {t!("units.stueck").to_string()}
+                                }
+                            }
+                        },
+                        None => rsx! {},
                     }
                 }
 

@@ -158,6 +158,11 @@ pub struct Form {
     pub amount: Amount,
     #[serde(default)]
     pub price: Price,
+    /// Number of eggs for egg packs, which are declared by count instead of a
+    /// weight-based Grundpreis (DEC-13). Only meaningful when the
+    /// Sachbezeichnung names eggs; kept out of URLs when unset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub egg_count: Option<usize>,
     #[serde(default)]
     pub rezeptur_vollstaendig: bool,
 }
@@ -231,6 +236,7 @@ impl Default for Form {
             volume_unit: t!("volume_units.ml").to_string(),
             amount: Amount::Single(Some(0)),
             price: Price::Single(Some(0)),
+            egg_count: None,
             rezeptur_vollstaendig: false,
         }
     }
@@ -298,6 +304,11 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     let mut volume_unit: Signal<String> = use_signal(|| initial_form.read().volume_unit.clone());
     let mut amount: Signal<Amount> = use_signal(|| initial_form.read().amount);
     let mut price: Signal<Price> = use_signal(|| initial_form.read().price);
+    // Egg packs are declared by count instead of a weight Grundpreis (DEC-13).
+    let mut egg_count: Signal<Option<usize>> = use_signal(|| initial_form.read().egg_count);
+    let is_egg_pack = use_memo(move || {
+        crate::category_service::is_egg_sachbezeichnung(&product_subtitle())
+    });
 
     use_effect(move || {
         let form_data = initial_form.read();
@@ -330,6 +341,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
             volume_unit.set(form_data.volume_unit.clone());
             amount.set(form_data.amount);
             price.set(form_data.price);
+            egg_count.set(form_data.egg_count);
         }
     });
 
@@ -361,6 +373,9 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         volume_unit: volume_unit(),
         amount: amount(),
         price: price(),
+        // Only meaningful for egg packs; renaming the product away from eggs
+        // drops the count instead of carrying it along in shared links.
+        egg_count: if is_egg_pack() { egg_count() } else { None },
         rezeptur_vollstaendig: rezeptur_vollstaendig(),
     });
 
@@ -582,6 +597,8 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                                 volume_unit: volume_unit,
                                 amount: amount,
                                 price: price,
+                                is_egg_pack: is_egg_pack(),
+                                egg_count: egg_count,
                             }
                         }
                         SeparatorLine {}
@@ -662,6 +679,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
             volume_unit: volume_unit,
             amount: amount,
             price: price,
+            egg_count: if is_egg_pack() { Some(egg_count) } else { None },
             calculated_amount: Some(calculated_amount),
             calculated_unit_price: Some(calculated_unit_price),
             calculated_total_price: Some(calculated_total_price),

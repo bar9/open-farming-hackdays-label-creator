@@ -63,6 +63,7 @@ label:
   gewicht: Peso
   volumen: Volume
   preisProEinheit: Prezzo per unità
+  anzahlEier: Numero di uova
   keinDatum: Nessuna data di conservazione/consumo
   ignore_ingredients: Nessun elenco ingredienti (ingrediente singolo)
   mono_quality: Qualità dell'ingrediente singolo
@@ -110,6 +111,7 @@ units:
   percent: "%"
   chf: CHF
   chfPro: "CHF per "
+  stueck: pezzo
 
 tooltips:
   save_needs_amount: "Quantità mancante — inserire prima una quantità."
@@ -234,6 +236,10 @@ help:
 
   ort: |
     Località di produzione
+
+  anzahlEier: |
+    **Numero di uova**
+    Per le uova si dichiara il numero di pezzi invece di un prezzo di base al peso.
 
   preisProX: |
     **Prezzo di base (opzionale)**
