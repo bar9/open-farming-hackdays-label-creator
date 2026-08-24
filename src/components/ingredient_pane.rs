@@ -843,6 +843,30 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         }
     };
 
+    // AP1.3: only configurations with the rule offer the name-giving flag.
+    // Rendered in one of two spots so it keeps the same place relative to the
+    // other per-ingredient fields: in leaf mode right after Allergen, in
+    // composite mode before the derived Allergen/Herkunft block. Previously it
+    // was emitted only after both branches, so switching a leaf to a composite
+    // pushed it below Allergen and Herkunft (DEC-15). Exactly one call renders
+    // per pass.
+    let namensgebend_field = move || {
+        if use_context::<VerdictsContext>().0().namensgebende_zutat_input {
+            rsx! {
+                FormField {
+                    help: Some(t!("help.namensgebendeZutaten").to_string()),
+                    label: t!("label.namensgebendeZutat").to_string(),
+                    inline_checkbox: true,
+                    CheckboxInput {
+                        bound_value: edit_is_namensgebend
+                    }
+                }
+            }
+        } else {
+            rsx! {}
+        }
+    };
+
     rsx! {
         div { class: if props.disabled { "opacity-50 pointer-events-none" } else { "" },
             // One title per window (Testing 25.06.2026): card stacks already render
@@ -1275,6 +1299,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 }
 
+                // Same slot as in leaf mode, so switching a leaf to a composite
+                // does not push this field below Allergen/Herkunft (DEC-15).
+                {namensgebend_field()}
+
                 // Allergen — bottom-up from children; greyed (a composite's allergen
                 // status is always derived), with go-to to the allergen-bearing
                 // sub-ingredient(s). Not clearable here (food safety).
@@ -1410,20 +1438,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                     br {}
                 }
+                {namensgebend_field()}
             }
 
             br {}
-            // AP1.3: only configurations with the rule offer the name-giving flag.
-            if use_context::<VerdictsContext>().0().namensgebende_zutat_input {
-                FormField {
-                    help: Some(t!("help.namensgebendeZutaten").to_string()),
-                    label: t!("label.namensgebendeZutat").to_string(),
-                    inline_checkbox: true,
-                    CheckboxInput {
-                        bound_value: edit_is_namensgebend
-                    }
-                }
-            }
             // Save status
             if let Some(status) = save_status() {
                 div { class: "alert alert-info mb-4",
