@@ -371,6 +371,19 @@ fn has_undeclared_non_bio(ingredients: &[Ingredient]) -> bool {
 /// German (as all processing steps are) and used as the lookup key.
 pub const WILDSAMMLUNG_STEP: &str = "aus zertifizierter Wildsammlung";
 
+/// Is this ingredient gathered from certified wild collection?
+///
+/// Ticking the box does not clear `is_agricultural` — that flag follows the
+/// «Nicht-landwirtschaftlich» quality, and a wild-collected ingredient still
+/// carries a bio quality. So the step itself is what tells farmed apart from
+/// gathered (DEC-16).
+fn is_wild_collected(ingredient: &Ingredient) -> bool {
+    ingredient
+        .processing_steps
+        .as_ref()
+        .is_some_and(|s| s.iter().any(|step| step == WILDSAMMLUNG_STEP))
+}
+
 /// Wording for wild collection, which differs by regime: Bio Suisse says «aus
 /// zertifizierter Wildsammlung», the Bio-Verordnung requires «aus biologisch
 /// zertifizierter Wildsammlung» (Abklärung BLW, DEC-11). Both the ° legend and
@@ -1488,16 +1501,19 @@ impl Calculator {
         // when every agricultural ingredient is organic. With a permitted non-organic
         // exception in the recipe, only the per-ingredient *-marking is available.
         //
-        // DEC-16: the wording also has to have something to talk about. A recipe made
-        // entirely of wild-collected ingredients has no agricultural ingredients at
-        // all, so the blanket sentence is meaningless there and must stay hidden.
-        let has_agricultural_ingredient = input
+        // DEC-16: the wording also has to have something to talk about. Wild
+        // collection is gathered, not farmed, so a recipe made entirely of
+        // wild-collected ingredients has nothing the sentence could describe.
+        // Note this cannot lean on `is_agricultural`: ticking «Wildsammlung»
+        // leaves that flag set (it follows the «Nicht-landwirtschaftlich»
+        // quality), so the processing step is what distinguishes the two.
+        let has_farmed_ingredient = input
             .ingredients
             .iter()
             .flat_map(|i| i.leaves())
-            .any(|i| i.is_agricultural());
+            .any(|i| i.is_agricultural() && !is_wild_collected(i));
         let alternative_marking_allowed =
-            has_agricultural_ingredient && !has_erlaubte_ausnahme(&input.ingredients);
+            has_farmed_ingredient && !has_erlaubte_ausnahme(&input.ingredients);
 
         // Calculate total amount first (needed for validations)
         let mut total_amount = input.ingredients.iter().map(|x| x.computed_amount()).sum();
@@ -1774,7 +1790,14 @@ impl Calculator {
             //                Bio_Knospe_EingabeIstBio schaltet das * frei, Legende fällt auf den
             //                aus_biologischer_landwirtschaft-Zweig durch)
             //   0–<95%     → per-Zutat * + "x% … aus biologischer Produktion"
-            if bio_ch_percentage >= 100.0 {
+            //
+            // DEC-16: a recipe made purely of wild-collected ingredients reaches
+            // 100% bio-CH (there is no farmed ingredient to dilute it), which
+            // would inject the AllBio legend «Alle landwirtschaftlichen Zutaten
+            // stammen aus biologischer Landwirtschaft». That sentence has no
+            // farmed ingredient to describe, so require one before the AllBio
+            // band applies.
+            if bio_ch_percentage >= 100.0 && has_farmed_ingredient {
                 output_rules.push(RuleDef::Bio_AllAgriAreBio);
             } else if bio_ch_percentage > 0.0 && bio_ch_percentage < 95.0 {
                 output_rules.push(RuleDef::Bio_PartialBioMarking);

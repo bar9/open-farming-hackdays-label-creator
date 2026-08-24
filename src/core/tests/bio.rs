@@ -1091,6 +1091,57 @@ fn alternative_marking_suppressed_when_there_are_no_agricultural_ingredients() {
     );
 }
 
+// Reported after the first DEC-16 fix: the case that actually occurs in the UI.
+// Ticking «Wildsammlung» does NOT clear is_agricultural (that flag only follows
+// the «Nicht-landwirtschaftlich» quality), so a recipe made purely of
+// wild-collected ingredients still counted as agricultural and printed the
+// blanket sentence.
+// The reported bug renders on the label itself, not just as a hint: a purely
+// wild-collected recipe hits 100% bio-CH and printed the AllBio legend.
+#[test]
+fn wild_only_recipe_omits_the_alle_landwirtschaftlichen_legend() {
+    let calculator = calculator_for(crate::shared::Configuration::Bio);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new_agri("B\u{e4}rlauch", 342.0)
+                .bio_ch()
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(
+        !label.contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"),
+        "wild-only recipe must not print the AllBio legend; label: {}",
+        label
+    );
+}
+
+#[test]
+fn alternative_marking_suppressed_when_every_ingredient_is_wild_collected() {
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new_agri("B\u{e4}rlauch", 1000.0)
+                .bio_ch()
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(
+        c.get(keys::ALTERNATIVE_MARKING_ALLOWED),
+        None,
+        "everything wild-collected \u{2192} nothing farmed to talk about; conditionals: {:?}",
+        c
+    );
+}
+
 // Guard the other half: one farmed ingredient alongside wild collection is
 // enough for the wording to be meaningful again.
 #[test]
