@@ -91,7 +91,7 @@ async fn knospe_label_schoggi_cookie_bsk() {
     assert!(
         body.contains("Knospe-Anforderungen"),
         "expected knospe_marketing_allowed banner; body excerpt:\n{}",
-        &body.chars().take(2000).collect::<String>()
+        body.chars().take(2000).collect::<String>()
     );
 
     assert_no_errors(&c, "knospe_label_schoggi_cookie_bsk").await;
@@ -205,7 +205,7 @@ async fn swiss_label_rindshackbraten_aufzucht_schlachtung() {
     assert!(
         raw_html.contains("<b>Ei") || raw_html.contains("<strong>Ei"),
         "expected Ei rendered as bold allergen; innerHTML excerpt:\n{}",
-        &raw_html.chars().take(2000).collect::<String>()
+        raw_html.chars().take(2000).collect::<String>()
     );
     // No BIO SUISSE logo on Lebensmittelrecht.
     assert!(

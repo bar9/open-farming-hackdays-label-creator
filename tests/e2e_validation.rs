@@ -50,7 +50,7 @@ async fn validation_clears_when_origin_restored() {
     assert!(
         body.contains("Herkunft"),
         "expected origin-required validation banner after Rezeptur vollständig (Rindfleisch is 80% of total — AP7_1 should fire). body excerpt:\n{}",
-        &body.chars().take(2000).collect::<String>()
+        body.chars().take(2000).collect::<String>()
     );
 
     // Add origin via edit card and verify the banner disappears.
@@ -77,7 +77,7 @@ async fn validation_clears_when_origin_restored() {
     assert!(
         !(body_after.contains("erforderlich") || body_after.contains("benötigt")),
         "expected origin-required validation banner to clear after setting Rindfleisch origin. body excerpt:\n{}",
-        &body_after.chars().take(2000).collect::<String>()
+        body_after.chars().take(2000).collect::<String>()
     );
 
     assert_no_errors(&c, "validation_clears_when_origin_restored").await;
@@ -121,7 +121,7 @@ async fn success_badge_shows_when_recipe_valid() {
     assert!(
         body.contains("Keine Fehler gefunden"),
         "expected success badge after Rezeptur vollständig on an error-free recipe. body excerpt:\n{}",
-        &body.chars().take(2000).collect::<String>()
+        body.chars().take(2000).collect::<String>()
     );
 
     assert_no_errors(&c, "success_badge_shows_when_recipe_valid").await;
@@ -157,7 +157,7 @@ async fn success_badge_hidden_when_validation_error() {
     assert!(
         !body.contains("Keine Fehler gefunden"),
         "success badge must stay hidden while validation errors remain. body excerpt:\n{}",
-        &body.chars().take(2000).collect::<String>()
+        body.chars().take(2000).collect::<String>()
     );
 
     assert_no_errors(&c, "success_badge_hidden_when_validation_error").await;
@@ -190,19 +190,19 @@ async fn summary_surfaces_invisible_beef_error() {
     assert!(
         body.contains("Aufzuchtort ist erforderlich") || body.contains("Schlachtungsort ist erforderlich"),
         "expected beef birthplace/slaughter validation message in the consolidated summary. body excerpt:\n{}",
-        &body.chars().take(2500).collect::<String>()
+        body.chars().take(2500).collect::<String>()
     );
     // Prefixed with the ingredient name.
     assert!(
         body.contains("Rindfleisch"),
         "expected the ingredient name 'Rindfleisch' alongside the issue. body excerpt:\n{}",
-        &body.chars().take(2500).collect::<String>()
+        body.chars().take(2500).collect::<String>()
     );
     // And the success badge must NOT be shown.
     assert!(
         !body.contains("Keine Fehler gefunden"),
         "success badge must be hidden while the beef error is outstanding. body excerpt:\n{}",
-        &body.chars().take(2500).collect::<String>()
+        body.chars().take(2500).collect::<String>()
     );
 
     assert_no_errors(&c, "summary_surfaces_invisible_beef_error").await;
