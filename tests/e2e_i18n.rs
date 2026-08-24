@@ -64,7 +64,7 @@ async fn country_dropdown_is_translated_per_locale() {
     assert!(
         de.iter().any(|t| t == "Deutschland"),
         "de-CH should list 'Deutschland', got a sample of {:?}",
-        &de.iter().take(20).collect::<Vec<_>>()
+        de.iter().take(20).collect::<Vec<_>>()
     );
 
     // French: the same dropdown must show French names, not German ones.
@@ -74,7 +74,7 @@ async fn country_dropdown_is_translated_per_locale() {
     assert!(
         fr.iter().any(|t| t == "Allemagne"),
         "fr-CH should list 'Allemagne', got a sample of {:?}",
-        &fr.iter().take(20).collect::<Vec<_>>()
+        fr.iter().take(20).collect::<Vec<_>>()
     );
     assert!(
         !fr.iter().any(|t| t == "Deutschland"),
@@ -88,7 +88,7 @@ async fn country_dropdown_is_translated_per_locale() {
     assert!(
         it.iter().any(|t| t == "Germania"),
         "it-CH should list 'Germania', got a sample of {:?}",
-        &it.iter().take(20).collect::<Vec<_>>()
+        it.iter().take(20).collect::<Vec<_>>()
     );
     assert!(
         !it.iter().any(|t| t == "Deutschland"),
