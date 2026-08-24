@@ -782,6 +782,49 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         }
     };
 
+    // Wildsammlung belongs with the other checkboxes of the selected quality
+    // rather than alone at the bottom of the modal. It applies to the Knospe
+    // quality and, with its own wording, to the Bio-V «Bio» quality (DEC-11),
+    // so it lives in a closure and is rendered inside whichever quality block
+    // is active — exactly one call renders per pass.
+    let wildsammlung_field = move || {
+        let wildsammlung_step = "aus zertifizierter Wildsammlung";
+        // The stored step is the same; only the label differs by regime.
+        let wildsammlung_label = if is_knospe_config() {
+            t!("bio_labels.wildsammlung").to_string()
+        } else {
+            t!("bio_labels.wildsammlung_bio").to_string()
+        };
+        let is_wildsammlung_checked = edit_processing_steps()
+            .as_ref()
+            .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
+        rsx! {
+            FormField {
+                help: Some(t!("help.wildsammlung").to_string()),
+                label: wildsammlung_label,
+                inline_checkbox: true,
+                input {
+                    r#type: "checkbox",
+                    class: "checkbox checkbox-accent",
+                    checked: is_wildsammlung_checked,
+                    onchange: move |evt: dioxus::prelude::Event<dioxus::prelude::FormData>| {
+                        let mut current = edit_processing_steps().unwrap_or_default();
+                        if evt.data.value() == "true" {
+                            if !current.contains(&wildsammlung_step.to_string()) {
+                                current.push(wildsammlung_step.to_string());
+                            }
+                        } else {
+                            current.retain(|s| s != wildsammlung_step);
+                        }
+                        edit_processing_steps.set(
+                            if current.is_empty() { None } else { Some(current) }
+                        );
+                    }
+                }
+            }
+        }
+    };
+
     rsx! {
         div { class: if props.disabled { "opacity-50 pointer-events-none" } else { "" },
             // One title per window (Testing 25.06.2026): card stacks already render
@@ -1535,6 +1578,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                             }
                                         }
                                     }
+                                    {wildsammlung_field()}
                                     {leaf_origin_field()}
                                 }
                             } else if bio_cat == "bio" {
@@ -1704,6 +1748,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                             }
                                         }
                                     }
+                                    {wildsammlung_field()}
                                 }
                             } else if bio_cat == "andere" {
                                 br {}
@@ -1909,49 +1954,6 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 } else {
                     rsx! {}
-                }
-            }
-            // Wildsammlung sits at the very bottom of the modal (Testing 25.06.2026,
-            // hand note 2) — relevant for the Knospe quality and, with its own
-            // wording, for the Bio-V «Bio» quality (DEC-11).
-            if (is_knospe_config() && edit_is_bio()) || (!is_knospe_config() && edit_bio_ch()) {
-                {
-                    let wildsammlung_step = "aus zertifizierter Wildsammlung";
-                    // The stored step is the same; only the label differs by regime.
-                    let wildsammlung_label = if is_knospe_config() {
-                        t!("bio_labels.wildsammlung").to_string()
-                    } else {
-                        t!("bio_labels.wildsammlung_bio").to_string()
-                    };
-                    let is_wildsammlung_checked = edit_processing_steps()
-                        .as_ref()
-                        .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));
-                    rsx! {
-                        br {}
-                        FormField {
-                            help: Some(t!("help.wildsammlung").to_string()),
-                            label: wildsammlung_label,
-                            inline_checkbox: true,
-                            input {
-                                r#type: "checkbox",
-                                class: "checkbox checkbox-accent",
-                                checked: is_wildsammlung_checked,
-                                onchange: move |evt: dioxus::prelude::Event<dioxus::prelude::FormData>| {
-                                    let mut current = edit_processing_steps().unwrap_or_default();
-                                    if evt.data.value() == "true" {
-                                        if !current.contains(&wildsammlung_step.to_string()) {
-                                            current.push(wildsammlung_step.to_string());
-                                        }
-                                    } else {
-                                        current.retain(|s| s != wildsammlung_step);
-                                    }
-                                    edit_processing_steps.set(
-                                        if current.is_empty() { None } else { Some(current) }
-                                    );
-                                }
-                            }
-                        }
-                    }
                 }
             }
             } // end if !edit_is_composite() for bio/origins/beef/fish
