@@ -192,9 +192,10 @@ impl RuleRegistry {
                 RuleDef::Bio_Knospe_EingabeIstBio,
                 RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
                 RuleDef::Bio_ShowBioSachbezeichnung,
-                // Wild collection exists under the Bio-Verordnung too, with its own
-                // wording («aus biologisch zertifizierter Wildsammlung», DEC-11).
-                RuleDef::Wildsammlung_Ueber10Prozent,
+                // DEC-16: the 10% °-marking is a Bio-Suisse rule. The Bio-V knows
+                // wild collection (DEC-11) and prints it with its own wording, but
+                // always inline next to the ingredient — never as a ° legend. So
+                // `Wildsammlung_Ueber10Prozent` stays out of this configuration.
             ],
         );
 

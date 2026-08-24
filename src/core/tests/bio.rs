@@ -1064,6 +1064,55 @@ fn alternative_marking_allowed_when_all_agricultural_are_bio() {
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), Some(&true));
 }
 
+// DEC-16: the blanket wording talks about «alle landwirtschaftlichen Zutaten»,
+// so it must not appear when the recipe has none — a jar of wild garlic from
+// certified wild collection is gathered, not farmed.
+#[test]
+fn alternative_marking_suppressed_when_there_are_no_agricultural_ingredients() {
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new("B\u{e4}rlauch", 1000.0)
+                .agricultural(false)
+                .bio_ch()
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(
+        c.get(keys::ALTERNATIVE_MARKING_ALLOWED),
+        None,
+        "no agricultural ingredients \u{2192} the blanket wording says nothing; conditionals: {:?}",
+        c
+    );
+}
+
+// Guard the other half: one farmed ingredient alongside wild collection is
+// enough for the wording to be meaningful again.
+#[test]
+fn alternative_marking_allowed_when_at_least_one_ingredient_is_agricultural() {
+    let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new("B\u{e4}rlauch", 500.0)
+                .agricultural(false)
+                .bio_ch()
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new_agri("Raps\u{f6}l", 500.0).bio_ch().build())
+        .build();
+    let output = calculator.execute(input);
+    let c = &output.conditionals();
+
+    assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), Some(&true));
+}
+
 #[test]
 fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
     // Ticket example: Konfitüre with 5 g Pektin as a permitted non-organic
@@ -1581,8 +1630,11 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
 // differs. Bio Suisse says «aus zertifizierter Wildsammlung», the Bio-V
 // requires «aus biologisch zertifizierter Wildsammlung» (Abklärung BLW).
 
+// DEC-16 narrowed this: the 10% °-marking is a Bio-Suisse rule, so the Bio-V
+// prints wild collection inline next to the ingredient at any share — with its
+// own wording (DEC-11), but never as a ° legend.
 #[test]
-fn biov_wildsammlung_legend_uses_the_bio_wording() {
+fn biov_wildsammlung_prints_inline_without_a_degree_marker() {
     let calculator = calculator_for(crate::shared::Configuration::Bio);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio_ch()
@@ -1591,10 +1643,32 @@ fn biov_wildsammlung_legend_uses_the_bio_wording() {
         .build();
     let label = calculator.execute(input).label;
 
-    assert!(label.contains('°'), "15% ≥ 10% → ° marker; label: {}", label);
+    assert!(
+        !label.contains('°'),
+        "the 10% ° rule is Knospe-only (DEC-16); label: {}",
+        label
+    );
     assert!(
         label.contains("aus biologisch zertifizierter Wildsammlung"),
-        "Bio-V legend must use the «biologisch» wording; label: {}",
+        "Bio-V must still use the «biologisch» wording; label: {}",
+        label
+    );
+}
+
+// The counterpart of the DEC-16 narrowing: Knospe keeps the ° marking.
+#[test]
+fn knospe_wildsammlung_still_marks_above_10_percent() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio().origin(Country::CH)
+            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
+        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio().origin(Country::CH).build())
+        .build();
+    let label = calculator.execute(input).label;
+
+    assert!(
+        label.contains('°'),
+        "Knospe keeps the 10% ° marking (DEC-16); label: {}",
         label
     );
 }

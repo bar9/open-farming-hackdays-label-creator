@@ -1487,7 +1487,17 @@ impl Calculator {
         // stammen aus biologischer Landwirtschaft" / "Bio-" prefix) are only truthful
         // when every agricultural ingredient is organic. With a permitted non-organic
         // exception in the recipe, only the per-ingredient *-marking is available.
-        let alternative_marking_allowed = !has_erlaubte_ausnahme(&input.ingredients);
+        //
+        // DEC-16: the wording also has to have something to talk about. A recipe made
+        // entirely of wild-collected ingredients has no agricultural ingredients at
+        // all, so the blanket sentence is meaningless there and must stay hidden.
+        let has_agricultural_ingredient = input
+            .ingredients
+            .iter()
+            .flat_map(|i| i.leaves())
+            .any(|i| i.is_agricultural());
+        let alternative_marking_allowed =
+            has_agricultural_ingredient && !has_erlaubte_ausnahme(&input.ingredients);
 
         // Calculate total amount first (needed for validations)
         let mut total_amount = input.ingredients.iter().map(|x| x.computed_amount()).sum();
