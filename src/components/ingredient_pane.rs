@@ -606,6 +606,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_erlaubte_ausnahme_knospe_details.set(String::new());
         edit_processing_steps.set(None);
         edit_canonical.set(None);
+        // DEC-14: «Nicht-landwirtschaftlich» is set by the food DB for entries
+        // like Salz. Without clearing it here it survived «Speichern und
+        // nächste Zutat» and the next ingredient started out non-agricultural
+        // instead of on the «Nicht-biologisch» default.
+        edit_nicht_landwirtschaftlich.set(false);
     };
 
     let mut handle_save = move |scale_all: bool| {
@@ -693,14 +698,27 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // Keep the locked choice in sync with the name: picking a DB ingredient that
     // is non-agricultural sets the quality, and switching away from it releases
     // the lock so a stale "nicht-landwirtschaftlich" cannot linger (DEC-9).
+    //
+    // The release half used to be missing: the effect only ever set the flag, so
+    // renaming «Salz» to free text (or saving it and starting the next
+    // ingredient) left the next ingredient stuck on non-agricultural instead of
+    // the «Nicht-biologisch» default (DEC-14). Only the DB-driven state is
+    // reset; a user who ticks the box themselves on a free-text ingredient keeps
+    // their choice, which is why this is gated on `was_db_locked`.
+    let mut was_db_locked = use_signal(|| false);
     use_effect(move || {
         if db_says_non_agricultural() {
+            was_db_locked.set(true);
             edit_nicht_landwirtschaftlich.set(true);
             edit_is_bio.set(false);
             edit_bio_ch.set(false);
             edit_aus_umstellbetrieb.set(false);
             edit_erlaubte_ausnahme_bio.set(false);
             edit_erlaubte_ausnahme_knospe.set(false);
+        } else if was_db_locked() {
+            // Name moved off the locked DB entry: drop the choice the DB made.
+            was_db_locked.set(false);
+            edit_nicht_landwirtschaftlich.set(false);
         }
     });
 
