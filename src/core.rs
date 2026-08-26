@@ -783,14 +783,23 @@ impl Ingredient {
         self.composites_with_rules(&[], 0.0, 0)
     }
 
+
     pub fn composites_with_rules(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize) -> String {
         // A quality claimed on this composite itself (bought certified unit) is
         // pushed DOWN onto the children's markers (Testing 25.06.2026) — the
         // parent name never carries `*`/`**`.
-        self.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, InheritedQuality::from_parent(self))
+        self.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, InheritedQuality::from_parent(self), false)
     }
 
-    fn composites_with_inherited(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize, inherited: InheritedQuality) -> String {
+    /// `force_origin`: the enclosing (top-level) ingredient is required to declare
+    /// an origin but carries none itself — its children hold the declaration, so
+    /// their country codes must be printed even though each child alone stays
+    /// below the >50% threshold.
+    fn composites_with_forced_origin(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize, force_origin: bool) -> String {
+        self.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, InheritedQuality::from_parent(self), force_origin)
+    }
+
+    fn composites_with_inherited(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize, inherited: InheritedQuality, force_origin: bool) -> String {
         let mut output = String::new();
         if let Some(children) = &self.children {
             if !children.is_empty() {
@@ -852,7 +861,7 @@ impl Ingredient {
                                 bio: inherited.bio || child.is_bio == Some(true) || child.bio_ch == Some(true),
                                 umstellung: inherited.umstellung || child.aus_umstellbetrieb == Some(true),
                             };
-                            base_name.push_str(&child.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, child_inherited));
+                            base_name.push_str(&child.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, child_inherited, force_origin && !has_declared_origin(child)));
                             // Add processing steps
                             if let Some(steps) = &child.processing_steps {
                                 if !steps.is_empty() {
@@ -862,7 +871,7 @@ impl Ingredient {
                             }
                             // Append origin: when rules are active, respect Knospe rules;
                             // when no rules (basic composites display), always show origins.
-                            if rules.is_empty() {
+                            if rules.is_empty() || force_origin {
                                 if let Some(origin_str) = format_valid_origins(&child.origins) {
                                     base_name = format!("{} {}", base_name, origin_str);
                                 }
@@ -1228,7 +1237,9 @@ impl OutputFormatter {
             .RuleDefs.contains(&RuleDef::AP2_1_ZusammegesetztOutput)
             && self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty())
         {
-            output = format! {"{}{}", output, self.ingredient.composites_with_rules(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count)};
+            let force_child_origin = !has_declared_origin(&self.ingredient)
+                && origin_required_by_traditional_rules(&self.ingredient, &self.RuleDefs, self.total_amount);
+            output = format! {"{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin)};
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps
@@ -1949,18 +1960,42 @@ fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], to
             None
         }
     } else {
-        // No Knospe rules — show origins if traditional herkunft rules apply
-        let has_herkunft_rule = rules.iter().any(|x|
-            *x == RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent
-            || *x == RuleDef::AP7_3_HerkunftFleischUeber20Prozent
-            || *x == RuleDef::Knospe_AlleZutatenHerkunft
-        );
-        if has_herkunft_rule {
+        // No Knospe rules — the origin is printed only when a rule actually
+        // demands it. AP7_1 (>50%) is a *requirement* threshold, not a licence
+        // to print every declared country: below 50% the Länderkürzel must not
+        // appear unless another rule (Knospe_AlleZutatenHerkunft, meat >20%)
+        // requires it.
+        if origin_required_by_traditional_rules(ingredient, rules, total_amount) {
             format_valid_origins(&ingredient.computed_origins())
         } else {
             None
         }
     }
+}
+
+/// Whether the traditional (non-Knospe) herkunft rules *require* this
+/// ingredient to declare its country on the label. Only a required declaration
+/// is printed: a country entered for an ingredient below the thresholds stays
+/// out of the ingredient list.
+fn origin_required_by_traditional_rules(ingredient: &Ingredient, rules: &[RuleDef], total_amount: f64) -> bool {
+    // Knospe regimes own their own origin logic (`should_show_origin_knospe_under90`).
+    if rules.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin)
+        || rules.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin)
+        || rules.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules)
+    {
+        return false;
+    }
+    if rules.contains(&RuleDef::Knospe_AlleZutatenHerkunft) {
+        return true;
+    }
+    let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+    let over_50_required = rules.contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent)
+        && ingredient.is_agricultural()
+        && percentage > 50.0;
+    let meat_over_20_required = rules.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent)
+        && percentage > 20.0
+        && ingredient.category.as_ref().is_some_and(|c| is_meat_category(c));
+    over_50_required || meat_over_20_required
 }
 
 /// Stable-sort a copy of the children by computed weight, descending — mirroring the

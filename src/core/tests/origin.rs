@@ -142,8 +142,10 @@ fn country_display_on_label_for_ingredients_with_origin() {
         .build();
     let output = calculator.execute(input);
     let label = output.label;
+    // Milch = 600/800 = 75% > 50% → origin printed.
     assert!(label.contains("Milch (CH)"));
-    assert!(label.contains("Zucker (EU)"));
+    // Zucker = 200/800 = 25% ≤ 50% → its declared origin must NOT be printed.
+    assert!(!label.contains("Zucker (EU)"), "sub-50% ingredient must not print a country code. Label: {}", label);
 }
 
 // Regression (Testing 25.06.2026, Bio Verordnung): an origin declared top-down on
@@ -175,7 +177,8 @@ fn composite_parent_declared_origin_shows_on_label() {
         "parent-declared origin must print after the composite list. Label: {}",
         label
     );
-    assert!(label.contains("Haferflocken (AT)"));
+    // Haferflocken = 400/1000 = 40% ≤ 50% → no country code.
+    assert!(!label.contains("Haferflocken (AT)"), "sub-50% ingredient must not print origin. Label: {}", label);
 }
 
 // Composite without a parent-declared origin keeps the lowest-level-only display.
@@ -288,13 +291,11 @@ fn meat_rule_only_shows_origin_for_meat_ingredients() {
     // Non-meat ingredient should NOT show origin field with only meat rule
     assert!(!conditionals.contains_key(&keys::herkunft_benoetigt(1)));
 
-    // The current origin display logic shows origin for all ingredients if any origin rule is active
-    // This is a limitation of the current design but the functionality still works correctly
-    // The meat ingredient shows origin on the label
+    // The meat ingredient shows origin on the label (meat >20%).
     assert!(label.contains("Hackfleisch (CH)"));
-    // The non-meat ingredient also shows origin due to current display logic design
-    // but its conditional field is correctly NOT set (so UI won't show origin input field)
-    assert!(label.contains("Nudeln (EU)"));
+    // The non-meat ingredient is not required to declare an origin under the meat rule,
+    // so its country code must not be printed either.
+    assert!(!label.contains("Nudeln (EU)"), "non-required origin must not print. Label: {}", label);
 }
 
 #[test]
@@ -457,4 +458,47 @@ fn single_non_ch_non_eu_country_displays_on_label() {
             expected_code, output.label
         );
     }
+}
+
+// The >50% rule is a *requirement* threshold, not a print licence: a country
+// entered for an ingredient below 50% (and not required by any other rule)
+// must not appear on the label.
+#[test]
+fn origin_under_50_percent_is_not_printed() {
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 300.0).origin(Country::DE).build())
+        .ingredient(IngredientBuilder::new_agri("Rosinen", 400.0).origin(Country::TR).build())
+        .total(1000.0)
+        .build();
+    let output = calculator.execute(input);
+    let label = output.label;
+    assert!(!label.contains('('), "no ingredient reaches 50%, so no country code may print. Label: {}", label);
+}
+
+// …but when the >50% ingredient is a composite without its own origin, the
+// children's declarations carry the required statement and must still print.
+#[test]
+fn composite_over_50_percent_prints_child_origins() {
+    let calculator = calculator_with(vec![
+        RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new("Fruchtmischung", 0.0)
+                .children(vec![
+                    IngredientBuilder::new_agri("Himbeere", 400.0).origin(Country::CH).build(),
+                    IngredientBuilder::new_agri("Erdbeere", 200.0).origin(Country::AT).build(),
+                ])
+                .build(),
+        )
+        .ingredient(IngredientBuilder::new_agri("Zucker", 200.0).origin(Country::DE).build())
+        .build();
+    let output = calculator.execute(input);
+    let label = output.label;
+    assert!(label.contains("Himbeere") && label.contains("(CH)"), "Label: {}", label);
+    assert!(label.contains("(AT)"), "Label: {}", label);
+    assert!(!label.contains("(DE)"), "sub-50% Zucker must not print its origin. Label: {}", label);
 }

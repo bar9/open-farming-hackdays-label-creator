@@ -4,7 +4,8 @@ use crate::shared::Configuration;
 /// Golden-file test for Erdbeer-Fruchtaufstrich (strawberry jam).
 ///
 /// Expected label (from requirement docs):
-/// Erdbeere vom Hof 66% (CH), Zucker (CH), Geliermittel: Pektin, Säuerungsmittel: Zitronensäure
+/// Erdbeere vom Hof 66% (CH), Zucker, Geliermittel: Pektin, Säuerungsmittel: Zitronensäure
+/// (Zucker is 28% — below the 50% threshold, so its declared CH origin is NOT printed.)
 ///
 /// 250g final product (manual total — water loss during cooking).
 #[test]
@@ -38,15 +39,15 @@ fn golden_erdbeer_fruchtaufstrich() {
     let output = calculator.execute(input);
     assert_eq!(
         output.label,
-        "Erdbeere vom Hof 66% (CH), Zucker (CH), Geliermittel: Pektin, Säuerungsmittel: Zitronensäure"
+        "Erdbeere vom Hof 66% (CH), Zucker, Geliermittel: Pektin, Säuerungsmittel: Zitronensäure"
     );
 }
 
 /// Golden-file test for Joghurt Salatsauce (yogurt salad dressing).
 ///
 /// Expected label (from requirement docs):
-/// Joghurt nature 63% (CH), Rapsöl (CH), Wasser, Blütenhonig, Senf, Zitronensaft,
-/// Bouillonpaste (Salz (CH), Sojasauce, Maltodextrin auf Weizenbasis, Karotte,
+/// Joghurt nature 63% (CH), Rapsöl, Wasser, Blütenhonig, Senf, Zitronensaft,
+/// Bouillonpaste (Salz, Sojasauce, Maltodextrin auf Weizenbasis, Karotte,
 /// Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz, Gewürze
 ///
 /// 450g product. Bouillonpaste is a composite ingredient with 9 children.
@@ -93,6 +94,6 @@ fn golden_joghurt_salatsauce() {
     // Gewürze (9.5g) sorts before Bouillonpaste (9.0g) by weight.
     assert_eq!(
         output.label,
-        "Joghurt nature 63% (CH), Rapsöl (CH), Wasser, Blütenhonig, Senf, Zitronensaft, Gewürze, Bouillonpaste (Salz (CH), Sojasauce, Maltodextrin auf Weizenbasis, Karotte, Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz"
+        "Joghurt nature 63% (CH), Rapsöl, Wasser, Blütenhonig, Senf, Zitronensaft, Gewürze, Bouillonpaste (Salz, Sojasauce, Maltodextrin auf Weizenbasis, Karotte, Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz"
     );
 }
