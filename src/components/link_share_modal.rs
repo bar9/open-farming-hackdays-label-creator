@@ -1,3 +1,4 @@
+use crate::services::url_shortener;
 use dioxus::prelude::*;
 use rust_i18n::t;
 use wasm_bindgen::JsCast;
@@ -18,6 +19,9 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
     let mut is_shortening = use_signal(|| false);
     let mut show_shorten_button = use_signal(|| true);
     let mut shorten_error = use_signal(|| None::<String>);
+    // Welcher Dienst den Kurz-Link erzeugt hat — wird unter dem Feld angezeigt,
+    // damit transparent bleibt, wo das Rezept gespeichert liegt.
+    let mut short_provider = use_signal(|| None::<String>);
 
     let url_clone1 = url.clone();
     let url_clone2 = url.clone();
@@ -82,24 +86,19 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
             show_shorten_button.set(false);
             shorten_error.set(None);
 
-            // Using TinyURL as a reliable URL shortener
-            let encoded_url = urlencoding::encode(&url_to_shorten);
-            let tinyurl_api = format!("https://tinyurl.com/api-create.php?url={}", encoded_url);
-
-            match gloo::net::http::Request::get(&tinyurl_api).send().await {
-                Ok(response) => {
-                    if let Ok(shortened) = response.text().await {
-                        short_url.set(Some(shortened));
-                        shorten_error.set(None);
-                    } else {
-                        shorten_error.set(Some(t!("link_shorten_error").to_string()));
-                        show_shorten_button.set(true);
-                    }
+            // Mehrere Anbieter mit Fallback (siehe services::url_shortener):
+            // ein einzelner Dienst ist in manchen Netzen gesperrt und scheitert
+            // dann mit einem CORS-/Netzwerkfehler.
+            match url_shortener::shorten(&url_to_shorten).await {
+                Ok(link) => {
+                    short_url.set(Some(link.url));
+                    short_provider.set(Some(link.provider.host().to_string()));
+                    shorten_error.set(None);
                 }
                 Err(e) => {
-                    tracing::error!("Failed to shorten URL: {:?}", e);
+                    tracing::error!("Failed to shorten URL: {}", e);
                     shorten_error.set(Some(t!("link_shorten_error").to_string()));
-                    // Reset button on error
+                    // Erneut versuchen erlauben (z.B. nach Netzwechsel).
                     show_shorten_button.set(true);
                 }
             }
@@ -112,6 +111,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
     use_effect(move || {
         if link_type() == LinkType::Full {
             short_url.set(None);
+            short_provider.set(None);
             show_shorten_button.set(true);
             shorten_error.set(None);
         }
@@ -163,7 +163,11 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                     if link_type() == LinkType::Short {
                         div {
                             class: "text-sm text-base-content/70 mb-4",
-                            {t!("link_short_disclaimer").to_string()}
+                            if let Some(provider) = short_provider() {
+                                {t!("link_short_disclaimer_provider", provider = provider).to_string()}
+                            } else {
+                                {t!("link_short_disclaimer").to_string()}
+                            }
                         }
 
                         if short_url().is_none() && show_shorten_button() {

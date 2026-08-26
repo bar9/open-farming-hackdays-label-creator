@@ -288,11 +288,12 @@ units:
 link_share_title: Link teilen
 link_type_full: Vollständiger Link
 link_type_short: Kurz-Link  
-link_short_disclaimer: "Hinweis: Der Inhalt des Rezepts wird bei einem Kurz-Link im Link eines Drittanbieter-Dienstes (tinyurl) gespeichert."
+link_short_disclaimer: "Hinweis: Der Inhalt des Rezepts wird bei einem Kurz-Link im Link eines Drittanbieter-Dienstes gespeichert."
+link_short_disclaimer_provider: "Hinweis: Der Inhalt des Rezepts ist im Kurz-Link des Drittanbieter-Dienstes %{provider} gespeichert."
 link_copied_success: Link wurde in die Zwischenablage kopiert!
 shorten_url_button: Link kürzen
 shortening: Wird gekürzt...
-link_shorten_error: "URL konnte nicht gekürzt werden. Bitte den vollständigen Link verwenden."
+link_shorten_error: "Kein Kurz-Link-Dienst war erreichbar (in manchen Netzen sind diese gesperrt). Bitte den vollständigen Link verwenden oder erneut versuchen."
 close: Schliessen
 
 disclaimer:
