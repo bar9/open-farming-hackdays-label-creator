@@ -7,15 +7,19 @@
 //!    der jünger als eine Stunde ist, eine Zwischenseite ein
 //!    (`shorten.shorturl_interstitial_cooldown => 3600` in dagd/dagd). Genau
 //!    frische Links werden aber geteilt — der Empfänger sähe fast immer erst
-//!    die Warnseite. is.gd/v.gd leiten dagegen sofort weiter.
+//!    die Warnseite. is.gd, v.gd und spoo.me leiten sofort weiter.
 //! 2. **Lokal soll der Button funktionieren.** is.gd, v.gd, spoo.me, cleanuri
 //!    und ulvis lehnen `http://localhost:8080/...` als ungültig ab. Nur da.gd
 //!    kürzt nicht-öffentliche Hosts — und dort ist die Zwischenseite egal,
 //!    weil der Link ohnehin nur auf diesem Rechner funktioniert.
 //!
-//! Deshalb: für öffentliche Adressen zuerst is.gd, dann v.gd, dann da.gd; für
+//! Deshalb: für öffentliche Adressen is.gd → v.gd → spoo.me → da.gd; für
 //! lokale Adressen direkt da.gd. Alle Endpunkte sind kostenlos, werbefrei,
 //! ohne API-Key und senden `Access-Control-Allow-Origin`.
+//!
+//! Getestet und verworfen: cleanuri und ulvis senden keinen CORS-Header (im
+//! Browser also unbrauchbar), clck.ru leitet über einen Yandex-Zwischenhost,
+//! tinyurl zeigt Werbe-Interstitials.
 
 use std::fmt;
 
@@ -30,10 +34,31 @@ pub enum Provider {
     /// v.gd — gleiche Software/API wie is.gd, aber eigene Domain: fällt nicht
     /// unter dieselben Sperrlisten.
     VGd,
+    /// spoo.me — unabhängige Infrastruktur, leitet ohne Zwischenseite weiter.
+    /// Nutzt die v1-JSON-API: die alte Formular-API ist auf wenige Anfragen
+    /// gedrosselt und liefert `http://`-Links, v1 erlaubt 20/Minute und
+    /// antwortet direkt mit `https://`.
+    Spoo,
     /// da.gd — kostenlos, werbefrei, akzeptiert als einziger auch localhost/IPs.
     /// Zeigt bei Links unter einer Stunde eine Zwischenseite, steht deshalb
     /// für öffentliche Adressen hinten.
     DaGd,
+}
+
+/// Wie eine Anfrage abgesetzt wird. `Get` ist der Normalfall; spoo.me v1
+/// erwartet einen JSON-Body.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum Request {
+    Get { url: String },
+    PostJson { url: String, body: String },
+}
+
+impl Request {
+    pub fn url(&self) -> &str {
+        match self {
+            Request::Get { url } | Request::PostJson { url, .. } => url,
+        }
+    }
 }
 
 impl Provider {
@@ -44,7 +69,12 @@ impl Provider {
     /// da.gd als unabhängige Infrastruktur fängt das ab.
     pub fn chain_for(long_url: &str) -> &'static [Provider] {
         if is_publicly_reachable(long_url) {
-            &[Provider::IsGd, Provider::VGd, Provider::DaGd]
+            &[
+                Provider::IsGd,
+                Provider::VGd,
+                Provider::Spoo,
+                Provider::DaGd,
+            ]
         } else {
             // Nur da.gd kürzt lokale Adressen; die anderen würden mit
             // "invalid URL" antworten.
@@ -56,17 +86,30 @@ impl Provider {
         match self {
             Provider::IsGd => "is.gd",
             Provider::VGd => "v.gd",
+            Provider::Spoo => "spoo.me",
             Provider::DaGd => "da.gd",
         }
     }
 
-    /// Anfrage-URL für die zu kürzende Adresse.
-    pub fn request_url(&self, long_url: &str) -> String {
+    /// Anfrage für die zu kürzende Adresse.
+    pub fn request(&self, long_url: &str) -> Request {
         let encoded = urlencoding::encode(long_url);
         match self {
-            Provider::IsGd => format!("https://is.gd/create.php?format=json&url={}", encoded),
-            Provider::VGd => format!("https://v.gd/create.php?format=json&url={}", encoded),
-            Provider::DaGd => format!("https://da.gd/shorten?url={}", encoded),
+            Provider::IsGd => Request::Get {
+                url: format!("https://is.gd/create.php?format=json&url={}", encoded),
+            },
+            Provider::VGd => Request::Get {
+                url: format!("https://v.gd/create.php?format=json&url={}", encoded),
+            },
+            Provider::Spoo => Request::PostJson {
+                url: "https://spoo.me/api/v1/shorten".to_string(),
+                // serde_json baut den Body, damit Anführungszeichen und
+                // Backslashes in der URL korrekt escaped werden.
+                body: serde_json::json!({ "url": long_url }).to_string(),
+            },
+            Provider::DaGd => Request::Get {
+                url: format!("https://da.gd/shorten?url={}", encoded),
+            },
         }
     }
 
@@ -80,6 +123,7 @@ impl Provider {
         let body = body.trim();
         let candidate = match self {
             Provider::IsGd | Provider::VGd => extract_json_shorturl(body)?,
+            Provider::Spoo => extract_json_field(body, "short_url")?,
             Provider::DaGd => body.to_string(),
         };
         if is_plausible_short_url(&candidate) {
@@ -126,14 +170,19 @@ pub struct ShortLink {
 }
 
 fn extract_json_shorturl(body: &str) -> Result<String, ShortenError> {
+    extract_json_field(body, "shorturl")
+}
+
+fn extract_json_field(body: &str, field: &str) -> Result<String, ShortenError> {
     let value: serde_json::Value =
         serde_json::from_str(body).map_err(|_| ShortenError::ProviderRejected(body.to_string()))?;
-    if let Some(short) = value.get("shorturl").and_then(|v| v.as_str()) {
+    if let Some(short) = value.get(field).and_then(|v| v.as_str()) {
         return Ok(short.to_string());
     }
     let message = value
         .get("errormessage")
         .and_then(|v| v.as_str())
+        .or_else(|| value.get("error").and_then(|v| v.as_str()))
         .unwrap_or(body);
     Err(ShortenError::ProviderRejected(message.to_string()))
 }
@@ -193,13 +242,17 @@ pub fn is_publicly_reachable(url: &str) -> bool {
 /// und ohne wasm testbar bleibt.
 pub async fn shorten_with<F, Fut>(long_url: &str, fetch: F) -> Result<ShortLink, ShortenError>
 where
-    F: Fn(String) -> Fut,
+    F: Fn(Request) -> Fut,
     Fut: std::future::Future<Output = Result<String, String>>,
 {
     let mut last_error = ShortenError::AllProvidersFailed;
     for provider in Provider::chain_for(long_url) {
         let provider = *provider;
-        match fetch(provider.request_url(long_url)).await {
+        let request = provider.request(long_url);
+        // Endpunkt mitloggen: bei Netzfehlern ist sonst nicht erkennbar, ob
+        // die alte oder neue API eines Anbieters gerufen wurde.
+        let endpoint = request.url().to_string();
+        match fetch(request).await {
             Ok(body) => match provider.parse_response(&body) {
                 Ok(url) => return Ok(ShortLink { url, provider }),
                 Err(err) => {
@@ -208,7 +261,7 @@ where
                 }
             },
             Err(err) => {
-                tracing::warn!("{} unreachable: {}", provider, err);
+                tracing::warn!("{} ({}) unreachable: {}", provider, endpoint, err);
                 last_error = ShortenError::Unreachable(err);
             }
         }
@@ -218,11 +271,20 @@ where
 
 /// Produktions-Variante: kürzt über einen echten HTTP-Aufruf.
 pub async fn shorten(long_url: &str) -> Result<ShortLink, ShortenError> {
-    shorten_with(long_url, |url| async move {
-        let response = gloo::net::http::Request::get(&url)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+    shorten_with(long_url, |request| async move {
+        let response = match request {
+            Request::Get { url } => gloo::net::http::Request::get(&url)
+                .send()
+                .await
+                .map_err(|e| e.to_string())?,
+            Request::PostJson { url, body } => gloo::net::http::Request::post(&url)
+                .header("Content-Type", "application/json")
+                .body(body)
+                .map_err(|e| e.to_string())?
+                .send()
+                .await
+                .map_err(|e| e.to_string())?,
+        };
         if !response.ok() {
             return Err(format!("HTTP {}", response.status()));
         }
@@ -243,6 +305,7 @@ mod tests {
         let chain = Provider::chain_for("https://www.declarino.ch/?a=1");
         assert_eq!(chain[0], Provider::IsGd);
         assert_eq!(chain[1], Provider::VGd);
+        assert_eq!(chain[2], Provider::Spoo);
         assert_eq!(*chain.last().unwrap(), Provider::DaGd);
     }
 
@@ -279,9 +342,29 @@ mod tests {
     #[test]
     fn request_urls_are_encoded() {
         for provider in [Provider::IsGd, Provider::VGd, Provider::DaGd] {
-            let url = provider.request_url("https://declarino.ch/?a=1&b=2");
+            let request = provider.request("https://declarino.ch/?a=1&b=2");
+            let url = request.url();
             assert!(url.contains(provider.host()), "wrong host: {}", url);
             assert!(url.contains("%26b%3D2"), "must be encoded: {}", url);
+        }
+    }
+
+    #[test]
+    fn spoo_uses_the_v1_json_api() {
+        // Die alte Formular-API ist hart gedrosselt ("rate_limit_exceeded"
+        // schon ab der vierten Anfrage) und liefert http://-Links.
+        let request = Provider::Spoo.request("https://declarino.ch/?a=1&b=\"2\"");
+        match request {
+            Request::PostJson { url, body } => {
+                assert_eq!(url, "https://spoo.me/api/v1/shorten");
+                // Anführungszeichen in der URL müssen escaped sein, sonst
+                // entsteht kaputtes JSON.
+                assert_eq!(
+                    body,
+                    r#"{"url":"https://declarino.ch/?a=1&b=\"2\""}"#
+                );
+            }
+            other => panic!("spoo.me must POST JSON, got {:?}", other),
         }
     }
 
@@ -297,6 +380,19 @@ mod tests {
         assert_eq!(
             Provider::DaGd.parse_response("https://da.gd/YraW\n").unwrap(),
             "https://da.gd/YraW"
+        );
+        // spoo.me v1 liefert bereits https://.
+        assert_eq!(
+            Provider::Spoo
+                .parse_response(r#"{"alias":"nA8IGsG","short_url":"https://spoo.me/nA8IGsG"}"#)
+                .unwrap(),
+            "https://spoo.me/nA8IGsG"
+        );
+        assert_eq!(
+            Provider::Spoo
+                .parse_response(r#"{"error":"Too many requests","code":"rate_limit_exceeded"}"#)
+                .unwrap_err(),
+            ShortenError::ProviderRejected("Too many requests".into())
         );
     }
 
@@ -336,8 +432,12 @@ mod tests {
 
     #[test]
     fn public_url_is_shortened_by_isgd() {
-        let result = block_on(shorten_with("https://declarino.ch/?a=1", |url| async move {
-            assert!(url.contains("is.gd"), "is.gd must be tried first: {}", url);
+        let result = block_on(shorten_with("https://declarino.ch/?a=1", |req| async move {
+            assert!(
+                req.url().contains("is.gd"),
+                "is.gd must be tried first: {}",
+                req.url()
+            );
             Ok("{ \"shorturl\": \"https://is.gd/abc123\" }".to_string())
         }))
         .unwrap();
@@ -345,11 +445,28 @@ mod tests {
     }
 
     #[test]
-    fn falls_back_to_da_gd_when_both_gd_services_fail() {
+    fn falls_back_to_spoo_when_both_gd_services_fail() {
         // Realer Ausfall vom 2026-08-27: is.gd und v.gd antworteten beide mit
-        // HTTP 200 und "Error, database insert failed".
-        let result = block_on(shorten_with("https://declarino.ch/?a=1", |url| async move {
-            if url.contains("da.gd") {
+        // HTTP 200 und "Error, database insert failed". spoo.me leitet ohne
+        // Zwischenseite weiter und kommt deshalb vor da.gd.
+        let result = block_on(shorten_with("https://declarino.ch/?a=1", |req| async move {
+            if req.url().contains("spoo.me") {
+                Ok(r#"{"short_url":"https://spoo.me/abc123"}"#.to_string())
+            } else if req.url().contains("da.gd") {
+                Ok("https://da.gd/should-not-be-used".to_string())
+            } else {
+                Ok("Error, database insert failed".to_string())
+            }
+        }))
+        .unwrap();
+        assert_eq!(result.provider, Provider::Spoo);
+        assert_eq!(result.url, "https://spoo.me/abc123");
+    }
+
+    #[test]
+    fn falls_back_to_da_gd_when_every_other_provider_fails() {
+        let result = block_on(shorten_with("https://declarino.ch/?a=1", |req| async move {
+            if req.url().contains("da.gd") {
                 Ok("https://da.gd/abc123".to_string())
             } else {
                 Ok("Error, database insert failed".to_string())
@@ -364,7 +481,8 @@ mod tests {
     fn localhost_is_shortened_without_asking_the_gd_services() {
         let result = block_on(shorten_with(
             "http://localhost:8080/open-farming-hackdays-label-creator/?a=1",
-            |url| async move {
+            |req| async move {
+                let url = req.url();
                 assert!(url.starts_with("https://da.gd/"), "unexpected call: {}", url);
                 assert!(url.contains("localhost"), "localhost must be forwarded");
                 Ok("https://da.gd/YraW".to_string())
