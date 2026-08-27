@@ -1,42 +1,61 @@
-//! URL-Shortener: bevorzugt interstitial-freie Anbieter, mit da.gd als
-//! Rückfallebene und als bevorzugtem Weg für lokale Adressen.
+//! URL-Shortener: bevorzugt den eigenen Endpunkt auf declarino.ch, mit
+//! Fremddiensten als Rückfallebene.
 //!
-//! Zwei Anforderungen stehen hier im Konflikt und erklären den Aufbau:
+//! Warum ein eigener Endpunkt: Die kostenlosen Fremddienste sind für diesen
+//! Zweck unbrauchbar geworden, und zwar aus einem strukturellen Grund. Ein
+//! Dienst, der ohne Konto beliebige Ziele kürzt, ist genau das Werkzeug, mit
+//! dem Phishing-Links gebaut werden. Provider sperren die Kategorie deshalb
+//! per DNS: Swisscom biegt da.gd und spoo.me auf einen Sperrserver um
+//! (195.186.4.x), dessen TLS-Handshake scheitert — im Browser sichtbar nur
+//! als "Failed to fetch". is.gd und v.gd antworteten mit "Error, database
+//! insert failed", tinyurl zeigt sporadisch Warn-Zwischenseiten.
 //!
-//! 1. **Produktion soll direkt weiterleiten.** da.gd blendet für jeden Link,
-//!    der jünger als eine Stunde ist, eine Zwischenseite ein
-//!    (`shorten.shorturl_interstitial_cooldown => 3600` in dagd/dagd). Genau
-//!    frische Links werden aber geteilt — der Empfänger sähe fast immer erst
-//!    die Warnseite. spoo.me leitet sofort weiter.
-//! 2. **Lokal soll der Button funktionieren.** spoo.me lehnt
-//!    `http://localhost:8080/...` als ungültig ab. Nur da.gd und tinyurl
-//!    kürzen nicht-öffentliche Hosts — und dort ist die Zwischenseite egal,
-//!    weil der Link ohnehin nur auf diesem Rechner funktioniert.
+//! `declarino.ch/s/…` umgeht das: die Domain hat eine eigene Reputation und
+//! steht auf keiner Shortener-Sperrliste. Der Endpunkt nimmt ausserdem nur
+//! Declarino-Adressen an (siehe `api/_lib.mjs`), taugt also nicht als
+//! Phishing-Werkzeug und wird deshalb voraussichtlich auch keine bekommen.
 //!
-//! Reihenfolge: öffentlich spoo.me → tinyurl → da.gd, lokal da.gd → tinyurl.
-//! Alle Endpunkte sind kostenlos, ohne API-Key und senden
-//! `Access-Control-Allow-Origin`.
+//! Die Fremddienste bleiben als Rückfallebene, damit der Teilen-Button nicht
+//! komplett ausfällt, wenn der Endpunkt nicht erreichbar ist:
 //!
-//! Zu tinyurl: es ist am zuverlässigsten *erreichbar* (Cloudflare, kaum je
-//! durch Netzfilter gesperrt) und ein frischer Link leitet in der Messung vom
-//! 2026-08-27 per reinem 301 weiter. Es steht trotzdem nicht vorn, weil dort
-//! in der Praxis wiederholt Warn-/Preview-Zwischenseiten auftraten, die sich
-//! von aussen nicht vorhersagen lassen. Ganz entfernen lässt es sich aber
-//! nicht: spoo.me und da.gd laufen auf derselben Infrastruktur (gleicher
-//! IPv6-Block 2001:4d98:4:b10c::), fallen also gemeinsam aus. tinyurl ist der
-//! einzige davon unabhängige Anbieter in der Kette.
+//! * öffentlich: declarino → spoo.me → tinyurl → da.gd
+//! * lokal: declarino → da.gd → tinyurl
 //!
-//! Getestet und verworfen: is.gd und v.gd (dieselbe Software und Datenbank,
-//! fielen am 2026-08-27 gemeinsam mit "Error, database insert failed" aus und
-//! sind in mehreren Netzen per Filter gesperrt), cleanuri und ulvis (senden
-//! keinen CORS-Header, im Browser also unbrauchbar), clck.ru (leitet über
-//! einen Yandex-Zwischenhost).
+//! Zwei Eigenheiten der Rückfallebene erklären ihre Reihenfolge:
+//!
+//! 1. **da.gd blendet eine Zwischenseite ein** für Links, die jünger als eine
+//!    Stunde sind (`shorten.shorturl_interstitial_cooldown => 3600` in
+//!    dagd/dagd). Genau frische Links werden geteilt, der Empfänger sähe also
+//!    fast immer erst die Warnseite. Deshalb steht da.gd hinten — ausser bei
+//!    lokalen Adressen, wo die Zwischenseite egal ist.
+//! 2. **spoo.me lehnt localhost ab.** Nur da.gd und tinyurl kürzen
+//!    nicht-öffentliche Hosts.
+//!
+//! tinyurl ist am zuverlässigsten erreichbar (Cloudflare), zeigt aber in der
+//! Praxis wiederholt Warn-/Preview-Zwischenseiten und steht deshalb hinter
+//! spoo.me.
+//!
+//! Getestet und verworfen: is.gd und v.gd (gemeinsame Datenbank, fielen
+//! zusammen aus), cleanuri und ulvis (senden keinen CORS-Header, im Browser
+//! also unbrauchbar), clck.ru (Yandex-Zwischenhost), bitly/t.ly/short.io
+//! (API-Key nötig — der läge im WASM-Binary offen und wäre auslesbar).
 
 use std::fmt;
+
+/// Basis des eigenen Kurz-Link-Dienstes.
+///
+/// Fest auf die Produktion verdrahtet, auch in Staging und lokal: Ein
+/// Kurz-Link soll überall funktionieren, wohin er verschickt wird. Ein Link
+/// auf `localhost` wäre für den Empfänger wertlos.
+const DECLARINO_API_BASE: &str = "https://www.declarino.ch";
 
 /// Ein Anbieter der Fallback-Kette.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Provider {
+    /// Eigener Endpunkt auf declarino.ch. Erste Wahl: keine Sperrlisten, keine
+    /// Zwischenseite, kein Rate-Limit, und die Links bleiben in eigener Hand.
+    /// Nimmt nur Declarino-Adressen an.
+    Declarino,
     /// spoo.me — unabhängige Infrastruktur, leitet ohne Zwischenseite weiter.
     /// Nutzt die v1-JSON-API: die alte Formular-API ist auf wenige Anfragen
     /// gedrosselt und liefert `http://`-Links, v1 erlaubt 20/Minute und
@@ -72,21 +91,30 @@ impl Request {
 impl Provider {
     /// Anbieter für `long_url`, in Reihenfolge der Versuche.
     ///
-    /// spoo.me und da.gd teilen sich eine Infrastruktur und fallen gemeinsam
-    /// aus; tinyurl liegt dazwischen und fängt genau diesen Fall ab.
+    /// Der eigene Endpunkt steht immer vorn; die Fremddienste folgen nur,
+    /// damit der Teilen-Button bei einem Ausfall nicht komplett tot ist.
     pub fn chain_for(long_url: &str) -> &'static [Provider] {
         if is_publicly_reachable(long_url) {
-            &[Provider::Spoo, Provider::TinyUrl, Provider::DaGd]
+            &[
+                Provider::Declarino,
+                Provider::Spoo,
+                Provider::TinyUrl,
+                Provider::DaGd,
+            ]
         } else {
             // Nur da.gd und tinyurl kürzen lokale Adressen; spoo.me würde mit
             // "invalid URL" antworten. Lokal ist eine Zwischenseite egal,
             // deshalb bleibt da.gd hier vorn.
-            &[Provider::DaGd, Provider::TinyUrl]
+            // Der eigene Endpunkt kürzt auch localhost (die Allowlist prüft
+            // das Ziel, nicht dessen Erreichbarkeit) — nur ist er im lokalen
+            // Betrieb oft nicht deployt, deshalb folgen die Fremddienste.
+            &[Provider::Declarino, Provider::DaGd, Provider::TinyUrl]
         }
     }
 
     pub fn host(&self) -> &'static str {
         match self {
+            Provider::Declarino => "declarino.ch",
             Provider::Spoo => "spoo.me",
             Provider::TinyUrl => "tinyurl.com",
             Provider::DaGd => "da.gd",
@@ -97,6 +125,10 @@ impl Provider {
     pub fn request(&self, long_url: &str) -> Request {
         let encoded = urlencoding::encode(long_url);
         match self {
+            Provider::Declarino => Request::PostJson {
+                url: format!("{}/api/shorten", DECLARINO_API_BASE),
+                body: serde_json::json!({ "url": long_url }).to_string(),
+            },
             Provider::Spoo => Request::PostJson {
                 url: "https://spoo.me/api/v1/shorten".to_string(),
                 // serde_json baut den Body, damit Anführungszeichen und
@@ -121,7 +153,9 @@ impl Provider {
     pub fn parse_response(&self, body: &str) -> Result<String, ShortenError> {
         let body = body.trim();
         let candidate = match self {
-            Provider::Spoo => extract_json_field(body, "short_url")?,
+            // Der eigene Endpunkt antwortet absichtlich im selben Format
+            // wie spoo.me, damit hier kein Sonderfall nötig ist.
+            Provider::Declarino | Provider::Spoo => extract_json_field(body, "short_url")?,
             // Beide antworten mit einer Zeile Klartext (ggf. mit Umbruch).
             Provider::TinyUrl | Provider::DaGd => body.to_string(),
         };
@@ -298,10 +332,12 @@ mod tests {
         // geteilte Links also praktisch immer. Es darf deshalb nur die
         // Rückfallebene sein, nie der erste Anbieter.
         let chain = Provider::chain_for("https://www.declarino.ch/?a=1");
-        assert_eq!(chain[0], Provider::Spoo);
+        // Der eigene Endpunkt zuerst: keine Sperrlisten, keine Zwischenseite.
+        assert_eq!(chain[0], Provider::Declarino);
+        assert_eq!(chain[1], Provider::Spoo);
         // tinyurl zeigt sporadisch Warnseiten (Praxiserfahrung) und darf
         // deshalb erst nach den interstitial-freien Diensten drankommen.
-        assert_eq!(chain[1], Provider::TinyUrl);
+        assert_eq!(chain[2], Provider::TinyUrl);
         assert_eq!(*chain.last().unwrap(), Provider::DaGd);
     }
 
@@ -310,7 +346,10 @@ mod tests {
         // spoo.me antwortet für localhost mit "invalid URL"; es zu fragen
         // kostet nur Zeit und produziert Fehlermeldungen.
         let chain = Provider::chain_for("http://localhost:8080/app/?a=1");
-        assert_eq!(chain, &[Provider::DaGd, Provider::TinyUrl]);
+        assert_eq!(
+            chain,
+            &[Provider::Declarino, Provider::DaGd, Provider::TinyUrl]
+        );
     }
 
     #[test]
@@ -426,17 +465,52 @@ mod tests {
     }
 
     #[test]
-    fn public_url_is_shortened_by_spoo() {
-        // spoo.me leitet ohne Zwischenseite weiter und ist deshalb erste Wahl.
+    fn public_url_is_shortened_by_our_own_endpoint() {
+        // Der eigene Endpunkt ist erste Wahl; kein Fremddienst darf gefragt
+        // werden, solange er antwortet.
         let result = block_on(shorten_with(
             "https://declarino.ch/?a=1",
             |req| async move {
-                assert!(
-                    req.url().contains("spoo.me"),
-                    "spoo.me must be tried first: {}",
-                    req.url()
+                assert_eq!(
+                    req.url(),
+                    "https://www.declarino.ch/api/shorten",
+                    "own endpoint must be tried first"
                 );
-                Ok(r#"{"short_url":"https://spoo.me/abc123"}"#.to_string())
+                Ok(r#"{"short_url":"https://www.declarino.ch/s/AbC1234"}"#.to_string())
+            },
+        ))
+        .unwrap();
+        assert_eq!(result.provider, Provider::Declarino);
+        assert_eq!(result.url, "https://www.declarino.ch/s/AbC1234");
+    }
+
+    #[test]
+    fn own_endpoint_posts_json_to_production_even_from_localhost() {
+        // Ein Kurz-Link muss überall funktionieren, wohin er verschickt wird —
+        // ein Link auf localhost wäre für den Empfänger wertlos. Deshalb geht
+        // die Anfrage auch lokal an die Produktion.
+        match Provider::Declarino.request(r#"http://localhost:8080/app/?a="x""#) {
+            Request::PostJson { url, body } => {
+                assert_eq!(url, "https://www.declarino.ch/api/shorten");
+                // Anführungszeichen müssen escaped sein, sonst kaputtes JSON.
+                assert_eq!(body, r#"{"url":"http://localhost:8080/app/?a=\"x\""}"#);
+            }
+            other => panic!("own endpoint must POST JSON, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn falls_back_to_third_party_when_own_endpoint_is_down() {
+        // Solange der eigene Endpunkt nicht deployt oder gestört ist, soll der
+        // Teilen-Button trotzdem etwas liefern.
+        let result = block_on(shorten_with(
+            "https://declarino.ch/?a=1",
+            |req| async move {
+                if req.url().contains("declarino.ch/api/") {
+                    Err("HTTP 404".to_string())
+                } else {
+                    Ok(r#"{"short_url":"https://spoo.me/abc123"}"#.to_string())
+                }
             },
         ))
         .unwrap();
@@ -444,7 +518,19 @@ mod tests {
     }
 
     #[test]
-    fn prefers_tinyurl_over_da_gd_when_spoo_rejects() {
+    fn own_endpoint_rejection_is_not_written_into_the_field() {
+        // Der Endpunkt lehnt fremde Ziele mit einer JSON-Fehlermeldung ab;
+        // die darf nie als "Kurz-Link" im Eingabefeld landen.
+        assert_eq!(
+            Provider::Declarino
+                .parse_response(r#"{"error":"Nur declarino.ch-Adressen"}"#)
+                .unwrap_err(),
+            ShortenError::ProviderRejected("Nur declarino.ch-Adressen".into())
+        );
+    }
+
+    #[test]
+    fn prefers_tinyurl_over_da_gd_when_own_endpoint_and_spoo_reject() {
         // da.gd zeigt für frische Links eine Zwischenseite; solange tinyurl
         // antwortet, darf es nicht drankommen.
         let result = block_on(shorten_with(
@@ -452,6 +538,8 @@ mod tests {
             |req| async move {
                 if req.url().contains("tinyurl.com") {
                     Ok("https://tinyurl.com/abc123".to_string())
+                } else if req.url().contains("declarino.ch/api/") {
+                    Err("HTTP 500".to_string())
                 } else if req.url().contains("da.gd") {
                     Ok("https://da.gd/should-not-be-used".to_string())
                 } else {
@@ -507,6 +595,10 @@ mod tests {
             "http://localhost:8080/open-farming-hackdays-label-creator/?a=1",
             |req| async move {
                 let url = req.url();
+                if url.contains("declarino.ch/api/") {
+                    // Lokal ist der eigene Endpunkt in der Regel nicht deployt.
+                    return Err("HTTP 404".to_string());
+                }
                 assert!(url.contains("localhost"), "localhost must be forwarded");
                 if url.contains("tinyurl.com") {
                     return Err("blocked here".to_string());

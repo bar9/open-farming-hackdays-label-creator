@@ -91,14 +91,14 @@ requirements/          # Architecture documentation
 | Build | Dioxus CLI (`dx`) + Cargo |
 | Task runner | GNU Make |
 | i18n | rust-i18n (YAML) |
-| CI/CD | GitHub Actions → GitHub Pages |
+| CI/CD | GitHub Actions → GitHub Pages (staging) / Vercel (production) |
 
 ## Deployment
 
 Both workflows trigger on push to `main`:
 
 - **Staging** (`deploy.yml`): Builds all pages, deploys to `bar9.github.io/open-farming-hackdays-label-creator/`
-- **Production** (`deploy-production.yml`): Builds with `--features hidebio`, deploys to `bar9/declarino` repo → declarino.ch
+- **Production** (`deploy-production.yml`): Builds with `--features hidebio`, deploys to `bar9/declarino` repo → served by Vercel at declarino.ch. Also ships the short-link functions in `api/` (see `api/README.md`)
 
 ## Architecture Docs
 

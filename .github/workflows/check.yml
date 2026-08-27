@@ -66,5 +66,20 @@ jobs:
       - name: Cargo test
         run: cargo test --bins --test locale_parity
 
+      # Die Shortener-Funktionen laufen auf Vercel, nicht im WASM-Build, und
+      # würden von cargo also nie angefasst. Ein Syntaxfehler fiele sonst erst
+      # in der Produktion auf. Der volle Selbsttest braucht eine Redis-Instanz
+      # und läuft deshalb nicht in CI (siehe api/README.md).
+      - name: Check shortener functions
+        run: |
+          for f in api/*.mjs; do node --check "$f"; done
+          node -e "import('./api/_lib.mjs').then(m => {
+            if (!m.codeForUrl || !m.isAllowedTarget) throw new Error('api/_lib.mjs exports missing');
+            if (m.codeForUrl('https://a') === m.codeForUrl('https://b')) throw new Error('codeForUrl collides');
+            if (!m.isAllowedTarget('https://www.declarino.ch/x')) throw new Error('declarino.ch must be allowed');
+            if (m.isAllowedTarget('https://example.com/x')) throw new Error('foreign hosts must be rejected');
+            console.log('shortener functions ok');
+          })"
+
       - name: Dioxus build
         run: dx build --release
