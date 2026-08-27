@@ -50,7 +50,8 @@ GET  /s/:code    -> 301 auf die hinterlegte Adresse
 | `api/_storage.mjs` | Speicherzugriff, Turso **oder** Upstash |
 | `api/shorten.mjs` | Kürzen (POST) |
 | `api/redirect.mjs` | Auflösen (301), erreichbar über den Rewrite in `vercel.json` |
-| `api/selftest.mjs` | End-to-End-Test gegen eine echte Redis-Instanz |
+| `api/selftest.mjs` | End-to-End-Test gegen eine echte Datenbank |
+| `api/backup.mjs` | Export, Import und Prüfung aller Kurz-Links |
 
 Antwortformat und Feldname `short_url` sind bewusst von spoo.me übernommen,
 damit die Rust-Seite (`src/services/url_shortener.rs`) denselben Parser nutzt.
@@ -133,6 +134,33 @@ TURSO_DATABASE_URL=http://localhost:8090 TURSO_AUTH_TOKEN=dummy \
 # Upstash: Wegwerf-Datenbank, gültig 3 Tage
 curl -X POST https://upstash.com/start-redis
 ```
+
+## Sicherung
+
+Kurz-Links sind dauerhafter Zustand: Einer auf einem gedruckten Etikett lässt
+sich nicht mehr ändern. Geht die Datenbank verloren, sind alle ausgedruckten
+Etiketten unbrauchbar — die lange URL trägt ihre Daten selbst und ist davon
+nicht betroffen, der Kurz-Link nicht.
+
+Der Bestand ist winzig (~1 KB je Eintrag), ein vollständiger Export kostet
+also fast nichts:
+
+```bash
+TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… node api/backup.mjs export > links.json
+node api/backup.mjs import links.json    # nach Verlust oder Anbieterwechsel
+node api/backup.mjs verify links.json    # prüft gegen die Live-Seite
+```
+
+`verify` fragt `declarino.ch/s/<code>` ab statt die Datenbank und belegt
+damit, was ein Empfänger tatsächlich erlebt. Exit-Code 1 bei Fehlern, also
+für Überwachung geeignet.
+
+**Anbieterwechsel** funktioniert damit ohne Linkverlust: exportieren, die
+Umgebungsvariablen umstellen, importieren. Die Codes bleiben gleich, weil sie
+aus der URL abgeleitet sind. Verifiziert für Turso → Upstash.
+
+Der Import wendet dieselbe Allowlist an wie der Endpunkt: eine manipulierte
+Sicherungsdatei kann keine fremden Ziele einschleusen.
 
 ## Deployment
 
