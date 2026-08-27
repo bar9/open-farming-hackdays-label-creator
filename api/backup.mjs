@@ -25,10 +25,31 @@ import { storageBackend, storeIfAbsent, lookup } from "./_storage.mjs";
 import { SHORT_BASE, isAllowedTarget } from "./_lib.mjs";
 
 const backend = storageBackend();
-if (!backend) {
+// `verify <datei>` prüft nur die öffentliche Seite und braucht deshalb keine
+// Zugangsdaten — gerade das macht es als Überwachung brauchbar, etwa aus CI
+// oder von einem Rechner ohne Datenbankzugang. Alle anderen Befehle brauchen
+// den Speicher.
+const command_ = process.argv[2];
+// Ohne (oder mit unbekanntem) Befehl zuerst die Hilfe zeigen, statt über
+// fehlende Zugangsdaten zu stolpern.
+if (!["export", "import", "verify"].includes(command_)) {
+  console.error(
+    "Sichern und Wiederherstellen der Kurz-Links.\n\n" +
+      "  node api/backup.mjs export > links.json\n" +
+      "  node api/backup.mjs import links.json\n" +
+      "  node api/backup.mjs verify [links.json]\n\n" +
+      "export/import brauchen TURSO_DATABASE_URL/TURSO_AUTH_TOKEN oder\n" +
+      "KV_REST_API_URL/KV_REST_API_TOKEN. `verify <datei.json>` prüft nur die\n" +
+      "öffentliche Seite und läuft ohne Zugangsdaten."
+  );
+  process.exit(2);
+}
+const needsStorage = !(command_ === "verify" && process.argv[3]);
+if (!backend && needsStorage) {
   console.error(
     "Kein Speicher konfiguriert. Setze TURSO_DATABASE_URL/TURSO_AUTH_TOKEN\n" +
-      "oder KV_REST_API_URL/KV_REST_API_TOKEN."
+      "oder KV_REST_API_URL/KV_REST_API_TOKEN.\n" +
+      "(`verify <datei.json>` läuft auch ohne Zugangsdaten.)"
   );
   process.exit(2);
 }
@@ -160,12 +181,4 @@ if (command === "export") {
   }
   console.error(`${ok} Links funktionieren, ${bad} fehlerhaft.`);
   process.exit(bad === 0 ? 0 : 1);
-} else {
-  console.error(
-    "Aufruf:\n" +
-      "  node api/backup.mjs export > links.json\n" +
-      "  node api/backup.mjs import links.json\n" +
-      "  node api/backup.mjs verify [links.json]"
-  );
-  process.exit(2);
 }

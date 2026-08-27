@@ -151,9 +151,10 @@ node api/backup.mjs import links.json    # nach Verlust oder Anbieterwechsel
 node api/backup.mjs verify links.json    # prüft gegen die Live-Seite
 ```
 
-`verify` fragt `declarino.ch/s/<code>` ab statt die Datenbank und belegt
-damit, was ein Empfänger tatsächlich erlebt. Exit-Code 1 bei Fehlern, also
-für Überwachung geeignet.
+`verify <datei>` fragt `declarino.ch/s/<code>` ab statt die Datenbank und
+belegt damit, was ein Empfänger tatsächlich erlebt. Es braucht deshalb keine
+Zugangsdaten und eignet sich zur Überwachung aus CI oder von einem beliebigen
+Rechner. Exit-Code 1 bei Fehlern.
 
 **Anbieterwechsel** funktioniert damit ohne Linkverlust: exportieren, die
 Umgebungsvariablen umstellen, importieren. Die Codes bleiben gleich, weil sie
