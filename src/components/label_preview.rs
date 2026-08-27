@@ -1,9 +1,11 @@
+use crate::components::icons::{
+    BioSuisseNoCross, BioSuisseRegular, UmstellungsknospeSatzImport, UmstellungsknospeSatzRegular,
+};
 use crate::components::{Amount, AmountType, Price};
-use crate::components::icons::{BioSuisseRegular, BioSuisseNoCross, UmstellungsknospeSatzRegular, UmstellungsknospeSatzImport};
 use crate::layout::DisclaimerContext;
+use crate::nl2br::Nl2Br;
 use crate::shared::VerdictsContext;
 use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeVerdict};
-use crate::nl2br::Nl2Br;
 use dioxus::prelude::*;
 use rust_i18n::t;
 
@@ -59,8 +61,7 @@ pub fn LabelPreview(
     producer_email: Signal<String>,
     producer_website: Signal<String>,
     producer_phone: Signal<String>,
-    #[props(default)]
-    certification_body: Option<Signal<String>>,
+    #[props(default)] certification_body: Option<Signal<String>>,
     amount_type: Signal<AmountType>,
     weight_unit: Signal<String>,
     volume_unit: Signal<String>,
@@ -79,7 +80,7 @@ pub fn LabelPreview(
     fn display_money_exact(cents: Option<usize>) -> String {
         match cents {
             None => String::new(),
-            Some(x) => format!("{:.2}", x as f64 / 100.0)
+            Some(x) => format!("{:.2}", x as f64 / 100.0),
         }
     }
 
@@ -154,7 +155,10 @@ pub fn LabelPreview(
         let accepted = disclaimer_accepted();
         if let Some(window) = web_sys::window() {
             if let Ok(Some(storage)) = window.local_storage() {
-                let _ = storage.set_item("disclaimer_accepted", if accepted { "true" } else { "false" });
+                let _ = storage.set_item(
+                    "disclaimer_accepted",
+                    if accepted { "true" } else { "false" },
+                );
             }
         }
     });

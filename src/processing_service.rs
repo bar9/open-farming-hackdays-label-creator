@@ -62,7 +62,10 @@ pub fn get_biosuisse_category_from_blv(blv_category: &str) -> Option<(String, St
                 let blv_name_en = record.get(2).unwrap_or("");
                 let blv_name_fr = record.get(3).unwrap_or("");
                 for search_cat in &search_categories {
-                    if *search_cat == blv_name_de || *search_cat == blv_name_en || *search_cat == blv_name_fr {
+                    if *search_cat == blv_name_de
+                        || *search_cat == blv_name_en
+                        || *search_cat == blv_name_fr
+                    {
                         let hauptgruppe = record.get(6).unwrap_or("").to_string();
                         let untergruppe = record.get(7).unwrap_or("").to_string();
                         if !hauptgruppe.is_empty() {
@@ -138,6 +141,9 @@ mod tests {
     fn biosuisse_mapping_sea_fish_no_longer_maps_to_oils() {
         // Row 6671 "Meeresfische" was incorrectly mapped to "Pflanzliche Öle / Mayonnaise"
         let result = get_biosuisse_category_from_blv("Meeresfische");
-        assert!(result.is_none(), "Sea fish should not map to any BioSuisse category (data error fixed)");
+        assert!(
+            result.is_none(),
+            "Sea fish should not map to any BioSuisse category (data error fixed)"
+        );
     }
 }

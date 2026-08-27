@@ -1,7 +1,7 @@
 use crate::api::{search_food, FoodItem};
 use crate::category_service::{
-    is_dairy_category, is_egg_category, is_fish_category, is_honey_category,
-    is_meat_category, is_plant_category
+    is_dairy_category, is_egg_category, is_fish_category, is_honey_category, is_meat_category,
+    is_plant_category,
 };
 use crate::model::{
     food_db, ingredient_aliases, lookup_agricultural, lookup_allergen, lookup_priority,
@@ -12,31 +12,31 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnifiedIngredient {
     pub name: String,
-    pub canonical: Option<String>,           // Set when `name` is an alias term; the real food_db entry
-    pub priority: i32,                       // Curated ranking priority (0 = uncurated)
-    pub category: Option<String>,            // From BLV API
+    pub canonical: Option<String>, // Set when `name` is an alias term; the real food_db entry
+    pub priority: i32,             // Curated ranking priority (0 = uncurated)
+    pub category: Option<String>,  // From BLV API
     pub origin: Option<crate::model::Country>, // Country of origin for flag display
 
     // Binary flags with visual indicators
-    pub is_allergen: Option<bool>,          // From local DB
-    pub is_agricultural: Option<bool>,       // From local DB
-    pub is_meat: Option<bool>,              // Derived from category
-    pub is_fish: Option<bool>,              // Derived from category
-    pub is_dairy: Option<bool>,             // Derived from category
-    pub is_egg: Option<bool>,               // Derived from category
-    pub is_honey: Option<bool>,             // Derived from category
-    pub is_plant: Option<bool>,             // Derived from category
-    pub is_bio: Option<bool>,               // From user input/saved
+    pub is_allergen: Option<bool>,     // From local DB
+    pub is_agricultural: Option<bool>, // From local DB
+    pub is_meat: Option<bool>,         // Derived from category
+    pub is_fish: Option<bool>,         // Derived from category
+    pub is_dairy: Option<bool>,        // Derived from category
+    pub is_egg: Option<bool>,          // Derived from category
+    pub is_honey: Option<bool>,        // Derived from category
+    pub is_plant: Option<bool>,        // Derived from category
+    pub is_bio: Option<bool>,          // From user input/saved
 
-    pub source: IngredientSource,           // Track data origin
+    pub source: IngredientSource, // Track data origin
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum IngredientSource {
-    Local,           // From food_db.csv only
-    BLV,            // From BLV API only
-    Merged,         // Combined from both sources
+    Local,  // From food_db.csv only
+    BLV,    // From BLV API only
+    Merged, // Combined from both sources
 }
 
 /// Category flags derived from BLV category
@@ -196,7 +196,9 @@ pub async fn search_unified(query: &str, lang: &str) -> Result<Vec<UnifiedIngred
             continue;
         }
         let blv_match = find_best_blv_match(&canonical, &blv_results).map(|(_, item)| item);
-        unified.push(UnifiedIngredient::from_alias(alias, canonical, priority, blv_match));
+        unified.push(UnifiedIngredient::from_alias(
+            alias, canonical, priority, blv_match,
+        ));
     }
 
     // Try to match local ingredients with BLV results
@@ -275,7 +277,10 @@ fn relevance(name: &str, query: &str) -> f32 {
 
     let name_chars: Vec<char> = name_lower.chars().collect();
     let query_chars: Vec<char> = query_lower.chars().collect();
-    let common = name_chars.iter().filter(|c| query_chars.contains(c)).count();
+    let common = name_chars
+        .iter()
+        .filter(|c| query_chars.contains(c))
+        .count();
     let max_len = name_chars.len().max(query_chars.len());
     if max_len > 0 {
         common as f32 / max_len as f32 * 0.4
@@ -317,10 +322,16 @@ fn name_contains_word(name: &str, word: &str) -> bool {
     }
     name.match_indices(word).any(|(start, _)| {
         let before_ok = start == 0
-            || !name[..start].chars().next_back().is_some_and(|c| c.is_alphanumeric());
+            || !name[..start]
+                .chars()
+                .next_back()
+                .is_some_and(|c| c.is_alphanumeric());
         let end = start + word.len();
         let after_ok = end == name.len()
-            || !name[end..].chars().next().is_some_and(|c| c.is_alphanumeric());
+            || !name[end..]
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_alphanumeric());
         before_ok && after_ok
     })
 }
@@ -445,7 +456,10 @@ mod tests {
     fn longer_name_still_matches_loosely() {
         let results = vec![food("Weizenmehl, hell", "Getreideprodukte")];
         assert_eq!(
-            find_best_blv_match("Weizenmehl", &results).unwrap().1.food_name,
+            find_best_blv_match("Weizenmehl", &results)
+                .unwrap()
+                .1
+                .food_name,
             "Weizenmehl, hell"
         );
     }
@@ -464,10 +478,7 @@ mod tests {
             );
             // What the search loop builds for a non-agricultural local entry.
             let unified = UnifiedIngredient::from_local(name.to_string());
-            assert_eq!(
-                unified.category, None,
-                "{name} must have no category hint"
-            );
+            assert_eq!(unified.category, None, "{name} must have no category hint");
             assert_eq!(unified.is_agricultural, Some(false));
         }
     }
@@ -492,7 +503,13 @@ mod tests {
         let order: Vec<&str> = unified.iter().map(|u| u.name.as_str()).collect();
         assert_eq!(
             order,
-            vec!["Mehl", "Weizenmehl", "Buchweizenmehl", "Dinkelmehl", "Roggenmehl"]
+            vec![
+                "Mehl",
+                "Weizenmehl",
+                "Buchweizenmehl",
+                "Dinkelmehl",
+                "Roggenmehl"
+            ]
         );
     }
 }

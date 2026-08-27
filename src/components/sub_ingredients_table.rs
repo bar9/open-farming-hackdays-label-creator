@@ -1,8 +1,8 @@
 use crate::components::*;
 use crate::core::{AmountUnit, Ingredient};
-use crate::model::{declaration_name, lookup_allergen, lookup_agricultural};
+use crate::model::{declaration_name, lookup_agricultural, lookup_allergen};
 use crate::persistence::get_saved_ingredients_list;
-use crate::services::{UnifiedIngredient, IngredientSource};
+use crate::services::{IngredientSource, UnifiedIngredient};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
@@ -99,11 +99,14 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
 
                 // Check if this is a saved composite ingredient by checking saved ingredients
                 let saved_ingredients = get_saved_ingredients_list();
-                let is_saved_composite = saved_ingredients.iter().any(|i| i.name == ingredient_name);
+                let is_saved_composite =
+                    saved_ingredients.iter().any(|i| i.name == ingredient_name);
 
                 if is_saved_composite {
                     // If it's a saved composite ingredient, expand its children
-                    if let Some(saved) = saved_ingredients.iter().find(|i| i.name == ingredient_name) {
+                    if let Some(saved) =
+                        saved_ingredients.iter().find(|i| i.name == ingredient_name)
+                    {
                         if let Some(saved_children) = &saved.children {
                             // Add all children from the saved ingredient
                             if let Some(children) = &mut ingredient.children {
@@ -120,7 +123,9 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                     let canonical = unified_ingredient.canonical.clone();
                     let lookup_name = canonical.clone().unwrap_or_else(|| ingredient_name.clone());
                     // Extract allergen status from unified ingredient, falling back to lookup
-                    let allergen_status = unified_ingredient.is_allergen.unwrap_or_else(|| lookup_allergen(&lookup_name));
+                    let allergen_status = unified_ingredient
+                        .is_allergen
+                        .unwrap_or_else(|| lookup_allergen(&lookup_name));
 
                     let new_child = Ingredient {
                         // Gluten-containing cereals are declared by species
@@ -130,7 +135,11 @@ pub fn SubIngredientsTable(props: SubIngredientsTableProps) -> Element {
                         is_agricultural: lookup_agricultural(&lookup_name),
                         canonical,
                         // In percentage mode new children are percentage shares (start at 0%).
-                        unit: if props.percentage_mode { AmountUnit::Percent } else { AmountUnit::default() },
+                        unit: if props.percentage_mode {
+                            AmountUnit::Percent
+                        } else {
+                            AmountUnit::default()
+                        },
                         ..Default::default()
                     };
 

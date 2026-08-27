@@ -32,11 +32,9 @@ pub fn DateInput(mut props: DateInputProps) -> Element {
         // Only update if we have a valid date string
         if let Ok(naive_date) = NaiveDate::parse_from_str(datestr, "%Y-%m-%d") {
             if let Some(datetime_utc) = naive_date.and_hms_opt(0, 0, 0) {
-                props.date_value.set(
-                    datetime_utc
-                        .format("%d.%m.%Y")
-                        .to_string(),
-                );
+                props
+                    .date_value
+                    .set(datetime_utc.format("%d.%m.%Y").to_string());
             }
         }
         // If parsing fails, keep the previous value

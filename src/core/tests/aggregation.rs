@@ -10,8 +10,14 @@ use super::*;
 fn topdown_weight_with_bottomup_quality_and_origin() {
     let composite = IngredientBuilder::new("Konfitüre", 250.0)
         .children(vec![
-            IngredientBuilder::new("Erdbeeren", 0.0).bio().origin(Country::CH).build(),
-            IngredientBuilder::new("Zucker", 0.0).bio().origin(Country::CH).build(),
+            IngredientBuilder::new("Erdbeeren", 0.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Zucker", 0.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
         ])
         .build();
 
@@ -31,8 +37,13 @@ fn topdown_weight_with_bottomup_quality_and_origin() {
 fn mixed_quality_composite_is_not_knospe_compliant() {
     let composite = IngredientBuilder::new("Mischung", 100.0)
         .children(vec![
-            IngredientBuilder::new("Apfel", 0.0).bio().origin(Country::CH).build(),
-            IngredientBuilder::new("Zusatz", 0.0).origin(Country::CH).build(), // not bio
+            IngredientBuilder::new("Apfel", 0.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Zusatz", 0.0)
+                .origin(Country::CH)
+                .build(), // not bio
         ])
         .build();
 
@@ -47,14 +58,29 @@ fn mixed_quality_composite_is_not_knospe_compliant() {
 fn non_agricultural_child_origin_not_aggregated() {
     let composite = IngredientBuilder::new("Mischung", 100.0)
         .children(vec![
-            IngredientBuilder::new("Kräuter", 0.0).origin(Country::FR).build(), // agricultural (default)
-            IngredientBuilder::new("Salz", 0.0).agricultural(false).origin(Country::CH).build(), // non-agri
+            IngredientBuilder::new("Kräuter", 0.0)
+                .origin(Country::FR)
+                .build(), // agricultural (default)
+            IngredientBuilder::new("Salz", 0.0)
+                .agricultural(false)
+                .origin(Country::CH)
+                .build(), // non-agri
         ])
         .build();
 
-    let origins = composite.computed_origins().expect("agricultural child still provides an origin");
-    assert!(origins.contains(&Country::FR), "agricultural child origin should aggregate. Got: {:?}", origins);
-    assert!(!origins.contains(&Country::CH), "non-agricultural child origin must NOT aggregate. Got: {:?}", origins);
+    let origins = composite
+        .computed_origins()
+        .expect("agricultural child still provides an origin");
+    assert!(
+        origins.contains(&Country::FR),
+        "agricultural child origin should aggregate. Got: {:?}",
+        origins
+    );
+    assert!(
+        !origins.contains(&Country::CH),
+        "non-agricultural child origin must NOT aggregate. Got: {:?}",
+        origins
+    );
 }
 
 /// Quality "parent claim overrides": a composite declared Knospe as a whole (e.g. a
@@ -69,7 +95,10 @@ fn parent_quality_claim_overrides_children() {
             IngredientBuilder::new("Zucker", 0.0).build(), // no own quality claim
         ])
         .build();
-    assert!(claimed.is_knospe_compliant(), "parent Knospe claim should override a non-bio child");
+    assert!(
+        claimed.is_knospe_compliant(),
+        "parent Knospe claim should override a non-bio child"
+    );
     assert_eq!(claimed.computed_bio_status(), Some(true));
 
     let derived = IngredientBuilder::new("Mischung", 100.0)
@@ -78,7 +107,10 @@ fn parent_quality_claim_overrides_children() {
             IngredientBuilder::new("Zucker", 0.0).build(),
         ])
         .build();
-    assert!(!derived.is_knospe_compliant(), "no parent claim → derive bottom-up (not all bio)");
+    assert!(
+        !derived.is_knospe_compliant(),
+        "no parent claim → derive bottom-up (not all bio)"
+    );
 }
 
 /// Origin is defined on a single level: an explicit parent origin wins over
@@ -87,9 +119,9 @@ fn parent_quality_claim_overrides_children() {
 fn parent_origin_takes_precedence_over_children() {
     let composite = IngredientBuilder::new("Saft", 100.0)
         .origin(Country::EU)
-        .children(vec![
-            IngredientBuilder::new("Apfel", 0.0).origin(Country::CH).build(),
-        ])
+        .children(vec![IngredientBuilder::new("Apfel", 0.0)
+            .origin(Country::CH)
+            .build()])
         .build();
 
     assert_eq!(composite.computed_origins(), Some(vec![Country::EU]));
@@ -116,8 +148,14 @@ fn override_children_uses_own_quality() {
 fn weighted_children_still_sum_and_descend() {
     let composite = IngredientBuilder::new("Vinaigrette", 0.0)
         .children(vec![
-            IngredientBuilder::new("Öl", 70.0).bio().origin(Country::CH).build(),
-            IngredientBuilder::new("Essig", 30.0).bio().origin(Country::CH).build(),
+            IngredientBuilder::new("Öl", 70.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Essig", 30.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
         ])
         .build();
 
@@ -131,15 +169,24 @@ fn weighted_children_still_sum_and_descend() {
 fn topdown_composite_counts_toward_percentages() {
     let composite = IngredientBuilder::new("Konfitüre", 200.0)
         .children(vec![
-            IngredientBuilder::new("Erdbeeren", 0.0).bio().origin(Country::CH).build(),
-            IngredientBuilder::new("Zucker", 0.0).bio().origin(Country::CH).build(),
+            IngredientBuilder::new("Erdbeeren", 0.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Zucker", 0.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
         ])
         .build();
     let ingredients = vec![composite];
 
     assert_eq!(calculate_swiss_agricultural_percentage(&ingredients), 100.0);
     assert_eq!(calculate_knospe_certified_percentage(&ingredients), 100.0);
-    assert_eq!(calculate_bio_swiss_agricultural_percentage(&ingredients), 100.0);
+    assert_eq!(
+        calculate_bio_swiss_agricultural_percentage(&ingredients),
+        100.0
+    );
 }
 
 /// Origin defined on both a composite and one of its children (same branch)
@@ -151,9 +198,9 @@ fn origin_single_level_branch_conflict() {
     // Conflict: parent AND child both declare an origin.
     let conflict = IngredientBuilder::new("Saft", 100.0)
         .origin(Country::CH)
-        .children(vec![
-            IngredientBuilder::new("Apfel", 0.0).origin(Country::CH).build(),
-        ])
+        .children(vec![IngredientBuilder::new("Apfel", 0.0)
+            .origin(Country::CH)
+            .build()])
         .build();
     let mut msgs = HashMap::new();
     validate_origin_single_level(&[conflict], &mut msgs);
@@ -171,8 +218,12 @@ fn origin_single_level_branch_conflict() {
     // Single level (children only): no conflict.
     let children_only = IngredientBuilder::new("Saft", 0.0)
         .children(vec![
-            IngredientBuilder::new("Apfel", 60.0).origin(Country::CH).build(),
-            IngredientBuilder::new("Birne", 40.0).origin(Country::Import).build(),
+            IngredientBuilder::new("Apfel", 60.0)
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Birne", 40.0)
+                .origin(Country::Import)
+                .build(),
         ])
         .build();
     let mut msgs = HashMap::new();
@@ -191,15 +242,24 @@ fn lebensmittelrecht_composite_renders_in_label() {
             IngredientBuilder::new("Salzbouillon", 9.0)
                 .origins(vec![Country::CH, Country::DE])
                 .children(vec![
-                    IngredientBuilder::new("Salz", 5.0).agricultural(false).origin(Country::CH).build(),
-                    IngredientBuilder::new("Pfeffer", 4.0).origin(Country::DE).build(),
+                    IngredientBuilder::new("Salz", 5.0)
+                        .agricultural(false)
+                        .origin(Country::CH)
+                        .build(),
+                    IngredientBuilder::new("Pfeffer", 4.0)
+                        .origin(Country::DE)
+                        .build(),
                 ])
                 .build(),
         )
         .total(100.0)
         .build();
     let output = calculator.execute(input);
-    assert!(output.label.contains("Salzbouillon"), "label missing composite name:\n{}", output.label);
+    assert!(
+        output.label.contains("Salzbouillon"),
+        "label missing composite name:\n{}",
+        output.label
+    );
 }
 
 /// Origin presence validations must respect aggregated (bottom-up) origin: a
@@ -211,8 +271,12 @@ fn over_50_origin_satisfied_by_bottom_up_composite() {
 
     let composite = IngredientBuilder::new("Saft", 80.0)
         .children(vec![
-            IngredientBuilder::new("Apfel", 50.0).origin(Country::CH).build(),
-            IngredientBuilder::new("Birne", 30.0).origin(Country::CH).build(),
+            IngredientBuilder::new("Apfel", 50.0)
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Birne", 30.0)
+                .origin(Country::CH)
+                .build(),
         ])
         .build();
     let mut msgs = HashMap::new();
@@ -244,7 +308,9 @@ fn import_origin_no_flag_and_roundtrips() {
     assert_eq!(Country::Import.flag_emoji(), "");
     assert_eq!(Country::Import.country_code(), "Import");
 
-    let ing = IngredientBuilder::new("Rohrzucker", 50.0).origin(Country::Import).build();
+    let ing = IngredientBuilder::new("Rohrzucker", 50.0)
+        .origin(Country::Import)
+        .build();
     let encoded = qs_to_string(&ing).unwrap();
     let decoded: Ingredient = qs_from_str(&encoded).unwrap();
     assert_eq!(decoded.origins, Some(vec![Country::Import]));

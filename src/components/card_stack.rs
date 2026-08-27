@@ -98,7 +98,13 @@ fn StackCard(props: StackCardProps) -> Element {
     let ingredient_name = {
         let root = props.ingredients.read();
         ingredient_path::get_at_path(&root, &card_path)
-            .map(|i| if i.name.is_empty() { t!("label.zutatDetails").to_string() } else { i.name.clone() })
+            .map(|i| {
+                if i.name.is_empty() {
+                    t!("label.zutatDetails").to_string()
+                } else {
+                    i.name.clone()
+                }
+            })
             .unwrap_or_default()
     };
 
@@ -360,13 +366,15 @@ pub fn GenesisModal(props: GenesisModalProps) -> Element {
     let genesis_save = {
         let mut ingredients = props.ingredients;
         move |new_ingredient: Ingredient, close: bool| {
-            if new_ingredient.children.is_none() || new_ingredient.children.as_ref().unwrap().is_empty() {
+            if new_ingredient.children.is_none()
+                || new_ingredient.children.as_ref().unwrap().is_empty()
+            {
                 let mut existing = ingredients.write();
                 if let Some(existing_index) = existing.iter().position(|ing| {
                     ing.name == new_ingredient.name
-                    && ing.is_allergen == new_ingredient.is_allergen
-                    && ing.is_namensgebend == new_ingredient.is_namensgebend
-                    && (ing.children.is_none() || ing.children.as_ref().unwrap().is_empty())
+                        && ing.is_allergen == new_ingredient.is_allergen
+                        && ing.is_namensgebend == new_ingredient.is_namensgebend
+                        && (ing.children.is_none() || ing.children.as_ref().unwrap().is_empty())
                 }) {
                     existing[existing_index].amount += new_ingredient.amount;
                     if new_ingredient.category.is_some() {

@@ -157,7 +157,10 @@ async fn db_non_agricultural_ingredient_locks_the_quality() {
     let c = connect().await;
     goto_config(&c, Config::Knospe).await;
 
-    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    assert!(
+        open_add_ingredient(&c).await,
+        "could not open the ingredient dialog"
+    );
     tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
     // Type a DB ingredient that is flagged non-agricultural.
@@ -232,7 +235,10 @@ async fn custom_ingredient_keeps_the_quality_editable() {
     let c = connect().await;
     goto_config(&c, Config::Knospe).await;
 
-    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    assert!(
+        open_add_ingredient(&c).await,
+        "could not open the ingredient dialog"
+    );
     tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
     if let Some(input) = first_accent_input(&c).await {
@@ -256,7 +262,10 @@ async fn custom_ingredient_keeps_the_quality_editable() {
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
-    assert!(any_enabled, "a free-text ingredient must keep its quality editable");
+    assert!(
+        any_enabled,
+        "a free-text ingredient must keep its quality editable"
+    );
 
     let _ = c.close().await;
 }
@@ -270,7 +279,10 @@ async fn biov_quality_options_keep_their_order_on_every_selection() {
     let c = connect().await;
     goto_config(&c, Config::Bio).await;
 
-    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    assert!(
+        open_add_ingredient(&c).await,
+        "could not open the ingredient dialog"
+    );
     tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
     if let Some(input) = first_accent_input(&c).await {
@@ -404,7 +416,10 @@ async fn save_and_next_clears_the_umstellbetrieb_flag() {
     let c = connect().await;
     goto_config(&c, Config::Bio).await;
 
-    assert!(open_add_ingredient(&c).await, "could not open the ingredient dialog");
+    assert!(
+        open_add_ingredient(&c).await,
+        "could not open the ingredient dialog"
+    );
     tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
     // First ingredient: Bio + «Aus Umstellbetrieb».
@@ -415,7 +430,10 @@ async fn save_and_next_clears_the_umstellbetrieb_flag() {
         let _ = input.send_keys("\u{E007}").await;
     }
     tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-    if let Ok(num) = c.find(Locator::Css("dialog[open] input[type='number']")).await {
+    if let Ok(num) = c
+        .find(Locator::Css("dialog[open] input[type='number']"))
+        .await
+    {
         let _ = num.click().await;
         let _ = num.send_keys("500").await;
     }
@@ -455,7 +473,10 @@ async fn save_and_next_clears_the_umstellbetrieb_flag() {
         .ok()
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
-    assert!(was_checked, "setup failed: «Aus Umstellbetrieb» was never ticked");
+    assert!(
+        was_checked,
+        "setup failed: «Aus Umstellbetrieb» was never ticked"
+    );
 
     assert!(
         click_button_by_text(&c, "Speichern und nächste Zutat").await,

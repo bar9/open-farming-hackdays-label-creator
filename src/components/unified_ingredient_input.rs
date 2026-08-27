@@ -69,7 +69,10 @@ pub fn UnifiedIngredientInput(mut props: UnifiedIngredientInputProps) -> Element
         // ingredient, so recall works even when food_db/BLV returns nothing or errors.
         {
             let q = value.to_lowercase();
-            if get_saved_ingredients_list().iter().any(|s| s.name.to_lowercase().contains(&q)) {
+            if get_saved_ingredients_list()
+                .iter()
+                .any(|s| s.name.to_lowercase().contains(&q))
+            {
                 is_dropdown_open.set(true);
             }
         }

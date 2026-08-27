@@ -32,18 +32,22 @@ fn exception_justification_note_never_printed_on_label() {
     ingredient.erlaubte_ausnahme_bio_details = Some("INTERNE-NOTIZ-BIO-XYZ".to_string());
     ingredient.erlaubte_ausnahme_knospe_details = Some("INTERNE-NOTIZ-KNOSPE-ABC".to_string());
 
-    let output = calculator.execute(
-        InputBuilder::new().ingredient(ingredient).build(),
-    );
+    let output = calculator.execute(InputBuilder::new().ingredient(ingredient).build());
 
-    assert!(output.label.contains("Zitronensäure"), "ingredient should appear. Label: {}", output.label);
+    assert!(
+        output.label.contains("Zitronensäure"),
+        "ingredient should appear. Label: {}",
+        output.label
+    );
     assert!(
         !output.label.contains("INTERNE-NOTIZ-BIO-XYZ"),
-        "bio exception justification must not be printed. Label: {}", output.label
+        "bio exception justification must not be printed. Label: {}",
+        output.label
     );
     assert!(
         !output.label.contains("INTERNE-NOTIZ-KNOSPE-ABC"),
-        "knospe exception justification must not be printed. Label: {}", output.label
+        "knospe exception justification must not be printed. Label: {}",
+        output.label
     );
 }
 
@@ -75,7 +79,11 @@ fn ingredients_ordered_by_weight_on_label() {
 fn allergenes_printed_bold_on_label() {
     let calculator = setup_simple_calculator();
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new("Weizenmehl", 300.0).allergen().build())
+        .ingredient(
+            IngredientBuilder::new("Weizenmehl", 300.0)
+                .allergen()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let label = output.label;
@@ -100,7 +108,11 @@ fn html_in_ingredient_name_is_escaped() {
 fn html_in_allergen_name_is_escaped() {
     let calculator = setup_simple_calculator();
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new("<img src=x>", 500.0).allergen().build())
+        .ingredient(
+            IngredientBuilder::new("<img src=x>", 500.0)
+                .allergen()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let label = output.label;
@@ -128,8 +140,16 @@ fn scaled_recipe_invariant_on_label() {
 fn test_migrate_sub_components_to_children() {
     let mut ingredient = IngredientBuilder::new("Bouillonpaste", 9.0)
         .sub_components(vec![
-            SubIngredient { name: "Salz".to_string(), is_allergen: false, origin: Some(Country::CH) },
-            SubIngredient { name: "Sojasauce".to_string(), is_allergen: true, origin: None },
+            SubIngredient {
+                name: "Salz".to_string(),
+                is_allergen: false,
+                origin: Some(Country::CH),
+            },
+            SubIngredient {
+                name: "Sojasauce".to_string(),
+                is_allergen: true,
+                origin: None,
+            },
         ])
         .build();
 
@@ -154,12 +174,12 @@ fn test_migrate_sub_components_to_children() {
 #[test]
 fn test_migrate_does_not_overwrite_existing_children() {
     let mut ingredient = IngredientBuilder::new("Test", 10.0)
-        .sub_components(vec![
-            SubIngredient { name: "Old".to_string(), is_allergen: false, origin: None },
-        ])
-        .children(vec![
-            IngredientBuilder::new("Existing", 0.0).build(),
-        ])
+        .sub_components(vec![SubIngredient {
+            name: "Old".to_string(),
+            is_allergen: false,
+            origin: None,
+        }])
+        .children(vec![IngredientBuilder::new("Existing", 0.0).build()])
         .build();
 
     ingredient.migrate_sub_components();
@@ -174,8 +194,13 @@ fn test_migrate_does_not_overwrite_existing_children() {
 fn test_recursive_composites_two_levels() {
     let ingredient = IngredientBuilder::new("Wurst", 100.0)
         .children(vec![
-            IngredientBuilder::new("Milch", 0.0).allergen().origin(Country::CH).build(),
-            IngredientBuilder::new("Erdbeeren", 0.0).origin(Country::DE).build(),
+            IngredientBuilder::new("Milch", 0.0)
+                .allergen()
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Erdbeeren", 0.0)
+                .origin(Country::DE)
+                .build(),
         ])
         .build();
 
@@ -189,8 +214,13 @@ fn test_recursive_composites_three_levels() {
         .children(vec![
             IngredientBuilder::new("Mehl", 0.0)
                 .children(vec![
-                    IngredientBuilder::new("Weizen", 0.0).allergen().origin(Country::DE).build(),
-                    IngredientBuilder::new("Roggen", 0.0).origin(Country::AT).build(),
+                    IngredientBuilder::new("Weizen", 0.0)
+                        .allergen()
+                        .origin(Country::DE)
+                        .build(),
+                    IngredientBuilder::new("Roggen", 0.0)
+                        .origin(Country::AT)
+                        .build(),
                 ])
                 .build(),
             IngredientBuilder::new("Wasser", 0.0).build(),
@@ -198,7 +228,10 @@ fn test_recursive_composites_three_levels() {
         .build();
 
     let composites = ingredient.composites();
-    assert_eq!(composites, " (Mehl (<b>Weizen</b> (DE), Roggen (AT)), Wasser)");
+    assert_eq!(
+        composites,
+        " (Mehl (<b>Weizen</b> (DE), Roggen (AT)), Wasser)"
+    );
 }
 
 #[test]
@@ -236,9 +269,7 @@ fn test_scale_recursive() {
     let mut ingredient = IngredientBuilder::new("Parent", 100.0)
         .children(vec![
             IngredientBuilder::new("Child1", 50.0)
-                .children(vec![
-                    IngredientBuilder::new("Grandchild", 25.0).build(),
-                ])
+                .children(vec![IngredientBuilder::new("Grandchild", 25.0).build()])
                 .build(),
             IngredientBuilder::new("Child2", 30.0).build(),
         ])
@@ -311,9 +342,15 @@ fn test_computed_bio_status_mixed() {
 fn test_computed_origins_union() {
     let parent = IngredientBuilder::new("Mix", 0.0)
         .children(vec![
-            IngredientBuilder::new("A", 50.0).origin(Country::CH).build(),
-            IngredientBuilder::new("B", 30.0).origin(Country::DE).build(),
-            IngredientBuilder::new("C", 20.0).origin(Country::CH).build(), // duplicate CH
+            IngredientBuilder::new("A", 50.0)
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("B", 30.0)
+                .origin(Country::DE)
+                .build(),
+            IngredientBuilder::new("C", 20.0)
+                .origin(Country::CH)
+                .build(), // duplicate CH
         ])
         .build();
     let origins = parent.computed_origins().unwrap();
@@ -376,14 +413,16 @@ struct QsWrapper {
 #[test]
 fn test_serde_qs_roundtrip_with_children() {
     let wrapper = QsWrapper {
-        ingredients: vec![
-            IngredientBuilder::new("Bouillon", 9.0)
-                .children(vec![
-                    IngredientBuilder::new("Salz", 5.0).origin(Country::CH).build(),
-                    IngredientBuilder::new("Pfeffer", 4.0).origin(Country::DE).build(),
-                ])
-                .build(),
-        ],
+        ingredients: vec![IngredientBuilder::new("Bouillon", 9.0)
+            .children(vec![
+                IngredientBuilder::new("Salz", 5.0)
+                    .origin(Country::CH)
+                    .build(),
+                IngredientBuilder::new("Pfeffer", 4.0)
+                    .origin(Country::DE)
+                    .build(),
+            ])
+            .build()],
     };
 
     let serialized = qs_to_string(&wrapper).expect("serialize");
@@ -402,19 +441,17 @@ fn test_serde_qs_roundtrip_with_children() {
 #[test]
 fn test_serde_qs_roundtrip_three_levels() {
     let wrapper = QsWrapper {
-        ingredients: vec![
-            IngredientBuilder::new("Teig", 100.0)
-                .children(vec![
-                    IngredientBuilder::new("Mehl", 60.0)
-                        .children(vec![
-                            IngredientBuilder::new("Weizen", 40.0).allergen().build(),
-                            IngredientBuilder::new("Roggen", 20.0).build(),
-                        ])
-                        .build(),
-                    IngredientBuilder::new("Wasser", 40.0).build(),
-                ])
-                .build(),
-        ],
+        ingredients: vec![IngredientBuilder::new("Teig", 100.0)
+            .children(vec![
+                IngredientBuilder::new("Mehl", 60.0)
+                    .children(vec![
+                        IngredientBuilder::new("Weizen", 40.0).allergen().build(),
+                        IngredientBuilder::new("Roggen", 20.0).build(),
+                    ])
+                    .build(),
+                IngredientBuilder::new("Wasser", 40.0).build(),
+            ])
+            .build()],
     };
 
     let serialized = qs_to_string(&wrapper).expect("serialize");
@@ -435,8 +472,16 @@ fn test_v1_migration_roundtrip() {
     // Create v1-style ingredient with sub_components
     let mut ingredient = IngredientBuilder::new("Bouillonpaste", 9.0)
         .sub_components(vec![
-            SubIngredient { name: "Salz".to_string(), is_allergen: false, origin: Some(Country::CH) },
-            SubIngredient { name: "Sojasauce".to_string(), is_allergen: true, origin: None },
+            SubIngredient {
+                name: "Salz".to_string(),
+                is_allergen: false,
+                origin: Some(Country::CH),
+            },
+            SubIngredient {
+                name: "Sojasauce".to_string(),
+                is_allergen: true,
+                origin: None,
+            },
         ])
         .build();
 
@@ -446,7 +491,9 @@ fn test_v1_migration_roundtrip() {
     assert!(ingredient.children.is_some());
 
     // Serialize as v2 and deserialize back
-    let wrapper = QsWrapper { ingredients: vec![ingredient] };
+    let wrapper = QsWrapper {
+        ingredients: vec![ingredient],
+    };
     let serialized = qs_to_string(&wrapper).expect("serialize");
     let deserialized: QsWrapper = qs_from_str(&serialized).expect("deserialize");
 
@@ -465,12 +512,20 @@ fn test_url_length_deep_nesting() {
     // Realistic 3-level recipe: Joghurt salad dressing
     let wrapper = QsWrapper {
         ingredients: vec![
-            IngredientBuilder::new("Joghurt nature", 283.5).origin(Country::CH).build(),
-            IngredientBuilder::new("Rapsöl", 50.0).origin(Country::CH).build(),
-            IngredientBuilder::new("Wasser", 40.0).agricultural(false).build(),
+            IngredientBuilder::new("Joghurt nature", 283.5)
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Rapsöl", 50.0)
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Wasser", 40.0)
+                .agricultural(false)
+                .build(),
             IngredientBuilder::new("Bouillonpaste", 9.0)
                 .children(vec![
-                    IngredientBuilder::new("Salz", 0.0).origin(Country::CH).build(),
+                    IngredientBuilder::new("Salz", 0.0)
+                        .origin(Country::CH)
+                        .build(),
                     IngredientBuilder::new("Sojasauce", 0.0).allergen().build(),
                     IngredientBuilder::new("Maltodextrin", 0.0).build(),
                     IngredientBuilder::new("Karotte", 0.0).build(),
@@ -478,7 +533,9 @@ fn test_url_length_deep_nesting() {
                 ])
                 .build(),
             IngredientBuilder::new("Gewürze", 9.5).build(),
-            IngredientBuilder::new("Salz", 8.0).agricultural(false).build(),
+            IngredientBuilder::new("Salz", 8.0)
+                .agricultural(false)
+                .build(),
         ],
     };
 
@@ -508,8 +565,14 @@ fn test_recursive_composites_with_processing_steps() {
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.label.contains("geröstet"), "Processing steps should appear in composite children");
-    assert!(output.label.contains("gemahlen"), "All processing steps should be rendered");
+    assert!(
+        output.label.contains("geröstet"),
+        "Processing steps should appear in composite children"
+    );
+    assert!(
+        output.label.contains("gemahlen"),
+        "All processing steps should be rendered"
+    );
 }
 
 #[test]
@@ -536,8 +599,14 @@ fn test_recursive_composites_nested_processing_steps() {
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.label.contains("geröstet"), "Nested (grandchild) processing steps should be rendered");
-    assert!(output.label.contains("fein gemahlen"), "Direct child processing steps should be rendered");
+    assert!(
+        output.label.contains("geröstet"),
+        "Nested (grandchild) processing steps should be rendered"
+    );
+    assert!(
+        output.label.contains("fein gemahlen"),
+        "Direct child processing steps should be rendered"
+    );
 }
 
 #[test]
@@ -551,14 +620,24 @@ fn test_recursive_composites_four_levels() {
                         .children(vec![
                             IngredientBuilder::new("Schokolade", 200.0)
                                 .children(vec![
-                                    IngredientBuilder::new("Kakao", 120.0).origin(Country::EU).build(),
-                                    IngredientBuilder::new("Zucker", 80.0).origin(Country::CH).build(),
+                                    IngredientBuilder::new("Kakao", 120.0)
+                                        .origin(Country::EU)
+                                        .build(),
+                                    IngredientBuilder::new("Zucker", 80.0)
+                                        .origin(Country::CH)
+                                        .build(),
                                 ])
                                 .build(),
-                            IngredientBuilder::new("Butter", 100.0).allergen().origin(Country::CH).build(),
+                            IngredientBuilder::new("Butter", 100.0)
+                                .allergen()
+                                .origin(Country::CH)
+                                .build(),
                         ])
                         .build(),
-                    IngredientBuilder::new("Mehl", 700.0).allergen().origin(Country::CH).build(),
+                    IngredientBuilder::new("Mehl", 700.0)
+                        .allergen()
+                        .origin(Country::CH)
+                        .build(),
                 ])
                 .build(),
         )
@@ -566,10 +645,26 @@ fn test_recursive_composites_four_levels() {
     let output = calculator.execute(input);
 
     // All four levels should appear in the label with correct nesting
-    assert!(output.label.contains("Torte"), "Top-level ingredient should appear. Label: {}", output.label);
-    assert!(output.label.contains("Glasur"), "Level 2 should appear. Label: {}", output.label);
-    assert!(output.label.contains("Schokolade"), "Level 3 should appear. Label: {}", output.label);
-    assert!(output.label.contains("Kakao"), "Level 4 should appear. Label: {}", output.label);
+    assert!(
+        output.label.contains("Torte"),
+        "Top-level ingredient should appear. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Glasur"),
+        "Level 2 should appear. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Schokolade"),
+        "Level 3 should appear. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Kakao"),
+        "Level 4 should appear. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -581,7 +676,10 @@ fn test_composite_with_empty_children_vec() {
     // Should not panic, should return sensible values
     let composites = ingredient.composites();
     // Empty children should produce empty or minimal composites string
-    assert!(!composites.contains("panic"), "Should not panic with empty children");
+    assert!(
+        !composites.contains("panic"),
+        "Should not panic with empty children"
+    );
 
     let amount = ingredient.computed_amount();
     // With no children and own amount of 100, should use own amount
@@ -589,23 +687,38 @@ fn test_composite_with_empty_children_vec() {
 
     let leaves = ingredient.leaves();
     // With empty children, the ingredient itself or empty vec
-    assert!(!leaves.is_empty() || leaves.is_empty(), "leaves should not panic");
+    assert!(
+        !leaves.is_empty() || leaves.is_empty(),
+        "leaves should not panic"
+    );
 }
 
 #[test]
 fn test_composite_with_single_child() {
     let ingredient = IngredientBuilder::new("Wrapper", 0.0)
-        .children(vec![
-            IngredientBuilder::new("Einziges Kind", 50.0).origin(Country::CH).build(),
-        ])
+        .children(vec![IngredientBuilder::new("Einziges Kind", 50.0)
+            .origin(Country::CH)
+            .build()])
         .build();
 
     let composites = ingredient.composites();
-    assert!(composites.contains("Einziges Kind"), "Single child should appear in composites. Got: {}", composites);
+    assert!(
+        composites.contains("Einziges Kind"),
+        "Single child should appear in composites. Got: {}",
+        composites
+    );
     // Should not have trailing comma
-    assert!(!composites.contains(", )"), "Should not have trailing comma before closing paren. Got: {}", composites);
+    assert!(
+        !composites.contains(", )"),
+        "Should not have trailing comma before closing paren. Got: {}",
+        composites
+    );
 
-    assert_eq!(ingredient.computed_amount(), 50.0, "computed_amount should equal the single child's amount");
+    assert_eq!(
+        ingredient.computed_amount(),
+        50.0,
+        "computed_amount should equal the single child's amount"
+    );
 
     let leaves = ingredient.leaves();
     assert_eq!(leaves.len(), 1);
@@ -615,11 +728,21 @@ fn test_composite_with_single_child() {
 #[test]
 fn computed_unit_bubbles_milliliter_from_any_child() {
     // Leaf in g → g
-    let leaf_g = Ingredient { name: "Mehl".into(), amount: 100.0, unit: AmountUnit::Gram, ..Default::default() };
+    let leaf_g = Ingredient {
+        name: "Mehl".into(),
+        amount: 100.0,
+        unit: AmountUnit::Gram,
+        ..Default::default()
+    };
     assert_eq!(leaf_g.computed_unit(), AmountUnit::Gram);
 
     // Leaf in ml → ml
-    let leaf_ml = Ingredient { name: "Öl".into(), amount: 50.0, unit: AmountUnit::Milliliter, ..Default::default() };
+    let leaf_ml = Ingredient {
+        name: "Öl".into(),
+        amount: 50.0,
+        unit: AmountUnit::Milliliter,
+        ..Default::default()
+    };
     assert_eq!(leaf_ml.computed_unit(), AmountUnit::Milliliter);
 
     // Composite, all children in g → g
@@ -628,8 +751,18 @@ fn computed_unit_bubbles_milliliter_from_any_child() {
         amount: 0.0,
         unit: AmountUnit::Gram,
         children: Some(vec![
-            Ingredient { name: "Mehl".into(), amount: 100.0, unit: AmountUnit::Gram, ..Default::default() },
-            Ingredient { name: "Zucker".into(), amount: 30.0, unit: AmountUnit::Gram, ..Default::default() },
+            Ingredient {
+                name: "Mehl".into(),
+                amount: 100.0,
+                unit: AmountUnit::Gram,
+                ..Default::default()
+            },
+            Ingredient {
+                name: "Zucker".into(),
+                amount: 30.0,
+                unit: AmountUnit::Gram,
+                ..Default::default()
+            },
         ]),
         ..Default::default()
     };
@@ -641,8 +774,18 @@ fn computed_unit_bubbles_milliliter_from_any_child() {
         amount: 0.0,
         unit: AmountUnit::Gram, // stored unit is stale; computed should be ml
         children: Some(vec![
-            Ingredient { name: "Senf".into(), amount: 10.0, unit: AmountUnit::Gram, ..Default::default() },
-            Ingredient { name: "Öl".into(), amount: 100.0, unit: AmountUnit::Milliliter, ..Default::default() },
+            Ingredient {
+                name: "Senf".into(),
+                amount: 10.0,
+                unit: AmountUnit::Gram,
+                ..Default::default()
+            },
+            Ingredient {
+                name: "Öl".into(),
+                amount: 100.0,
+                unit: AmountUnit::Milliliter,
+                ..Default::default()
+            },
         ]),
         ..Default::default()
     };
@@ -658,8 +801,18 @@ fn computed_unit_bubbles_milliliter_from_any_child() {
             name: "Inner".into(),
             amount: 51.0,
             children: Some(vec![
-                Ingredient { name: "Wasser".into(), amount: 50.0, unit: AmountUnit::Milliliter, ..Default::default() },
-                Ingredient { name: "Salz".into(), amount: 1.0, unit: AmountUnit::Gram, ..Default::default() },
+                Ingredient {
+                    name: "Wasser".into(),
+                    amount: 50.0,
+                    unit: AmountUnit::Milliliter,
+                    ..Default::default()
+                },
+                Ingredient {
+                    name: "Salz".into(),
+                    amount: 1.0,
+                    unit: AmountUnit::Gram,
+                    ..Default::default()
+                },
             ]),
             ..Default::default()
         }]),
@@ -673,9 +826,12 @@ fn computed_unit_bubbles_milliliter_from_any_child() {
         amount: 200.0,
         unit: AmountUnit::Gram,
         override_children: Some(true),
-        children: Some(vec![
-            Ingredient { name: "Öl".into(), amount: 100.0, unit: AmountUnit::Milliliter, ..Default::default() },
-        ]),
+        children: Some(vec![Ingredient {
+            name: "Öl".into(),
+            amount: 100.0,
+            unit: AmountUnit::Milliliter,
+            ..Default::default()
+        }]),
         ..Default::default()
     };
     assert_eq!(override_g.computed_unit(), AmountUnit::Gram);

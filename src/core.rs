@@ -1,7 +1,12 @@
-use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeLogo, KnospeVerdict, Verdicts};
-use crate::model::{lookup_allergen, lookup_agricultural, Country};
+use crate::category_service::{
+    is_beef_category, is_dairy_category, is_egg_category, is_fish_category, is_honey_category,
+    is_insect_category, is_meat_category, is_plant_category,
+};
+use crate::model::{lookup_agricultural, lookup_allergen, Country};
 use crate::rules::RuleDef;
-use crate::category_service::{is_fish_category, is_beef_category, is_meat_category, is_egg_category, is_honey_category, is_dairy_category, is_insect_category, is_plant_category};
+use crate::verdicts::{
+    BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeLogo, KnospeVerdict, Verdicts,
+};
 use rust_i18n::t;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::PartialEq;
@@ -14,7 +19,7 @@ fn deserialize_origins<'de, D>(deserializer: D) -> Result<Option<Vec<Country>>, 
 where
     D: Deserializer<'de>,
 {
-    use serde::de::{self, Visitor, SeqAccess};
+    use serde::de::{self, SeqAccess, Visitor};
 
     struct OriginsVisitor;
 
@@ -62,9 +67,8 @@ where
             E: de::Error,
         {
             // Parse country code directly
-            let country = parse_country_code(value).ok_or_else(|| {
-                de::Error::unknown_variant(value, &["valid country code"])
-            })?;
+            let country = parse_country_code(value)
+                .ok_or_else(|| de::Error::unknown_variant(value, &["valid country code"]))?;
             Ok(Some(vec![country]))
         }
 
@@ -89,7 +93,8 @@ where
         where
             M: de::MapAccess<'de>,
         {
-            let country: Country = Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))?;
+            let country: Country =
+                Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))?;
             Ok(Some(vec![country]))
         }
     }
@@ -104,89 +109,254 @@ fn parse_country_code(value: &str) -> Option<Country> {
         "EU" => Some(Country::EU),
         "NoOriginRequired" => Some(Country::NoOriginRequired),
         "Import" => Some(Country::Import),
-        "AD" => Some(Country::AD), "AE" => Some(Country::AE), "AF" => Some(Country::AF),
-        "AG" => Some(Country::AG), "AI" => Some(Country::AI), "AL" => Some(Country::AL),
-        "AM" => Some(Country::AM), "AO" => Some(Country::AO), "AQ" => Some(Country::AQ),
-        "AR" => Some(Country::AR), "AS" => Some(Country::AS), "AT" => Some(Country::AT),
-        "AU" => Some(Country::AU), "AW" => Some(Country::AW), "AX" => Some(Country::AX),
-        "AZ" => Some(Country::AZ), "BA" => Some(Country::BA), "BB" => Some(Country::BB),
-        "BD" => Some(Country::BD), "BE" => Some(Country::BE), "BF" => Some(Country::BF),
-        "BG" => Some(Country::BG), "BH" => Some(Country::BH), "BI" => Some(Country::BI),
-        "BJ" => Some(Country::BJ), "BL" => Some(Country::BL), "BM" => Some(Country::BM),
-        "BN" => Some(Country::BN), "BO" => Some(Country::BO), "BQ" => Some(Country::BQ),
-        "BR" => Some(Country::BR), "BS" => Some(Country::BS), "BT" => Some(Country::BT),
-        "BV" => Some(Country::BV), "BW" => Some(Country::BW), "BY" => Some(Country::BY),
-        "BZ" => Some(Country::BZ), "CA" => Some(Country::CA), "CC" => Some(Country::CC),
-        "CD" => Some(Country::CD), "CF" => Some(Country::CF), "CG" => Some(Country::CG),
-        "CI" => Some(Country::CI), "CK" => Some(Country::CK), "CL" => Some(Country::CL),
-        "CM" => Some(Country::CM), "CN" => Some(Country::CN), "CO" => Some(Country::CO),
-        "CR" => Some(Country::CR), "CU" => Some(Country::CU), "CV" => Some(Country::CV),
-        "CW" => Some(Country::CW), "CX" => Some(Country::CX), "CY" => Some(Country::CY),
-        "CZ" => Some(Country::CZ), "DE" => Some(Country::DE), "DJ" => Some(Country::DJ),
-        "DK" => Some(Country::DK), "DM" => Some(Country::DM), "DO" => Some(Country::DO),
-        "DZ" => Some(Country::DZ), "EC" => Some(Country::EC), "EE" => Some(Country::EE),
-        "EG" => Some(Country::EG), "EH" => Some(Country::EH), "ER" => Some(Country::ER),
-        "ES" => Some(Country::ES), "ET" => Some(Country::ET), "FI" => Some(Country::FI),
-        "FJ" => Some(Country::FJ), "FK" => Some(Country::FK), "FM" => Some(Country::FM),
-        "FO" => Some(Country::FO), "FR" => Some(Country::FR), "GA" => Some(Country::GA),
-        "GB" => Some(Country::GB), "GD" => Some(Country::GD), "GE" => Some(Country::GE),
-        "GF" => Some(Country::GF), "GG" => Some(Country::GG), "GH" => Some(Country::GH),
-        "GI" => Some(Country::GI), "GL" => Some(Country::GL), "GM" => Some(Country::GM),
-        "GN" => Some(Country::GN), "GP" => Some(Country::GP), "GQ" => Some(Country::GQ),
-        "GR" => Some(Country::GR), "GS" => Some(Country::GS), "GT" => Some(Country::GT),
-        "GU" => Some(Country::GU), "GW" => Some(Country::GW), "GY" => Some(Country::GY),
-        "HK" => Some(Country::HK), "HM" => Some(Country::HM), "HN" => Some(Country::HN),
-        "HR" => Some(Country::HR), "HT" => Some(Country::HT), "HU" => Some(Country::HU),
-        "ID" => Some(Country::ID), "IE" => Some(Country::IE), "IL" => Some(Country::IL),
-        "IM" => Some(Country::IM), "IN" => Some(Country::IN), "IO" => Some(Country::IO),
-        "IQ" => Some(Country::IQ), "IR" => Some(Country::IR), "IS" => Some(Country::IS),
-        "IT" => Some(Country::IT), "JE" => Some(Country::JE), "JM" => Some(Country::JM),
-        "JO" => Some(Country::JO), "JP" => Some(Country::JP), "KE" => Some(Country::KE),
-        "KG" => Some(Country::KG), "KH" => Some(Country::KH), "KI" => Some(Country::KI),
-        "KM" => Some(Country::KM), "KN" => Some(Country::KN), "KP" => Some(Country::KP),
-        "KR" => Some(Country::KR), "KW" => Some(Country::KW), "KY" => Some(Country::KY),
-        "KZ" => Some(Country::KZ), "LA" => Some(Country::LA), "LB" => Some(Country::LB),
-        "LC" => Some(Country::LC), "LI" => Some(Country::LI), "LK" => Some(Country::LK),
-        "LR" => Some(Country::LR), "LS" => Some(Country::LS), "LT" => Some(Country::LT),
-        "LU" => Some(Country::LU), "LV" => Some(Country::LV), "LY" => Some(Country::LY),
-        "MA" => Some(Country::MA), "MC" => Some(Country::MC), "MD" => Some(Country::MD),
-        "ME" => Some(Country::ME), "MF" => Some(Country::MF), "MG" => Some(Country::MG),
-        "MH" => Some(Country::MH), "MK" => Some(Country::MK), "ML" => Some(Country::ML),
-        "MM" => Some(Country::MM), "MN" => Some(Country::MN), "MO" => Some(Country::MO),
-        "MP" => Some(Country::MP), "MQ" => Some(Country::MQ), "MR" => Some(Country::MR),
-        "MS" => Some(Country::MS), "MT" => Some(Country::MT), "MU" => Some(Country::MU),
-        "MV" => Some(Country::MV), "MW" => Some(Country::MW), "MX" => Some(Country::MX),
-        "MY" => Some(Country::MY), "MZ" => Some(Country::MZ), "NA" => Some(Country::NA),
-        "NC" => Some(Country::NC), "NE" => Some(Country::NE), "NF" => Some(Country::NF),
-        "NG" => Some(Country::NG), "NI" => Some(Country::NI), "NL" => Some(Country::NL),
-        "NO" => Some(Country::NO), "NP" => Some(Country::NP), "NR" => Some(Country::NR),
-        "NU" => Some(Country::NU), "NZ" => Some(Country::NZ), "OM" => Some(Country::OM),
-        "PA" => Some(Country::PA), "PE" => Some(Country::PE), "PF" => Some(Country::PF),
-        "PG" => Some(Country::PG), "PH" => Some(Country::PH), "PK" => Some(Country::PK),
-        "PL" => Some(Country::PL), "PM" => Some(Country::PM), "PN" => Some(Country::PN),
-        "PR" => Some(Country::PR), "PS" => Some(Country::PS), "PT" => Some(Country::PT),
-        "PW" => Some(Country::PW), "PY" => Some(Country::PY), "QA" => Some(Country::QA),
-        "RE" => Some(Country::RE), "RO" => Some(Country::RO), "RS" => Some(Country::RS),
-        "RU" => Some(Country::RU), "RW" => Some(Country::RW), "SA" => Some(Country::SA),
-        "SB" => Some(Country::SB), "SC" => Some(Country::SC), "SD" => Some(Country::SD),
-        "SE" => Some(Country::SE), "SG" => Some(Country::SG), "SH" => Some(Country::SH),
-        "SI" => Some(Country::SI), "SJ" => Some(Country::SJ), "SK" => Some(Country::SK),
-        "SL" => Some(Country::SL), "SM" => Some(Country::SM), "SN" => Some(Country::SN),
-        "SO" => Some(Country::SO), "SR" => Some(Country::SR), "SS" => Some(Country::SS),
-        "ST" => Some(Country::ST), "SV" => Some(Country::SV), "SX" => Some(Country::SX),
-        "SY" => Some(Country::SY), "SZ" => Some(Country::SZ), "TC" => Some(Country::TC),
-        "TD" => Some(Country::TD), "TF" => Some(Country::TF), "TG" => Some(Country::TG),
-        "TH" => Some(Country::TH), "TJ" => Some(Country::TJ), "TK" => Some(Country::TK),
-        "TL" => Some(Country::TL), "TM" => Some(Country::TM), "TN" => Some(Country::TN),
-        "TO" => Some(Country::TO), "TR" => Some(Country::TR), "TT" => Some(Country::TT),
-        "TV" => Some(Country::TV), "TW" => Some(Country::TW), "TZ" => Some(Country::TZ),
-        "UA" => Some(Country::UA), "UG" => Some(Country::UG), "UM" => Some(Country::UM),
-        "US" => Some(Country::US), "UY" => Some(Country::UY), "UZ" => Some(Country::UZ),
-        "VA" => Some(Country::VA), "VC" => Some(Country::VC), "VE" => Some(Country::VE),
-        "VG" => Some(Country::VG), "VI" => Some(Country::VI), "VN" => Some(Country::VN),
-        "VU" => Some(Country::VU), "WF" => Some(Country::WF), "WS" => Some(Country::WS),
-        "YE" => Some(Country::YE), "YT" => Some(Country::YT), "ZA" => Some(Country::ZA),
-        "ZM" => Some(Country::ZM), "ZW" => Some(Country::ZW),
+        "AD" => Some(Country::AD),
+        "AE" => Some(Country::AE),
+        "AF" => Some(Country::AF),
+        "AG" => Some(Country::AG),
+        "AI" => Some(Country::AI),
+        "AL" => Some(Country::AL),
+        "AM" => Some(Country::AM),
+        "AO" => Some(Country::AO),
+        "AQ" => Some(Country::AQ),
+        "AR" => Some(Country::AR),
+        "AS" => Some(Country::AS),
+        "AT" => Some(Country::AT),
+        "AU" => Some(Country::AU),
+        "AW" => Some(Country::AW),
+        "AX" => Some(Country::AX),
+        "AZ" => Some(Country::AZ),
+        "BA" => Some(Country::BA),
+        "BB" => Some(Country::BB),
+        "BD" => Some(Country::BD),
+        "BE" => Some(Country::BE),
+        "BF" => Some(Country::BF),
+        "BG" => Some(Country::BG),
+        "BH" => Some(Country::BH),
+        "BI" => Some(Country::BI),
+        "BJ" => Some(Country::BJ),
+        "BL" => Some(Country::BL),
+        "BM" => Some(Country::BM),
+        "BN" => Some(Country::BN),
+        "BO" => Some(Country::BO),
+        "BQ" => Some(Country::BQ),
+        "BR" => Some(Country::BR),
+        "BS" => Some(Country::BS),
+        "BT" => Some(Country::BT),
+        "BV" => Some(Country::BV),
+        "BW" => Some(Country::BW),
+        "BY" => Some(Country::BY),
+        "BZ" => Some(Country::BZ),
+        "CA" => Some(Country::CA),
+        "CC" => Some(Country::CC),
+        "CD" => Some(Country::CD),
+        "CF" => Some(Country::CF),
+        "CG" => Some(Country::CG),
+        "CI" => Some(Country::CI),
+        "CK" => Some(Country::CK),
+        "CL" => Some(Country::CL),
+        "CM" => Some(Country::CM),
+        "CN" => Some(Country::CN),
+        "CO" => Some(Country::CO),
+        "CR" => Some(Country::CR),
+        "CU" => Some(Country::CU),
+        "CV" => Some(Country::CV),
+        "CW" => Some(Country::CW),
+        "CX" => Some(Country::CX),
+        "CY" => Some(Country::CY),
+        "CZ" => Some(Country::CZ),
+        "DE" => Some(Country::DE),
+        "DJ" => Some(Country::DJ),
+        "DK" => Some(Country::DK),
+        "DM" => Some(Country::DM),
+        "DO" => Some(Country::DO),
+        "DZ" => Some(Country::DZ),
+        "EC" => Some(Country::EC),
+        "EE" => Some(Country::EE),
+        "EG" => Some(Country::EG),
+        "EH" => Some(Country::EH),
+        "ER" => Some(Country::ER),
+        "ES" => Some(Country::ES),
+        "ET" => Some(Country::ET),
+        "FI" => Some(Country::FI),
+        "FJ" => Some(Country::FJ),
+        "FK" => Some(Country::FK),
+        "FM" => Some(Country::FM),
+        "FO" => Some(Country::FO),
+        "FR" => Some(Country::FR),
+        "GA" => Some(Country::GA),
+        "GB" => Some(Country::GB),
+        "GD" => Some(Country::GD),
+        "GE" => Some(Country::GE),
+        "GF" => Some(Country::GF),
+        "GG" => Some(Country::GG),
+        "GH" => Some(Country::GH),
+        "GI" => Some(Country::GI),
+        "GL" => Some(Country::GL),
+        "GM" => Some(Country::GM),
+        "GN" => Some(Country::GN),
+        "GP" => Some(Country::GP),
+        "GQ" => Some(Country::GQ),
+        "GR" => Some(Country::GR),
+        "GS" => Some(Country::GS),
+        "GT" => Some(Country::GT),
+        "GU" => Some(Country::GU),
+        "GW" => Some(Country::GW),
+        "GY" => Some(Country::GY),
+        "HK" => Some(Country::HK),
+        "HM" => Some(Country::HM),
+        "HN" => Some(Country::HN),
+        "HR" => Some(Country::HR),
+        "HT" => Some(Country::HT),
+        "HU" => Some(Country::HU),
+        "ID" => Some(Country::ID),
+        "IE" => Some(Country::IE),
+        "IL" => Some(Country::IL),
+        "IM" => Some(Country::IM),
+        "IN" => Some(Country::IN),
+        "IO" => Some(Country::IO),
+        "IQ" => Some(Country::IQ),
+        "IR" => Some(Country::IR),
+        "IS" => Some(Country::IS),
+        "IT" => Some(Country::IT),
+        "JE" => Some(Country::JE),
+        "JM" => Some(Country::JM),
+        "JO" => Some(Country::JO),
+        "JP" => Some(Country::JP),
+        "KE" => Some(Country::KE),
+        "KG" => Some(Country::KG),
+        "KH" => Some(Country::KH),
+        "KI" => Some(Country::KI),
+        "KM" => Some(Country::KM),
+        "KN" => Some(Country::KN),
+        "KP" => Some(Country::KP),
+        "KR" => Some(Country::KR),
+        "KW" => Some(Country::KW),
+        "KY" => Some(Country::KY),
+        "KZ" => Some(Country::KZ),
+        "LA" => Some(Country::LA),
+        "LB" => Some(Country::LB),
+        "LC" => Some(Country::LC),
+        "LI" => Some(Country::LI),
+        "LK" => Some(Country::LK),
+        "LR" => Some(Country::LR),
+        "LS" => Some(Country::LS),
+        "LT" => Some(Country::LT),
+        "LU" => Some(Country::LU),
+        "LV" => Some(Country::LV),
+        "LY" => Some(Country::LY),
+        "MA" => Some(Country::MA),
+        "MC" => Some(Country::MC),
+        "MD" => Some(Country::MD),
+        "ME" => Some(Country::ME),
+        "MF" => Some(Country::MF),
+        "MG" => Some(Country::MG),
+        "MH" => Some(Country::MH),
+        "MK" => Some(Country::MK),
+        "ML" => Some(Country::ML),
+        "MM" => Some(Country::MM),
+        "MN" => Some(Country::MN),
+        "MO" => Some(Country::MO),
+        "MP" => Some(Country::MP),
+        "MQ" => Some(Country::MQ),
+        "MR" => Some(Country::MR),
+        "MS" => Some(Country::MS),
+        "MT" => Some(Country::MT),
+        "MU" => Some(Country::MU),
+        "MV" => Some(Country::MV),
+        "MW" => Some(Country::MW),
+        "MX" => Some(Country::MX),
+        "MY" => Some(Country::MY),
+        "MZ" => Some(Country::MZ),
+        "NA" => Some(Country::NA),
+        "NC" => Some(Country::NC),
+        "NE" => Some(Country::NE),
+        "NF" => Some(Country::NF),
+        "NG" => Some(Country::NG),
+        "NI" => Some(Country::NI),
+        "NL" => Some(Country::NL),
+        "NO" => Some(Country::NO),
+        "NP" => Some(Country::NP),
+        "NR" => Some(Country::NR),
+        "NU" => Some(Country::NU),
+        "NZ" => Some(Country::NZ),
+        "OM" => Some(Country::OM),
+        "PA" => Some(Country::PA),
+        "PE" => Some(Country::PE),
+        "PF" => Some(Country::PF),
+        "PG" => Some(Country::PG),
+        "PH" => Some(Country::PH),
+        "PK" => Some(Country::PK),
+        "PL" => Some(Country::PL),
+        "PM" => Some(Country::PM),
+        "PN" => Some(Country::PN),
+        "PR" => Some(Country::PR),
+        "PS" => Some(Country::PS),
+        "PT" => Some(Country::PT),
+        "PW" => Some(Country::PW),
+        "PY" => Some(Country::PY),
+        "QA" => Some(Country::QA),
+        "RE" => Some(Country::RE),
+        "RO" => Some(Country::RO),
+        "RS" => Some(Country::RS),
+        "RU" => Some(Country::RU),
+        "RW" => Some(Country::RW),
+        "SA" => Some(Country::SA),
+        "SB" => Some(Country::SB),
+        "SC" => Some(Country::SC),
+        "SD" => Some(Country::SD),
+        "SE" => Some(Country::SE),
+        "SG" => Some(Country::SG),
+        "SH" => Some(Country::SH),
+        "SI" => Some(Country::SI),
+        "SJ" => Some(Country::SJ),
+        "SK" => Some(Country::SK),
+        "SL" => Some(Country::SL),
+        "SM" => Some(Country::SM),
+        "SN" => Some(Country::SN),
+        "SO" => Some(Country::SO),
+        "SR" => Some(Country::SR),
+        "SS" => Some(Country::SS),
+        "ST" => Some(Country::ST),
+        "SV" => Some(Country::SV),
+        "SX" => Some(Country::SX),
+        "SY" => Some(Country::SY),
+        "SZ" => Some(Country::SZ),
+        "TC" => Some(Country::TC),
+        "TD" => Some(Country::TD),
+        "TF" => Some(Country::TF),
+        "TG" => Some(Country::TG),
+        "TH" => Some(Country::TH),
+        "TJ" => Some(Country::TJ),
+        "TK" => Some(Country::TK),
+        "TL" => Some(Country::TL),
+        "TM" => Some(Country::TM),
+        "TN" => Some(Country::TN),
+        "TO" => Some(Country::TO),
+        "TR" => Some(Country::TR),
+        "TT" => Some(Country::TT),
+        "TV" => Some(Country::TV),
+        "TW" => Some(Country::TW),
+        "TZ" => Some(Country::TZ),
+        "UA" => Some(Country::UA),
+        "UG" => Some(Country::UG),
+        "UM" => Some(Country::UM),
+        "US" => Some(Country::US),
+        "UY" => Some(Country::UY),
+        "UZ" => Some(Country::UZ),
+        "VA" => Some(Country::VA),
+        "VC" => Some(Country::VC),
+        "VE" => Some(Country::VE),
+        "VG" => Some(Country::VG),
+        "VI" => Some(Country::VI),
+        "VN" => Some(Country::VN),
+        "VU" => Some(Country::VU),
+        "WF" => Some(Country::WF),
+        "WS" => Some(Country::WS),
+        "YE" => Some(Country::YE),
+        "YT" => Some(Country::YT),
+        "ZA" => Some(Country::ZA),
+        "ZM" => Some(Country::ZM),
+        "ZW" => Some(Country::ZW),
         _ => None,
     }
 }
@@ -279,7 +449,10 @@ fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
     agricultural_share(
         ingredients,
         |_| true,
-        |i| i.computed_origins().is_some_and(|o| o.contains(&Country::CH)),
+        |i| {
+            i.computed_origins()
+                .is_some_and(|o| o.contains(&Country::CH))
+        },
         0.0,
     )
 }
@@ -290,7 +463,10 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f6
     agricultural_share(
         ingredients,
         |i| i.computed_bio_status().unwrap_or(false),
-        |i| i.computed_origins().is_some_and(|o| o.contains(&Country::CH)),
+        |i| {
+            i.computed_origins()
+                .is_some_and(|o| o.contains(&Country::CH))
+        },
         0.0,
     )
 }
@@ -411,10 +587,12 @@ fn has_agricultural_ingredient(ingredients: &[Ingredient]) -> bool {
 
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
 fn is_mono_product(ingredients: &[Ingredient]) -> bool {
-    ingredients.iter()
+    ingredients
+        .iter()
         .flat_map(|i| i.leaves())
         .filter(|i| i.is_agricultural())
-        .count() == 1
+        .count()
+        == 1
 }
 
 /// Check if any leaf ingredient has aus_umstellbetrieb set
@@ -424,7 +602,9 @@ fn is_mono_product(ingredients: &[Ingredient]) -> bool {
 fn has_umstellbetrieb_in_tree(ingredients: &[Ingredient]) -> bool {
     fn node_or_descendant(i: &Ingredient) -> bool {
         i.aus_umstellbetrieb.unwrap_or(false)
-            || i.children.as_ref().is_some_and(|cs| cs.iter().any(node_or_descendant))
+            || i.children
+                .as_ref()
+                .is_some_and(|cs| cs.iter().any(node_or_descendant))
     }
     ingredients.iter().any(node_or_descendant)
 }
@@ -452,7 +632,12 @@ impl InheritedQuality {
 /// `composites_with_inherited` including parent-claim push-down, so the
 /// legend lines match what is printed.
 fn tree_marker_presence(ingredients: &[Ingredient]) -> (bool, bool) {
-    fn walk(ing: &Ingredient, inherited: InheritedQuality, star: &mut bool, double_star: &mut bool) {
+    fn walk(
+        ing: &Ingredient,
+        inherited: InheritedQuality,
+        star: &mut bool,
+        double_star: &mut bool,
+    ) {
         let own_bio = ing.is_bio == Some(true) || ing.bio_ch == Some(true);
         let own_umst = ing.aus_umstellbetrieb.unwrap_or(false);
         match ing.children.as_ref().filter(|c| !c.is_empty()) {
@@ -478,7 +663,12 @@ fn tree_marker_presence(ingredients: &[Ingredient]) -> (bool, bool) {
     }
     let (mut star, mut double_star) = (false, false);
     for ing in ingredients {
-        walk(ing, InheritedQuality::default(), &mut star, &mut double_star);
+        walk(
+            ing,
+            InheritedQuality::default(),
+            &mut star,
+            &mut double_star,
+        );
     }
     (star, double_star)
 }
@@ -525,7 +715,11 @@ impl Calculator {
                 &(if is_active { "✅" } else { "❌" }).into(),
             );
             let _ = Reflect::set(&row, &"Regel".into(), &format!("{:?}", rule).into());
-            let _ = Reflect::set(&row, &"Typ".into(), &format!("{:?}", rule.get_type()).into());
+            let _ = Reflect::set(
+                &row,
+                &"Typ".into(),
+                &format!("{:?}", rule.get_type()).into(),
+            );
             let _ = Reflect::set(&row, &"Beschreibung".into(), &rule.get_description().into());
 
             table_data.push(&row);
@@ -549,7 +743,12 @@ impl Calculator {
 
     /// Debug logging method to log individual rule processing
     #[cfg(target_arch = "wasm32")]
-    fn log_rule_processing(&self, rule: &RuleDef, processing_type: &str, additional_info: Option<&str>) {
+    fn log_rule_processing(
+        &self,
+        rule: &RuleDef,
+        processing_type: &str,
+        additional_info: Option<&str>,
+    ) {
         use crate::rules::Rule;
         let info = if let Some(info) = additional_info {
             format!(" - {}", info)
@@ -568,7 +767,12 @@ impl Calculator {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn log_rule_processing(&self, _rule: &RuleDef, _processing_type: &str, _additional_info: Option<&str>) {
+    fn log_rule_processing(
+        &self,
+        _rule: &RuleDef,
+        _processing_type: &str,
+        _additional_info: Option<&str>,
+    ) {
         // No-op for non-wasm targets
     }
 }
@@ -586,7 +790,12 @@ pub struct Ingredient {
     pub children: Option<Vec<Ingredient>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_namensgebend: Option<bool>,
-    #[serde(default, deserialize_with = "deserialize_origins", alias = "origin", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_origins",
+        alias = "origin",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub origins: Option<Vec<Country>>,
     #[serde(default = "default_is_agricultural")]
     pub is_agricultural: bool,
@@ -722,7 +931,12 @@ impl Ingredient {
     /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_knospe_compliant(&self) -> bool {
         if self.aggregates_quality_from_children() {
-            return self.children.as_ref().unwrap().iter().all(|c| c.is_knospe_compliant());
+            return self
+                .children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .all(|c| c.is_knospe_compliant());
         }
         self.is_bio.unwrap_or(false)
             || self.erlaubte_ausnahme_bio.unwrap_or(false)
@@ -736,7 +950,12 @@ impl Ingredient {
     /// For composites this aggregates bottom-up: compliant iff every child is.
     pub fn is_bio_ch_compliant(&self) -> bool {
         if self.aggregates_quality_from_children() {
-            return self.children.as_ref().unwrap().iter().all(|c| c.is_bio_ch_compliant());
+            return self
+                .children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .all(|c| c.is_bio_ch_compliant());
         }
         self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false)
     }
@@ -751,7 +970,12 @@ impl Ingredient {
     /// on that claim rather than on its children.
     pub fn has_undeclared_non_bio(&self) -> bool {
         if self.aggregates_quality_from_children() {
-            return self.children.as_ref().unwrap().iter().any(|c| c.has_undeclared_non_bio());
+            return self
+                .children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .any(|c| c.has_undeclared_non_bio());
         }
         self.is_agricultural()
             && !self.bio_ch.unwrap_or(false)
@@ -783,23 +1007,52 @@ impl Ingredient {
         self.composites_with_rules(&[], 0.0, 0)
     }
 
-
-    pub fn composites_with_rules(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize) -> String {
+    pub fn composites_with_rules(
+        &self,
+        rules: &[RuleDef],
+        total_amount: f64,
+        agricultural_ingredient_count: usize,
+    ) -> String {
         // A quality claimed on this composite itself (bought certified unit) is
         // pushed DOWN onto the children's markers (Testing 25.06.2026) — the
         // parent name never carries `*`/`**`.
-        self.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, InheritedQuality::from_parent(self), false)
+        self.composites_with_inherited(
+            rules,
+            total_amount,
+            agricultural_ingredient_count,
+            InheritedQuality::from_parent(self),
+            false,
+        )
     }
 
     /// `force_origin`: the enclosing (top-level) ingredient is required to declare
     /// an origin but carries none itself — its children hold the declaration, so
     /// their country codes must be printed even though each child alone stays
     /// below the >50% threshold.
-    fn composites_with_forced_origin(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize, force_origin: bool) -> String {
-        self.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, InheritedQuality::from_parent(self), force_origin)
+    fn composites_with_forced_origin(
+        &self,
+        rules: &[RuleDef],
+        total_amount: f64,
+        agricultural_ingredient_count: usize,
+        force_origin: bool,
+    ) -> String {
+        self.composites_with_inherited(
+            rules,
+            total_amount,
+            agricultural_ingredient_count,
+            InheritedQuality::from_parent(self),
+            force_origin,
+        )
     }
 
-    fn composites_with_inherited(&self, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize, inherited: InheritedQuality, force_origin: bool) -> String {
+    fn composites_with_inherited(
+        &self,
+        rules: &[RuleDef],
+        total_amount: f64,
+        agricultural_ingredient_count: usize,
+        inherited: InheritedQuality,
+        force_origin: bool,
+    ) -> String {
         let mut output = String::new();
         if let Some(children) = &self.children {
             if !children.is_empty() {
@@ -852,20 +1105,34 @@ impl Ingredient {
                                         t!("label.liv_anhang7_format", grams = grams_per_100g)
                                     );
                                 } else if percentage > 0.0 {
-                                    base_name = format!("{} {}", base_name, format_percentage(percentage));
+                                    base_name =
+                                        format!("{} {}", base_name, format_percentage(percentage));
                                 }
                             }
                             // Recurse into children's children, extending inheritance
                             // with this child's own claim.
                             let child_inherited = InheritedQuality {
-                                bio: inherited.bio || child.is_bio == Some(true) || child.bio_ch == Some(true),
-                                umstellung: inherited.umstellung || child.aus_umstellbetrieb == Some(true),
+                                bio: inherited.bio
+                                    || child.is_bio == Some(true)
+                                    || child.bio_ch == Some(true),
+                                umstellung: inherited.umstellung
+                                    || child.aus_umstellbetrieb == Some(true),
                             };
-                            base_name.push_str(&child.composites_with_inherited(rules, total_amount, agricultural_ingredient_count, child_inherited, force_origin && !has_declared_origin(child)));
+                            base_name.push_str(&child.composites_with_inherited(
+                                rules,
+                                total_amount,
+                                agricultural_ingredient_count,
+                                child_inherited,
+                                force_origin && !has_declared_origin(child),
+                            ));
                             // Add processing steps
                             if let Some(steps) = &child.processing_steps {
                                 if !steps.is_empty() {
-                                    let steps_text = steps.iter().map(|s| html_escape(s)).collect::<Vec<_>>().join(", ");
+                                    let steps_text = steps
+                                        .iter()
+                                        .map(|s| html_escape(s))
+                                        .collect::<Vec<_>>()
+                                        .join(", ");
                                     base_name = format!("{}, {}", base_name, steps_text);
                                 }
                             }
@@ -875,7 +1142,12 @@ impl Ingredient {
                                 if let Some(origin_str) = format_valid_origins(&child.origins) {
                                     base_name = format!("{} {}", base_name, origin_str);
                                 }
-                            } else if let Some(origin_str) = format_origin_for_knospe_rules(child, rules, total_amount, agricultural_ingredient_count) {
+                            } else if let Some(origin_str) = format_origin_for_knospe_rules(
+                                child,
+                                rules,
+                                total_amount,
+                                agricultural_ingredient_count,
+                            ) {
                                 base_name = format!("{} {}", base_name, origin_str);
                             }
                             base_name
@@ -893,12 +1165,16 @@ impl Ingredient {
     pub fn migrate_sub_components(&mut self) {
         if let Some(subs) = self.sub_components.take() {
             if !subs.is_empty() && self.children.is_none() {
-                self.children = Some(subs.into_iter().map(|sub| Ingredient {
-                    name: sub.name,
-                    is_allergen: sub.is_allergen,
-                    origins: sub.origin.map(|o| vec![o]),
-                    ..Default::default()
-                }).collect());
+                self.children = Some(
+                    subs.into_iter()
+                        .map(|sub| Ingredient {
+                            name: sub.name,
+                            is_allergen: sub.is_allergen,
+                            origins: sub.origin.map(|o| vec![o]),
+                            ..Default::default()
+                        })
+                        .collect(),
+                );
             }
         }
     }
@@ -936,9 +1212,10 @@ impl Ingredient {
     fn is_leaf(&self) -> bool {
         self.override_children.unwrap_or(false)
             || self.is_percentage_mode()
-            || self.children.as_ref().is_none_or(|c| {
-                c.is_empty() || c.iter().all(|child| child.amount == 0.0)
-            })
+            || self
+                .children
+                .as_ref()
+                .is_none_or(|c| c.is_empty() || c.iter().all(|child| child.amount == 0.0))
     }
 
     /// Resolve percentage-mode children into absolute (gram/ml) children, recursively.
@@ -961,9 +1238,10 @@ impl Ingredient {
                         // it sums to the target grams (keeps its bottom-up quality/origin
                         // intact); otherwise it's a leaf and the target is simply its amount.
                         let current = child.computed_amount();
-                        let is_weighted_composite = child.children.as_ref().is_some_and(|c| {
-                            !c.is_empty() && c.iter().any(|g| g.amount != 0.0)
-                        });
+                        let is_weighted_composite = child
+                            .children
+                            .as_ref()
+                            .is_some_and(|c| !c.is_empty() && c.iter().any(|g| g.amount != 0.0));
                         if is_weighted_composite && current > 0.0 {
                             let factor = target / current;
                             if let Some(grandchildren) = child.children.as_mut() {
@@ -991,8 +1269,12 @@ impl Ingredient {
         if self.is_leaf() {
             self.amount
         } else {
-            self.children.as_ref().unwrap()
-                .iter().map(|c| c.computed_amount()).sum()
+            self.children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .map(|c| c.computed_amount())
+                .sum()
         }
     }
 
@@ -1003,7 +1285,10 @@ impl Ingredient {
     pub fn computed_unit(&self) -> AmountUnit {
         if self.is_leaf() {
             self.unit.clone()
-        } else if self.children.as_ref().unwrap()
+        } else if self
+            .children
+            .as_ref()
+            .unwrap()
             .iter()
             .any(|c| c.computed_unit() == AmountUnit::Milliliter)
         {
@@ -1020,7 +1305,11 @@ impl Ingredient {
         if self.aggregates_quality_from_children() {
             let children = self.children.as_ref().unwrap();
             if children.iter().any(|c| c.computed_bio_status().is_some()) {
-                Some(children.iter().all(|c| c.computed_bio_status().unwrap_or(false)))
+                Some(
+                    children
+                        .iter()
+                        .all(|c| c.computed_bio_status().unwrap_or(false)),
+                )
             } else {
                 None
             }
@@ -1033,8 +1322,15 @@ impl Ingredient {
     pub fn computed_bio_ch_status(&self) -> Option<bool> {
         if self.aggregates_quality_from_children() {
             let children = self.children.as_ref().unwrap();
-            if children.iter().any(|c| c.computed_bio_ch_status().is_some()) {
-                Some(children.iter().all(|c| c.computed_bio_ch_status().unwrap_or(false)))
+            if children
+                .iter()
+                .any(|c| c.computed_bio_ch_status().is_some())
+            {
+                Some(
+                    children
+                        .iter()
+                        .all(|c| c.computed_bio_ch_status().unwrap_or(false)),
+                )
             } else {
                 None
             }
@@ -1054,13 +1350,20 @@ impl Ingredient {
             // Non-agricultural children (e.g. salt, water) carry no country-of-origin
             // declaration, so their origin must not be taken over into the parent's
             // aggregated origin.
-            let all: HashSet<Country> = self.children.as_ref().unwrap()
+            let all: HashSet<Country> = self
+                .children
+                .as_ref()
+                .unwrap()
                 .iter()
                 .filter(|c| c.is_agricultural)
                 .filter_map(|c| c.computed_origins())
                 .flatten()
                 .collect();
-            if all.is_empty() { None } else { Some(all.into_iter().collect()) }
+            if all.is_empty() {
+                None
+            } else {
+                Some(all.into_iter().collect())
+            }
         } else {
             self.origins.clone()
         }
@@ -1073,11 +1376,15 @@ impl Ingredient {
     /// nodes never require one.
     fn has_import_knospe_without_origin(&self) -> bool {
         let has_real_origin = self.computed_origins().is_some_and(|o| {
-            o.iter().any(|c| !matches!(c, Country::Import | Country::NoOriginRequired))
+            o.iter()
+                .any(|c| !matches!(c, Country::Import | Country::NoOriginRequired))
         });
         let self_flagged = self.is_agricultural()
             && self.is_bio == Some(true)
-            && !self.origins.as_ref().is_some_and(|o| o.contains(&Country::CH))
+            && !self
+                .origins
+                .as_ref()
+                .is_some_and(|o| o.contains(&Country::CH))
             && !has_real_origin;
         self_flagged
             || self
@@ -1092,8 +1399,12 @@ impl Ingredient {
         if self.is_leaf() {
             vec![self]
         } else {
-            self.children.as_ref().unwrap()
-                .iter().flat_map(|c| c.leaves()).collect()
+            self.children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .flat_map(|c| c.leaves())
+                .collect()
         }
     }
 }
@@ -1158,7 +1469,12 @@ impl PartialEq for RuleDef {
 }
 
 impl OutputFormatter {
-    pub fn from(ingredient: Ingredient, total_amount: f64, RuleDefs: Vec<RuleDef>, agricultural_ingredient_count: usize) -> Self {
+    pub fn from(
+        ingredient: Ingredient,
+        total_amount: f64,
+        RuleDefs: Vec<RuleDef>,
+        agricultural_ingredient_count: usize,
+    ) -> Self {
         Self {
             ingredient,
             total_amount,
@@ -1172,7 +1488,11 @@ impl OutputFormatter {
         // Composite parents delegate allergen bolding to their children
         // (lowest-level-only). The bold wrap and any origin display are
         // skipped on the parent when it has non-empty children.
-        let has_children = self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty());
+        let has_children = self
+            .ingredient
+            .children
+            .as_ref()
+            .is_some_and(|c| !c.is_empty());
         let mut output = match self.ingredient.is_allergen && !has_children {
             true => format!("<b>{}</b>", escaped_name),
             false => escaped_name,
@@ -1199,8 +1519,13 @@ impl OutputFormatter {
 
         // Wildsammlung °-marking when ingredient >10%
         let wildsammlung_step = WILDSAMMLUNG_STEP;
-        let has_wildsammlung_rule = self.RuleDefs.contains(&RuleDef::Wildsammlung_Ueber10Prozent);
-        let has_wildsammlung_step = self.ingredient.processing_steps.as_ref()
+        let has_wildsammlung_rule = self
+            .RuleDefs
+            .contains(&RuleDef::Wildsammlung_Ueber10Prozent);
+        let has_wildsammlung_step = self
+            .ingredient
+            .processing_steps
+            .as_ref()
             .is_some_and(|s| s.iter().any(|step| step == wildsammlung_step));
         let show_wildsammlung_marker = has_wildsammlung_rule && has_wildsammlung_step
             // Excel Zeile 12: "grösser/gleich 10 %" → inclusive boundary.
@@ -1211,7 +1536,8 @@ impl OutputFormatter {
         }
 
         if self
-            .RuleDefs.contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
+            .RuleDefs
+            .contains(&RuleDef::AP1_2_ProzentOutputNamensgebend)
         {
             if let Some(true) = self.ingredient.is_namensgebend {
                 let percentage = self.ingredient.computed_amount() / self.total_amount * 100.;
@@ -1225,26 +1551,30 @@ impl OutputFormatter {
                         t!("label.liv_anhang7_format", grams = grams_per_100g)
                     )
                 } else {
-                    output = format!(
-                        "{} {}",
-                        output,
-                        format_percentage(percentage)
-                    )
+                    output = format!("{} {}", output, format_percentage(percentage))
                 }
             }
         }
-        if self
-            .RuleDefs.contains(&RuleDef::AP2_1_ZusammegesetztOutput)
-            && self.ingredient.children.as_ref().is_some_and(|c| !c.is_empty())
+        if self.RuleDefs.contains(&RuleDef::AP2_1_ZusammegesetztOutput)
+            && self
+                .ingredient
+                .children
+                .as_ref()
+                .is_some_and(|c| !c.is_empty())
         {
             let force_child_origin = !has_declared_origin(&self.ingredient)
-                && origin_required_by_traditional_rules(&self.ingredient, &self.RuleDefs, self.total_amount);
+                && origin_required_by_traditional_rules(
+                    &self.ingredient,
+                    &self.RuleDefs,
+                    self.total_amount,
+                );
             output = format! {"{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin)};
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps
         if let Some(steps) = &self.ingredient.processing_steps {
-            let filtered: Vec<_> = steps.iter()
+            let filtered: Vec<_> = steps
+                .iter()
                 .filter(|s| !(show_wildsammlung_marker && s.as_str() == wildsammlung_step))
                 // Below the 10% threshold the step is printed inline, so it has to
                 // carry the regime's wording just like the legend does (DEC-11).
@@ -1263,11 +1593,14 @@ impl OutputFormatter {
         }
         // Handle Knospe-specific rules first (they take precedence)
         let has_knospe_100_rule = self
-            .RuleDefs.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
+            .RuleDefs
+            .contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
         let has_knospe_90_99_rule = self
-            .RuleDefs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+            .RuleDefs
+            .contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
         let has_knospe_under90_rule = self
-            .RuleDefs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
+            .RuleDefs
+            .contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
         // Composite parents normally inherit origin from their children (declared
         // at the lowest level). But origin is single-level and may equally be
@@ -1275,7 +1608,12 @@ impl OutputFormatter {
         // reach the label instead of being silently dropped (Testing 25.06.2026).
         if has_children {
             if has_declared_origin(&self.ingredient) {
-                if let Some(origin_str) = format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount, self.agricultural_ingredient_count) {
+                if let Some(origin_str) = format_origin_for_knospe_rules(
+                    &self.ingredient,
+                    &self.RuleDefs,
+                    self.total_amount,
+                    self.agricultural_ingredient_count,
+                ) {
                     output = format!("{} {}", output, origin_str);
                 }
             }
@@ -1284,7 +1622,12 @@ impl OutputFormatter {
 
         if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
             // Knospe origin rules — shared with composite children
-            if let Some(origin_str) = format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount, self.agricultural_ingredient_count) {
+            if let Some(origin_str) = format_origin_for_knospe_rules(
+                &self.ingredient,
+                &self.RuleDefs,
+                self.total_amount,
+                self.agricultural_ingredient_count,
+            ) {
                 output = format!("{} {}", output, origin_str);
             }
         } else {
@@ -1292,17 +1635,29 @@ impl OutputFormatter {
             // When beef details are rendered, they replace the standard
             // herkunft display so we don't print "(Geburtsort: CH, …) (CH)".
             let mut beef_details_rendered = false;
-            if self.RuleDefs.contains(&RuleDef::AP7_4_RindfleischHerkunftDetails) {
+            if self
+                .RuleDefs
+                .contains(&RuleDef::AP7_4_RindfleischHerkunftDetails)
+            {
                 if let Some(category) = &self.ingredient.category {
                     if is_beef_category(category) {
                         let mut beef_origin_parts = Vec::new();
 
                         if let Some(aufzucht_ort) = &self.ingredient.aufzucht_ort {
-                            beef_origin_parts.push(t!("origin.birthplace", country = aufzucht_ort.country_code()).to_string());
+                            beef_origin_parts.push(
+                                t!("origin.birthplace", country = aufzucht_ort.country_code())
+                                    .to_string(),
+                            );
                         }
 
                         if let Some(schlachtungs_ort) = &self.ingredient.schlachtungs_ort {
-                            beef_origin_parts.push(t!("origin.slaughtered_in", country = schlachtungs_ort.country_code()).to_string());
+                            beef_origin_parts.push(
+                                t!(
+                                    "origin.slaughtered_in",
+                                    country = schlachtungs_ort.country_code()
+                                )
+                                .to_string(),
+                            );
                         }
 
                         if !beef_origin_parts.is_empty() {
@@ -1327,7 +1682,12 @@ impl OutputFormatter {
             // Add country of origin display for traditional herkunft rules
             // (skipped when beef/fish details already rendered the origin).
             if !beef_details_rendered && !fish_details_rendered {
-                if let Some(origin_str) = format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount, self.agricultural_ingredient_count) {
+                if let Some(origin_str) = format_origin_for_knospe_rules(
+                    &self.ingredient,
+                    &self.RuleDefs,
+                    self.total_amount,
+                    self.agricultural_ingredient_count,
+                ) {
                     output = format!("{} {}", output, origin_str);
                 }
             }
@@ -1369,7 +1729,10 @@ impl Calculator {
     /// Bio-V-Urteil (Sachbezeichnung «Bio», Vermarktung). Reine Funktion der
     /// Rezeptur; die «Rezeptur prüfen»-Schicht kommt in `decide_bio_check` dazu.
     fn decide_bio(&self, ingredients: &[Ingredient]) -> Option<BioVerdict> {
-        if !self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
+        if !self
+            .rule_defs
+            .contains(&RuleDef::Bio_ShowBioSachbezeichnung)
+        {
             return None;
         }
 
@@ -1393,7 +1756,9 @@ impl Calculator {
                 .filter(|i| i.is_agricultural())
                 .all(|i| i.bio_ch == Some(true));
             if mono_is_bio_ch && !undeclared_non_bio {
-                return Some(BioVerdict::Allowed { umstellung_mono: true });
+                return Some(BioVerdict::Allowed {
+                    umstellung_mono: true,
+                });
             }
         }
 
@@ -1402,7 +1767,9 @@ impl Calculator {
             && !umstellung;
 
         if qualifies {
-            return Some(BioVerdict::Allowed { umstellung_mono: false });
+            return Some(BioVerdict::Allowed {
+                umstellung_mono: false,
+            });
         }
 
         let mut reasons = vec![BioBlockReason::ShareBelow95];
@@ -1501,7 +1868,11 @@ impl Calculator {
         // so the entire downstream pipeline (computed_amount, QUID, sorting, validations)
         // operates on plain weights. The persisted Form keeps the percentages.
         let input = Input {
-            ingredients: input.ingredients.iter().map(|i| i.resolve_percentages()).collect(),
+            ingredients: input
+                .ingredients
+                .iter()
+                .map(|i| i.resolve_percentages())
+                .collect(),
             ..input
         };
 
@@ -1529,7 +1900,8 @@ impl Calculator {
         // Calculate total amount first (needed for validations)
         let mut total_amount = input.ingredients.iter().map(|x| x.computed_amount()).sum();
         if self
-            .rule_defs.contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
+            .rule_defs
+            .contains(&RuleDef::AP1_4_ManuelleEingabeTotal)
         {
             if let Some(tot) = input.total {
                 total_amount = tot;
@@ -1557,41 +1929,91 @@ impl Calculator {
             // Ingredient validations only run when recipe is marked as complete
             if input.rezeptur_vollstaendig {
                 if let RuleDef::AP1_1_ZutatMengeValidierung = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking ingredient amounts > 0"));
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some("Checking ingredient amounts > 0"),
+                    );
                     validate_amount(&input.ingredients, &mut validation_messages)
                 }
                 if let RuleDef::AP1_2_ProzentOutputNamensgebend = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking namensgebend sub-ingredients carry an amount"));
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some("Checking namensgebend sub-ingredients carry an amount"),
+                    );
                     validate_namensgebend_amounts(&input.ingredients, &mut validation_messages)
                 }
                 if let RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking origin for ingredients >50% of {}g total", total_amount)));
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some(&format!(
+                            "Checking origin for ingredients >50% of {}g total",
+                            total_amount
+                        )),
+                    );
                     validate_origin(&input.ingredients, total_amount, &mut validation_messages);
                 }
                 if let RuleDef::AP7_3_HerkunftFleischUeber20Prozent = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some(&format!("Checking meat origin for ingredients >20% of {}g total", total_amount)));
-                    validate_meat_origin(&input.ingredients, total_amount, &mut validation_messages);
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some(&format!(
+                            "Checking meat origin for ingredients >20% of {}g total",
+                            total_amount
+                        )),
+                    );
+                    validate_meat_origin(
+                        &input.ingredients,
+                        total_amount,
+                        &mut validation_messages,
+                    );
                 }
                 if let RuleDef::AP7_4_RindfleischHerkunftDetails = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking beef origin details (birthplace/slaughter)"));
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some("Checking beef origin details (birthplace/slaughter)"),
+                    );
                     validate_beef_origin_details(&input.ingredients, &mut validation_messages);
                 }
                 if let RuleDef::AP7_5_FischFangort = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking fish catch location"));
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some("Checking fish catch location"),
+                    );
                     validate_fish_catch_location(&input.ingredients, &mut validation_messages);
                 }
                 if let RuleDef::Knospe_AlleZutatenHerkunft = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for Import-Knospe ingredients when the Import-Knospe shows"));
-                    validate_import_knospe_origin(&input.ingredients, import_knospe_logo_would_show, &mut validation_messages)
+                    validate_import_knospe_origin(
+                        &input.ingredients,
+                        import_knospe_logo_would_show,
+                        &mut validation_messages,
+                    )
                 }
                 if let RuleDef::Knospe_Under90_Percent_CH_IngredientRules = ruleDef {
-                    self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking Knospe <90% specific ingredient origin requirements"));
-                    validate_knospe_under90_origin(&input.ingredients, total_amount, &mut validation_messages);
+                    self.log_rule_processing(
+                        ruleDef,
+                        "VALIDATION",
+                        Some("Checking Knospe <90% specific ingredient origin requirements"),
+                    );
+                    validate_knospe_under90_origin(
+                        &input.ingredients,
+                        total_amount,
+                        &mut validation_messages,
+                    );
                 }
             }
             // Non-ingredient validations always run
             if let RuleDef::Bio_Knospe_ZertifizierungsstellePflicht = ruleDef {
-                self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking mandatory certification body for Bio/Knospe"));
+                self.log_rule_processing(
+                    ruleDef,
+                    "VALIDATION",
+                    Some("Checking mandatory certification body for Bio/Knospe"),
+                );
                 validate_certification_body(&input.certification_body, &mut validation_messages);
             }
         }
@@ -1605,7 +2027,14 @@ impl Calculator {
         #[cfg(target_arch = "wasm32")]
         {
             let total_errors: usize = validation_messages.values().map(|v| v.len()).sum();
-            web_sys::console::log_1(&format!("📊 Validation results: {} fields with {} total errors", validation_messages.len(), total_errors).into());
+            web_sys::console::log_1(
+                &format!(
+                    "📊 Validation results: {} fields with {} total errors",
+                    validation_messages.len(),
+                    total_errors
+                )
+                .into(),
+            );
 
             if !validation_messages.is_empty() {
                 web_sys::console::log_1(&"❌ Validation errors by field:".into());
@@ -1636,17 +2065,22 @@ impl Calculator {
         #[cfg(target_arch = "wasm32")]
         web_sys::console::log_1(&"🌍 Origin Requirement Rules".into());
         let has_50_percent_rule = self
-            .rule_defs.contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
+            .rule_defs
+            .contains(&RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent);
         let has_bio_knospe_rule = self
-            .rule_defs.contains(&RuleDef::Knospe_AlleZutatenHerkunft);
+            .rule_defs
+            .contains(&RuleDef::Knospe_AlleZutatenHerkunft);
 
         // Handle Knospe-specific percentage-based rules
         let has_knospe_100_rule = self
-            .rule_defs.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
+            .rule_defs
+            .contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
         let has_knospe_90_99_rule = self
-            .rule_defs.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
+            .rule_defs
+            .contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
         let has_knospe_under90_rule = self
-            .rule_defs.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
+            .rule_defs
+            .contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
         // Calculate percentage of Swiss agricultural ingredients for Knospe rules
         let mut actual_knospe_rule: Option<RuleDef> = None;
@@ -1654,21 +2088,41 @@ impl Calculator {
             let swiss_percentage = self.swiss_agricultural_percentage(&input.ingredients);
 
             #[cfg(target_arch = "wasm32")]
-            web_sys::console::log_1(&format!("🇨🇭 Swiss agricultural percentage: {:.1}%", swiss_percentage).into());
+            web_sys::console::log_1(
+                &format!("🇨🇭 Swiss agricultural percentage: {:.1}%", swiss_percentage).into(),
+            );
 
             if swiss_percentage >= 100.0 && has_knospe_100_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_100_Percent_CH_NoOrigin);
-                self.log_rule_processing(&RuleDef::Knospe_100_Percent_CH_NoOrigin, "OUTPUT", Some("100% Swiss ingredients - no origin display needed"));
+                self.log_rule_processing(
+                    &RuleDef::Knospe_100_Percent_CH_NoOrigin,
+                    "OUTPUT",
+                    Some("100% Swiss ingredients - no origin display needed"),
+                );
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&"✅ Knospe Rule A: 100% Swiss agricultural ingredients - origin display disabled".into());
             } else if swiss_percentage >= 90.0 && has_knospe_90_99_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
-                self.log_rule_processing(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin, "OUTPUT", Some(&format!("{:.1}% Swiss ingredients - show origin for Swiss", swiss_percentage)));
+                self.log_rule_processing(
+                    &RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
+                    "OUTPUT",
+                    Some(&format!(
+                        "{:.1}% Swiss ingredients - show origin for Swiss",
+                        swiss_percentage
+                    )),
+                );
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("✅ Knospe Rule B: {:.1}% Swiss agricultural ingredients - show origin for Swiss only", swiss_percentage).into());
             } else if swiss_percentage < 90.0 && has_knospe_under90_rule {
                 actual_knospe_rule = Some(RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
-                self.log_rule_processing(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules, "OUTPUT", Some(&format!("{:.1}% Swiss ingredients - use ingredient-specific rules", swiss_percentage)));
+                self.log_rule_processing(
+                    &RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
+                    "OUTPUT",
+                    Some(&format!(
+                        "{:.1}% Swiss ingredients - use ingredient-specific rules",
+                        swiss_percentage
+                    )),
+                );
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("✅ Knospe Rule C: {:.1}% Swiss agricultural ingredients - ingredient-specific origin rules", swiss_percentage).into());
             }
@@ -1687,10 +2141,11 @@ impl Calculator {
             None
         };
 
-
         // Bio-V: «Bio» in der Sachbezeichnung — one typed verdict (TD-1 Stufe 2).
         // The percentage itself is still needed below for the legend variants.
-        let has_bio_rule = self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung);
+        let has_bio_rule = self
+            .rule_defs
+            .contains(&RuleDef::Bio_ShowBioSachbezeichnung);
         let bio_ch_percentage = if has_bio_rule {
             calculate_bio_ch_certified_percentage(&input.ingredients)
         } else {
@@ -1704,15 +2159,16 @@ impl Calculator {
             None
         };
 
-
-
         let has_meat_rule = self
-            .rule_defs.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent);
+            .rule_defs
+            .contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent);
 
         let mut origin_required_indices: Vec<usize> = Vec::new();
         if has_50_percent_rule || has_bio_knospe_rule || has_meat_rule {
             #[cfg(target_arch = "wasm32")]
-            web_sys::console::log_1(&"🌍 Analyzing origin requirements for each ingredient:".into());
+            web_sys::console::log_1(
+                &"🌍 Analyzing origin requirements for each ingredient:".into(),
+            );
 
             for (index, ingredient) in input.ingredients.iter().enumerate() {
                 let mut requires_herkunft = false;
@@ -1723,7 +2179,8 @@ impl Calculator {
                 // percentage toward 0 and the >50%/meat-20% flags never fire. This
                 // matches the denominator `total_amount` (Σ computed_amount, ~line 1272)
                 // and the validators `validate_origin` / `validate_meat_origin`.
-                let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+                let percentage =
+                    calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
 
                 // Check if >50% rule applies (non-agricultural ingredients never require origin)
                 if has_50_percent_rule && percentage > 50.0 && ingredient.is_agricultural() {
@@ -1757,9 +2214,23 @@ impl Calculator {
 
                 #[cfg(target_arch = "wasm32")]
                 if requires_herkunft {
-                    web_sys::console::log_1(&format!("  ✅ {} ({:.1}%): Origin required - {}", ingredient.name, percentage, reasons.join(", ")).into());
+                    web_sys::console::log_1(
+                        &format!(
+                            "  ✅ {} ({:.1}%): Origin required - {}",
+                            ingredient.name,
+                            percentage,
+                            reasons.join(", ")
+                        )
+                        .into(),
+                    );
                 } else {
-                    web_sys::console::log_1(&format!("  ⚪ {} ({:.1}%): No origin required", ingredient.name, percentage).into());
+                    web_sys::console::log_1(
+                        &format!(
+                            "  ⚪ {} ({:.1}%): No origin required",
+                            ingredient.name, percentage
+                        )
+                        .into(),
+                    );
                 }
 
                 if requires_herkunft {
@@ -1784,17 +2255,25 @@ impl Calculator {
         };
         let verdicts_out = verdicts;
 
-
         // Prepare rule_defs for OutputFormatter, including the specific Knospe rule
         let mut output_rules = self.rule_defs.clone();
         if let Some(knospe_rule) = actual_knospe_rule {
             // Remove the generic Knospe rules and add the specific one
-            output_rules.retain(|rule| !matches!(rule, RuleDef::Knospe_100_Percent_CH_NoOrigin | RuleDef::Knospe_90_99_Percent_CH_ShowOrigin));
+            output_rules.retain(|rule| {
+                !matches!(
+                    rule,
+                    RuleDef::Knospe_100_Percent_CH_NoOrigin
+                        | RuleDef::Knospe_90_99_Percent_CH_ShowOrigin
+                )
+            });
             output_rules.push(knospe_rule);
         }
 
         // Inject Bio marking mode rules (only for Bio config with Bio_ShowBioSachbezeichnung)
-        if self.rule_defs.contains(&RuleDef::Bio_ShowBioSachbezeichnung) {
+        if self
+            .rule_defs
+            .contains(&RuleDef::Bio_ShowBioSachbezeichnung)
+        {
             // Three bands (Excel "Inhaltsverzeichnis_Bio_Zusatz", Zeilen 2–4):
             //   = 100%     → "Alle landwirtschaftlichen … aus biologischer Landwirtschaft", kein *
             //   95–99.99%  → per-Zutat * + "* aus biologischer Landwirtschaft" (weder Rule injiziert;
@@ -1819,8 +2298,16 @@ impl Calculator {
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::console::log_1(&"📈 Final Results".into());
-            web_sys::console::log_1(&format!("✅ Label generation complete - {} ingredients processed", sorted_ingredients.len()).into());
-            web_sys::console::log_1(&format!("📋 {} validation messages", validation_messages.len()).into());
+            web_sys::console::log_1(
+                &format!(
+                    "✅ Label generation complete - {} ingredients processed",
+                    sorted_ingredients.len()
+                )
+                .into(),
+            );
+            web_sys::console::log_1(
+                &format!("📋 {} validation messages", validation_messages.len()).into(),
+            );
             web_sys::console::log_1(&format!("⚖️ Total amount: {}g", total_amount).into());
         }
 
@@ -1836,7 +2323,8 @@ impl Calculator {
         let has_umstellbetrieb = has_bio_rules && tree_has_double_star;
 
         // Count agricultural ingredients for Monoprodukt detection in OutputFormatter
-        let agricultural_ingredient_count = sorted_ingredients.iter()
+        let agricultural_ingredient_count = sorted_ingredients
+            .iter()
             .flat_map(|i| i.leaves())
             .filter(|i| i.is_agricultural())
             .count();
@@ -1845,29 +2333,52 @@ impl Calculator {
         let has_wildsammlung_marker = output_rules.contains(&RuleDef::Wildsammlung_Ueber10Prozent)
             && sorted_ingredients.iter().any(|ing| {
                 let pct = calculate_ingredient_percentage(ing.computed_amount(), total_amount);
-                pct >= 10.0 && ing.processing_steps.as_ref()
-                    .is_some_and(|s| s.iter().any(|step| step == WILDSAMMLUNG_STEP))
+                pct >= 10.0
+                    && ing
+                        .processing_steps
+                        .as_ref()
+                        .is_some_and(|s| s.iter().any(|step| step == WILDSAMMLUNG_STEP))
             });
 
         // Generiere Zutatenliste
         let ingredients_label = sorted_ingredients
             .into_iter()
-            .map(|item| OutputFormatter::from(item, total_amount, output_rules.clone(), agricultural_ingredient_count))
+            .map(|item| {
+                OutputFormatter::from(
+                    item,
+                    total_amount,
+                    output_rules.clone(),
+                    agricultural_ingredient_count,
+                )
+            })
             .map(|fmt| fmt.format())
             .collect::<Vec<_>>()
             .join(", ");
 
         // Legende anhängen basierend auf Bio-Modus
-        let mut label = if output_rules.contains(&RuleDef::Bio_AllAgriAreBio) && has_bio_ingredients {
+        let mut label = if output_rules.contains(&RuleDef::Bio_AllAgriAreBio) && has_bio_ingredients
+        {
             // AllBio mode: no asterisks, "Alle landwirtschaftlichen..." legend
-            format!("{}<br><br>{}", ingredients_label, t!("bio_legend.alle_landwirtschaftlichen"))
+            format!(
+                "{}<br><br>{}",
+                ingredients_label,
+                t!("bio_legend.alle_landwirtschaftlichen")
+            )
         } else if output_rules.contains(&RuleDef::Bio_PartialBioMarking) && has_bio_ingredients {
             // PartialBio mode: asterisks on bio ingredients, percentage legend
             let rounded = bio_ch_percentage.round() as u32;
-            format!("{}<br><br>* {}", ingredients_label, t!("bio_legend.x_prozent_bio", percentage = rounded))
+            format!(
+                "{}<br><br>* {}",
+                ingredients_label,
+                t!("bio_legend.x_prozent_bio", percentage = rounded)
+            )
         } else if has_bio_ingredients {
             // Knospe fallback: simple * legend
-            format!("{}<br><br>* {}", ingredients_label, t!("bio_legend.aus_biologischer_landwirtschaft"))
+            format!(
+                "{}<br><br>* {}",
+                ingredients_label,
+                t!("bio_legend.aus_biologischer_landwirtschaft")
+            )
         } else {
             ingredients_label
         };
@@ -1899,10 +2410,14 @@ impl Calculator {
     }
 }
 
-fn validate_amount(ingredients: &[Ingredient], validation_messages: &mut HashMap<String, Vec<String>>) {
+fn validate_amount(
+    ingredients: &[Ingredient],
+    validation_messages: &mut HashMap<String, Vec<String>>,
+) {
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.amount <= 0. {
-            validation_messages.entry(format!("ingredients[{}][amount]", i))
+            validation_messages
+                .entry(format!("ingredients[{}][amount]", i))
                 .or_default()
                 .push(t!("validation.amount_greater_than_zero").to_string());
         }
@@ -1915,12 +2430,14 @@ fn validate_origin(
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        let percentage =
+            calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
         // Respect bottom-up origin: a composite satisfies the requirement when its
         // sub-ingredients carry origins, even if the parent declares none.
         let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
         if percentage > 50.0 && !has_origin && ingredient.is_agricultural() {
-            validation_messages.entry(format!("ingredients[{}][origin]", i))
+            validation_messages
+                .entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_over_50_percent").to_string());
         }
@@ -1934,27 +2451,39 @@ fn validate_origin(
 /// Format origin display string for an ingredient according to active Knospe rules.
 /// Returns None if origin should not be displayed, Some("(CH)") etc. if it should.
 /// Used by both OutputFormatter::format() and composites_with_rules() for consistency.
-fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], total_amount: f64, agricultural_ingredient_count: usize) -> Option<String> {
+fn format_origin_for_knospe_rules(
+    ingredient: &Ingredient,
+    rules: &[RuleDef],
+    total_amount: f64,
+    agricultural_ingredient_count: usize,
+) -> Option<String> {
     let has_knospe_100_rule = rules.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
     let has_knospe_90_99_rule = rules.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
-    let has_knospe_under90_rule = rules.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
+    let has_knospe_under90_rule =
+        rules.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
     if has_knospe_100_rule {
         // Rule A: 100% Swiss agricultural ingredients — no origin display
         None
     } else if has_knospe_90_99_rule {
         // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
-        if ingredient.is_agricultural() && ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)) {
+        if ingredient.is_agricultural()
+            && ingredient
+                .computed_origins()
+                .is_some_and(|o| o.contains(&Country::CH))
+        {
             Some("(CH)".to_string())
         } else {
             None
         }
     } else if has_knospe_under90_rule {
         // Rule C: <90% Swiss — show origin based on specific ingredient criteria
-        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        let percentage =
+            calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
         let is_mono_product = agricultural_ingredient_count == 1;
 
-        if should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product) {
+        if should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product)
+        {
             format_valid_origins(&ingredient.computed_origins())
         } else {
             None
@@ -1977,7 +2506,11 @@ fn format_origin_for_knospe_rules(ingredient: &Ingredient, rules: &[RuleDef], to
 /// ingredient to declare its country on the label. Only a required declaration
 /// is printed: a country entered for an ingredient below the thresholds stays
 /// out of the ingredient list.
-fn origin_required_by_traditional_rules(ingredient: &Ingredient, rules: &[RuleDef], total_amount: f64) -> bool {
+fn origin_required_by_traditional_rules(
+    ingredient: &Ingredient,
+    rules: &[RuleDef],
+    total_amount: f64,
+) -> bool {
     // Knospe regimes own their own origin logic (`should_show_origin_knospe_under90`).
     if rules.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin)
         || rules.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin)
@@ -1994,7 +2527,10 @@ fn origin_required_by_traditional_rules(ingredient: &Ingredient, rules: &[RuleDe
         && percentage > 50.0;
     let meat_over_20_required = rules.contains(&RuleDef::AP7_3_HerkunftFleischUeber20Prozent)
         && percentage > 20.0
-        && ingredient.category.as_ref().is_some_and(|c| is_meat_category(c));
+        && ingredient
+            .category
+            .as_ref()
+            .is_some_and(|c| is_meat_category(c));
     over_50_required || meat_over_20_required
 }
 
@@ -2032,7 +2568,12 @@ fn format_valid_origins(origins: &Option<Vec<Country>>) -> Option<String> {
 
 /// Determines if an ingredient should show origin for Knospe <90% CH rules
 /// Based on specific Knospe criteria for ingredient types and percentages
-fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _total_amount: f64, is_mono_product: bool) -> bool {
+fn should_show_origin_knospe_under90(
+    ingredient: &Ingredient,
+    percentage: f64,
+    _total_amount: f64,
+    is_mono_product: bool,
+) -> bool {
     // Non-agricultural ingredients (water, salt, additives like Dicarbonat) never require
     // or show an origin — this MUST win over the Monoprodukt short-circuit below, which
     // otherwise flags every origin-less ingredient once the product has a single agri leaf.
@@ -2058,25 +2599,26 @@ fn should_show_origin_knospe_under90(ingredient: &Ingredient, percentage: f64, _
         }
 
         // Eggs/Honey/Fish/Other aquacultures with more than 10% share
-        if (is_egg_category(category) ||
-            is_honey_category(category) ||
-            is_fish_category(category)) && percentage > 10.0 {
+        if (is_egg_category(category) || is_honey_category(category) || is_fish_category(category))
+            && percentage > 10.0
+        {
             return true;
         }
 
         // Milk/Dairy/Meat/Insects always show origin
-        if is_dairy_category(category) ||
-           is_meat_category(category) ||
-           is_insect_category(category) {
+        if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category)
+        {
             return true;
         }
-
     }
 
     // Swiss agricultural ingredients with >=10% share (regardless of category)
-    if ingredient.is_agricultural() &&
-       ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)) &&
-       percentage >= 10.0 {
+    if ingredient.is_agricultural()
+        && ingredient
+            .computed_origins()
+            .is_some_and(|o| o.contains(&Country::CH))
+        && percentage >= 10.0
+    {
         return true;
     }
 
@@ -2089,13 +2631,15 @@ fn validate_meat_origin(
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        let percentage =
+            calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
         if percentage > 20.0 {
             // Check if this ingredient is meat-based using the category
             if let Some(category) = &ingredient.category {
                 let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
                 if is_meat_category(category) && !has_origin {
-                    validation_messages.entry(format!("ingredients[{}][origin]", i))
+                    validation_messages
+                        .entry(format!("ingredients[{}][origin]", i))
                         .or_default()
                         .push(t!("validation.origin_required_meat_over_20").to_string());
                 }
@@ -2125,7 +2669,8 @@ fn validate_namensgebend_amounts(
             .as_ref()
             .is_some_and(|cs| cs.iter().any(subtree_has_zero_namensgebend));
         if flagged {
-            validation_messages.entry(format!("ingredients[{}][amount]", i))
+            validation_messages
+                .entry(format!("ingredients[{}][amount]", i))
                 .or_default()
                 .push(t!("validation.namensgebend_amount_required").to_string());
         }
@@ -2146,7 +2691,8 @@ fn validate_import_knospe_origin(
     }
     for (i, ingredient) in ingredients.iter().enumerate() {
         if ingredient.has_import_knospe_without_origin() {
-            validation_messages.entry(format!("ingredients[{}][origin]", i))
+            validation_messages
+                .entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(t!("validation.origin_required_import_knospe").to_string());
         }
@@ -2197,18 +2743,21 @@ fn validate_certification_body(
 ) {
     match certification_body {
         None => {
-            validation_messages.entry("certification_body".to_string())
+            validation_messages
+                .entry("certification_body".to_string())
                 .or_default()
                 .push(t!("validation.certification_body_required").to_string());
         }
         Some(s) if s.is_empty() => {
-            validation_messages.entry("certification_body".to_string())
+            validation_messages
+                .entry("certification_body".to_string())
                 .or_default()
                 .push(t!("validation.certification_body_required").to_string());
         }
         Some(s) => {
             if !s.starts_with("CH-BIO-") {
-                validation_messages.entry("certification_body".to_string())
+                validation_messages
+                    .entry("certification_body".to_string())
                     .or_default()
                     .push(t!("validation.certification_body_format").to_string());
             }
@@ -2226,14 +2775,16 @@ fn validate_beef_origin_details(
             if is_beef_category(category) {
                 // Validate aufzucht_ort (birthplace/where it lived)
                 if ingredient.aufzucht_ort.is_none() {
-                    validation_messages.entry(format!("ingredients[{}][aufzucht_ort]", i))
+                    validation_messages
+                        .entry(format!("ingredients[{}][aufzucht_ort]", i))
                         .or_default()
                         .push(t!("validation.beef_breeding_location_required").to_string());
                 }
 
                 // Validate schlachtungs_ort (slaughter location)
                 if ingredient.schlachtungs_ort.is_none() {
-                    validation_messages.entry(format!("ingredients[{}][schlachtungs_ort]", i))
+                    validation_messages
+                        .entry(format!("ingredients[{}][schlachtungs_ort]", i))
                         .or_default()
                         .push(t!("validation.beef_slaughter_location_required").to_string());
                 }
@@ -2252,7 +2803,8 @@ fn validate_fish_catch_location(
             if is_fish_category(category) {
                 // Validate fangort (catch location)
                 if ingredient.fangort.is_none() {
-                    validation_messages.entry(format!("ingredients[{}][fangort]", i))
+                    validation_messages
+                        .entry(format!("ingredients[{}][fangort]", i))
                         .or_default()
                         .push(t!("validation.fish_catch_location_required").to_string());
                 }
@@ -2266,18 +2818,25 @@ fn validate_knospe_under90_origin(
     total_amount: f64,
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
-    let agricultural_count = ingredients.iter()
+    let agricultural_count = ingredients
+        .iter()
         .flat_map(|i| i.leaves())
         .filter(|i| i.is_agricultural())
         .count();
 
     for (i, ingredient) in ingredients.iter().enumerate() {
-        let percentage = calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        let percentage =
+            calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
         let is_mono_product = agricultural_count == 1;
 
         // `requires_origin` keeps the Excel category/percentage thresholds as-is;
         // only the presence check aggregates bottom-up (composite origin on children).
-        let requires_origin = should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product);
+        let requires_origin = should_show_origin_knospe_under90(
+            ingredient,
+            percentage,
+            total_amount,
+            is_mono_product,
+        );
         let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
 
         if requires_origin && !has_origin {
@@ -2288,13 +2847,23 @@ fn validate_knospe_under90_origin(
             } else if let Some(category) = &ingredient.effective_category() {
                 if is_plant_category(category) && percentage > 50.0 {
                     t!("validation.knospe_plants_over_50_origin_required").to_string()
-                } else if (is_egg_category(category) || is_honey_category(category) || is_fish_category(category)) && percentage > 10.0 {
+                } else if (is_egg_category(category)
+                    || is_honey_category(category)
+                    || is_fish_category(category))
+                    && percentage > 10.0
+                {
                     t!("validation.knospe_egg_honey_fish_origin_required").to_string()
-                } else if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category) {
+                } else if is_dairy_category(category)
+                    || is_meat_category(category)
+                    || is_insect_category(category)
+                {
                     t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
-                } else if ingredient.is_agricultural() &&
-                          ingredient.computed_origins().is_some_and(|o| o.contains(&Country::CH)) &&
-                          percentage >= 10.0 {
+                } else if ingredient.is_agricultural()
+                    && ingredient
+                        .computed_origins()
+                        .is_some_and(|o| o.contains(&Country::CH))
+                    && percentage >= 10.0
+                {
                     t!("validation.knospe_over_10_percent_origin_required").to_string()
                 } else {
                     t!("validation.knospe_general_origin_required").to_string()
@@ -2303,13 +2872,13 @@ fn validate_knospe_under90_origin(
                 t!("validation.knospe_general_origin_required").to_string()
             };
 
-            validation_messages.entry(format!("ingredients[{}][origin]", i))
+            validation_messages
+                .entry(format!("ingredients[{}][origin]", i))
                 .or_default()
                 .push(reason);
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests;

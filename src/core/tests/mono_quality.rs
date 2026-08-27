@@ -8,8 +8,8 @@
 // These tests drive the real `Form` conversion rather than hand-built inputs,
 // so a regression in the wiring is caught, not just in the rules.
 
-use crate::conditional_keys as keys;
 use super::*;
+use crate::conditional_keys as keys;
 use crate::pages::label_page::{Form, MonoQuality};
 use crate::shared::Configuration;
 
@@ -34,7 +34,11 @@ fn mono_knospe_ch_shows_the_swiss_knospe() {
     let c = mono_output(Configuration::Knospe, MonoQuality::KnospeCh).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Swiss Knospe → logo with cross");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        Some(&true),
+        "Swiss Knospe → logo with cross"
+    );
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None);
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), None);
 }
@@ -44,7 +48,11 @@ fn mono_knospe_import_shows_the_knospe_without_cross() {
     let c = mono_output(Configuration::Knospe, MonoQuality::KnospeImport).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "import → logo without cross");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        Some(&true),
+        "import → logo without cross"
+    );
     assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
     assert_eq!(c.get(keys::KNOSPE_UMSTELLUNG_LOGO), None);
 }
@@ -61,8 +69,7 @@ fn mono_umstellung_knospe_ch_shows_the_umstellungsknospe() {
 
 #[test]
 fn mono_umstellung_knospe_import_shows_the_imported_umstellungsknospe() {
-    let c =
-        mono_output(Configuration::Knospe, MonoQuality::UmstellungKnospeImport).conditionals();
+    let c = mono_output(Configuration::Knospe, MonoQuality::UmstellungKnospeImport).conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
@@ -124,8 +131,7 @@ fn mono_nicht_biologisch_gets_no_bio_sachbezeichnung() {
 fn mono_nicht_landwirtschaftlich_makes_no_bio_claim() {
     // Salt/water: no agricultural ingredient at all, so there is nothing to
     // certify — and nothing may be claimed.
-    let c = mono_output(Configuration::Bio, MonoQuality::NichtLandwirtschaftlich)
-        .conditionals();
+    let c = mono_output(Configuration::Bio, MonoQuality::NichtLandwirtschaftlich).conditionals();
 
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
@@ -140,9 +146,9 @@ fn mono_quality_does_not_leak_into_normal_recipes() {
     let form = Form {
         ignore_ingredients: false,
         mono_quality: MonoQuality::KnospeCh,
-        ingredients: vec![
-            IngredientBuilder::new_agri("Zucker", 1000.0).origin(Country::CH).build(),
-        ],
+        ingredients: vec![IngredientBuilder::new_agri("Zucker", 1000.0)
+            .origin(Country::CH)
+            .build()],
         rezeptur_vollstaendig: true,
         ..Form::default()
     };

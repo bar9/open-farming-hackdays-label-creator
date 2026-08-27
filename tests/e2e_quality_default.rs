@@ -59,7 +59,10 @@ async fn non_agricultural_lock_does_not_leak_into_the_next_ingredient() {
         "premise: the food DB should lock Salz to non-agricultural"
     );
 
-    if let Ok(num) = c.find(Locator::Css("dialog[open] input[type='number']")).await {
+    if let Ok(num) = c
+        .find(Locator::Css("dialog[open] input[type='number']"))
+        .await
+    {
         num.click().await.unwrap();
         num.send_keys("10").await.unwrap();
     }

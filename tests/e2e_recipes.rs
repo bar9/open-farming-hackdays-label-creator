@@ -31,7 +31,11 @@ async fn recipe_strawberry_jam() {
     tokio::time::sleep(Duration::from_millis(500)).await;
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics in strawberry jam:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics in strawberry jam:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 #[tokio::test]
@@ -46,7 +50,11 @@ async fn recipe_beef_with_origins() {
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics in beef recipe:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics in beef recipe:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 #[tokio::test]
@@ -59,7 +67,11 @@ async fn recipe_fish_salmon() {
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics in fish recipe:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics in fish recipe:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 // ---------- B. Editing ----------
@@ -108,7 +120,11 @@ async fn edit_change_amount() {
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics in edit-amount:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics in edit-amount:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 #[tokio::test]
@@ -134,7 +150,11 @@ async fn edit_delete_ingredient() {
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics in delete-ingredient:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics in delete-ingredient:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 // Regression tests for tester feedback against v0.8.5:
@@ -378,13 +398,22 @@ async fn switch_swiss_to_bio() {
     tokio::time::sleep(Duration::from_millis(800)).await;
 
     // Verify we're on /bio (best-effort: URL contains "bio")
-    let url = c.current_url().await.ok().map(|u| u.to_string()).unwrap_or_default();
+    let url = c
+        .current_url()
+        .await
+        .ok()
+        .map(|u| u.to_string())
+        .unwrap_or_default();
     let on_bio = url.contains("/bio");
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
 
-    assert!(errs.is_empty(), "panics during swiss→bio switch:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics during swiss→bio switch:\n  {}",
+        errs.join("\n  ")
+    );
     if !on_bio {
         eprintln!("warning: did not reach /bio (URL: {url}) — selector for switch button may have changed");
     }
@@ -415,7 +444,11 @@ async fn switch_bio_to_knospe_with_data() {
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics during bio→knospe switch:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics during bio→knospe switch:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 // ---------- D. Link share roundtrip ----------
@@ -438,7 +471,11 @@ async fn link_copy_modal_opens() {
 
     assert!(opened, "could not find 'Link kopieren' button");
     assert!(!url.is_empty(), "share URL was empty");
-    assert!(errs.is_empty(), "panics opening share modal:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics opening share modal:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 #[tokio::test]
@@ -453,7 +490,11 @@ async fn link_copy_and_reuse() {
     let share_url = read_share_url(&c1).await;
     let errs1 = read_errors(&c1).await;
     c1.close().await.ok();
-    assert!(errs1.is_empty(), "panics in source session:\n  {}", errs1.join("\n  "));
+    assert!(
+        errs1.is_empty(),
+        "panics in source session:\n  {}",
+        errs1.join("\n  ")
+    );
 
     let url = share_url.expect("share URL must be present");
     assert!(!url.is_empty());
@@ -467,7 +508,11 @@ async fn link_copy_and_reuse() {
     add_simple_ingredient(&c2, "Butter", 50).await;
     let errs2 = read_errors(&c2).await;
     c2.close().await.ok();
-    assert!(errs2.is_empty(), "panics in restored session:\n  {}", errs2.join("\n  "));
+    assert!(
+        errs2.is_empty(),
+        "panics in restored session:\n  {}",
+        errs2.join("\n  ")
+    );
 }
 
 // ---------- E. "Zutaten merken" (saved ingredients) ----------
@@ -511,8 +556,15 @@ async fn merken_seed_and_open_manager() {
     let errs = read_errors(&c).await;
     c.close().await.ok();
 
-    assert!(opened, "could not find 'Gespeicherte Zutaten' header button");
-    assert!(errs.is_empty(), "panics opening saved-ingredients manager:\n  {}", errs.join("\n  "));
+    assert!(
+        opened,
+        "could not find 'Gespeicherte Zutaten' header button"
+    );
+    assert!(
+        errs.is_empty(),
+        "panics opening saved-ingredients manager:\n  {}",
+        errs.join("\n  ")
+    );
     assert!(has_entry, "seeded saved ingredient not visible in manager");
 }
 
@@ -532,13 +584,19 @@ async fn merken_recall_in_search() {
     }
     // Look for the "Gespeicherte Zutaten" section header in the dropdown
     let saved_section = c
-        .find(Locator::XPath("//*[contains(text(),'Gespeicherte Zutaten')]"))
+        .find(Locator::XPath(
+            "//*[contains(text(),'Gespeicherte Zutaten')]",
+        ))
         .await
         .is_ok();
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics during saved-ingredient recall:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics during saved-ingredient recall:\n  {}",
+        errs.join("\n  ")
+    );
     if !saved_section {
         eprintln!("warning: saved-ingredients section did not appear in search dropdown");
     }
@@ -565,7 +623,11 @@ async fn merken_delete() {
 
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics during saved-ingredient delete:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics during saved-ingredient delete:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 // ---------- F. Robustness ----------
@@ -581,7 +643,11 @@ async fn empty_form_no_panic() {
     tokio::time::sleep(Duration::from_millis(500)).await;
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics on empty form:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics on empty form:\n  {}",
+        errs.join("\n  ")
+    );
 }
 
 #[tokio::test]
@@ -590,13 +656,16 @@ async fn many_ingredients_stress() {
     goto(&c, "lebensmittelrecht").await;
     set_product_title(&c, "Stresstest").await;
     let names = [
-        "Mehl", "Zucker", "Butter", "Eier", "Milch",
-        "Salz", "Hefe", "Wasser", "Honig", "Vanille",
+        "Mehl", "Zucker", "Butter", "Eier", "Milch", "Salz", "Hefe", "Wasser", "Honig", "Vanille",
     ];
     for (i, n) in names.iter().enumerate() {
         add_simple_ingredient(&c, n, ((i + 1) * 10) as u32).await;
     }
     let errs = read_errors(&c).await;
     c.close().await.ok();
-    assert!(errs.is_empty(), "panics in stress test:\n  {}", errs.join("\n  "));
+    assert!(
+        errs.is_empty(),
+        "panics in stress test:\n  {}",
+        errs.join("\n  ")
+    );
 }

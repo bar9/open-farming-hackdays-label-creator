@@ -305,14 +305,25 @@ async fn composite_origin_locks_when_subingredient_defines_it() {
 
     // Wait for mount, open the genesis pane, and recall the saved composite.
     for _ in 0..30 {
-        if c.execute("return document.body.innerText.length > 0;", vec![]).await.ok()
-            .and_then(|v| v.as_bool()).unwrap_or(false) { break; }
+        if c.execute("return document.body.innerText.length > 0;", vec![])
+            .await
+            .ok()
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+        {
+            break;
+        }
         tokio::time::sleep(Duration::from_millis(300)).await;
     }
     let mut input_el = None;
     for attempt in 0..30 {
-        if let Some(el) = first_accent_input(&c).await { input_el = Some(el); break; }
-        if attempt % 3 == 0 { open_add_ingredient(&c).await; }
+        if let Some(el) = first_accent_input(&c).await {
+            input_el = Some(el);
+            break;
+        }
+        if attempt % 3 == 0 {
+            open_add_ingredient(&c).await;
+        }
         tokio::time::sleep(Duration::from_millis(300)).await;
     }
     let input = input_el.expect("genesis ingredient input never appeared");
@@ -328,7 +339,9 @@ async fn composite_origin_locks_when_subingredient_defines_it() {
             }
             return false;
         "#, vec![]).await.ok().and_then(|v| v.as_bool()).unwrap_or(false);
-        if clicked { break; }
+        if clicked {
+            break;
+        }
         tokio::time::sleep(Duration::from_millis(300)).await;
     }
     assert!(clicked, "could not recall 'Salzbouillon' saved composite");
@@ -336,12 +349,16 @@ async fn composite_origin_locks_when_subingredient_defines_it() {
 
     // Save + close so the composite lands in the recipe list.
     for label in &["Speichern und nächste Zutat", "Speichern", "Hinzufügen"] {
-        if click_button_by_text(&c, label).await { break; }
+        if click_button_by_text(&c, label).await {
+            break;
+        }
     }
     tokio::time::sleep(Duration::from_millis(500)).await;
     if open_dialog_count(&c).await > 0 {
         for label in &["Schliessen", "Schließen", "Abbrechen", "Close"] {
-            if click_button_by_text(&c, label).await { break; }
+            if click_button_by_text(&c, label).await {
+                break;
+            }
         }
     }
     tokio::time::sleep(Duration::from_millis(300)).await;
@@ -354,8 +371,14 @@ async fn composite_origin_locks_when_subingredient_defines_it() {
     tokio::time::sleep(Duration::from_millis(400)).await;
 
     let dom = c
-        .execute("const d=document.querySelector('dialog[open]'); return d?d.textContent:'';", vec![])
-        .await.ok().and_then(|v| v.as_str().map(|s| s.to_string())).unwrap_or_default();
+        .execute(
+            "const d=document.querySelector('dialog[open]'); return d?d.textContent:'';",
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
 
     // Cross-level lock is now a greyed control + a (non-interactive) tooltip whose
     // text lives in the `data-tip` attribute — query that, not textContent.

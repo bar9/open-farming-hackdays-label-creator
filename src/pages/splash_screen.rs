@@ -83,345 +83,346 @@ pub fn SplashScreen() -> Element {
     });
 
     rsx! {
-        div {
-            class: "min-h-screen md:h-screen flex flex-col md:overflow-hidden bg-base-200",
-            header {
-                class: "flex-none bg-base-200 p-4",
-                div {
-                    class: "flex justify-between items-center",
-                    div {
-                        class: "text-2xl font-bold",
-                        {
-                            #[cfg(feature = "hidebio")]
-                            { rsx! { {t!("app.title").to_string()} } }
-                        }
-                    }
-                    div {
-                        class: "dropdown dropdown-end",
-                        div {
-                            tabindex: "0",
-                            role: "button",
-                            class: "btn btn-ghost btn-sm",
-                            {match rust_i18n::locale().as_ref() {
-                                "fr-CH" => t!("languages.fr").to_string(),
-                                "it-CH" => t!("languages.it").to_string(),
-                                _ => t!("languages.de").to_string(),
-                            }}
-                            svg {
-                                class: "w-4 h-4 ml-1",
-                                fill: "none",
-                                stroke: "currentColor",
-                                view_box: "0 0 24 24",
-                                path {
-                                    stroke_linecap: "round",
-                                    stroke_linejoin: "round",
-                                    stroke_width: "2",
-                                    d: "M19 9l-7 7-7-7"
-                                }
-                            }
-                        }
-                        ul {
-                            tabindex: "0",
-                            class: "dropdown-content menu bg-base-100 rounded-box z-[1] w-20 p-2 shadow-lg",
-                            li {
-                                button {
-                                    class: "btn btn-ghost btn-sm justify-start",
-                                    onclick: move |_| {
-                                        rust_i18n::set_locale("de-CH");
-                                        if let Some(window) = web_sys::window() {
-                                            if let Ok(Some(storage)) = window.local_storage() {
-                                                let _ = storage.set_item("locale", "de-CH");
-                                            }
-                                            let _ = window.location().reload();
-                                        }
-                                    },
-                                    {t!("languages.de").to_string()}
-                                }
-                            }
-                            li {
-                                button {
-                                    class: "btn btn-ghost btn-sm justify-start",
-                                    onclick: move |_| {
-                                        rust_i18n::set_locale("fr-CH");
-                                        if let Some(window) = web_sys::window() {
-                                            if let Ok(Some(storage)) = window.local_storage() {
-                                                let _ = storage.set_item("locale", "fr-CH");
-                                            }
-                                            let _ = window.location().reload();
-                                        }
-                                    },
-                                    {t!("languages.fr").to_string()}
-                                }
-                            }
-                            li {
-                                button {
-                                    class: "btn btn-ghost btn-sm justify-start",
-                                    onclick: move |_| {
-                                        rust_i18n::set_locale("it-CH");
-                                        if let Some(window) = web_sys::window() {
-                                            if let Ok(Some(storage)) = window.local_storage() {
-                                                let _ = storage.set_item("locale", "it-CH");
-                                            }
-                                            let _ = window.location().reload();
-                                        }
-                                    },
-                                    {t!("languages.it").to_string()}
-                                }
-                            }
-                        }
-                    }
-                }
-            }
             div {
-                class: "flex-1 min-h-0 flex flex-col items-center justify-start md:justify-center px-8 py-4",
-                div {
-                    class: "text-center max-w-4xl",
-                    h1 {
-                        class: "text-4xl md:text-5xl font-bold mb-8 md:mb-10 text-base-content flex justify-center",
-                        {
-                            #[cfg(not(feature = "hidebio"))]
-                            { rsx! { span { class: "inline-block h-28 md:h-32 -mt-4 md:-mt-8 text-black", "aria-label": "Declarino", dangerous_inner_html: crate::layout::locale_logo() } } }
-                            #[cfg(feature = "hidebio")]
-                            { rsx! { {t!("app.title").to_string()} } }
-                        }
-                    }
-                    {
-                        #[cfg(feature = "hidebio")]
-                        { rsx! { h2 { class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content", {t!("splash.subtitle").to_string()} } } }
-                    }
-                    p {
-                        class: "text-lg md:text-xl text-base-content/70 mb-6 max-w-2xl mx-auto",
-                        {t!("splash.description").to_string()}
-                    }
+                class: "min-h-screen md:h-screen flex flex-col md:overflow-hidden bg-base-200",
+                header {
+                    class: "flex-none bg-base-200 p-4",
                     div {
-                        class: "grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl",
-
-                        button {
-                            class: "card bg-red-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
-                            onclick: move |_| {
-                                nav.push(Route::Swiss {});
-                            },
+                        class: "flex justify-between items-center",
                         div {
-                            class: "card-body items-center text-center py-5",
-                            h3 {
-                                class: "card-title text-xl mb-2",
-                                {t!("routes.swiss").to_string()}
+                            class: "text-2xl font-bold",
+                            {
+                                #[cfg(feature = "hidebio")]
+                                { rsx! { {t!("app.title").to_string()} } }
                             }
+                        }
+                        div {
+                            class: "dropdown dropdown-end",
                             div {
-                                class: "w-20 h-16 flex items-center justify-center mb-2",
+                                tabindex: "0",
+                                role: "button",
+                                class: "btn btn-ghost btn-sm",
+                                {match rust_i18n::locale().as_ref() {
+                                    "fr-CH" => t!("languages.fr").to_string(),
+                                    "it-CH" => t!("languages.it").to_string(),
+                                    _ => t!("languages.de").to_string(),
+                                }}
                                 svg {
-                                    class: "w-16 h-16",
-                                    view_box: "0 0 32 32",
-                                    rect {
-                                        width: "32",
-                                        height: "32",
-                                        fill: "#FF0000"
-                                    }
-                                    rect {
-                                        x: "13",
-                                        y: "6",
-                                        width: "6",
-                                        height: "20",
-                                        fill: "white"
-                                    }
-                                    rect {
-                                        x: "6",
-                                        y: "13",
-                                        width: "20",
-                                        height: "6",
-                                        fill: "white"
+                                    class: "w-4 h-4 ml-1",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    view_box: "0 0 24 24",
+                                    path {
+                                        stroke_linecap: "round",
+                                        stroke_linejoin: "round",
+                                        stroke_width: "2",
+                                        d: "M19 9l-7 7-7-7"
                                     }
                                 }
                             }
-                            div {
-                                class: "badge badge-info text-xs px-2 py-1",
-                                {t!("badges.not_for_meat_dairy").to_string()}
-                            }
-                        }
-                    }
-
-                        button {
-                            class: if cfg!(feature = "hidebio") {
-                                "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
-                            } else {
-                                "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
-                            },
-                            disabled: cfg!(feature = "hidebio"),
-                            onclick: move |_| {
-                                #[cfg(not(feature = "hidebio"))]
-                                {
-                                    nav.push(Route::Bio {});
+                            ul {
+                                tabindex: "0",
+                                class: "dropdown-content menu bg-base-100 rounded-box z-[1] w-20 p-2 shadow-lg",
+                                li {
+                                    button {
+                                        class: "btn btn-ghost btn-sm justify-start",
+                                        onclick: move |_| {
+                                            rust_i18n::set_locale("de-CH");
+                                            if let Some(window) = web_sys::window() {
+                                                if let Ok(Some(storage)) = window.local_storage() {
+                                                    let _ = storage.set_item("locale", "de-CH");
+                                                }
+                                                let _ = window.location().reload();
+                                            }
+                                        },
+                                        {t!("languages.de").to_string()}
+                                    }
                                 }
-                            },
-                        div {
-                            class: "card-body items-center text-center py-5",
-                            h3 {
-                                class: "card-title text-xl mb-2",
-                                {t!("routes.bio").to_string()}
-                            }
-                            div {
-                                class: "w-20 h-16 flex flex-col items-center justify-center mb-2",
-                                span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
-                                span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
-                            }
-                            div {
-                                class: if cfg!(feature = "hidebio") {
-                                    "badge badge-secondary text-xs px-2 py-1"
-                                } else {
-                                    "badge badge-warning text-xs px-2 py-1"
-                                },
-{
-                                    if cfg!(feature = "hidebio") {
-                                        "Coming Soon".to_string()
-                                    } else {
-                                        t!("badges.in_development").to_string()
+                                li {
+                                    button {
+                                        class: "btn btn-ghost btn-sm justify-start",
+                                        onclick: move |_| {
+                                            rust_i18n::set_locale("fr-CH");
+                                            if let Some(window) = web_sys::window() {
+                                                if let Ok(Some(storage)) = window.local_storage() {
+                                                    let _ = storage.set_item("locale", "fr-CH");
+                                                }
+                                                let _ = window.location().reload();
+                                            }
+                                        },
+                                        {t!("languages.fr").to_string()}
+                                    }
+                                }
+                                li {
+                                    button {
+                                        class: "btn btn-ghost btn-sm justify-start",
+                                        onclick: move |_| {
+                                            rust_i18n::set_locale("it-CH");
+                                            if let Some(window) = web_sys::window() {
+                                                if let Ok(Some(storage)) = window.local_storage() {
+                                                    let _ = storage.set_item("locale", "it-CH");
+                                                }
+                                                let _ = window.location().reload();
+                                            }
+                                        },
+                                        {t!("languages.it").to_string()}
                                     }
                                 }
                             }
                         }
-                    }
-
-                        button {
-                            class: if cfg!(feature = "hidebio") {
-                                "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
-                            } else {
-                                "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
-                            },
-                            disabled: cfg!(feature = "hidebio"),
-                            onclick: move |_| {
-                                #[cfg(not(feature = "hidebio"))]
-                                {
-                                    nav.push(Route::Knospe {});
-                                }
-                            },
-                        div {
-                            class: "card-body items-center text-center py-5",
-                            h3 {
-                                class: "card-title text-xl mb-2",
-                                {t!("routes.knospe").to_string()}
-                            }
-                            div {
-                                class: "w-20 h-16 flex items-center justify-center mb-2",
-
-                                svg {
-                                    height: "768",
-                                    id: "svg23238",
-                                    "svg": "http://www.w3.org/2000/svg",
-                                    version: "1.1",
-                                    view_box: "-2.27216241 -2.27216241 98.57944282 80.28307182",
-                                    width: "943",
-                                    xmlns: "http://www.w3.org/2000/svg",
-                                    defs { id: "defs23240" }
-                                    path {
-                                        d: "m 24.38225,28.0565 c 0,-12.39625 10.04875,-22.44375 22.445,-22.44375 12.395,0 22.44375,10.0475 22.44375,22.44375 0,12.395 -10.04875,22.44375 -22.44375,22.44375 -12.39625,0 -22.445,-10.04875 -22.445,-22.44375",
-                                        id: "path22766",
-                                        style: "fill:#30a32d;fill-opacity:1;fill-rule:nonzero;stroke:none",
-                                    }
-                                    path {
-                                        d: "m 47.154,8.39425 c 0,0 -18.9025,11.39375 -6.43875,30.80375 0,0 -7.20625,-3.63125 -8.79375,-14.2175 -0.0475,-0.4375 -0.565,-0.95875 -0.93875,0.105 -3.7425,10.69125 1.84875,24.12 17.10875,23.4725 15.38875,-0.65375 18.88,-18.325 10.955,-29.23875 -0.28625,-0.4475 -0.7,-0.56375 -0.4625,0.2975 1.53875,5.57875 -1.02375,12.12375 -1.93875,13.605 C 61.249,18.10925 48.17025,8.518 47.154,8.39425",
-                                        id: "path22770",
-                                        style: "fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none",
-                                    }
-                                    path {
-                                        d: "m 86.74887,75.42725 0,-13.755 7.20875,0 0,1.0325 -6.03875,0 0,5.085 5.63,0 0,1.0325 -5.63,0 0,5.5725 6.11625,0 0,1.0325 -7.28625,0 z m -7.14012,0.23437 c -1.7725,0 -3.33125,-0.74 -4.01375,-2.455 -0.2325,-0.585 -0.29125,-1.18875 -0.33,-1.8125 l 1.16875,0 c 0.0575,1.93 1.24625,3.215 3.23375,3.215 1.5975,0 3.07875,-0.99375 3.07875,-2.70875 0,-0.895 -0.41,-1.51875 -1.09125,-2.045 -0.89625,-0.70125 -2.1825,-1.15 -3.215,-1.65625 -0.4675,-0.21375 -0.935,-0.42875 -1.36375,-0.74125 -0.87625,-0.6225 -1.36375,-1.51875 -1.36375,-2.61 0,-2.22125 1.94875,-3.41 3.97375,-3.41 1.735,0 3.25375,0.83875 3.74125,2.5725 0.0975,0.35125 0.1175,0.70125 0.13625,1.0525 l -1.15,0 c -0.0387,-0.41 -0.11625,-0.83875 -0.31125,-1.20875 -0.4875,-0.95375 -1.48125,-1.36375 -2.5125,-1.36375 -1.345,0 -2.67,0.8375 -2.67,2.3 0,3.0775 7.05375,2.435 7.05375,7.0325 0,2.49375 -2.04625,3.83875 -4.365,3.83875 m -10.77563,0 c -1.7725,0 -3.33125,-0.74 -4.01375,-2.455 -0.23375,-0.585 -0.2925,-1.18875 -0.33125,-1.8125 l 1.16875,0 c 0.0587,1.93 1.2475,3.215 3.235,3.215 1.5975,0 3.07875,-0.99375 3.07875,-2.70875 0,-0.895 -0.41,-1.51875 -1.09125,-2.045 -0.8975,-0.70125 -2.1825,-1.15 -3.215,-1.65625 -0.4675,-0.21375 -0.935,-0.42875 -1.36375,-0.74125 -0.8775,-0.6225 -1.36375,-1.51875 -1.36375,-2.61 0,-2.22125 1.94875,-3.41 3.97375,-3.41 1.735,0 3.25375,0.83875 3.74125,2.5725 0.0975,0.35125 0.11625,0.70125 0.13625,1.0525 l -1.15,0 c -0.0387,-0.41 -0.11625,-0.83875 -0.31125,-1.20875 -0.4875,-0.95375 -1.48125,-1.36375 -2.5125,-1.36375 -1.345,0 -2.67,0.8375 -2.67,2.3 0,3.0775 7.0525,2.435 7.0525,7.0325 0,2.49375 -2.045,3.83875 -4.36375,3.83875 m -8.67125,-13.99 1.2075,0 0,13.755 -1.2075,0 0,-13.755 z m -3.66425,10.6385 c -0.39,2.3575 -2.37625,3.35125 -4.5975,3.35125 -1.89,0 -3.83875,-0.76 -4.4625,-2.70875 -0.195,-0.58375 -0.21375,-1.2075 -0.21375,-1.83125 l 0,-9.44875 1.16875,0 c 0,3.0775 -0.02,6.13625 -0.02,9.21625 0,0.77875 0.0788,1.5775 0.4675,2.27875 0.62375,1.09 1.87125,1.44125 3.06,1.44125 0.68125,0 1.46125,-0.175 2.065,-0.48625 1.6175,-0.83875 1.4225,-2.59125 1.4225,-4.13125 l 0,-8.31875 1.18875,0 0,9.41 c 0,0.41 -0.02,0.81875 -0.0788,1.2275 m -16.2315,3.3515 c -1.7725,0 -3.33125,-0.74 -4.01375,-2.455 -0.23375,-0.585 -0.2925,-1.18875 -0.33125,-1.8125 l 1.16875,0 c 0.0587,1.93 1.2475,3.215 3.235,3.215 1.5975,0 3.07875,-0.99375 3.07875,-2.70875 0,-0.895 -0.41,-1.51875 -1.09125,-2.045 -0.89625,-0.70125 -2.1825,-1.15 -3.215,-1.65625 -0.4675,-0.21375 -0.93625,-0.42875 -1.36375,-0.74125 -0.8775,-0.6225 -1.36375,-1.51875 -1.36375,-2.61 0,-2.22125 1.9475,-3.41 3.97375,-3.41 1.73375,0 3.25375,0.83875 3.74125,2.5725 0.0975,0.35125 0.1175,0.70125 0.13625,1.0525 l -1.14875,0 c -0.04,-0.41 -0.1175,-0.83875 -0.3125,-1.20875 -0.4875,-0.95375 -1.48125,-1.36375 -2.5125,-1.36375 -1.345,0 -2.67,0.8375 -2.67,2.3 0,3.0775 7.05375,2.435 7.05375,7.0325 0,2.49375 -2.04625,3.83875 -4.365,3.83875 M 27.27357,64.18 c -2.41625,0 -3.1575,2.35875 -3.1575,4.36625 0,2.06625 0.72125,4.36625 3.19625,4.36625 2.3975,0 3.1575,-2.28125 3.1575,-4.3075 0,-2.08625 -0.6825,-4.425 -3.19625,-4.425 m 0.0188,11.55875 c -4.2875,0 -6.9575,-2.9825 -6.9575,-7.1925 0,-4.24875 2.65,-7.1925 6.9775,-7.1925 4.2875,0 6.95875,3.0025 6.95875,7.1925 0,4.21 -2.69,7.1925 -6.97875,7.1925 m -12.88175,-14.07213 3.64625,0 0,13.76 -3.64625,0 0,-13.76 z m -8.29937,7.9125 -2.54375,0 0,3.1575 2.68,0 c 1.13125,0 2.18375,-0.19375 2.18375,-1.55875 0,-1.4625 -1.15,-1.59875 -2.32,-1.59875 m -0.17625,-5.2425 -2.3675,0 0,2.68875 2.11625,0 c 1.0125,0 2.085,-0.0975 2.085,-1.38375 0,-1.13 -0.8975,-1.305 -1.83375,-1.305 m 4.26875,10.33 c -1.285,0.72125 -3.09875,0.76 -4.54125,0.76 l -5.6625,0 0,-13.76 5.64375,0 c 1.735,0 3.89875,0.0388 5.06625,1.55875 0.44875,0.565 0.645,1.30625 0.645,2.02625 0,1.385 -0.74125,2.32 -2.0475,2.7675 1.69625,0.37125 2.84625,1.54125 2.84625,3.33375 0,1.38375 -0.74125,2.65125 -1.95,3.31375",
-                                        id: "path22802",
-                                        style: "fill:#30a32d;fill-opacity:1;fill-rule:nonzero;stroke:none",
-                                    }
-                                    path {
-                                        d: "m 81.13737,15.08862 c -0.05,-1.94 -0.06,-3 -0.3225,-5.3875 -0.7825,0.85875 -1.635,1.78875 -2.6625,2.69 -0.19875,-1.6875 -0.53125,-3.255 -0.72,-4.3025 -1.36125,1.4125 -1.945,2.02 -3.08625,3.12 0.16875,1.05875 0.3725,2.2425 0.4675,3.7375 -1.1425,0.8525 -2.25875,1.6025 -3.3125,2.2625 0.15375,1.83 0.2125,2.81125 0.325,4.45625 0.26,-0.14875 1.68125,-1.09625 3.275,-2.125 0.0225,1.6725 0.07,3.2375 0.006,4.605 0.335,-0.195 2.23,-1.1825 3.50875,-2.48 0.18375,-1.3875 0.0788,-2.93 0.015,-4.61 1.35875,-0.945 2.2625,-1.5925 2.50625,-1.96625",
-                                        id: "path22806",
-                                        style: "fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none",
-                                    }
-                                    path {
-                                        d: "m 81.13887,14.92375 c -0.3725,0.42125 -1.41375,1.20625 -2.66875,2.085 0.0925,1.6025 0.1,3.165 -0.0437,4.49 -1.1725,1.2625 -2.80375,2.12 -3.11375,2.31125 0.0325,-1.35375 0.008,-2.96875 -0.0637,-4.625 -1.61,1.0575 -2.97625,1.92 -3.22625,2.0675 -0.10125,-1.57125 -0.135,-2.135 -0.28125,-3.88125 1.005,-0.64 2.12,-1.4175 3.24375,-2.26125 -0.13,-1.46125 -0.29125,-2.795 -0.47625,-3.82125 1.04875,-1.07125 1.595,-1.58125 2.84375,-2.95625 0.2075,1.05 0.47125,2.5825 0.6975,4.30375 1.05375,-0.92 2.02125,-1.8425 2.79375,-2.7025 -0.615,-5.57 -1.97,-9.42375 -1.9725,-9.435 L 78.69522,0 78.43647,0.45875 c 0,0.001 -0.0825,0.1475 -0.245,0.41625 -1.0725,1.7925 -5.6,8.955 -11.68375,13.43875 2.72875,3.8975 4.33125,8.635 4.33125,13.74375 0,1.61 -0.16125,3.185 -0.465,4.7075 0.85125,-0.4425 1.74375,-0.915 2.68125,-1.42 1.8625,-1.08375 3.345,-1.84 4.55,-2.98625 1.20625,-1.14375 2.1025,-2.66875 2.7775,-5.21625 l 0.002,-0.006 0.001,-0.009 c 0.54625,-2.72 0.75375,-5.4 0.75375,-7.91125 0,-0.0987 -0.001,-0.195 -0.001,-0.2925 M 25.27785,38.6574 c -8.3625,4.5675 -6.28,9.895 -0.0613,12.86125 7.335,3.50125 21.9925,5.2225 29.05125,2.47 C 41.27155,54.6899 29.6553,50.1274 25.2778,38.6574",
-                                        id: "path22814",
-                                        style: "fill:#e2001a;fill-opacity:1;fill-rule:nonzero;stroke:none",
-                                    }
-                                }
-                            }
-                            div {
-                                class: if cfg!(feature = "hidebio") {
-                                    "badge badge-secondary text-xs px-2 py-1"
-                                } else {
-                                    "badge badge-warning text-xs px-2 py-1"
-                                },
-{
-                                    if cfg!(feature = "hidebio") {
-                                        "Coming Soon".to_string()
-                                    } else {
-                                        t!("badges.in_development").to_string()
-                                    }
-                                }
-                            }
-                        }
-                    }
                     }
                 }
-            }
+                div {
+                    class: "flex-1 min-h-0 flex flex-col items-center justify-start md:justify-center px-8 py-4",
+                    div {
+                        class: "text-center max-w-4xl",
+                        h1 {
+                            class: "text-4xl md:text-5xl font-bold mb-8 md:mb-10 text-base-content flex justify-center",
+                            {
+                                #[cfg(not(feature = "hidebio"))]
+                                { rsx! { span { class: "inline-block h-28 md:h-32 -mt-4 md:-mt-8 text-black", "aria-label": "Declarino", dangerous_inner_html: crate::layout::locale_logo() } } }
+                                #[cfg(feature = "hidebio")]
+                                { rsx! { {t!("app.title").to_string()} } }
+                            }
+                        }
+                        {
+                            #[cfg(feature = "hidebio")]
+                            { rsx! { h2 { class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content", {t!("splash.subtitle").to_string()} } } }
+                        }
+                        p {
+                            class: "text-lg md:text-xl text-base-content/70 mb-6 max-w-2xl mx-auto",
+                            {t!("splash.description").to_string()}
+                        }
+                        div {
+                            class: "grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl",
 
-
-            {
-                #[cfg(not(feature = "hidebio"))]
-                { rsx! {
-                    // Animated Trägerschaft / Unterstützt-durch logo ribbon.
-                    // Per-logo heights are tuned so the lettering reads at a comparable
-                    // cap-height across all marks (pure wordmarks like FiBL/Liebegg are
-                    // scaled down; stacked emblem+text marks are scaled up), then
-                    // optically centered on a common line.
-                    {
-                        let logos = [
-                            (asset!("assets/logos/bio-suisse.png"),              "h-10 md:h-12", "Bio Suisse"),
-                            (asset!("assets/logos/arenenberg.png"),              "h-12 md:h-14", "Arenenberg"),
-                            (asset!("assets/logos/hightech-zentrum-aargau.png"), "h-9 md:h-11",  "Hightech Zentrum Aargau"),
-                            (asset!("assets/logos/fibl.png"),                    "h-8 md:h-9",   "FiBL"),
-                            (asset!("assets/logos/liebegg.svg"),                 "h-7 md:h-8",   "Liebegg"),
-                        ];
-                        let op = if logos_visible() { "opacity-100" } else { "opacity-0" };
-                        let caption = if show_supporters() {
-                            t!("splash.supporters").to_string()
-                        } else {
-                            t!("splash.traegerschaft").to_string()
-                        };
-                        rsx! {
+                            button {
+                                class: "card bg-red-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
+                                onclick: move |_| {
+                                    nav.push(Route::Swiss {});
+                                },
                             div {
-                                class: "flex-none bg-base-100 px-6 pt-4 pb-8",
-                                p {
-                                    class: "text-center text-sm text-base-content/70 mb-2 transition-opacity duration-700 {op}",
-                                    {caption}
+                                class: "card-body items-center text-center py-5",
+                                h3 {
+                                    class: "card-title text-xl mb-2",
+                                    {t!("routes.swiss").to_string()}
                                 }
-                                // min-height keeps the ribbon from jumping when swapping
-                                // between the multi-logo row and the single OFH wordmark.
                                 div {
-                                    class: "min-h-24 flex items-center justify-center",
-                                    if show_supporters() {
-                                        div {
-                                            class: "flex flex-wrap items-center justify-around gap-x-8 gap-y-3 max-w-5xl w-full mx-auto",
-                                            div {
-                                                class: "text-base-content transition-opacity duration-700 {op}",
-                                                dangerous_inner_html: OFH_LOGO_SVG,
-                                            }
-                                            img {
-                                                src: asset!("assets/logos/blw.png"),
-                                                alt: "Bundesamt für Landwirtschaft BLW",
-                                                class: "h-9 md:h-11 w-auto object-contain transition-opacity duration-700 {op}",
-                                                style: "transition-delay: 120ms",
-                                            }
-                                            img {
-                                                src: asset!("assets/logos/innovation-booster.png"),
-                                                alt: "Innovation Booster Swiss Food Ecosystems, powered by Innosuisse",
-                                                class: "h-12 md:h-14 w-auto object-contain transition-opacity duration-700 {op}",
-                                                style: "transition-delay: 240ms",
-                                            }
+                                    class: "w-20 h-16 flex items-center justify-center mb-2",
+                                    svg {
+                                        class: "w-16 h-16",
+                                        view_box: "0 0 32 32",
+                                        rect {
+                                            width: "32",
+                                            height: "32",
+                                            fill: "#FF0000"
                                         }
+                                        rect {
+                                            x: "13",
+                                            y: "6",
+                                            width: "6",
+                                            height: "20",
+                                            fill: "white"
+                                        }
+                                        rect {
+                                            x: "6",
+                                            y: "13",
+                                            width: "20",
+                                            height: "6",
+                                            fill: "white"
+                                        }
+                                    }
+                                }
+                                div {
+                                    class: "badge badge-info text-xs px-2 py-1",
+                                    {t!("badges.not_for_meat_dairy").to_string()}
+                                }
+                            }
+                        }
+
+                            button {
+                                class: if cfg!(feature = "hidebio") {
+                                    "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
+                                } else {
+                                    "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
+                                },
+                                disabled: cfg!(feature = "hidebio"),
+                                onclick: move |_| {
+                                    #[cfg(not(feature = "hidebio"))]
+                                    {
+                                        nav.push(Route::Bio {});
+                                    }
+                                },
+                            div {
+                                class: "card-body items-center text-center py-5",
+                                h3 {
+                                    class: "card-title text-xl mb-2",
+                                    {t!("routes.bio").to_string()}
+                                }
+                                div {
+                                    class: "w-20 h-16 flex flex-col items-center justify-center mb-2",
+                                    span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
+                                    span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
+                                }
+                                div {
+                                    class: if cfg!(feature = "hidebio") {
+                                        "badge badge-secondary text-xs px-2 py-1"
                                     } else {
-                                        div {
-                                            class: "flex flex-wrap items-center justify-around gap-x-8 gap-y-3 max-w-5xl w-full mx-auto",
-                                            for (i, (src, h, alt)) in logos.iter().enumerate() {
+                                        "badge badge-warning text-xs px-2 py-1"
+                                    },
+    {
+                                        if cfg!(feature = "hidebio") {
+                                            "Coming Soon".to_string()
+                                        } else {
+                                            t!("badges.in_development").to_string()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                            button {
+                                class: if cfg!(feature = "hidebio") {
+                                    "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
+                                } else {
+                                    "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
+                                },
+                                disabled: cfg!(feature = "hidebio"),
+                                onclick: move |_| {
+                                    #[cfg(not(feature = "hidebio"))]
+                                    {
+                                        nav.push(Route::Knospe {});
+                                    }
+                                },
+                            div {
+                                class: "card-body items-center text-center py-5",
+                                h3 {
+                                    class: "card-title text-xl mb-2",
+                                    {t!("routes.knospe").to_string()}
+                                }
+                                div {
+                                    class: "w-20 h-16 flex items-center justify-center mb-2",
+
+                                    svg {
+                                        height: "768",
+                                        id: "svg23238",
+                                        "svg": "http://www.w3.org/2000/svg",
+                                        version: "1.1",
+                                        view_box: "-2.27216241 -2.27216241 98.57944282 80.28307182",
+                                        width: "943",
+                                        xmlns: "http://www.w3.org/2000/svg",
+                                        defs { id: "defs23240" }
+                                        path {
+                                            d: "m 24.38225,28.0565 c 0,-12.39625 10.04875,-22.44375 22.445,-22.44375 12.395,0 22.44375,10.0475 22.44375,22.44375 0,12.395 -10.04875,22.44375 -22.44375,22.44375 -12.39625,0 -22.445,-10.04875 -22.445,-22.44375",
+                                            id: "path22766",
+                                            style: "fill:#30a32d;fill-opacity:1;fill-rule:nonzero;stroke:none",
+                                        }
+                                        path {
+                                            d: "m 47.154,8.39425 c 0,0 -18.9025,11.39375 -6.43875,30.80375 0,0 -7.20625,-3.63125 -8.79375,-14.2175 -0.0475,-0.4375 -0.565,-0.95875 -0.93875,0.105 -3.7425,10.69125 1.84875,24.12 17.10875,23.4725 15.38875,-0.65375 18.88,-18.325 10.955,-29.23875 -0.28625,-0.4475 -0.7,-0.56375 -0.4625,0.2975 1.53875,5.57875 -1.02375,12.12375 -1.93875,13.605 C 61.249,18.10925 48.17025,8.518 47.154,8.39425",
+                                            id: "path22770",
+                                            style: "fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none",
+                                        }
+                                        path {
+                                            d: "m 86.74887,75.42725 0,-13.755 7.20875,0 0,1.0325 -6.03875,0 0,5.085 5.63,0 0,1.0325 -5.63,0 0,5.5725 6.11625,0 0,1.0325 -7.28625,0 z m -7.14012,0.23437 c -1.7725,0 -3.33125,-0.74 -4.01375,-2.455 -0.2325,-0.585 -0.29125,-1.18875 -0.33,-1.8125 l 1.16875,0 c 0.0575,1.93 1.24625,3.215 3.23375,3.215 1.5975,0 3.07875,-0.99375 3.07875,-2.70875 0,-0.895 -0.41,-1.51875 -1.09125,-2.045 -0.89625,-0.70125 -2.1825,-1.15 -3.215,-1.65625 -0.4675,-0.21375 -0.935,-0.42875 -1.36375,-0.74125 -0.87625,-0.6225 -1.36375,-1.51875 -1.36375,-2.61 0,-2.22125 1.94875,-3.41 3.97375,-3.41 1.735,0 3.25375,0.83875 3.74125,2.5725 0.0975,0.35125 0.1175,0.70125 0.13625,1.0525 l -1.15,0 c -0.0387,-0.41 -0.11625,-0.83875 -0.31125,-1.20875 -0.4875,-0.95375 -1.48125,-1.36375 -2.5125,-1.36375 -1.345,0 -2.67,0.8375 -2.67,2.3 0,3.0775 7.05375,2.435 7.05375,7.0325 0,2.49375 -2.04625,3.83875 -4.365,3.83875 m -10.77563,0 c -1.7725,0 -3.33125,-0.74 -4.01375,-2.455 -0.23375,-0.585 -0.2925,-1.18875 -0.33125,-1.8125 l 1.16875,0 c 0.0587,1.93 1.2475,3.215 3.235,3.215 1.5975,0 3.07875,-0.99375 3.07875,-2.70875 0,-0.895 -0.41,-1.51875 -1.09125,-2.045 -0.8975,-0.70125 -2.1825,-1.15 -3.215,-1.65625 -0.4675,-0.21375 -0.935,-0.42875 -1.36375,-0.74125 -0.8775,-0.6225 -1.36375,-1.51875 -1.36375,-2.61 0,-2.22125 1.94875,-3.41 3.97375,-3.41 1.735,0 3.25375,0.83875 3.74125,2.5725 0.0975,0.35125 0.11625,0.70125 0.13625,1.0525 l -1.15,0 c -0.0387,-0.41 -0.11625,-0.83875 -0.31125,-1.20875 -0.4875,-0.95375 -1.48125,-1.36375 -2.5125,-1.36375 -1.345,0 -2.67,0.8375 -2.67,2.3 0,3.0775 7.0525,2.435 7.0525,7.0325 0,2.49375 -2.045,3.83875 -4.36375,3.83875 m -8.67125,-13.99 1.2075,0 0,13.755 -1.2075,0 0,-13.755 z m -3.66425,10.6385 c -0.39,2.3575 -2.37625,3.35125 -4.5975,3.35125 -1.89,0 -3.83875,-0.76 -4.4625,-2.70875 -0.195,-0.58375 -0.21375,-1.2075 -0.21375,-1.83125 l 0,-9.44875 1.16875,0 c 0,3.0775 -0.02,6.13625 -0.02,9.21625 0,0.77875 0.0788,1.5775 0.4675,2.27875 0.62375,1.09 1.87125,1.44125 3.06,1.44125 0.68125,0 1.46125,-0.175 2.065,-0.48625 1.6175,-0.83875 1.4225,-2.59125 1.4225,-4.13125 l 0,-8.31875 1.18875,0 0,9.41 c 0,0.41 -0.02,0.81875 -0.0788,1.2275 m -16.2315,3.3515 c -1.7725,0 -3.33125,-0.74 -4.01375,-2.455 -0.23375,-0.585 -0.2925,-1.18875 -0.33125,-1.8125 l 1.16875,0 c 0.0587,1.93 1.2475,3.215 3.235,3.215 1.5975,0 3.07875,-0.99375 3.07875,-2.70875 0,-0.895 -0.41,-1.51875 -1.09125,-2.045 -0.89625,-0.70125 -2.1825,-1.15 -3.215,-1.65625 -0.4675,-0.21375 -0.93625,-0.42875 -1.36375,-0.74125 -0.8775,-0.6225 -1.36375,-1.51875 -1.36375,-2.61 0,-2.22125 1.9475,-3.41 3.97375,-3.41 1.73375,0 3.25375,0.83875 3.74125,2.5725 0.0975,0.35125 0.1175,0.70125 0.13625,1.0525 l -1.14875,0 c -0.04,-0.41 -0.1175,-0.83875 -0.3125,-1.20875 -0.4875,-0.95375 -1.48125,-1.36375 -2.5125,-1.36375 -1.345,0 -2.67,0.8375 -2.67,2.3 0,3.0775 7.05375,2.435 7.05375,7.0325 0,2.49375 -2.04625,3.83875 -4.365,3.83875 M 27.27357,64.18 c -2.41625,0 -3.1575,2.35875 -3.1575,4.36625 0,2.06625 0.72125,4.36625 3.19625,4.36625 2.3975,0 3.1575,-2.28125 3.1575,-4.3075 0,-2.08625 -0.6825,-4.425 -3.19625,-4.425 m 0.0188,11.55875 c -4.2875,0 -6.9575,-2.9825 -6.9575,-7.1925 0,-4.24875 2.65,-7.1925 6.9775,-7.1925 4.2875,0 6.95875,3.0025 6.95875,7.1925 0,4.21 -2.69,7.1925 -6.97875,7.1925 m -12.88175,-14.07213 3.64625,0 0,13.76 -3.64625,0 0,-13.76 z m -8.29937,7.9125 -2.54375,0 0,3.1575 2.68,0 c 1.13125,0 2.18375,-0.19375 2.18375,-1.55875 0,-1.4625 -1.15,-1.59875 -2.32,-1.59875 m -0.17625,-5.2425 -2.3675,0 0,2.68875 2.11625,0 c 1.0125,0 2.085,-0.0975 2.085,-1.38375 0,-1.13 -0.8975,-1.305 -1.83375,-1.305 m 4.26875,10.33 c -1.285,0.72125 -3.09875,0.76 -4.54125,0.76 l -5.6625,0 0,-13.76 5.64375,0 c 1.735,0 3.89875,0.0388 5.06625,1.55875 0.44875,0.565 0.645,1.30625 0.645,2.02625 0,1.385 -0.74125,2.32 -2.0475,2.7675 1.69625,0.37125 2.84625,1.54125 2.84625,3.33375 0,1.38375 -0.74125,2.65125 -1.95,3.31375",
+                                            id: "path22802",
+                                            style: "fill:#30a32d;fill-opacity:1;fill-rule:nonzero;stroke:none",
+                                        }
+                                        path {
+                                            d: "m 81.13737,15.08862 c -0.05,-1.94 -0.06,-3 -0.3225,-5.3875 -0.7825,0.85875 -1.635,1.78875 -2.6625,2.69 -0.19875,-1.6875 -0.53125,-3.255 -0.72,-4.3025 -1.36125,1.4125 -1.945,2.02 -3.08625,3.12 0.16875,1.05875 0.3725,2.2425 0.4675,3.7375 -1.1425,0.8525 -2.25875,1.6025 -3.3125,2.2625 0.15375,1.83 0.2125,2.81125 0.325,4.45625 0.26,-0.14875 1.68125,-1.09625 3.275,-2.125 0.0225,1.6725 0.07,3.2375 0.006,4.605 0.335,-0.195 2.23,-1.1825 3.50875,-2.48 0.18375,-1.3875 0.0788,-2.93 0.015,-4.61 1.35875,-0.945 2.2625,-1.5925 2.50625,-1.96625",
+                                            id: "path22806",
+                                            style: "fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none",
+                                        }
+                                        path {
+                                            d: "m 81.13887,14.92375 c -0.3725,0.42125 -1.41375,1.20625 -2.66875,2.085 0.0925,1.6025 0.1,3.165 -0.0437,4.49 -1.1725,1.2625 -2.80375,2.12 -3.11375,2.31125 0.0325,-1.35375 0.008,-2.96875 -0.0637,-4.625 -1.61,1.0575 -2.97625,1.92 -3.22625,2.0675 -0.10125,-1.57125 -0.135,-2.135 -0.28125,-3.88125 1.005,-0.64 2.12,-1.4175 3.24375,-2.26125 -0.13,-1.46125 -0.29125,-2.795 -0.47625,-3.82125 1.04875,-1.07125 1.595,-1.58125 2.84375,-2.95625 0.2075,1.05 0.47125,2.5825 0.6975,4.30375 1.05375,-0.92 2.02125,-1.8425 2.79375,-2.7025 -0.615,-5.57 -1.97,-9.42375 -1.9725,-9.435 L 78.69522,0 78.43647,0.45875 c 0,0.001 -0.0825,0.1475 -0.245,0.41625 -1.0725,1.7925 -5.6,8.955 -11.68375,13.43875 2.72875,3.8975 4.33125,8.635 4.33125,13.74375 0,1.61 -0.16125,3.185 -0.465,4.7075 0.85125,-0.4425 1.74375,-0.915 2.68125,-1.42 1.8625,-1.08375 3.345,-1.84 4.55,-2.98625 1.20625,-1.14375 2.1025,-2.66875 2.7775,-5.21625 l 0.002,-0.006 0.001,-0.009 c 0.54625,-2.72 0.75375,-5.4 0.75375,-7.91125 0,-0.0987 -0.001,-0.195 -0.001,-0.2925 M 25.27785,38.6574 c -8.3625,4.5675 -6.28,9.895 -0.0613,12.86125 7.335,3.50125 21.9925,5.2225 29.05125,2.47 C 41.27155,54.6899 29.6553,50.1274 25.2778,38.6574",
+                                            id: "path22814",
+                                            style: "fill:#e2001a;fill-opacity:1;fill-rule:nonzero;stroke:none",
+                                        }
+                                    }
+                                }
+                                div {
+                                    class: if cfg!(feature = "hidebio") {
+                                        "badge badge-secondary text-xs px-2 py-1"
+                                    } else {
+                                        "badge badge-warning text-xs px-2 py-1"
+                                    },
+    {
+                                        if cfg!(feature = "hidebio") {
+                                            "Coming Soon".to_string()
+                                        } else {
+                                            t!("badges.in_development").to_string()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        }
+                    }
+                }
+
+
+                {
+                    #[cfg(not(feature = "hidebio"))]
+                    { rsx! {
+                        // Animated Trägerschaft / Unterstützt-durch logo ribbon.
+                        // Per-logo heights are tuned so the lettering reads at a comparable
+                        // cap-height across all marks (pure wordmarks like FiBL/Liebegg are
+                        // scaled down; stacked emblem+text marks are scaled up), then
+                        // optically centered on a common line.
+                        {
+                            let logos = [
+                                (asset!("assets/logos/bio-suisse.png"),              "h-10 md:h-12", "Bio Suisse"),
+                                (asset!("assets/logos/arenenberg.png"),              "h-12 md:h-14", "Arenenberg"),
+                                (asset!("assets/logos/hightech-zentrum-aargau.png"), "h-9 md:h-11",  "Hightech Zentrum Aargau"),
+                                (asset!("assets/logos/fibl.png"),                    "h-8 md:h-9",   "FiBL"),
+                                (asset!("assets/logos/liebegg.svg"),                 "h-7 md:h-8",   "Liebegg"),
+                            ];
+                            let op = if logos_visible() { "opacity-100" } else { "opacity-0" };
+                            let caption = if show_supporters() {
+                                t!("splash.supporters").to_string()
+                            } else {
+                                t!("splash.traegerschaft").to_string()
+                            };
+                            rsx! {
+                                div {
+                                    class: "flex-none bg-base-100 px-6 pt-4 pb-8",
+                                    p {
+                                        class: "text-center text-sm text-base-content/70 mb-2 transition-opacity duration-700 {op}",
+                                        {caption}
+                                    }
+                                    // min-height keeps the ribbon from jumping when swapping
+                                    // between the multi-logo row and the single OFH wordmark.
+                                    div {
+                                        class: "min-h-24 flex items-center justify-center",
+                                        if show_supporters() {
+                                            div {
+                                                class: "flex flex-wrap items-center justify-around gap-x-8 gap-y-3 max-w-5xl w-full mx-auto",
+                                                div {
+                                                    class: "text-base-content transition-opacity duration-700 {op}",
+                                                    dangerous_inner_html: OFH_LOGO_SVG,
+                                                }
                                                 img {
-                                                    src: *src,
-                                                    alt: "{alt}",
-                                                    class: "{h} w-auto object-contain transition-opacity duration-700 {op}",
-                                                    style: "transition-delay: {i * 120}ms",
+                                                    src: asset!("assets/logos/blw.png"),
+                                                    alt: "Bundesamt für Landwirtschaft BLW",
+                                                    class: "h-9 md:h-11 w-auto object-contain transition-opacity duration-700 {op}",
+                                                    style: "transition-delay: 120ms",
+                                                }
+                                                img {
+                                                    src: asset!("assets/logos/innovation-booster.png"),
+                                                    alt: "Innovation Booster Swiss Food Ecosystems, powered by Innosuisse",
+                                                    class: "h-12 md:h-14 w-auto object-contain transition-opacity duration-700 {op}",
+                                                    style: "transition-delay: 240ms",
+                                                }
+                                            }
+                                        } else {
+                                            div {
+                                                class: "flex flex-wrap items-center justify-around gap-x-8 gap-y-3 max-w-5xl w-full mx-auto",
+                                                for (i, (src, h, alt)) in logos.iter().enumerate() {
+                                                    img {
+                                                        src: *src,
+                                                        alt: "{alt}",
+                                                        class: "{h} w-auto object-contain transition-opacity duration-700 {op}",
+                                                        style: "transition-delay: {i * 120}ms",
+                                                    }
                                                 }
                                             }
                                         }
@@ -429,49 +430,48 @@ pub fn SplashScreen() -> Element {
                                 }
                             }
                         }
-                    }
-                } }
-            }
+                    } }
+                }
 
-            footer {
-                class: "flex-none bg-base-200 p-4 text-center text-sm border-t border-base-300",
-                div {
-                    class: "flex justify-center items-center gap-4",
-                    span {
-                        {t!("version.version").to_string()} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from").to_string()} " " {
-                            // Convert UTC time string to a more readable format
-                            let build_time = built_info::BUILT_TIME_UTC;
-                            // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
-                            if let Ok(datetime) = chrono::DateTime::parse_from_rfc2822(build_time) {
-                                format!("{}", datetime.format("%d.%m.%Y"))
-                            } else {
-                                build_time.to_string()
+                footer {
+                    class: "flex-none bg-base-200 p-4 text-center text-sm border-t border-base-300",
+                    div {
+                        class: "flex justify-center items-center gap-4",
+                        span {
+                            {t!("version.version").to_string()} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from").to_string()} " " {
+                                // Convert UTC time string to a more readable format
+                                let build_time = built_info::BUILT_TIME_UTC;
+                                // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
+                                if let Ok(datetime) = chrono::DateTime::parse_from_rfc2822(build_time) {
+                                    format!("{}", datetime.format("%d.%m.%Y"))
+                                } else {
+                                    build_time.to_string()
+                                }
                             }
                         }
-                    }
-                    Link {
-                        to: Route::Faq {},
-                        class: "link link-blue hover:link-primary",
-                        {t!("app.faq").to_string()}
-                    }
-                    Link {
-                        to: Route::Support {},
-                        class: "link link-blue hover:link-primary",
-                        {t!("app.support").to_string()}
-                    }
-                    Link {
-                        to: Route::Impressum {},
-                        class: "link link-blue hover:link-primary",
-                        {t!("app.impressum").to_string()}
-                    }
-                    a {
-                        class: "link link-blue hover:link-primary",
-                        href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                        target: "_blank",
-                        {t!("app.release_notes").to_string()}
+                        Link {
+                            to: Route::Faq {},
+                            class: "link link-blue hover:link-primary",
+                            {t!("app.faq").to_string()}
+                        }
+                        Link {
+                            to: Route::Support {},
+                            class: "link link-blue hover:link-primary",
+                            {t!("app.support").to_string()}
+                        }
+                        Link {
+                            to: Route::Impressum {},
+                            class: "link link-blue hover:link-primary",
+                            {t!("app.impressum").to_string()}
+                        }
+                        a {
+                            class: "link link-blue hover:link-primary",
+                            href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
+                            target: "_blank",
+                            {t!("app.release_notes").to_string()}
+                        }
                     }
                 }
             }
         }
-    }
 }

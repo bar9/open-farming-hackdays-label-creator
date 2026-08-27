@@ -137,9 +137,21 @@ async fn faq_page_renders_from_the_locales_in_every_language() {
     let c = connect().await;
 
     let expected = [
-        ("de-CH", "Häufige Fragen", "Ersetzt Declarino eine rechtliche Beratung?"),
-        ("fr-CH", "Questions fréquentes", "Declarino remplace-t-il un conseil juridique ?"),
-        ("it-CH", "Domande frequenti", "Declarino sostituisce una consulenza legale?"),
+        (
+            "de-CH",
+            "Häufige Fragen",
+            "Ersetzt Declarino eine rechtliche Beratung?",
+        ),
+        (
+            "fr-CH",
+            "Questions fréquentes",
+            "Declarino remplace-t-il un conseil juridique ?",
+        ),
+        (
+            "it-CH",
+            "Domande frequenti",
+            "Declarino sostituisce una consulenza legale?",
+        ),
     ];
 
     for (locale, title, first_question) in expected {
@@ -152,7 +164,10 @@ async fn faq_page_renders_from_the_locales_in_every_language() {
             .await
             .expect("body text");
 
-        assert!(body.contains(title), "{locale} FAQ is missing the title {title:?}");
+        assert!(
+            body.contains(title),
+            "{locale} FAQ is missing the title {title:?}"
+        );
         assert!(
             body.contains(first_question),
             "{locale} FAQ is missing its first question {first_question:?}"

@@ -273,7 +273,7 @@ pub fn SplitLayout() -> Element {
                                 rsx! { span {} }
                             }
                         }
-                        
+
                         // Saved ingredients manager button
                         SavedIngredientsManager {}
 
@@ -486,7 +486,11 @@ pub fn FullLayout() -> Element {
         .flatten()
         .map(|v| v == "true")
         .unwrap_or(false);
-    use_context_provider(|| Signal::new(DisclaimerContext { accepted: disclaimer_accepted }));
+    use_context_provider(|| {
+        Signal::new(DisclaimerContext {
+            accepted: disclaimer_accepted,
+        })
+    });
 
     rsx! {
         document::Stylesheet {

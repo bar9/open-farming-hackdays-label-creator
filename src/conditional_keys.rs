@@ -55,8 +55,7 @@ pub const BIO_MARKETING_NOT_ALLOWED: &str = "bio_marketing_not_allowed";
 /// DEC-7: nicht-bio Zutat ohne Ausnahme-Häkchen — konkreter Grund.
 pub const BIO_NICHT_DEKLARIERTE_ZUTAT: &str = "bio_nicht_deklarierte_zutat";
 /// Erlaubte nicht-bio Zutaten über der 5%-Grenze — konkreter Grund.
-pub const BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT: &str =
-    "bio_erlaubte_ausnahme_ueber_5_prozent";
+pub const BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT: &str = "bio_erlaubte_ausnahme_ueber_5_prozent";
 /// Monoprodukt aus Umstellbetrieb: Pflicht-Umstellungshinweis.
 pub const UMSTELLBETRIEB_HINWEIS: &str = "umstellbetrieb_hinweis";
 
@@ -68,8 +67,7 @@ pub const BIO_CHECK_FAILED: &str = "bio_check_failed";
 // --- Herkunft ---------------------------------------------------------------
 
 /// Mindestens eine Zutat über 50% braucht eine Herkunftsangabe.
-pub const HERKUNFT_BENOETIGT_UEBER_50_PROZENT: &str =
-    "herkunft_benoetigt_ueber_50_prozent";
+pub const HERKUNFT_BENOETIGT_UEBER_50_PROZENT: &str = "herkunft_benoetigt_ueber_50_prozent";
 
 /// Präfix der pro-Zutat-Flags; `herkunft_benoetigt()` hängt den Index an.
 pub const HERKUNFT_BENOETIGT_PREFIX: &str = "herkunft_benoetigt_";

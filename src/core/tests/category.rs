@@ -62,7 +62,9 @@ fn test_is_meat_category_with_api_categories() {
     assert!(is_meat_category("Kochwurstware"));
 
     // Test combined categories (semicolon-separated)
-    assert!(is_meat_category("Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"));
+    assert!(is_meat_category(
+        "Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"
+    ));
     assert!(is_meat_category("Kalb; Rind; Schwein; Geflügel"));
     assert!(is_meat_category("Kalb; Lamm, Schaf; Schwein"));
 

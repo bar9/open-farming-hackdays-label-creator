@@ -12,12 +12,11 @@ mod layout;
 mod shared;
 
 mod api;
-pub mod conditional_keys;
-pub mod verdicts;
 mod category_service;
-pub mod faq;
 mod components;
+pub mod conditional_keys;
 pub mod core;
+pub mod faq;
 mod model;
 mod nl2br;
 mod persistence;
@@ -25,6 +24,7 @@ pub mod processing_service;
 mod routes;
 mod rules;
 mod services;
+pub mod verdicts;
 
 mod pages;
 

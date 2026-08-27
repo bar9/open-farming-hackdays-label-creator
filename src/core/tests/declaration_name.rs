@@ -28,7 +28,9 @@ fn selected_mehl_suggestion(amount: f64) -> Ingredient {
 fn mehl_selection_declares_weizenmehl_on_label() {
     let calculator = setup_simple_calculator();
     let output = calculator.execute(
-        InputBuilder::new().ingredient(selected_mehl_suggestion(500.0)).build(),
+        InputBuilder::new()
+            .ingredient(selected_mehl_suggestion(500.0))
+            .build(),
     );
 
     assert!(
@@ -42,10 +44,16 @@ fn mehl_selection_declares_weizenmehl_on_label() {
 // rule is declaration law, not a bio-scheme detail.
 #[test]
 fn weizenmehl_declaration_holds_in_all_configurations() {
-    for config in [Configuration::Conventional, Configuration::Bio, Configuration::Knospe] {
+    for config in [
+        Configuration::Conventional,
+        Configuration::Bio,
+        Configuration::Knospe,
+    ] {
         let calculator = calculator_for(config);
         let output = calculator.execute(
-            InputBuilder::new().ingredient(selected_mehl_suggestion(500.0)).build(),
+            InputBuilder::new()
+                .ingredient(selected_mehl_suggestion(500.0))
+                .build(),
         );
         assert!(
             output.label.contains("Weizenmehl"),
@@ -111,7 +119,11 @@ fn other_aliases_still_print_the_typed_term() {
             .build(),
     );
 
-    assert!(output.label.contains("Ei"), "typed term should appear. Label: {}", output.label);
+    assert!(
+        output.label.contains("Ei"),
+        "typed term should appear. Label: {}",
+        output.label
+    );
     assert!(
         !output.label.contains("Hühnerei ganz"),
         "alias must not be expanded to its canonical. Label: {}",

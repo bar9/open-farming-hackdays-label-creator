@@ -21,7 +21,11 @@ pub fn ValidationDisplay(props: ValidationDisplayProps) -> Element {
     });
 
     let has_errors = !relevant_validation_entries().is_empty();
-    let border_class = if has_errors { "border border-error rounded-md" } else { "" };
+    let border_class = if has_errors {
+        "border border-error rounded-md"
+    } else {
+        ""
+    };
 
     rsx! {
         div {

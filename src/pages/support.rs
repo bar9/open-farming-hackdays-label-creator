@@ -89,8 +89,8 @@ mod tests {
         ];
 
         for (locale, source) in LOCALES {
-            let doc: serde_yaml::Value =
-                serde_yaml::from_str(source).unwrap_or_else(|e| panic!("{locale} is not valid YAML: {e}"));
+            let doc: serde_yaml::Value = serde_yaml::from_str(source)
+                .unwrap_or_else(|e| panic!("{locale} is not valid YAML: {e}"));
 
             let support = doc
                 .get("support")

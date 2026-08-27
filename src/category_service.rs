@@ -30,11 +30,11 @@ pub fn is_beef_category(category: &str) -> bool {
     let category_lower = category.to_lowercase();
 
     // Check for beef/cattle specific categories
-    category_lower == "rind" ||
-    category_lower == "rindfleisch" ||
-    category_lower.contains("rind") ||
-    category_lower.contains("beef") ||
-    category_lower.contains("cattle")
+    category_lower == "rind"
+        || category_lower == "rindfleisch"
+        || category_lower.contains("rind")
+        || category_lower.contains("beef")
+        || category_lower.contains("cattle")
 }
 
 /// Check if a category represents meat
@@ -204,12 +204,13 @@ pub fn is_plant_category(category: &str) -> bool {
     let category_lower = category.to_lowercase();
 
     // First exclude animal products
-    if is_meat_category(category) ||
-       is_fish_category(category) ||
-       is_egg_category(category) ||
-       is_honey_category(category) ||
-       is_dairy_category(category) ||
-       is_insect_category(category) {
+    if is_meat_category(category)
+        || is_fish_category(category)
+        || is_egg_category(category)
+        || is_honey_category(category)
+        || is_dairy_category(category)
+        || is_insect_category(category)
+    {
         return false;
     }
 
@@ -260,7 +261,9 @@ mod tests {
         assert!(is_meat_category("Fleisch und Innereien"));
         assert!(is_meat_category("Rind"));
         assert!(is_meat_category("Schwein"));
-        assert!(is_meat_category("Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"));
+        assert!(is_meat_category(
+            "Kalb; Lamm, Schaf; Rind; Schwein; Wild; Geflügel"
+        ));
         assert!(is_meat_category("beef"));
         assert!(!is_meat_category("Getreide"));
         assert!(!is_meat_category("Milch"));
@@ -308,7 +311,9 @@ mod tests {
         assert!(is_egg_sachbezeichnung("Frischeier"));
         // fr / it
         assert!(is_egg_sachbezeichnung("\u{152}ufs"));
-        assert!(is_egg_sachbezeichnung("Oeufs de poules \u{e9}lev\u{e9}es en plein air"));
+        assert!(is_egg_sachbezeichnung(
+            "Oeufs de poules \u{e9}lev\u{e9}es en plein air"
+        ));
         assert!(is_egg_sachbezeichnung("Uova"));
     }
 

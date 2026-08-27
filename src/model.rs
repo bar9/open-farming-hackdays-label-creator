@@ -518,37 +518,254 @@ impl Country {
 
     /// All selectable countries in UI order: regions first, then ISO countries.
     pub const ISO_COUNTRIES: [Country; 248] = [
-        Country::AD, Country::AE, Country::AF, Country::AG, Country::AI, Country::AL, Country::AM, Country::AO,
-        Country::AQ, Country::AR, Country::AS, Country::AT, Country::AU, Country::AW, Country::AX, Country::AZ,
-        Country::BA, Country::BB, Country::BD, Country::BE, Country::BF, Country::BG, Country::BH, Country::BI,
-        Country::BJ, Country::BL, Country::BM, Country::BN, Country::BO, Country::BQ, Country::BR, Country::BS,
-        Country::BT, Country::BV, Country::BW, Country::BY, Country::BZ, Country::CA, Country::CC, Country::CD,
-        Country::CF, Country::CG, Country::CI, Country::CK, Country::CL, Country::CM, Country::CN, Country::CO,
-        Country::CR, Country::CU, Country::CV, Country::CW, Country::CX, Country::CY, Country::CZ, Country::DE,
-        Country::DJ, Country::DK, Country::DM, Country::DO, Country::DZ, Country::EC, Country::EE, Country::EG,
-        Country::EH, Country::ER, Country::ES, Country::ET, Country::FI, Country::FJ, Country::FK, Country::FM,
-        Country::FO, Country::FR, Country::GA, Country::GB, Country::GD, Country::GE, Country::GF, Country::GG,
-        Country::GH, Country::GI, Country::GL, Country::GM, Country::GN, Country::GP, Country::GQ, Country::GR,
-        Country::GS, Country::GT, Country::GU, Country::GW, Country::GY, Country::HK, Country::HM, Country::HN,
-        Country::HR, Country::HT, Country::HU, Country::ID, Country::IE, Country::IL, Country::IM, Country::IN,
-        Country::IO, Country::IQ, Country::IR, Country::IS, Country::IT, Country::JE, Country::JM, Country::JO,
-        Country::JP, Country::KE, Country::KG, Country::KH, Country::KI, Country::KM, Country::KN, Country::KP,
-        Country::KR, Country::KW, Country::KY, Country::KZ, Country::LA, Country::LB, Country::LC, Country::LI,
-        Country::LK, Country::LR, Country::LS, Country::LT, Country::LU, Country::LV, Country::LY, Country::MA,
-        Country::MC, Country::MD, Country::ME, Country::MF, Country::MG, Country::MH, Country::MK, Country::ML,
-        Country::MM, Country::MN, Country::MO, Country::MP, Country::MQ, Country::MR, Country::MS, Country::MT,
-        Country::MU, Country::MV, Country::MW, Country::MX, Country::MY, Country::MZ, Country::NA, Country::NC,
-        Country::NE, Country::NF, Country::NG, Country::NI, Country::NL, Country::NO, Country::NP, Country::NR,
-        Country::NU, Country::NZ, Country::OM, Country::PA, Country::PE, Country::PF, Country::PG, Country::PH,
-        Country::PK, Country::PL, Country::PM, Country::PN, Country::PR, Country::PS, Country::PT, Country::PW,
-        Country::PY, Country::QA, Country::RE, Country::RO, Country::RS, Country::RU, Country::RW, Country::SA,
-        Country::SB, Country::SC, Country::SD, Country::SE, Country::SG, Country::SH, Country::SI, Country::SJ,
-        Country::SK, Country::SL, Country::SM, Country::SN, Country::SO, Country::SR, Country::SS, Country::ST,
-        Country::SV, Country::SX, Country::SY, Country::SZ, Country::TC, Country::TD, Country::TF, Country::TG,
-        Country::TH, Country::TJ, Country::TK, Country::TL, Country::TM, Country::TN, Country::TO, Country::TR,
-        Country::TT, Country::TV, Country::TW, Country::TZ, Country::UA, Country::UG, Country::UM, Country::US,
-        Country::UY, Country::UZ, Country::VA, Country::VC, Country::VE, Country::VG, Country::VI, Country::VN,
-        Country::VU, Country::WF, Country::WS, Country::YE, Country::YT, Country::ZA, Country::ZM, Country::ZW,
+        Country::AD,
+        Country::AE,
+        Country::AF,
+        Country::AG,
+        Country::AI,
+        Country::AL,
+        Country::AM,
+        Country::AO,
+        Country::AQ,
+        Country::AR,
+        Country::AS,
+        Country::AT,
+        Country::AU,
+        Country::AW,
+        Country::AX,
+        Country::AZ,
+        Country::BA,
+        Country::BB,
+        Country::BD,
+        Country::BE,
+        Country::BF,
+        Country::BG,
+        Country::BH,
+        Country::BI,
+        Country::BJ,
+        Country::BL,
+        Country::BM,
+        Country::BN,
+        Country::BO,
+        Country::BQ,
+        Country::BR,
+        Country::BS,
+        Country::BT,
+        Country::BV,
+        Country::BW,
+        Country::BY,
+        Country::BZ,
+        Country::CA,
+        Country::CC,
+        Country::CD,
+        Country::CF,
+        Country::CG,
+        Country::CI,
+        Country::CK,
+        Country::CL,
+        Country::CM,
+        Country::CN,
+        Country::CO,
+        Country::CR,
+        Country::CU,
+        Country::CV,
+        Country::CW,
+        Country::CX,
+        Country::CY,
+        Country::CZ,
+        Country::DE,
+        Country::DJ,
+        Country::DK,
+        Country::DM,
+        Country::DO,
+        Country::DZ,
+        Country::EC,
+        Country::EE,
+        Country::EG,
+        Country::EH,
+        Country::ER,
+        Country::ES,
+        Country::ET,
+        Country::FI,
+        Country::FJ,
+        Country::FK,
+        Country::FM,
+        Country::FO,
+        Country::FR,
+        Country::GA,
+        Country::GB,
+        Country::GD,
+        Country::GE,
+        Country::GF,
+        Country::GG,
+        Country::GH,
+        Country::GI,
+        Country::GL,
+        Country::GM,
+        Country::GN,
+        Country::GP,
+        Country::GQ,
+        Country::GR,
+        Country::GS,
+        Country::GT,
+        Country::GU,
+        Country::GW,
+        Country::GY,
+        Country::HK,
+        Country::HM,
+        Country::HN,
+        Country::HR,
+        Country::HT,
+        Country::HU,
+        Country::ID,
+        Country::IE,
+        Country::IL,
+        Country::IM,
+        Country::IN,
+        Country::IO,
+        Country::IQ,
+        Country::IR,
+        Country::IS,
+        Country::IT,
+        Country::JE,
+        Country::JM,
+        Country::JO,
+        Country::JP,
+        Country::KE,
+        Country::KG,
+        Country::KH,
+        Country::KI,
+        Country::KM,
+        Country::KN,
+        Country::KP,
+        Country::KR,
+        Country::KW,
+        Country::KY,
+        Country::KZ,
+        Country::LA,
+        Country::LB,
+        Country::LC,
+        Country::LI,
+        Country::LK,
+        Country::LR,
+        Country::LS,
+        Country::LT,
+        Country::LU,
+        Country::LV,
+        Country::LY,
+        Country::MA,
+        Country::MC,
+        Country::MD,
+        Country::ME,
+        Country::MF,
+        Country::MG,
+        Country::MH,
+        Country::MK,
+        Country::ML,
+        Country::MM,
+        Country::MN,
+        Country::MO,
+        Country::MP,
+        Country::MQ,
+        Country::MR,
+        Country::MS,
+        Country::MT,
+        Country::MU,
+        Country::MV,
+        Country::MW,
+        Country::MX,
+        Country::MY,
+        Country::MZ,
+        Country::NA,
+        Country::NC,
+        Country::NE,
+        Country::NF,
+        Country::NG,
+        Country::NI,
+        Country::NL,
+        Country::NO,
+        Country::NP,
+        Country::NR,
+        Country::NU,
+        Country::NZ,
+        Country::OM,
+        Country::PA,
+        Country::PE,
+        Country::PF,
+        Country::PG,
+        Country::PH,
+        Country::PK,
+        Country::PL,
+        Country::PM,
+        Country::PN,
+        Country::PR,
+        Country::PS,
+        Country::PT,
+        Country::PW,
+        Country::PY,
+        Country::QA,
+        Country::RE,
+        Country::RO,
+        Country::RS,
+        Country::RU,
+        Country::RW,
+        Country::SA,
+        Country::SB,
+        Country::SC,
+        Country::SD,
+        Country::SE,
+        Country::SG,
+        Country::SH,
+        Country::SI,
+        Country::SJ,
+        Country::SK,
+        Country::SL,
+        Country::SM,
+        Country::SN,
+        Country::SO,
+        Country::SR,
+        Country::SS,
+        Country::ST,
+        Country::SV,
+        Country::SX,
+        Country::SY,
+        Country::SZ,
+        Country::TC,
+        Country::TD,
+        Country::TF,
+        Country::TG,
+        Country::TH,
+        Country::TJ,
+        Country::TK,
+        Country::TL,
+        Country::TM,
+        Country::TN,
+        Country::TO,
+        Country::TR,
+        Country::TT,
+        Country::TV,
+        Country::TW,
+        Country::TZ,
+        Country::UA,
+        Country::UG,
+        Country::UM,
+        Country::US,
+        Country::UY,
+        Country::UZ,
+        Country::VA,
+        Country::VC,
+        Country::VE,
+        Country::VG,
+        Country::VI,
+        Country::VN,
+        Country::VU,
+        Country::WF,
+        Country::WS,
+        Country::YE,
+        Country::YT,
+        Country::ZA,
+        Country::ZM,
+        Country::ZW,
     ];
 
     /// Parse an ISO code (or the special `CH`/`EU`/`NoOriginRequired` values) into a `Country`.
@@ -1174,7 +1391,10 @@ pub fn lookup_agricultural(name: &str) -> bool {
             return entry.2; // Return agricultural status
         }
     }
-    tracing::warn!("Ingredient '{}' not found in food_db, defaulting to agricultural=true", name);
+    tracing::warn!(
+        "Ingredient '{}' not found in food_db, defaulting to agricultural=true",
+        name
+    );
     true // Default to agricultural if not found
 }
 
@@ -1240,10 +1460,14 @@ pub fn declaration_name(typed: &str, canonical: Option<&str>) -> String {
         return typed.to_string();
     };
     let typed_lower = typed.to_lowercase();
-    let matches_rule = declare_as_canonical_aliases().into_iter().any(|(alias, canon)| {
-        alias.to_lowercase() == typed_lower && canon == canonical
-    });
-    if matches_rule { canonical.to_string() } else { typed.to_string() }
+    let matches_rule = declare_as_canonical_aliases()
+        .into_iter()
+        .any(|(alias, canon)| alias.to_lowercase() == typed_lower && canon == canonical);
+    if matches_rule {
+        canonical.to_string()
+    } else {
+        typed.to_string()
+    }
 }
 
 /// Whether the food DB positively knows this ingredient to be non-agricultural
@@ -1296,20 +1520,35 @@ mod food_db_tests {
     #[test]
     fn food_db_loads_without_panic() {
         let entries = food_db();
-        assert!(entries.len() > 50, "food_db should have many entries, got {}", entries.len());
+        assert!(
+            entries.len() > 50,
+            "food_db should have many entries, got {}",
+            entries.len()
+        );
     }
 
     #[test]
     fn food_db_full_loads_without_panic() {
         let entries = food_db_full();
-        assert!(entries.len() > 50, "food_db_full should have many entries, got {}", entries.len());
-        assert_eq!(food_db().len(), entries.len(), "food_db and food_db_full row counts must match");
+        assert!(
+            entries.len() > 50,
+            "food_db_full should have many entries, got {}",
+            entries.len()
+        );
+        assert_eq!(
+            food_db().len(),
+            entries.len(),
+            "food_db and food_db_full row counts must match"
+        );
     }
 
     #[test]
     fn ingredient_aliases_loads_without_panic() {
         let aliases = ingredient_aliases();
-        assert!(!aliases.is_empty(), "ingredient_aliases should have entries");
+        assert!(
+            !aliases.is_empty(),
+            "ingredient_aliases should have entries"
+        );
     }
 
     // Every alias must point at a real food_db entry, otherwise allergen /
@@ -1330,11 +1569,11 @@ mod food_db_tests {
     #[test]
     fn lookup_priority_returns_curated_values() {
         assert_eq!(lookup_priority("Butter"), 100); // alias term
-        // Canonical inherits its alias's priority (matched on the canonical column).
+                                                    // Canonical inherits its alias's priority (matched on the canonical column).
         assert_eq!(lookup_priority("Kochbutter"), 100);
         assert_eq!(lookup_priority("Eiweiss"), 50); // standalone boost row
         assert_eq!(lookup_priority("Buchweizenmehl"), 0); // uncurated
-        // Label convention uses the plural «Mandeln»; alias to the food_db «Mandel».
+                                                          // Label convention uses the plural «Mandeln»; alias to the food_db «Mandel».
         assert_eq!(lookup_priority("Mandeln"), 90);
         assert_eq!(lookup_priority("Vollmilch"), 80); // existing alias to Vollmilch pasteurisiert
     }
@@ -1365,7 +1604,10 @@ mod food_db_tests {
         assert_eq!(declaration_name("Dinkelmehl", None), "Dinkelmehl");
         assert_eq!(declaration_name("Roggenmehl", None), "Roggenmehl");
         // Free-text ingredients (no canonical) are never rewritten.
-        assert_eq!(declaration_name("Grossmutters Mehl", None), "Grossmutters Mehl");
+        assert_eq!(
+            declaration_name("Grossmutters Mehl", None),
+            "Grossmutters Mehl"
+        );
     }
 
     // A typed term only resolves against its own canonical: a mismatched pair
@@ -1386,7 +1628,11 @@ mod food_db_tests {
             declared
         );
         // Weizenmehl is gluten-containing, so it must render bold as an allergen.
-        assert!(lookup_allergen(&declared), "'{}' must be flagged as an allergen", declared);
+        assert!(
+            lookup_allergen(&declared),
+            "'{}' must be flagged as an allergen",
+            declared
+        );
     }
 
     // DEC-9: the food DB already knows which ingredients are non-agricultural,
@@ -1431,8 +1677,9 @@ mod country_i18n_tests {
     use super::Country;
 
     fn de_ch_country_keys() -> std::collections::HashSet<String> {
-        let yml = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/locales/de-CH.yml"))
-            .expect("de-CH.yml must be readable");
+        let yml =
+            std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/locales/de-CH.yml"))
+                .expect("de-CH.yml must be readable");
         let block = yml
             .split("\ncountries:\n")
             .nth(1)
@@ -1440,7 +1687,12 @@ mod country_i18n_tests {
         block
             .lines()
             .take_while(|l| l.starts_with("  ") || l.trim().is_empty())
-            .filter_map(|l| l.trim().split(':').next().map(|k| k.trim_matches('"').to_string()))
+            .filter_map(|l| {
+                l.trim()
+                    .split(':')
+                    .next()
+                    .map(|k| k.trim_matches('"').to_string())
+            })
             .filter(|k| !k.is_empty())
             .collect()
     }
@@ -1449,17 +1701,25 @@ mod country_i18n_tests {
     fn every_country_has_a_de_ch_translation_key() {
         let keys = de_ch_country_keys();
         let mut missing: Vec<String> = Vec::new();
-        for country in Country::ISO_COUNTRIES
-            .iter()
-            .chain([Country::CH, Country::EU, Country::NoOriginRequired, Country::Import].iter())
-        {
+        for country in Country::ISO_COUNTRIES.iter().chain(
+            [
+                Country::CH,
+                Country::EU,
+                Country::NoOriginRequired,
+                Country::Import,
+            ]
+            .iter(),
+        ) {
             let key = country.i18n_key();
             let leaf = key.trim_start_matches("countries.");
             if !keys.contains(leaf) {
                 missing.push(leaf.to_string());
             }
         }
-        assert!(missing.is_empty(), "countries.* keys missing in de-CH.yml: {missing:?}");
+        assert!(
+            missing.is_empty(),
+            "countries.* keys missing in de-CH.yml: {missing:?}"
+        );
     }
 
     #[test]
@@ -1485,7 +1745,10 @@ mod country_i18n_tests {
         }
         assert_eq!(Country::from_code("CH"), Some(Country::CH));
         assert_eq!(Country::from_code("EU"), Some(Country::EU));
-        assert_eq!(Country::from_code("NoOriginRequired"), Some(Country::NoOriginRequired));
+        assert_eq!(
+            Country::from_code("NoOriginRequired"),
+            Some(Country::NoOriginRequired)
+        );
         assert_eq!(Country::from_code(""), None);
     }
 }

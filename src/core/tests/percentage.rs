@@ -3,8 +3,12 @@ use super::*;
 #[test]
 fn calculate_swiss_agricultural_percentage_100_percent() {
     let ingredients = vec![
-        IngredientBuilder::new_agri("Hafer", 600.0).origin(Country::CH).build(),
-        IngredientBuilder::new_agri("Weizenmehl", 400.0).origin(Country::CH).build(),
+        IngredientBuilder::new_agri("Hafer", 600.0)
+            .origin(Country::CH)
+            .build(),
+        IngredientBuilder::new_agri("Weizenmehl", 400.0)
+            .origin(Country::CH)
+            .build(),
     ];
 
     let percentage = calculate_swiss_agricultural_percentage(&ingredients);
@@ -14,9 +18,15 @@ fn calculate_swiss_agricultural_percentage_100_percent() {
 #[test]
 fn calculate_swiss_agricultural_percentage_90_percent() {
     let ingredients = vec![
-        IngredientBuilder::new_agri("Hafer", 500.0).origin(Country::CH).build(),
-        IngredientBuilder::new_agri("Weizenmehl", 400.0).origin(Country::CH).build(),
-        IngredientBuilder::new_agri("Olivenöl", 100.0).origin(Country::EU).build(),
+        IngredientBuilder::new_agri("Hafer", 500.0)
+            .origin(Country::CH)
+            .build(),
+        IngredientBuilder::new_agri("Weizenmehl", 400.0)
+            .origin(Country::CH)
+            .build(),
+        IngredientBuilder::new_agri("Olivenöl", 100.0)
+            .origin(Country::EU)
+            .build(),
     ];
 
     let percentage = calculate_swiss_agricultural_percentage(&ingredients);
@@ -26,8 +36,12 @@ fn calculate_swiss_agricultural_percentage_90_percent() {
 #[test]
 fn calculate_swiss_agricultural_percentage_with_non_agricultural() {
     let ingredients = vec![
-        IngredientBuilder::new_agri("Hafer", 500.0).origin(Country::CH).build(),
-        IngredientBuilder::new_agri("Salz", 500.0).origin(Country::EU).build(),
+        IngredientBuilder::new_agri("Hafer", 500.0)
+            .origin(Country::CH)
+            .build(),
+        IngredientBuilder::new_agri("Salz", 500.0)
+            .origin(Country::EU)
+            .build(),
     ];
 
     let percentage = calculate_swiss_agricultural_percentage(&ingredients);
@@ -56,8 +70,12 @@ fn test_agricultural_lookup() {
 fn knospe_certified_percentage_no_agricultural_returns_100() {
     // When there are no agricultural ingredients, knospe certified percentage should be 100%
     let ingredients = vec![
-        IngredientBuilder::new("Salz", 500.0).agricultural(false).build(),
-        IngredientBuilder::new("Wasser", 500.0).agricultural(false).build(),
+        IngredientBuilder::new("Salz", 500.0)
+            .agricultural(false)
+            .build(),
+        IngredientBuilder::new("Wasser", 500.0)
+            .agricultural(false)
+            .build(),
     ];
 
     let percentage = calculate_knospe_certified_percentage(&ingredients);
@@ -68,8 +86,12 @@ fn knospe_certified_percentage_no_agricultural_returns_100() {
 fn bio_ch_certified_percentage_no_agricultural_returns_100() {
     // When there are no agricultural ingredients, bio_ch certified percentage should be 100%
     let ingredients = vec![
-        IngredientBuilder::new("Salz", 500.0).agricultural(false).build(),
-        IngredientBuilder::new("Wasser", 500.0).agricultural(false).build(),
+        IngredientBuilder::new("Salz", 500.0)
+            .agricultural(false)
+            .build(),
+        IngredientBuilder::new("Wasser", 500.0)
+            .agricultural(false)
+            .build(),
     ];
 
     let percentage = calculate_bio_ch_certified_percentage(&ingredients);
@@ -87,14 +109,17 @@ fn format_percentage_boundary_values() {
 #[test]
 fn test_swiss_percentage_with_children() {
     // Composite ingredient: 100g Bouillon with 60g CH salt + 40g DE pepper
-    let ingredients = vec![
-        IngredientBuilder::new("Bouillon", 100.0)
-            .children(vec![
-                IngredientBuilder::new("Salz", 60.0).agricultural(false).origin(Country::CH).build(),
-                IngredientBuilder::new("Pfeffer", 40.0).origin(Country::DE).build(),
-            ])
-            .build(),
-    ];
+    let ingredients = vec![IngredientBuilder::new("Bouillon", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Salz", 60.0)
+                .agricultural(false)
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new("Pfeffer", 40.0)
+                .origin(Country::DE)
+                .build(),
+        ])
+        .build()];
     // Only Pfeffer is agricultural (40g total agricultural, 0g Swiss agricultural)
     let percentage = calculate_swiss_agricultural_percentage(&ingredients);
     assert_eq!(percentage, 0.0);
@@ -103,14 +128,12 @@ fn test_swiss_percentage_with_children() {
 #[test]
 fn test_knospe_percentage_with_children() {
     // Composite with mixed bio leaves
-    let ingredients = vec![
-        IngredientBuilder::new("Mischung", 100.0)
-            .children(vec![
-                IngredientBuilder::new("Hafer", 70.0).bio().build(),
-                IngredientBuilder::new("Zucker", 30.0).build(), // not bio
-            ])
-            .build(),
-    ];
+    let ingredients = vec![IngredientBuilder::new("Mischung", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Hafer", 70.0).bio().build(),
+            IngredientBuilder::new("Zucker", 30.0).build(), // not bio
+        ])
+        .build()];
     let percentage = calculate_knospe_certified_percentage(&ingredients);
     assert_eq!(percentage, 70.0);
 }
@@ -118,14 +141,12 @@ fn test_knospe_percentage_with_children() {
 #[test]
 fn test_bio_ch_percentage_with_children() {
     // Composite with mixed bio_ch leaves
-    let ingredients = vec![
-        IngredientBuilder::new("Mischung", 100.0)
-            .children(vec![
-                IngredientBuilder::new("Milch", 80.0).bio_ch().build(),
-                IngredientBuilder::new("Sahne", 20.0).build(), // not bio_ch
-            ])
-            .build(),
-    ];
+    let ingredients = vec![IngredientBuilder::new("Mischung", 100.0)
+        .children(vec![
+            IngredientBuilder::new("Milch", 80.0).bio_ch().build(),
+            IngredientBuilder::new("Sahne", 20.0).build(), // not bio_ch
+        ])
+        .build()];
     let percentage = calculate_bio_ch_certified_percentage(&ingredients);
     assert_eq!(percentage, 80.0);
 }
@@ -133,16 +154,16 @@ fn test_bio_ch_percentage_with_children() {
 #[test]
 fn test_percentage_with_override() {
     // Override node treated as single unit, not decomposed into leaves
-    let ingredients = vec![
-        IngredientBuilder::new("Bouillon", 100.0)
-            .bio()
-            .override_children()
-            .children(vec![
-                IngredientBuilder::new("Salz", 60.0).agricultural(false).build(),
-                IngredientBuilder::new("Pfeffer", 40.0).build(), // not bio
-            ])
-            .build(),
-    ];
+    let ingredients = vec![IngredientBuilder::new("Bouillon", 100.0)
+        .bio()
+        .override_children()
+        .children(vec![
+            IngredientBuilder::new("Salz", 60.0)
+                .agricultural(false)
+                .build(),
+            IngredientBuilder::new("Pfeffer", 40.0).build(), // not bio
+        ])
+        .build()];
     // With override, the parent node (100g, bio, agricultural=true by default) is the leaf
     let percentage = calculate_knospe_certified_percentage(&ingredients);
     assert_eq!(percentage, 100.0);
@@ -155,8 +176,12 @@ fn resolve_percentages_basic() {
     // Parent 200g with children 60% / 40% -> 120g / 80g.
     let parent = IngredientBuilder::new("Sauce", 200.0)
         .children(vec![
-            IngredientBuilder::new("Tomate", 60.0).unit(AmountUnit::Percent).build(),
-            IngredientBuilder::new("Wasser", 40.0).unit(AmountUnit::Percent).build(),
+            IngredientBuilder::new("Tomate", 60.0)
+                .unit(AmountUnit::Percent)
+                .build(),
+            IngredientBuilder::new("Wasser", 40.0)
+                .unit(AmountUnit::Percent)
+                .build(),
         ])
         .build();
 
@@ -174,8 +199,12 @@ fn resolve_percentages_non_100_sum() {
     // 60% / 30% (sum 90%) -> 120g / 60g; parent weighs the declared parts (180g).
     let parent = IngredientBuilder::new("Sauce", 200.0)
         .children(vec![
-            IngredientBuilder::new("Tomate", 60.0).unit(AmountUnit::Percent).build(),
-            IngredientBuilder::new("Wasser", 30.0).unit(AmountUnit::Percent).build(),
+            IngredientBuilder::new("Tomate", 60.0)
+                .unit(AmountUnit::Percent)
+                .build(),
+            IngredientBuilder::new("Wasser", 30.0)
+                .unit(AmountUnit::Percent)
+                .build(),
         ])
         .build();
 
@@ -192,8 +221,12 @@ fn percentage_mode_parent_is_authoritative_before_resolution() {
     // not the meaningless sum of the percentage values.
     let parent = IngredientBuilder::new("Sauce", 200.0)
         .children(vec![
-            IngredientBuilder::new("Tomate", 60.0).unit(AmountUnit::Percent).build(),
-            IngredientBuilder::new("Wasser", 40.0).unit(AmountUnit::Percent).build(),
+            IngredientBuilder::new("Tomate", 60.0)
+                .unit(AmountUnit::Percent)
+                .build(),
+            IngredientBuilder::new("Wasser", 40.0)
+                .unit(AmountUnit::Percent)
+                .build(),
         ])
         .build();
     assert_eq!(parent.computed_amount(), 200.0);
@@ -205,8 +238,12 @@ fn scale_recursive_leaves_percentage_children() {
     // child percentages untouched (their derived grams double automatically).
     let mut parent = IngredientBuilder::new("Sauce", 200.0)
         .children(vec![
-            IngredientBuilder::new("Tomate", 60.0).unit(AmountUnit::Percent).build(),
-            IngredientBuilder::new("Wasser", 40.0).unit(AmountUnit::Percent).build(),
+            IngredientBuilder::new("Tomate", 60.0)
+                .unit(AmountUnit::Percent)
+                .build(),
+            IngredientBuilder::new("Wasser", 40.0)
+                .unit(AmountUnit::Percent)
+                .build(),
         ])
         .build();
 
@@ -247,7 +284,9 @@ fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
         .ingredient(
             IngredientBuilder::new("Rosinenmischung", 0.0)
                 .children(vec![
-                    IngredientBuilder::new("Rosinen", 100.0).namensgebend().build(),
+                    IngredientBuilder::new("Rosinen", 100.0)
+                        .namensgebend()
+                        .build(),
                     IngredientBuilder::new("Zimt", 100.0).build(),
                 ])
                 .build(),
@@ -260,7 +299,11 @@ fn namensgebend_sub_ingredient_prints_percent_of_whole_product() {
         "namensgebend child must print its whole-product share. Label: {}",
         output.label
     );
-    assert!(!output.label.contains("Rosinen 50%"), "share must not be composite-relative. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Rosinen 50%"),
+        "share must not be composite-relative. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -275,8 +318,13 @@ fn namensgebend_percent_mode_child_resolves_to_whole_product_percent() {
         .ingredient(
             IngredientBuilder::new("Rosinenmischung", 200.0)
                 .children(vec![
-                    IngredientBuilder::new("Rosinen", 50.0).unit(AmountUnit::Percent).namensgebend().build(),
-                    IngredientBuilder::new("Zimt", 50.0).unit(AmountUnit::Percent).build(),
+                    IngredientBuilder::new("Rosinen", 50.0)
+                        .unit(AmountUnit::Percent)
+                        .namensgebend()
+                        .build(),
+                    IngredientBuilder::new("Zimt", 50.0)
+                        .unit(AmountUnit::Percent)
+                        .build(),
                 ])
                 .build(),
         )
@@ -301,7 +349,9 @@ fn namensgebend_sub_ingredient_without_amount_is_flagged() {
         .ingredient(
             IngredientBuilder::new("Himbeerstreusel", 600.0)
                 .children(vec![
-                    IngredientBuilder::new("Himbeere", 0.0).namensgebend().build(),
+                    IngredientBuilder::new("Himbeere", 0.0)
+                        .namensgebend()
+                        .build(),
                     IngredientBuilder::new("Zucker", 0.0).build(),
                 ])
                 .build(),
@@ -316,7 +366,11 @@ fn namensgebend_sub_ingredient_without_amount_is_flagged() {
         output.validation_messages
     );
     // No spurious % appears for the amount-less child
-    assert!(!output.label.contains("Himbeere 0%"), "Label: {}", output.label);
+    assert!(
+        !output.label.contains("Himbeere 0%"),
+        "Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -330,7 +384,9 @@ fn namensgebend_validator_quiet_when_amounts_present() {
         .ingredient(
             IngredientBuilder::new("Himbeerstreusel", 0.0)
                 .children(vec![
-                    IngredientBuilder::new("Himbeere", 300.0).namensgebend().build(),
+                    IngredientBuilder::new("Himbeere", 300.0)
+                        .namensgebend()
+                        .build(),
                     IngredientBuilder::new("Zucker", 300.0).build(),
                 ])
                 .build(),
@@ -339,9 +395,15 @@ fn namensgebend_validator_quiet_when_amounts_present() {
         .build();
     let output = calculator.execute(input);
     assert!(
-        !output.validation_messages.contains_key("ingredients[0][amount]"),
+        !output
+            .validation_messages
+            .contains_key("ingredients[0][amount]"),
         "weighted namensgebend child must not be flagged. Messages: {:?}",
         output.validation_messages
     );
-    assert!(output.label.contains("Himbeere 30%"), "Label: {}", output.label);
+    assert!(
+        output.label.contains("Himbeere 30%"),
+        "Label: {}",
+        output.label
+    );
 }

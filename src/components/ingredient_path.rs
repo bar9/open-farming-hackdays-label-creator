@@ -59,7 +59,9 @@ pub fn descendant_definitions(
     defines: &dyn Fn(&Ingredient) -> bool,
 ) -> Vec<IngredientPath> {
     let mut out = Vec::new();
-    let Some(node) = get_at_path(ingredients, base) else { return out };
+    let Some(node) = get_at_path(ingredients, base) else {
+        return out;
+    };
     if let Some(children) = node.children.as_ref() {
         for (i, child) in children.iter().enumerate() {
             let mut child_path = base.to_vec();
@@ -200,17 +202,26 @@ mod tests {
             name: "Composite".into(),
             children: Some(vec![
                 // [0,0] direct child WITH an origin
-                Ingredient { name: "Apfel".into(), origins: Some(vec![Country::CH]), ..Default::default() },
+                Ingredient {
+                    name: "Apfel".into(),
+                    origins: Some(vec![Country::CH]),
+                    ..Default::default()
+                },
                 // [0,1] composite child WITHOUT its own origin, but [0,1,0] grandchild has one
                 Ingredient {
                     name: "Mix".into(),
-                    children: Some(vec![
-                        Ingredient { name: "Birne".into(), origins: Some(vec![Country::FR]), ..Default::default() },
-                    ]),
+                    children: Some(vec![Ingredient {
+                        name: "Birne".into(),
+                        origins: Some(vec![Country::FR]),
+                        ..Default::default()
+                    }]),
                     ..Default::default()
                 },
                 // [0,2] plain child, no origin
-                Ingredient { name: "Wasser".into(), ..Default::default() },
+                Ingredient {
+                    name: "Wasser".into(),
+                    ..Default::default()
+                },
             ]),
             ..Default::default()
         }]
@@ -222,9 +233,22 @@ mod tests {
         let has_origin = |i: &Ingredient| i.origins.as_ref().is_some_and(|o| !o.is_empty());
         let defs = descendant_definitions(&tree, &[0], &has_origin);
         // Direct child [0,0] defines it; the grandchild [0,1,0] (shallowest below [0,1]) defines it.
-        assert!(defs.contains(&vec![0, 0]), "direct origin child should be found: {:?}", defs);
-        assert!(defs.contains(&vec![0, 1, 0]), "nested origin grandchild should be found: {:?}", defs);
-        assert_eq!(defs.len(), 2, "Wasser has no origin; expected exactly 2 definitions: {:?}", defs);
+        assert!(
+            defs.contains(&vec![0, 0]),
+            "direct origin child should be found: {:?}",
+            defs
+        );
+        assert!(
+            defs.contains(&vec![0, 1, 0]),
+            "nested origin grandchild should be found: {:?}",
+            defs
+        );
+        assert_eq!(
+            defs.len(),
+            2,
+            "Wasser has no origin; expected exactly 2 definitions: {:?}",
+            defs
+        );
     }
 
     #[test]
@@ -242,15 +266,21 @@ mod tests {
             children: Some(vec![Ingredient {
                 name: "Sub".into(),
                 origins: Some(vec![Country::CH]),
-                children: Some(vec![
-                    Ingredient { name: "Deep".into(), origins: Some(vec![Country::DE]), ..Default::default() },
-                ]),
+                children: Some(vec![Ingredient {
+                    name: "Deep".into(),
+                    origins: Some(vec![Country::DE]),
+                    ..Default::default()
+                }]),
                 ..Default::default()
             }]),
             ..Default::default()
         }];
         let has_origin = |i: &Ingredient| i.origins.as_ref().is_some_and(|o| !o.is_empty());
         let defs = descendant_definitions(&tree, &[0], &has_origin);
-        assert_eq!(defs, vec![vec![0, 0]], "should stop at the shallowest defining node");
+        assert_eq!(
+            defs,
+            vec![vec![0, 0]],
+            "should stop at the shallowest defining node"
+        );
     }
 }

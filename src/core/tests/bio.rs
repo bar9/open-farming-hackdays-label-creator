@@ -1,5 +1,5 @@
-use crate::conditional_keys as keys;
 use super::*;
+use crate::conditional_keys as keys;
 use crate::rules::RuleDef;
 use crate::shared::Configuration;
 
@@ -12,7 +12,11 @@ fn bio_ch_100_percent_sets_sachbezeichnung_suffix() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 400.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -48,7 +52,11 @@ fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
     ]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 40.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -58,10 +66,24 @@ fn bio_ch_erlaubte_ausnahme_within_5pct_allows_sachbezeichnung() {
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), None);
     assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), None);
     // 96% (not 100%): per-ingredient marking, Pektin unmarked, no "Alle" legend.
-    assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
-    assert!(!output.label.contains("Pektin*"), "permitted non-bio exception must not be starred");
-    assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Label: {}", output.label);
-    assert!(!output.label.contains("Alle landwirtschaftlichen"), "not 100% → no 'Alle' legend");
+    assert!(
+        output.label.contains("Hafer*"),
+        "bio ingredient gets *. Label: {}",
+        output.label
+    );
+    assert!(
+        !output.label.contains("Pektin*"),
+        "permitted non-bio exception must not be starred"
+    );
+    assert!(
+        output.label.contains("* aus biologischer Landwirtschaft"),
+        "Label: {}",
+        output.label
+    );
+    assert!(
+        !output.label.contains("Alle landwirtschaftlichen"),
+        "not 100% → no 'Alle' legend"
+    );
 }
 
 #[test]
@@ -74,7 +96,11 @@ fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
     ]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 400.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 400.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -82,7 +108,10 @@ fn bio_ch_erlaubte_ausnahme_over_5pct_blocks_sachbezeichnung() {
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
-    assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
+    assert_eq!(
+        c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT),
+        Some(&true)
+    );
 }
 
 #[test]
@@ -142,8 +171,18 @@ fn bio_ch_100_percent_via_full_bio_config() {
     let input = InputBuilder::new()
         .vollstaendig()
         .certification_body("CH-BIO-006 (bio.inspecta AG)")
-        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 600.0)
+                .bio_ch()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 400.0)
+                .bio_ch()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -232,8 +271,17 @@ fn knospe_bio_branching_uses_bio_swiss_percentage() {
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 500.0).origin(Country::EU).build()) // not bio → ignored
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 500.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 500.0)
+                .origin(Country::EU)
+                .build(),
+        ) // not bio → ignored
         .build();
     let output = calculator.execute(input);
 
@@ -252,9 +300,23 @@ fn knospe_bio_branching_ignores_non_bio() {
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 300.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 200.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 500.0).origin(Country::EU).build()) // not bio
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 300.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 200.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 500.0)
+                .origin(Country::EU)
+                .build(),
+        ) // not bio
         .build();
     let output = calculator.execute(input);
 
@@ -272,8 +334,17 @@ fn knospe_without_bio_rule_uses_all_ingredients() {
     ]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 500.0).origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 500.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 500.0)
+                .origin(Country::EU)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
 
@@ -295,8 +366,18 @@ fn knospe_logo_regular_100_knospe_90_plus_swiss() {
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 100.0).bio().origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 100.0)
+                .bio()
+                .origin(Country::EU)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -313,8 +394,18 @@ fn knospe_logo_no_cross_100_knospe_under_90_swiss() {
         RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 400.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 600.0).bio().origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 400.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 600.0)
+                .bio()
+                .origin(Country::EU)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -331,8 +422,17 @@ fn knospe_no_logo_when_not_100_knospe() {
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 400.0).origin(Country::EU).build()) // NOT bio
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 600.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 400.0)
+                .origin(Country::EU)
+                .build(),
+        ) // NOT bio
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -348,8 +448,19 @@ fn knospe_no_logo_when_not_100_knospe() {
 fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
     let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().umstellbetrieb().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .umstellbetrieb()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 100.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -362,8 +473,19 @@ fn knospe_umstellung_logo_with_umstellbetrieb_ingredient() {
 fn knospe_umstellung_logo_import_variant() {
     let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 400.0).bio().umstellbetrieb().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Rohrzucker", 600.0).bio().origin(Country::PE).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 400.0)
+                .bio()
+                .umstellbetrieb()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Rohrzucker", 600.0)
+                .bio()
+                .origin(Country::PE)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -376,11 +498,19 @@ fn knospe_umstellung_logo_import_variant() {
 fn knospe_umstellung_logo_absent_without_umstellbetrieb() {
     let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
 
-    assert_eq!(output.conditionals().get(keys::KNOSPE_UMSTELLUNG_LOGO), None);
+    assert_eq!(
+        output.conditionals().get(keys::KNOSPE_UMSTELLUNG_LOGO),
+        None
+    );
 }
 
 #[test]
@@ -414,7 +544,12 @@ fn knospe_umstellung_logo_from_composite_parent_claim() {
 fn knospe_check_pending_before_recipe_marked_complete() {
     let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -430,18 +565,33 @@ fn knospe_check_hints_suppressed_for_einzelzutat() {
     // tri-state hints must stay silent in the Knospe environment too.
     for vollstaendig in [false, true] {
         let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
-        let mut builder = InputBuilder::new()
-            .einzelzutat()
-            .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build());
+        let mut builder = InputBuilder::new().einzelzutat().ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        );
         if vollstaendig {
             builder = builder.vollstaendig();
         }
         let output = calculator.execute(builder.build());
         let c = &output.conditionals();
 
-        assert_eq!(c.get(keys::KNOSPE_CHECK_PENDING), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get(keys::KNOSPE_CHECK_OK), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get(keys::KNOSPE_CHECK_FAILED), None, "vollstaendig={vollstaendig}");
+        assert_eq!(
+            c.get(keys::KNOSPE_CHECK_PENDING),
+            None,
+            "vollstaendig={vollstaendig}"
+        );
+        assert_eq!(
+            c.get(keys::KNOSPE_CHECK_OK),
+            None,
+            "vollstaendig={vollstaendig}"
+        );
+        assert_eq!(
+            c.get(keys::KNOSPE_CHECK_FAILED),
+            None,
+            "vollstaendig={vollstaendig}"
+        );
     }
 }
 
@@ -451,7 +601,12 @@ fn knospe_check_ok_when_complete_and_valid() {
     // No certification body set: must NOT block the OK state.
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -471,7 +626,12 @@ fn knospe_check_failed_when_recipe_has_validation_issue() {
         .vollstaendig()
         // Import-Knospe without a country while the Import-Knospe logo shows
         // → recipe-scoped validation error → failed
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::Import).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::Import)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -485,8 +645,17 @@ fn knospe_check_failed_when_not_fully_knospe() {
     let calculator = calculator_with(vec![RuleDef::Knospe_ShowBioSuisseLogo]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 400.0).origin(Country::EU).build()) // NOT bio
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 600.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 400.0)
+                .origin(Country::EU)
+                .build(),
+        ) // NOT bio
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -504,8 +673,18 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 960.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Nonbio", 40.0).origin(Country::CH).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Himbeeren", 960.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Nonbio", 40.0)
+                .origin(Country::CH)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -513,7 +692,10 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_bio() {
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
     // A logo variant must be set (exception is non-bio so 100% Swiss of the bio share → regular).
-    assert!(c.get(keys::BIO_SUISSE_REGULAR) == Some(&true) || c.get(keys::BIO_SUISSE_NO_CROSS) == Some(&true));
+    assert!(
+        c.get(keys::BIO_SUISSE_REGULAR) == Some(&true)
+            || c.get(keys::BIO_SUISSE_NO_CROSS) == Some(&true)
+    );
 }
 
 #[test]
@@ -525,15 +707,28 @@ fn knospe_logo_shown_when_nonbio_has_erlaubte_ausnahme_knospe() {
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 960.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Himbeeren", 960.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 40.0)
+                .origin(Country::CH)
+                .erlaubte_ausnahme_knospe()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
 
     assert_eq!(c.get(keys::KNOSPE_MARKETING_ALLOWED), Some(&true));
     assert_eq!(c.get(keys::KNOSPE_MARKETING_NOT_ALLOWED), None);
-    assert!(c.get(keys::BIO_SUISSE_REGULAR) == Some(&true) || c.get(keys::BIO_SUISSE_NO_CROSS) == Some(&true));
+    assert!(
+        c.get(keys::BIO_SUISSE_REGULAR) == Some(&true)
+            || c.get(keys::BIO_SUISSE_NO_CROSS) == Some(&true)
+    );
 }
 
 #[test]
@@ -544,8 +739,18 @@ fn knospe_logo_regular_exact_90_boundary() {
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 100.0).bio().origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 900.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 100.0)
+                .bio()
+                .origin(Country::EU)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -563,8 +768,18 @@ fn knospe_logo_no_cross_just_under_90_boundary() {
         RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 890.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Olivenöl", 110.0).bio().origin(Country::EU).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 890.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Olivenöl", 110.0)
+                .bio()
+                .origin(Country::EU)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -602,7 +817,9 @@ fn certification_body_valid() {
     let output = calculator.execute(input);
 
     // Valid certification body → no validation error for this field
-    assert!(!output.validation_messages.contains_key("certification_body"));
+    assert!(!output
+        .validation_messages
+        .contains_key("certification_body"));
 }
 
 #[test]
@@ -646,7 +863,11 @@ fn bio_ch_95_percent_sets_sachbezeichnung_suffix() {
     // an undeclared non-bio ingredient blocks "Bio" outright (DEC-7).
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 50.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 50.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -676,10 +897,18 @@ fn bio_blocked_by_undeclared_non_bio_under_5_percent() {
     let output = calculator.execute(input);
     let c = &output.conditionals();
 
-    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None, "4% nicht-bio Ei darf «Bio» nicht erlauben");
+    assert_eq!(
+        c.get(keys::BIO_MARKETING_ALLOWED),
+        None,
+        "4% nicht-bio Ei darf «Bio» nicht erlauben"
+    );
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
-    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), Some(&true), "Hinweis nennt den Grund");
+    assert_eq!(
+        c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT),
+        Some(&true),
+        "Hinweis nennt den Grund"
+    );
     assert_eq!(c.get(keys::BIO_CHECK_FAILED), Some(&true));
 }
 
@@ -690,7 +919,11 @@ fn bio_allowed_when_same_ingredient_is_declared_exception() {
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 40.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -708,14 +941,25 @@ fn bio_still_blocked_when_declared_exception_over_5_percent() {
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 900.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 100.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 100.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), Some(&true));
-    assert_eq!(c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT), Some(&true));
-    assert_eq!(c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT), None, "deklariert — anderer Grund");
+    assert_eq!(
+        c.get(keys::BIO_ERLAUBTE_AUSNAHME_UEBER_5_PROZENT),
+        Some(&true)
+    );
+    assert_eq!(
+        c.get(keys::BIO_NICHT_DEKLARIERTE_ZUTAT),
+        None,
+        "deklariert — anderer Grund"
+    );
 }
 
 #[test]
@@ -725,7 +969,11 @@ fn bio_non_agricultural_ingredient_does_not_block() {
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new_agri("Mehl", 960.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Salz", 40.0).agricultural(false).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Salz", 40.0)
+                .agricultural(false)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -741,7 +989,12 @@ fn bio_mono_umstellbetrieb_still_allowed() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().umstellbetrieb().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .umstellbetrieb()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -757,7 +1010,9 @@ fn bio_blocked_by_undeclared_non_bio_inside_composite() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let fuellung = IngredientBuilder::new_agri("Füllung", 400.0)
         .children(vec![
-            IngredientBuilder::new_agri("Aprikosen", 380.0).bio_ch().build(),
+            IngredientBuilder::new_agri("Aprikosen", 380.0)
+                .bio_ch()
+                .build(),
             IngredientBuilder::new_agri("Ei", 20.0).build(),
         ])
         .build();
@@ -822,7 +1077,12 @@ fn bio_ch_umstellbetrieb_excluded_from_percentage() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 400.0)
+                .bio_ch()
+                .umstellbetrieb()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -837,7 +1097,12 @@ fn bio_ch_95_with_umstellbetrieb_drops_below_threshold() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 100.0).bio_ch().umstellbetrieb().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 100.0)
+                .bio_ch()
+                .umstellbetrieb()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -860,14 +1125,23 @@ fn bio_100pct_all_bio_no_asterisk_alle_legend() {
     ]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 40.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 40.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
 
     // No asterisk on individual ingredients
-    assert!(!output.label.contains("Hafer*"), "100% mode should suppress individual * marking");
+    assert!(
+        !output.label.contains("Hafer*"),
+        "100% mode should suppress individual * marking"
+    );
     // "Alle landwirtschaftlichen" legend present
-    assert!(output.label.contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"));
+    assert!(output
+        .label
+        .contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"));
 }
 
 #[test]
@@ -882,16 +1156,38 @@ fn bio_95_99_band_uses_per_ingredient_asterisk() {
     // is blocked entirely (DEC-7) — so the 95–99.99% band IS the exception case.
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 40.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 40.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
 
-    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), Some(&true), "96% >= 95% → Bio in Sachbezeichnung");
-    assert!(output.label.contains("Hafer*"), "bio ingredient gets *. Label: {}", output.label);
-    assert!(!output.label.contains("Pektin*"), "non-bio ingredient not starred");
-    assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Label: {}", output.label);
-    assert!(!output.label.contains("Alle landwirtschaftlichen"), "not 100% → no 'Alle' legend");
+    assert_eq!(
+        c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX),
+        Some(&true),
+        "96% >= 95% → Bio in Sachbezeichnung"
+    );
+    assert!(
+        output.label.contains("Hafer*"),
+        "bio ingredient gets *. Label: {}",
+        output.label
+    );
+    assert!(
+        !output.label.contains("Pektin*"),
+        "non-bio ingredient not starred"
+    );
+    assert!(
+        output.label.contains("* aus biologischer Landwirtschaft"),
+        "Label: {}",
+        output.label
+    );
+    assert!(
+        !output.label.contains("Alle landwirtschaftlichen"),
+        "not 100% → no 'Alle' legend"
+    );
 }
 
 #[test]
@@ -908,10 +1204,18 @@ fn bio_partial_bio_has_asterisks_and_percentage() {
     let output = calculator.execute(input);
 
     // Asterisk on bio ingredient
-    assert!(output.label.contains("Hafer*"), "PartialBio mode should add * on bio ingredients");
-    assert!(!output.label.contains("Weizenmehl*"), "Non-bio ingredient should not have *");
+    assert!(
+        output.label.contains("Hafer*"),
+        "PartialBio mode should add * on bio ingredients"
+    );
+    assert!(
+        !output.label.contains("Weizenmehl*"),
+        "Non-bio ingredient should not have *"
+    );
     // Percentage legend
-    assert!(output.label.contains("60% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"));
+    assert!(output
+        .label
+        .contains("60% der landwirtschaftlichen Zutaten stammen aus biologischer Produktion"));
 }
 
 #[test]
@@ -927,8 +1231,14 @@ fn bio_no_bio_no_legend() {
         .build();
     let output = calculator.execute(input);
 
-    assert!(!output.label.contains("biologischer"), "No bio ingredients → no bio legend");
-    assert!(!output.label.contains("*"), "No bio ingredients → no asterisks");
+    assert!(
+        !output.label.contains("biologischer"),
+        "No bio ingredients → no bio legend"
+    );
+    assert!(
+        !output.label.contains("*"),
+        "No bio ingredients → no asterisks"
+    );
 }
 
 #[test]
@@ -941,11 +1251,19 @@ fn knospe_mode_asterisk_unchanged() {
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.label.contains("Hafer*"), "Knospe mode should add simple *");
-    assert!(output.label.contains("* aus biologischer Landwirtschaft"), "Knospe mode should have simple legend");
+    assert!(
+        output.label.contains("Hafer*"),
+        "Knospe mode should add simple *"
+    );
+    assert!(
+        output.label.contains("* aus biologischer Landwirtschaft"),
+        "Knospe mode should have simple legend"
+    );
     // Should NOT have the new Bio-specific legends
     assert!(!output.label.contains("Alle landwirtschaftlichen"));
-    assert!(!output.label.contains("der landwirtschaftlichen Zutaten stammen"));
+    assert!(!output
+        .label
+        .contains("der landwirtschaftlichen Zutaten stammen"));
 }
 
 // =============================================================================
@@ -957,11 +1275,19 @@ fn umstellbetrieb_gets_double_asterisk() {
     let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).bio_ch().umstellbetrieb().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 400.0)
+                .bio_ch()
+                .umstellbetrieb()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.label.contains("Weizenmehl**"), "Umstellbetrieb should get **");
+    assert!(
+        output.label.contains("Weizenmehl**"),
+        "Umstellbetrieb should get **"
+    );
     assert!(output.label.contains("Hafer*"), "Regular bio should get *");
     // ** should not be followed by another * (i.e., no ***)
     assert!(!output.label.contains("***"));
@@ -972,11 +1298,17 @@ fn umstellbetrieb_legend_appended() {
     let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 600.0).bio().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 400.0).umstellbetrieb().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 400.0)
+                .umstellbetrieb()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
 
-    assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"));
+    assert!(output
+        .label
+        .contains("** aus Umstellung auf biologische Landwirtschaft"));
 }
 
 #[test]
@@ -989,8 +1321,17 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
         RuleDef::Bio_Knospe_EingabeIstBio,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 950.0).bio_ch().umstellbetrieb().build())
-        .ingredient(IngredientBuilder::new("Salz", 50.0).agricultural(false).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 950.0)
+                .bio_ch()
+                .umstellbetrieb()
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new("Salz", 50.0)
+                .agricultural(false)
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1001,9 +1342,18 @@ fn monoprodukt_umstellbetrieb_allows_sachbezeichnung_with_note() {
     assert_eq!(c.get(keys::BIO_MARKETING_NOT_ALLOWED), None);
     assert_eq!(c.get(keys::UMSTELLBETRIEB_HINWEIS), Some(&true));
     // The mandatory Umstellung declaration is printed on the label via the ** marker + legend.
-    assert!(output.label.contains("Hafer**"), "expected ** marker on Hafer; label: {}", output.label);
-    assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"),
-        "expected Umstellung legend; label: {}", output.label);
+    assert!(
+        output.label.contains("Hafer**"),
+        "expected ** marker on Hafer; label: {}",
+        output.label
+    );
+    assert!(
+        output
+            .label
+            .contains("** aus Umstellung auf biologische Landwirtschaft"),
+        "expected Umstellung legend; label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -1012,7 +1362,12 @@ fn composite_umstellbetrieb_removes_sachbezeichnung() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Weizenmehl", 500.0).bio_ch().umstellbetrieb().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 500.0)
+                .bio_ch()
+                .umstellbetrieb()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1031,7 +1386,11 @@ fn bio_check_pending_before_rezeptur_vollstaendig() {
     // Not yet checked → pending, and neither ok nor failed is asserted.
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1054,8 +1413,16 @@ fn alternative_marking_allowed_when_all_agricultural_are_bio() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 500.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Himbeeren", 500.0)
+                .bio_ch()
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Zucker", 500.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1113,7 +1480,8 @@ fn wild_only_recipe_omits_the_alle_landwirtschaftlichen_legend() {
     let label = calculator.execute(input).label;
 
     assert!(
-        !label.contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"),
+        !label
+            .contains("Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft"),
         "wild-only recipe must not print the AllBio legend; label: {}",
         label
     );
@@ -1156,7 +1524,11 @@ fn alternative_marking_allowed_when_at_least_one_ingredient_is_agricultural() {
                 .processing_steps(vec!["aus zertifizierter Wildsammlung"])
                 .build(),
         )
-        .ingredient(IngredientBuilder::new_agri("Raps\u{f6}l", 500.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Raps\u{f6}l", 500.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1172,15 +1544,31 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_bio() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 500.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Himbeeren", 500.0)
+                .bio_ch()
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Zucker", 500.0)
+                .bio_ch()
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 5.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
 
     // The positive verdict must remain — only the alternative-wording hint goes.
-    assert_eq!(c.get(keys::BIO_CHECK_OK), Some(&true), "Rezeptur erfüllt die Bio-Anforderungen weiterhin");
+    assert_eq!(
+        c.get(keys::BIO_CHECK_OK),
+        Some(&true),
+        "Rezeptur erfüllt die Bio-Anforderungen weiterhin"
+    );
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
 }
 
@@ -1193,13 +1581,27 @@ fn alternative_marking_suppressed_with_erlaubte_ausnahme_knospe() {
     ]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 995.0).bio().origin(Country::CH).build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).origin(Country::CH).erlaubte_ausnahme_knospe().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Himbeeren", 995.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 5.0)
+                .origin(Country::CH)
+                .erlaubte_ausnahme_knospe()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
 
-    assert_eq!(c.get(keys::KNOSPE_CHECK_OK), Some(&true), "Rezeptur erfüllt die Knospe-Anforderungen weiterhin");
+    assert_eq!(
+        c.get(keys::KNOSPE_CHECK_OK),
+        Some(&true),
+        "Rezeptur erfüllt die Knospe-Anforderungen weiterhin"
+    );
     assert_eq!(c.get(keys::ALTERNATIVE_MARKING_ALLOWED), None);
 }
 
@@ -1210,8 +1612,17 @@ fn alternative_marking_allowed_when_exception_ingredient_is_also_bio() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Himbeeren", 995.0).bio_ch().build())
-        .ingredient(IngredientBuilder::new_agri("Pektin", 5.0).bio_ch().erlaubte_ausnahme_bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Himbeeren", 995.0)
+                .bio_ch()
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Pektin", 5.0)
+                .bio_ch()
+                .erlaubte_ausnahme_bio()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1225,13 +1636,21 @@ fn alternative_marking_suppressed_for_nested_erlaubte_ausnahme() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let fuellung = IngredientBuilder::new_agri("Füllung", 500.0)
         .children(vec![
-            IngredientBuilder::new_agri("Aprikosen", 495.0).bio_ch().build(),
-            IngredientBuilder::new_agri("Pektin", 5.0).erlaubte_ausnahme_bio().build(),
+            IngredientBuilder::new_agri("Aprikosen", 495.0)
+                .bio_ch()
+                .build(),
+            IngredientBuilder::new_agri("Pektin", 5.0)
+                .erlaubte_ausnahme_bio()
+                .build(),
         ])
         .build();
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Zucker", 500.0)
+                .bio_ch()
+                .build(),
+        )
         .ingredient(fuellung)
         .build();
     let output = calculator.execute(input);
@@ -1247,18 +1666,32 @@ fn bio_check_hints_suppressed_for_einzelzutat() {
     // the check button would have been pressed.
     for vollstaendig in [false, true] {
         let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
-        let mut builder = InputBuilder::new()
-            .einzelzutat()
-            .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build());
+        let mut builder = InputBuilder::new().einzelzutat().ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .build(),
+        );
         if vollstaendig {
             builder = builder.vollstaendig();
         }
         let output = calculator.execute(builder.build());
         let c = &output.conditionals();
 
-        assert_eq!(c.get(keys::BIO_CHECK_PENDING), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get(keys::BIO_CHECK_OK), None, "vollstaendig={vollstaendig}");
-        assert_eq!(c.get(keys::BIO_CHECK_FAILED), None, "vollstaendig={vollstaendig}");
+        assert_eq!(
+            c.get(keys::BIO_CHECK_PENDING),
+            None,
+            "vollstaendig={vollstaendig}"
+        );
+        assert_eq!(
+            c.get(keys::BIO_CHECK_OK),
+            None,
+            "vollstaendig={vollstaendig}"
+        );
+        assert_eq!(
+            c.get(keys::BIO_CHECK_FAILED),
+            None,
+            "vollstaendig={vollstaendig}"
+        );
     }
 }
 
@@ -1268,7 +1701,11 @@ fn bio_check_ok_when_vollstaendig_and_qualifies() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
@@ -1302,13 +1739,26 @@ fn bio_check_failed_when_recipe_issue_despite_qualifying() {
     ]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let c = &output.conditionals();
-    assert!(output.validation_messages.contains_key("ingredients[0][origin]"),
-        "expected an open origin error; messages: {:?}", output.validation_messages);
-    assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true), "still qualifies on percentage");
+    assert!(
+        output
+            .validation_messages
+            .contains_key("ingredients[0][origin]"),
+        "expected an open origin error; messages: {:?}",
+        output.validation_messages
+    );
+    assert_eq!(
+        c.get(keys::BIO_MARKETING_ALLOWED),
+        Some(&true),
+        "still qualifies on percentage"
+    );
     assert_eq!(c.get(keys::BIO_CHECK_FAILED), Some(&true));
     assert_eq!(c.get(keys::BIO_CHECK_OK), None);
 }
@@ -1318,7 +1768,9 @@ fn monoprodukt_detection_single_agricultural() {
     // 1 agricultural + 1 non-agricultural → mono
     let ingredients = vec![
         IngredientBuilder::new_agri("Hafer", 900.0).build(),
-        IngredientBuilder::new("Salz", 100.0).agricultural(false).build(),
+        IngredientBuilder::new("Salz", 100.0)
+            .agricultural(false)
+            .build(),
     ];
     assert!(is_mono_product(&ingredients));
 }
@@ -1367,13 +1819,29 @@ fn composite_child_umstellbetrieb_gets_double_asterisk_on_label() {
 
     // Star on ONE level only: the children carry the markers, so the composite
     // parent must NOT also get a star (testing round 2026-06-17).
-    assert!(!output.label.contains("Müeslimischung*"), "Composite parent must not duplicate the children's star. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Müeslimischung*"),
+        "Composite parent must not duplicate the children's star. Label: {}",
+        output.label
+    );
     // Hafer child gets * (bio)
-    assert!(output.label.contains("Hafer*"), "Bio child should get *. Label: {}", output.label);
+    assert!(
+        output.label.contains("Hafer*"),
+        "Bio child should get *. Label: {}",
+        output.label
+    );
     // Dinkel child gets ** (umstellbetrieb)
-    assert!(output.label.contains("Dinkel**"), "Umstellbetrieb child should get **. Label: {}", output.label);
+    assert!(
+        output.label.contains("Dinkel**"),
+        "Umstellbetrieb child should get **. Label: {}",
+        output.label
+    );
     // No *** anywhere
-    assert!(!output.label.contains("***"), "Should not have ***. Label: {}", output.label);
+    assert!(
+        !output.label.contains("***"),
+        "Should not have ***. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -1410,8 +1878,13 @@ fn composite_child_umstellbetrieb_triggers_legend() {
 
     let output = calculator.execute(input);
 
-    assert!(output.label.contains("** aus Umstellung auf biologische Landwirtschaft"),
-        "Umstellbetrieb legend should appear for composite child. Label: {}", output.label);
+    assert!(
+        output
+            .label
+            .contains("** aus Umstellung auf biologische Landwirtschaft"),
+        "Umstellbetrieb legend should appear for composite child. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -1449,11 +1922,23 @@ fn composite_children_bio_markers_in_knospe_context() {
     let output = calculator.execute(input);
 
     // Children inside composite get bio asterisk
-    assert!(output.label.contains("Zucker*"), "Bio child Zucker should get *. Label: {}", output.label);
-    assert!(output.label.contains("Kakaobutter*"), "Bio child Kakaobutter should get *. Label: {}", output.label);
+    assert!(
+        output.label.contains("Zucker*"),
+        "Bio child Zucker should get *. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Kakaobutter*"),
+        "Bio child Kakaobutter should get *. Label: {}",
+        output.label
+    );
     // Star on ONE level only: the children show the markers, so the composite
     // parent must NOT also get a star — even with explicit is_bio (2026-06-17).
-    assert!(!output.label.contains("Schokolade*"), "Composite parent must not duplicate the children's star. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Schokolade*"),
+        "Composite parent must not duplicate the children's star. Label: {}",
+        output.label
+    );
 }
 
 // Counterpart to the "one level only" rule: when a composite is declared Knospe as a
@@ -1482,11 +1967,27 @@ fn composite_parent_claim_pushes_star_down_to_children() {
 
     let output = calculator.execute(input);
 
-    assert!(!output.label.contains("Fertigmischung*"), "Composite parent must never carry the star. Label: {}", output.label);
-    assert!(output.label.contains("Komponente A*"), "Children inherit the parent-level claim. Label: {}", output.label);
-    assert!(output.label.contains("Komponente B*"), "Children inherit the parent-level claim. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Fertigmischung*"),
+        "Composite parent must never carry the star. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Komponente A*"),
+        "Children inherit the parent-level claim. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Komponente B*"),
+        "Children inherit the parent-level claim. Label: {}",
+        output.label
+    );
     // Inherited stars also drive the legend.
-    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Legend must appear for inherited stars. Label: {}", output.label);
+    assert!(
+        output.label.contains("aus biologischer Landwirtschaft"),
+        "Legend must appear for inherited stars. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -1501,7 +2002,9 @@ fn composite_parent_umstellung_claim_pushes_double_star_down() {
                 .children(vec![
                     IngredientBuilder::new_agri("Komponente A", 60.0).build(),
                     // Non-agricultural additive: NO inherited marker
-                    IngredientBuilder::new("Zusatzstoff", 40.0).agricultural(false).build(),
+                    IngredientBuilder::new("Zusatzstoff", 40.0)
+                        .agricultural(false)
+                        .build(),
                 ])
                 .build(),
         )
@@ -1509,10 +2012,26 @@ fn composite_parent_umstellung_claim_pushes_double_star_down() {
 
     let output = calculator.execute(input);
 
-    assert!(!output.label.contains("Fertigmischung*"), "Parent carries no marker. Label: {}", output.label);
-    assert!(output.label.contains("Komponente A**"), "Agricultural child inherits **. Label: {}", output.label);
-    assert!(!output.label.contains("Zusatzstoff*"), "Non-agricultural child must not inherit a marker. Label: {}", output.label);
-    assert!(output.label.contains("aus Umstellung"), "** legend must appear. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Fertigmischung*"),
+        "Parent carries no marker. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Komponente A**"),
+        "Agricultural child inherits **. Label: {}",
+        output.label
+    );
+    assert!(
+        !output.label.contains("Zusatzstoff*"),
+        "Non-agricultural child must not inherit a marker. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("aus Umstellung"),
+        "** legend must appear. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -1550,24 +2069,41 @@ fn composite_parent_no_asterisk_when_bio_inherited_from_children() {
     let output = calculator.execute(input);
 
     // Children should get bio asterisk
-    assert!(output.label.contains("Zucker*"), "Bio child Zucker should get *. Label: {}", output.label);
-    assert!(output.label.contains("Kakaobutter*"), "Bio child Kakaobutter should get *. Label: {}", output.label);
+    assert!(
+        output.label.contains("Zucker*"),
+        "Bio child Zucker should get *. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Kakaobutter*"),
+        "Bio child Kakaobutter should get *. Label: {}",
+        output.label
+    );
     // Parent should NOT get * because bio was inherited from children (lowest-level-only)
-    assert!(!output.label.contains("Schokolade*"), "Parent with inherited bio should NOT get *. Label: {}", output.label);
-    assert!(output.label.contains("Schokolade"), "Parent name should still appear. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Schokolade*"),
+        "Parent with inherited bio should NOT get *. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Schokolade"),
+        "Parent name should still appear. Label: {}",
+        output.label
+    );
 }
 
 #[test]
 fn composite_mixed_bio_and_nonbio_children() {
     // Composite with mix of bio and non-bio children: only bio children get *
-    let calculator = calculator_with(vec![RuleDef::Bio_Knospe_EingabeIstBio, RuleDef::AP2_1_ZusammegesetztOutput]);
+    let calculator = calculator_with(vec![
+        RuleDef::Bio_Knospe_EingabeIstBio,
+        RuleDef::AP2_1_ZusammegesetztOutput,
+    ]);
     let input = InputBuilder::new()
         .ingredient(
             IngredientBuilder::new_agri("Gewürzmischung", 100.0)
                 .children(vec![
-                    IngredientBuilder::new_agri("Pfeffer", 60.0)
-                        .bio()
-                        .build(),
+                    IngredientBuilder::new_agri("Pfeffer", 60.0).bio().build(),
                     IngredientBuilder::new("Salz", 40.0)
                         .agricultural(false)
                         .build(),
@@ -1579,9 +2115,17 @@ fn composite_mixed_bio_and_nonbio_children() {
     let output = calculator.execute(input);
 
     // Pfeffer is bio → gets *
-    assert!(output.label.contains("Pfeffer*"), "Bio child should get *. Label: {}", output.label);
+    assert!(
+        output.label.contains("Pfeffer*"),
+        "Bio child should get *. Label: {}",
+        output.label
+    );
     // Salz is not bio → no *
-    assert!(!output.label.contains("Salz*"), "Non-bio child should not get *. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Salz*"),
+        "Non-bio child should not get *. Label: {}",
+        output.label
+    );
 }
 
 #[test]
@@ -1610,8 +2154,12 @@ fn composite_umstellbetrieb_child_excluded_from_bio_ch_percentage() {
     let c = &output.conditionals();
 
     // 600/1000 = 60% bio_ch (umstellbetrieb excluded) → below 95% threshold
-    assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None,
-        "Umstellbetrieb child should be excluded from bio_ch %. Conditionals: {:?}", c);
+    assert_eq!(
+        c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX),
+        None,
+        "Umstellbetrieb child should be excluded from bio_ch %. Conditionals: {:?}",
+        c
+    );
 }
 
 // --- DEC-6: the green Bio badge follows the recipe, not the check button ----
@@ -1625,7 +2173,11 @@ fn bio_marketing_allowed_without_pressing_rezeptur_pruefen() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     // Note: no .vollstaendig() — the user has not pressed the button.
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let c = calculator.execute(input).conditionals();
 
@@ -1640,7 +2192,9 @@ fn bio_marketing_not_allowed_for_an_empty_recipe() {
     // Guard against the badge appearing on an untouched form: an empty recipe
     // has a vacuous 100% Bio share.
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
-    let c = calculator.execute(InputBuilder::new().build()).conditionals();
+    let c = calculator
+        .execute(InputBuilder::new().build())
+        .conditionals();
 
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), None);
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
@@ -1666,7 +2220,11 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
     let calculator = calculator_with(vec![RuleDef::Bio_ShowBioSachbezeichnung]);
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let c = calculator.execute(input).conditionals();
 
@@ -1688,9 +2246,17 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
 fn biov_wildsammlung_prints_inline_without_a_degree_marker() {
     let calculator = calculator_for(crate::shared::Configuration::Bio);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio_ch()
-            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
-        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Bärlauch", 150.0)
+                .bio_ch()
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Rapsöl", 850.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let label = calculator.execute(input).label;
 
@@ -1711,9 +2277,19 @@ fn biov_wildsammlung_prints_inline_without_a_degree_marker() {
 fn knospe_wildsammlung_still_marks_above_10_percent() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio().origin(Country::CH)
-            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
-        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Bärlauch", 150.0)
+                .bio()
+                .origin(Country::CH)
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Rapsöl", 850.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let label = calculator.execute(input).label;
 
@@ -1728,9 +2304,19 @@ fn knospe_wildsammlung_still_marks_above_10_percent() {
 fn knospe_wildsammlung_legend_wording_is_unchanged() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Bärlauch", 150.0).bio().origin(Country::CH)
-            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
-        .ingredient(IngredientBuilder::new_agri("Rapsöl", 850.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Bärlauch", 150.0)
+                .bio()
+                .origin(Country::CH)
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Rapsöl", 850.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let label = calculator.execute(input).label;
 
@@ -1753,13 +2339,25 @@ fn biov_wildsammlung_under_10_percent_prints_the_bio_wording_inline() {
     // ingredient instead — and must carry the same Bio-V wording.
     let calculator = calculator_for(crate::shared::Configuration::Bio);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0).bio_ch()
-            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
-        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).bio_ch().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Bärlauch", 50.0)
+                .bio_ch()
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Rapsöl", 950.0)
+                .bio_ch()
+                .build(),
+        )
         .build();
     let label = calculator.execute(input).label;
 
-    assert!(!label.contains('°'), "5% < 10% → no ° marker; label: {}", label);
+    assert!(
+        !label.contains('°'),
+        "5% < 10% → no ° marker; label: {}",
+        label
+    );
     assert!(
         label.contains("aus biologisch zertifizierter Wildsammlung"),
         "inline step must use the Bio-V wording; label: {}",
@@ -1771,14 +2369,28 @@ fn biov_wildsammlung_under_10_percent_prints_the_bio_wording_inline() {
 fn knospe_wildsammlung_under_10_percent_keeps_its_wording_inline() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new_agri("Bärlauch", 50.0).bio().origin(Country::CH)
-            .processing_steps(vec!["aus zertifizierter Wildsammlung"]).build())
-        .ingredient(IngredientBuilder::new_agri("Rapsöl", 950.0).bio().origin(Country::CH).build())
+        .ingredient(
+            IngredientBuilder::new_agri("Bärlauch", 50.0)
+                .bio()
+                .origin(Country::CH)
+                .processing_steps(vec!["aus zertifizierter Wildsammlung"])
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Rapsöl", 950.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
         .build();
     let label = calculator.execute(input).label;
 
     assert!(!label.contains('°'), "label: {}", label);
-    assert!(label.contains("aus zertifizierter Wildsammlung"), "label: {}", label);
+    assert!(
+        label.contains("aus zertifizierter Wildsammlung"),
+        "label: {}",
+        label
+    );
     assert!(
         !label.contains("biologisch zertifizierter Wildsammlung"),
         "label: {}",

@@ -84,4 +84,3 @@ async fn adding_a_farmed_ingredient_brings_the_sentence_back() {
 
     let _ = c.close().await;
 }
-

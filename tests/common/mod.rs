@@ -97,11 +97,7 @@ pub async fn clear_errors(c: &Client) {
 pub async fn assert_no_errors(c: &Client, context: &str) {
     let errs = read_errors(c).await;
     if !errs.is_empty() {
-        panic!(
-            "JS errors at [{}]:\n  {}",
-            context,
-            errs.join("\n  ")
-        );
+        panic!("JS errors at [{}]:\n  {}", context, errs.join("\n  "));
     }
 }
 
@@ -143,7 +139,9 @@ pub async fn click_button_by_text(c: &Client, text: &str) -> bool {
 /// type into the wrong box. Scope to the open dialog, where the ingredient
 /// input is the first bordered input.
 pub async fn first_accent_input(c: &Client) -> Option<Element> {
-    c.find(Locator::Css("dialog[open] input.input-bordered")).await.ok()
+    c.find(Locator::Css("dialog[open] input.input-bordered"))
+        .await
+        .ok()
 }
 
 /// First text input on the page (used as product title heuristic).
@@ -155,11 +153,14 @@ pub async fn first_text_input(c: &Client) -> Option<Element> {
 
 /// Find `<dialog open>` count — for sanity checking modals opened/closed.
 pub async fn open_dialog_count(c: &Client) -> usize {
-    c.execute("return document.querySelectorAll('dialog[open]').length;", vec![])
-        .await
-        .ok()
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0) as usize
+    c.execute(
+        "return document.querySelectorAll('dialog[open]').length;",
+        vec![],
+    )
+    .await
+    .ok()
+    .and_then(|v| v.as_u64())
+    .unwrap_or(0) as usize
 }
 
 /// Type into the product-name field. Tries the de-CH placeholder
@@ -539,7 +540,9 @@ pub async fn select_configuration(c: &Client, label: &str, confirm: bool) -> boo
     if !click_button_by_text(c, "Konfiguration").await {
         // Fall back to clicking the dropdown trigger by role.
         let trigger = c
-            .find(Locator::Css("[role='button'].dropdown-toggle, .dropdown [role='button']"))
+            .find(Locator::Css(
+                "[role='button'].dropdown-toggle, .dropdown [role='button']",
+            ))
             .await
             .ok();
         if let Some(t) = trigger {
@@ -716,7 +719,10 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
         tokio::time::sleep(Duration::from_millis(400)).await;
     }
     // Amount
-    if let Ok(num) = c.find(Locator::Css("dialog[open] input[type='number']")).await {
+    if let Ok(num) = c
+        .find(Locator::Css("dialog[open] input[type='number']"))
+        .await
+    {
         let _ = num.click().await;
         // Some ingredient cards include multiple numeric inputs; the first one
         // is the amount field per ingredient_pane.rs.
@@ -799,7 +805,12 @@ pub async fn add_full_ingredient(c: &Client, ing: &RecipeIngredient) {
     // for the genesis flow and "Speichern" for plain saves. Poll briefly: the
     // enabled button appears only once the amount signal has propagated.
     'commit: for _ in 0..10 {
-        for label in &["Speichern und nächste Zutat", "Speichern", "Hinzufügen", "OK"] {
+        for label in &[
+            "Speichern und nächste Zutat",
+            "Speichern",
+            "Hinzufügen",
+            "OK",
+        ] {
             if click_button_by_text(c, label).await {
                 break 'commit;
             }

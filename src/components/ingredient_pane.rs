@@ -1,11 +1,14 @@
+use crate::components::ingredient_path::{descendant_definitions, IngredientPath};
 use crate::components::*;
-use crate::components::ingredient_path::{IngredientPath, descendant_definitions};
-use crate::core::{Ingredient, AmountUnit};
-use crate::model::{db_knows_non_agricultural, declaration_name, food_db, lookup_allergen, lookup_agricultural, Country};
+use crate::core::{AmountUnit, Ingredient};
+use crate::model::{
+    db_knows_non_agricultural, declaration_name, food_db, lookup_agricultural, lookup_allergen,
+    Country,
+};
+use crate::persistence::{get_saved_ingredients_list, save_composite_ingredient};
 use crate::rules::RuleDef;
 use crate::services::UnifiedIngredient;
 use crate::shared::{Validations, VerdictsContext};
-use crate::persistence::{save_composite_ingredient, get_saved_ingredients_list};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
@@ -87,17 +90,21 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     });
     let mut edit_unit = use_signal(|| original_ingredient.unit.clone());
     let mut edit_is_composite = use_signal(|| {
-        original_ingredient.children.as_ref().is_some_and(|s| !s.is_empty())
+        original_ingredient
+            .children
+            .as_ref()
+            .is_some_and(|s| !s.is_empty())
     });
     // Percentage mode: children are entered as percentages of the parent total
     // (which stays editable in g/ml). Detected from children carrying the Percent unit.
     let mut edit_percentage_mode = use_signal(|| {
-        original_ingredient.children.as_ref()
+        original_ingredient
+            .children
+            .as_ref()
             .is_some_and(|c| c.iter().any(|ch| ch.unit == AmountUnit::Percent))
     });
-    let mut edit_is_namensgebend = use_signal(|| {
-        original_ingredient.is_namensgebend.unwrap_or(false)
-    });
+    let mut edit_is_namensgebend =
+        use_signal(|| original_ingredient.is_namensgebend.unwrap_or(false));
     let mut edit_children = use_signal(|| original_ingredient.children.clone());
     let mut edit_category = use_signal(|| original_ingredient.category.clone());
     // Canonical food_db name when the ingredient name is a curated alias term.
@@ -109,12 +116,28 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let mut edit_fangort = use_signal(|| original_ingredient.fangort.clone());
     let mut edit_is_bio = use_signal(|| original_ingredient.is_bio.unwrap_or(false));
     let mut edit_bio_ch = use_signal(|| original_ingredient.bio_ch.unwrap_or(false));
-    let mut edit_erlaubte_ausnahme_bio = use_signal(|| original_ingredient.erlaubte_ausnahme_bio.unwrap_or(false));
-    let mut edit_erlaubte_ausnahme_bio_details = use_signal(|| original_ingredient.erlaubte_ausnahme_bio_details.clone().unwrap_or_default());
-    let mut edit_erlaubte_ausnahme_knospe = use_signal(|| original_ingredient.erlaubte_ausnahme_knospe.unwrap_or(false));
-    let mut edit_erlaubte_ausnahme_knospe_details = use_signal(|| original_ingredient.erlaubte_ausnahme_knospe_details.clone().unwrap_or_default());
+    let mut edit_erlaubte_ausnahme_bio =
+        use_signal(|| original_ingredient.erlaubte_ausnahme_bio.unwrap_or(false));
+    let mut edit_erlaubte_ausnahme_bio_details = use_signal(|| {
+        original_ingredient
+            .erlaubte_ausnahme_bio_details
+            .clone()
+            .unwrap_or_default()
+    });
+    let mut edit_erlaubte_ausnahme_knospe = use_signal(|| {
+        original_ingredient
+            .erlaubte_ausnahme_knospe
+            .unwrap_or(false)
+    });
+    let mut edit_erlaubte_ausnahme_knospe_details = use_signal(|| {
+        original_ingredient
+            .erlaubte_ausnahme_knospe_details
+            .clone()
+            .unwrap_or_default()
+    });
     let mut edit_processing_steps = use_signal(|| original_ingredient.processing_steps.clone());
-    let mut edit_aus_umstellbetrieb = use_signal(|| original_ingredient.aus_umstellbetrieb.unwrap_or(false));
+    let mut edit_aus_umstellbetrieb =
+        use_signal(|| original_ingredient.aus_umstellbetrieb.unwrap_or(false));
     let mut edit_nicht_landwirtschaftlich = use_signal(|| {
         !original_ingredient.is_agricultural
             && original_ingredient.is_bio != Some(true)
@@ -142,9 +165,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // water, Dicarbonat). Treat that like the allergen flag: show it and lock it,
     // instead of making the user guess (DEC-9). Free-text ingredients are not in
     // the DB, so their choice stays open.
-    let db_says_non_agricultural = use_memo(move || {
-        db_knows_non_agricultural(&edit_name(), edit_canonical().as_deref())
-    });
+    let db_says_non_agricultural =
+        use_memo(move || db_knows_non_agricultural(&edit_name(), edit_canonical().as_deref()));
 
     // Captured once at mount. Not reactive to `ingredients` changes so the
     // auto-save effect below can't overwrite it with the user's new value.
@@ -209,7 +231,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 Some(edit_erlaubte_ausnahme_bio_details())
             },
             erlaubte_ausnahme_knospe: Some(edit_erlaubte_ausnahme_knospe()),
-            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty() {
+            erlaubte_ausnahme_knospe_details: if edit_erlaubte_ausnahme_knospe_details().is_empty()
+            {
                 None
             } else {
                 Some(edit_erlaubte_ausnahme_knospe_details())
@@ -240,9 +263,13 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             fangort: original_ingredient.fangort.clone(),
             bio_ch: original_ingredient.bio_ch,
             erlaubte_ausnahme_bio: original_ingredient.erlaubte_ausnahme_bio,
-            erlaubte_ausnahme_bio_details: original_ingredient.erlaubte_ausnahme_bio_details.clone(),
+            erlaubte_ausnahme_bio_details: original_ingredient
+                .erlaubte_ausnahme_bio_details
+                .clone(),
             erlaubte_ausnahme_knospe: original_ingredient.erlaubte_ausnahme_knospe,
-            erlaubte_ausnahme_knospe_details: original_ingredient.erlaubte_ausnahme_knospe_details.clone(),
+            erlaubte_ausnahme_knospe_details: original_ingredient
+                .erlaubte_ausnahme_knospe_details
+                .clone(),
             processing_steps: original_ingredient.processing_steps.clone(),
             aus_umstellbetrieb: original_ingredient.aus_umstellbetrieb,
             override_children: None,
@@ -255,7 +282,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // grandchild). Shared by the sub-ingredient table and the cross-level popovers
     // so the composite's in-progress edits survive the round-trip into a child card.
     let goto_descendant = use_callback(move |rel: IngredientPath| {
-        let live_children = wrapper_ingredients.read().first().and_then(|i| i.children.clone());
+        let live_children = wrapper_ingredients
+            .read()
+            .first()
+            .and_then(|i| i.children.clone());
         let mut root_ingredients = ingredients;
         if let Some(mut ing) = root_ingredients.get_mut(index) {
             ing.name = edit_name();
@@ -271,12 +301,16 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         }
         if let Some(mut ep) = props.editing_path {
             let mut new_path = ep.read().clone();
-            if new_path.is_empty() { new_path.push(index); }
+            if new_path.is_empty() {
+                new_path.push(index);
+            }
             new_path.extend(rel);
             ep.set(new_path);
         }
     });
-    let goto_child = use_callback(move |child_index: usize| { goto_descendant.call(vec![child_index]); });
+    let goto_child = use_callback(move |child_index: usize| {
+        goto_descendant.call(vec![child_index]);
+    });
 
     // Enforce: aus_umstellbetrieb requires bio or bio_ch
     // Umstellbetrieb only exists under a bio quality. This also does the work the
@@ -312,7 +346,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // Track changes from SubIngredientsTable back to edit state (children only).
     {
         use_effect(move || {
-            if let Some(wrapper_children) = wrapper_ingredients.read().first().and_then(|i| i.children.as_ref()) {
+            if let Some(wrapper_children) = wrapper_ingredients
+                .read()
+                .first()
+                .and_then(|i| i.children.as_ref())
+            {
                 let current_edit_children = edit_children();
                 if current_edit_children.as_ref() != Some(wrapper_children) {
                     edit_children.set(Some(wrapper_children.clone()));
@@ -365,7 +403,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 sub_components: None,
                 children,
                 origins,
-                is_agricultural: if edit_nicht_landwirtschaftlich() { false } else { lookup_agricultural(&lookup_name) },
+                is_agricultural: if edit_nicht_landwirtschaftlich() {
+                    false
+                } else {
+                    lookup_agricultural(&lookup_name)
+                },
                 is_bio: Some(is_bio),
                 category,
                 aufzucht_ort,
@@ -373,16 +415,25 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 fangort,
                 bio_ch: Some(bio_ch),
                 erlaubte_ausnahme_bio: Some(erlaubte_ausnahme_bio),
-                erlaubte_ausnahme_bio_details: if erlaubte_ausnahme_bio_details.is_empty() { None } else { Some(erlaubte_ausnahme_bio_details) },
+                erlaubte_ausnahme_bio_details: if erlaubte_ausnahme_bio_details.is_empty() {
+                    None
+                } else {
+                    Some(erlaubte_ausnahme_bio_details)
+                },
                 erlaubte_ausnahme_knospe: Some(erlaubte_ausnahme_knospe),
-                erlaubte_ausnahme_knospe_details: if erlaubte_ausnahme_knospe_details.is_empty() { None } else { Some(erlaubte_ausnahme_knospe_details) },
+                erlaubte_ausnahme_knospe_details: if erlaubte_ausnahme_knospe_details.is_empty() {
+                    None
+                } else {
+                    Some(erlaubte_ausnahme_knospe_details)
+                },
                 processing_steps,
                 aus_umstellbetrieb: Some(aus_umstellbetrieb),
                 override_children: None,
                 canonical,
             };
 
-            let needs_update = ingredients.get(pane_index)
+            let needs_update = ingredients
+                .get(pane_index)
                 .map(|current| *current != new_ing)
                 .unwrap_or(false);
             if needs_update {
@@ -403,7 +454,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         let pane_index = props.index;
         let is_genesis = props.is_genesis;
         use_effect(move || {
-            if !edit_is_composite() { return; }
+            if !edit_is_composite() {
+                return;
+            }
             // Source of truth for the composite differs by mode. In genesis the
             // ingredient isn't committed to `props.ingredients` yet (the auto-sync
             // effect skips genesis), so its computed values and children live in
@@ -421,22 +474,34 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     edit_amount.set(Some(ca));
                 }
                 let cu = ing.computed_unit();
-                if *edit_unit.peek() != cu { edit_unit.set(cu); }
+                if *edit_unit.peek() != cu {
+                    edit_unit.set(cu);
+                }
                 let cb = ing.computed_bio_status().unwrap_or(false);
-                if *edit_is_bio.peek() != cb { edit_is_bio.set(cb); }
+                if *edit_is_bio.peek() != cb {
+                    edit_is_bio.set(cb);
+                }
                 let cbc = ing.computed_bio_ch_status().unwrap_or(false);
-                if *edit_bio_ch.peek() != cbc { edit_bio_ch.set(cbc); }
+                if *edit_bio_ch.peek() != cbc {
+                    edit_bio_ch.set(cbc);
+                }
                 // NOTE: origin is intentionally NOT mirrored up from children here.
                 // Origin is single-level: a composite's parent origin must stay
                 // purely user-authored (top-down) and empty for bottom-up composites,
                 // so it doesn't create a spurious two-level conflict. The label still
                 // shows the aggregated origin via `computed_origins()`.
                 let ch = ing.children.clone();
-                if *edit_children.peek() != ch { edit_children.set(ch); }
+                if *edit_children.peek() != ch {
+                    edit_children.set(ch);
+                }
                 // Allergen: true if any child is allergen
-                let any_allergen = ing.children.as_ref()
+                let any_allergen = ing
+                    .children
+                    .as_ref()
                     .is_some_and(|children| children.iter().any(|c| c.is_allergen));
-                if *is_allergen_custom.peek() != any_allergen { is_allergen_custom.set(any_allergen); }
+                if *is_allergen_custom.peek() != any_allergen {
+                    is_allergen_custom.set(any_allergen);
+                }
             }
         });
     }
@@ -449,10 +514,12 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         let ingredients = props.ingredients;
         let pane_index = props.index;
         use_effect(move || {
-            let real_children = ingredients.read()
+            let real_children = ingredients
+                .read()
                 .get(pane_index)
                 .and_then(|i| i.children.clone());
-            let wrapper_children = wrapper_ingredients.peek()
+            let wrapper_children = wrapper_ingredients
+                .peek()
                 .first()
                 .and_then(|i| i.children.clone());
             if real_children != wrapper_children {
@@ -486,7 +553,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         // Saved entries always have children (handle_save_to_storage enforces it), so the
         // is_composite flag can be set unconditionally on a hit.
         let saved_ingredients = get_saved_ingredients_list();
-        if let Some(saved) = saved_ingredients.into_iter().find(|i| i.name == unified_ingredient.name) {
+        if let Some(saved) = saved_ingredients
+            .into_iter()
+            .find(|i| i.name == unified_ingredient.name)
+        {
             // Refresh the wrapper FIRST: in genesis mode the computed-value sync
             // effect reads the wrapper as source of truth and may be scheduled
             // before the composite-sync effect — with a stale (empty) wrapper it
@@ -508,12 +578,14 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let handle_save_to_storage = move |_| {
         if edit_is_composite() && edit_children().is_some() {
             // Saved composites are stored normalised to 100 units.
-            let ingredient_to_save =
-                make_ingredient(100.0, is_allergen_custom(), edit_children());
+            let ingredient_to_save = make_ingredient(100.0, is_allergen_custom(), edit_children());
 
             match save_composite_ingredient(&ingredient_to_save) {
                 Ok(_) => {
-                    save_status.set(Some(t!("messages.ingredient_saved_successfully", name = edit_name()).to_string()));
+                    save_status.set(Some(
+                        t!("messages.ingredient_saved_successfully", name = edit_name())
+                            .to_string(),
+                    ));
                     let mut save_status_clone = save_status;
                     spawn(async move {
                         gloo::timers::future::TimeoutFuture::new(2000).await;
@@ -537,16 +609,19 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             let children = edit_children();
             // Percentage children are shares of the parent total (top-down), not
             // bottom-up weights, so they don't count here.
-            let has_weighted_child = children
-                .as_ref()
-                .is_some_and(|c| c.iter().any(|child| {
-                    child.unit != AmountUnit::Percent && child.computed_amount() > 0.0
-                }));
+            let has_weighted_child = children.as_ref().is_some_and(|c| {
+                c.iter()
+                    .any(|child| child.unit != AmountUnit::Percent && child.computed_amount() > 0.0)
+            });
             if has_weighted_child {
                 // Bottom-up weight: the total is the sum of the children. Derive it
                 // directly (don't depend on edit_amount being synced yet — e.g. right
                 // after a saved-composite recall).
-                let tmp = Ingredient { name: edit_name(), children: children.clone(), ..Default::default() };
+                let tmp = Ingredient {
+                    name: edit_name(),
+                    children: children.clone(),
+                    ..Default::default()
+                };
                 tmp.computed_amount()
             } else {
                 // Top-down weight: weightless (qualitative) children mean the parent
@@ -615,7 +690,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
 
     let mut handle_save = move |scale_all: bool| {
         if let Some(new_ingredient) = build_ingredient() {
-            props.on_save.call((new_ingredient, scale_all, scaling_factor()));
+            props
+                .on_save
+                .call((new_ingredient, scale_all, scaling_factor()));
 
             if props.is_genesis {
                 // Reset local state for next creation
@@ -675,7 +752,11 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_canonical.set(orig.canonical.clone());
         edit_amount.set(Some(orig.amount));
         edit_unit.set(orig.unit.clone());
-        edit_is_composite.set(orig.children.as_ref().is_some_and(|c: &Vec<Ingredient>| !c.is_empty()));
+        edit_is_composite.set(
+            orig.children
+                .as_ref()
+                .is_some_and(|c: &Vec<Ingredient>| !c.is_empty()),
+        );
         edit_is_namensgebend.set(orig.is_namensgebend.unwrap_or(false));
         edit_children.set(orig.children.clone());
         is_allergen_custom.set(orig.is_allergen);
@@ -687,12 +768,21 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         edit_bio_ch.set(orig.bio_ch.unwrap_or(false));
         edit_is_bio.set(orig.is_bio.unwrap_or(false));
         edit_erlaubte_ausnahme_bio.set(orig.erlaubte_ausnahme_bio.unwrap_or(false));
-        edit_erlaubte_ausnahme_bio_details.set(orig.erlaubte_ausnahme_bio_details.clone().unwrap_or_default());
+        edit_erlaubte_ausnahme_bio_details.set(
+            orig.erlaubte_ausnahme_bio_details
+                .clone()
+                .unwrap_or_default(),
+        );
         edit_erlaubte_ausnahme_knospe.set(orig.erlaubte_ausnahme_knospe.unwrap_or(false));
-        edit_erlaubte_ausnahme_knospe_details.set(orig.erlaubte_ausnahme_knospe_details.clone().unwrap_or_default());
+        edit_erlaubte_ausnahme_knospe_details.set(
+            orig.erlaubte_ausnahme_knospe_details
+                .clone()
+                .unwrap_or_default(),
+        );
         edit_processing_steps.set(orig.processing_steps.clone());
         edit_aus_umstellbetrieb.set(orig.aus_umstellbetrieb.unwrap_or(false));
-        edit_nicht_landwirtschaftlich.set(!orig.is_agricultural && orig.is_bio != Some(true) && orig.bio_ch != Some(true));
+        edit_nicht_landwirtschaftlich
+            .set(!orig.is_agricultural && orig.is_bio != Some(true) && orig.bio_ch != Some(true));
     };
 
     // Keep the locked choice in sync with the name: picking a DB ingredient that
@@ -734,7 +824,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     let origin_locked_ch = use_memo(move || {
         is_knospe_config()
             && edit_is_bio()
-            && edit_origins().as_ref().is_some_and(|o| o.contains(&Country::CH))
+            && edit_origins()
+                .as_ref()
+                .is_some_and(|o| o.contains(&Country::CH))
     });
 
     // Does this composite have at least one child carrying a weight? When it does,
@@ -742,25 +834,31 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // doesn't, the children are qualitative and the parent supplies the total
     // weight top-down — so the amount field is editable.
     let composite_has_weighted_child = use_memo(move || {
-        edit_children()
-            .as_ref()
-            .is_some_and(|c| c.iter().any(|child| {
+        edit_children().as_ref().is_some_and(|c| {
+            c.iter().any(|child| {
                 // Percentage children don't make the parent a bottom-up sum; the
                 // parent total stays user-entered, so they don't count as "weighted".
                 child.unit != AmountUnit::Percent && child.computed_amount() > 0.0
-            }))
+            })
+        })
     });
 
     // Use the path for validation display paths, falling back to index
-    let validation_index = if props.path.is_empty() { index } else { props.path[0] };
+    let validation_index = if props.path.is_empty() {
+        index
+    } else {
+        props.path[0]
+    };
 
     // Check for validation errors
     let validations_context = use_context::<Validations>();
     let _has_validation_error = use_memo(move || {
         let validation_entries = (*validations_context.0.read()).clone();
-        let has_origin_error = validation_entries.get(&format!("ingredients[{}][origin]", validation_index))
+        let has_origin_error = validation_entries
+            .get(&format!("ingredients[{}][origin]", validation_index))
             .is_some_and(|v| !v.is_empty());
-        let has_amount_error = validation_entries.get(&format!("ingredients[{}][amount]", validation_index))
+        let has_amount_error = validation_entries
+            .get(&format!("ingredients[{}][amount]", validation_index))
             .is_some_and(|v| !v.is_empty());
         has_origin_error || has_amount_error
     });
@@ -772,27 +870,29 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // under the Knospe variant cards (Knospe quality, Testing 25.06.2026) or at the
     // classic position further down — so it lives in a closure; exactly one call
     // renders per pass.
-    let leaf_origin_field = move || rsx! {
-        FormField {
-            label: t!("origin.herkunft").to_string(),
-            help: Some(t!("help.herkunft_liv_art_16").to_string()),
-            ValidationDisplay {
-                paths: vec![
-                    format!("ingredients[{}][origin]", validation_index)
-                ],
-                if origin_locked_ch() {
-                    // Plain Knospe is Swiss by definition — origin is fixed to CH.
-                    // Shown as a static badge (no editable country picker).
-                    div { class: "flex items-center gap-2",
-                        span { class: "badge badge-lg badge-outline",
-                            "{Country::CH.flag_emoji()} {Country::CH.country_code()}"
+    let leaf_origin_field = move || {
+        rsx! {
+            FormField {
+                label: t!("origin.herkunft").to_string(),
+                help: Some(t!("help.herkunft_liv_art_16").to_string()),
+                ValidationDisplay {
+                    paths: vec![
+                        format!("ingredients[{}][origin]", validation_index)
+                    ],
+                    if origin_locked_ch() {
+                        // Plain Knospe is Swiss by definition — origin is fixed to CH.
+                        // Shown as a static badge (no editable country picker).
+                        div { class: "flex items-center gap-2",
+                            span { class: "badge badge-lg badge-outline",
+                                "{Country::CH.flag_emoji()} {Country::CH.country_code()}"
+                            }
                         }
-                    }
-                } else {
-                    MultiCountrySelect {
-                        values: edit_origins.read().clone(),
-                        onchange: move |countries| {
-                            edit_origins.set(countries);
+                    } else {
+                        MultiCountrySelect {
+                            values: edit_origins.read().clone(),
+                            onchange: move |countries| {
+                                edit_origins.set(countries);
+                            }
                         }
                     }
                 }

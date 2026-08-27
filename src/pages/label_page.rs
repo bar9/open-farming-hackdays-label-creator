@@ -1,9 +1,11 @@
 use crate::components::*;
 use crate::core::{Calculator, Ingredient, Input, Output};
-use crate::model::Country;
 use crate::layout::{CopyLinkContext, ThemeContext};
+use crate::model::Country;
 use crate::rules::{RuleDef, RuleRegistry};
-use crate::shared::{restore_params_from_session_storage, Configuration, Validations, VerdictsContext};
+use crate::shared::{
+    restore_params_from_session_storage, Configuration, Validations, VerdictsContext,
+};
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
@@ -170,7 +172,9 @@ pub struct Form {
 // URLs without an explicit `v` field were produced before the version field
 // was introduced (commit 85411ee). They use the legacy `sub_components` shape
 // and must be migrated, so we treat a missing `v` as v=1.
-fn default_version() -> u8 { 1 }
+fn default_version() -> u8 {
+    1
+}
 
 fn default_weight_unit() -> String {
     t!("weight_units.g").to_string()
@@ -299,16 +303,16 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     let mut producer_city = use_signal(|| initial_form.read().producer_city.clone());
     let mut certification_body = use_signal(|| initial_form.read().certification_body.clone());
     let mut manual_total = use_signal(|| initial_form.read().manual_total);
-    let mut amount_type: Signal<AmountType> = use_signal(|| initial_form.read().amount_type.clone());
+    let mut amount_type: Signal<AmountType> =
+        use_signal(|| initial_form.read().amount_type.clone());
     let mut weight_unit: Signal<String> = use_signal(|| initial_form.read().weight_unit.clone());
     let mut volume_unit: Signal<String> = use_signal(|| initial_form.read().volume_unit.clone());
     let mut amount: Signal<Amount> = use_signal(|| initial_form.read().amount);
     let mut price: Signal<Price> = use_signal(|| initial_form.read().price);
     // Egg packs are declared by count instead of a weight Grundpreis (DEC-13).
     let mut egg_count: Signal<Option<usize>> = use_signal(|| initial_form.read().egg_count);
-    let is_egg_pack = use_memo(move || {
-        crate::category_service::is_egg_sachbezeichnung(&product_subtitle())
-    });
+    let is_egg_pack =
+        use_memo(move || crate::category_service::is_egg_sachbezeichnung(&product_subtitle()));
 
     use_effect(move || {
         let form_data = initial_form.read();
@@ -401,7 +405,8 @@ pub fn LabelPage(configuration: Configuration) -> Element {
 
     let rules: Memo<Vec<RuleDef>> = use_memo(move || {
         let registry = RuleRegistry::new();
-        registry.get_rules_for_config(&configuration())
+        registry
+            .get_rules_for_config(&configuration())
             .unwrap_or(&vec![])
             .clone()
     });

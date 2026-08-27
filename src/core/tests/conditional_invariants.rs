@@ -7,14 +7,17 @@
 // dieser Test die Ausschlüsse über eine Matrix von Rezepturen — jede neue
 // Regel, die versehentlich beide Seiten eines Paars setzt, fällt hier auf.
 
-use crate::conditional_keys as keys;
 use super::*;
+use crate::conditional_keys as keys;
 use crate::shared::Configuration;
 
 /// Pairs that must never both be set in one output.
 const EXCLUSIVE_PAIRS: &[(&str, &str)] = &[
     (keys::BIO_MARKETING_ALLOWED, keys::BIO_MARKETING_NOT_ALLOWED),
-    (keys::KNOSPE_MARKETING_ALLOWED, keys::KNOSPE_MARKETING_NOT_ALLOWED),
+    (
+        keys::KNOSPE_MARKETING_ALLOWED,
+        keys::KNOSPE_MARKETING_NOT_ALLOWED,
+    ),
     (keys::BIO_CHECK_OK, keys::BIO_CHECK_FAILED),
     (keys::BIO_CHECK_OK, keys::BIO_CHECK_PENDING),
     (keys::BIO_CHECK_FAILED, keys::BIO_CHECK_PENDING),
@@ -56,69 +59,164 @@ fn check_invariants(ctx: &str, c: &std::collections::HashMap<String, bool>) {
 fn recipe_matrix() -> Vec<(&'static str, Vec<Ingredient>)> {
     vec![
         ("empty", vec![]),
-        ("plain conventional", vec![
-            IngredientBuilder::new_agri("Zucker", 1000.0).origin(Country::CH).build(),
-        ]),
-        ("only water", vec![
-            IngredientBuilder::new("Wasser", 1000.0).agricultural(false).build(),
-        ]),
-        ("full bio ch", vec![
-            IngredientBuilder::new_agri("Hafer", 1000.0).bio_ch().origin(Country::CH).build(),
-        ]),
-        ("full knospe swiss", vec![
-            IngredientBuilder::new_agri("Himbeeren", 1000.0).bio().bio_ch().origin(Country::CH).build(),
-        ]),
-        ("full knospe import", vec![
-            IngredientBuilder::new_agri("Rohrzucker", 1000.0).bio().bio_ch().origin(Country::Import).build(),
-        ]),
-        ("mixed bio and conventional", vec![
-            IngredientBuilder::new_agri("Hafer", 600.0).bio_ch().origin(Country::CH).build(),
-            IngredientBuilder::new_agri("Zucker", 400.0).origin(Country::CH).build(),
-        ]),
-        ("exception under 5%", vec![
-            IngredientBuilder::new_agri("Hafer", 960.0).bio().bio_ch().origin(Country::CH).build(),
-            IngredientBuilder::new_agri("Pektin", 40.0).origin(Country::CH).erlaubte_ausnahme_bio().build(),
-        ]),
-        ("exception over 5%", vec![
-            IngredientBuilder::new_agri("Hafer", 600.0).bio().bio_ch().origin(Country::CH).build(),
-            IngredientBuilder::new_agri("Pektin", 400.0).origin(Country::CH).erlaubte_ausnahme_knospe().build(),
-        ]),
-        ("umstellung mono", vec![
-            IngredientBuilder::new_agri("Hafer", 1000.0).bio().bio_ch().origin(Country::CH)
-                .umstellbetrieb().build(),
-        ]),
-        ("umstellung composite", vec![
-            IngredientBuilder::new_agri("Hafer", 600.0).bio().bio_ch().origin(Country::CH)
-                .umstellbetrieb().build(),
-            IngredientBuilder::new_agri("Zucker", 400.0).bio().bio_ch().origin(Country::CH).build(),
-        ]),
+        (
+            "plain conventional",
+            vec![IngredientBuilder::new_agri("Zucker", 1000.0)
+                .origin(Country::CH)
+                .build()],
+        ),
+        (
+            "only water",
+            vec![IngredientBuilder::new("Wasser", 1000.0)
+                .agricultural(false)
+                .build()],
+        ),
+        (
+            "full bio ch",
+            vec![IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio_ch()
+                .origin(Country::CH)
+                .build()],
+        ),
+        (
+            "full knospe swiss",
+            vec![IngredientBuilder::new_agri("Himbeeren", 1000.0)
+                .bio()
+                .bio_ch()
+                .origin(Country::CH)
+                .build()],
+        ),
+        (
+            "full knospe import",
+            vec![IngredientBuilder::new_agri("Rohrzucker", 1000.0)
+                .bio()
+                .bio_ch()
+                .origin(Country::Import)
+                .build()],
+        ),
+        (
+            "mixed bio and conventional",
+            vec![
+                IngredientBuilder::new_agri("Hafer", 600.0)
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .build(),
+                IngredientBuilder::new_agri("Zucker", 400.0)
+                    .origin(Country::CH)
+                    .build(),
+            ],
+        ),
+        (
+            "exception under 5%",
+            vec![
+                IngredientBuilder::new_agri("Hafer", 960.0)
+                    .bio()
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .build(),
+                IngredientBuilder::new_agri("Pektin", 40.0)
+                    .origin(Country::CH)
+                    .erlaubte_ausnahme_bio()
+                    .build(),
+            ],
+        ),
+        (
+            "exception over 5%",
+            vec![
+                IngredientBuilder::new_agri("Hafer", 600.0)
+                    .bio()
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .build(),
+                IngredientBuilder::new_agri("Pektin", 400.0)
+                    .origin(Country::CH)
+                    .erlaubte_ausnahme_knospe()
+                    .build(),
+            ],
+        ),
+        (
+            "umstellung mono",
+            vec![IngredientBuilder::new_agri("Hafer", 1000.0)
+                .bio()
+                .bio_ch()
+                .origin(Country::CH)
+                .umstellbetrieb()
+                .build()],
+        ),
+        (
+            "umstellung composite",
+            vec![
+                IngredientBuilder::new_agri("Hafer", 600.0)
+                    .bio()
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .umstellbetrieb()
+                    .build(),
+                IngredientBuilder::new_agri("Zucker", 400.0)
+                    .bio()
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .build(),
+            ],
+        ),
         // The Umstellbetrieb ingredient is small enough that the Bio-CH share
         // stays >= 95% — exactly the case where execute() must retract the
         // already-granted "allowed" via remove(). Dropping that remove() is the
         // regression this row exists to catch.
-        ("umstellung composite with high bio share", vec![
-            IngredientBuilder::new_agri("Hafer", 960.0).bio_ch().origin(Country::CH).build(),
-            IngredientBuilder::new_agri("Karotte", 40.0).bio_ch().origin(Country::CH)
-                .umstellbetrieb().build(),
-        ]),
-        ("swiss share just under 90%", vec![
-            IngredientBuilder::new_agri("Himbeeren", 890.0).bio().bio_ch().origin(Country::CH).build(),
-            IngredientBuilder::new_agri("Rohrzucker", 110.0).bio().bio_ch().origin(Country::Import).build(),
-        ]),
-        ("composite with children", vec![
-            IngredientBuilder::new_agri("Müesli", 0.0)
+        (
+            "umstellung composite with high bio share",
+            vec![
+                IngredientBuilder::new_agri("Hafer", 960.0)
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .build(),
+                IngredientBuilder::new_agri("Karotte", 40.0)
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .umstellbetrieb()
+                    .build(),
+            ],
+        ),
+        (
+            "swiss share just under 90%",
+            vec![
+                IngredientBuilder::new_agri("Himbeeren", 890.0)
+                    .bio()
+                    .bio_ch()
+                    .origin(Country::CH)
+                    .build(),
+                IngredientBuilder::new_agri("Rohrzucker", 110.0)
+                    .bio()
+                    .bio_ch()
+                    .origin(Country::Import)
+                    .build(),
+            ],
+        ),
+        (
+            "composite with children",
+            vec![IngredientBuilder::new_agri("Müesli", 0.0)
                 .children(vec![
-                    IngredientBuilder::new_agri("Hafer", 700.0).bio().bio_ch().origin(Country::CH).build(),
-                    IngredientBuilder::new_agri("Rosinen", 300.0).origin(Country::Import).build(),
+                    IngredientBuilder::new_agri("Hafer", 700.0)
+                        .bio()
+                        .bio_ch()
+                        .origin(Country::CH)
+                        .build(),
+                    IngredientBuilder::new_agri("Rosinen", 300.0)
+                        .origin(Country::Import)
+                        .build(),
                 ])
-                .build(),
-        ]),
+                .build()],
+        ),
     ]
 }
 
 #[test]
 fn conditionals_are_consistent_across_the_recipe_matrix() {
-    for config in [Configuration::Bio, Configuration::Knospe, Configuration::Conventional] {
+    for config in [
+        Configuration::Bio,
+        Configuration::Knospe,
+        Configuration::Conventional,
+    ] {
         for (name, ingredients) in recipe_matrix() {
             // Each recipe in every check state: untouched, and confirmed.
             for vollstaendig in [false, true] {
@@ -165,7 +263,11 @@ fn every_produced_conditional_is_consumed_somewhere() {
         keys::HERKUNFT_BENOETIGT_UEBER_50_PROZENT,
     ];
 
-    for config in [Configuration::Bio, Configuration::Knospe, Configuration::Conventional] {
+    for config in [
+        Configuration::Bio,
+        Configuration::Knospe,
+        Configuration::Conventional,
+    ] {
         for (name, ingredients) in recipe_matrix() {
             for vollstaendig in [false, true] {
                 let mut builder = InputBuilder::new().ingredients(ingredients.clone());

@@ -1,9 +1,9 @@
 use crate::components::card_stack::{CardStack, GenesisModal};
-use crate::shared::VerdictsContext;
 use crate::components::ingredient_path::IngredientPath;
 use crate::components::*;
 use crate::core::Ingredient;
 use crate::rules::RuleDef;
+use crate::shared::VerdictsContext;
 use dioxus::prelude::*;
 use rust_i18n::t;
 use std::collections::HashMap;
@@ -49,7 +49,9 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
         }
         // Deterministic order: HashMap iteration is unordered.
         out.sort_by(|a, b| a.0.cmp(&b.0).then(a.2.cmp(&b.2)));
-        out.into_iter().map(|(_, label, msg)| (label, msg)).collect::<Vec<_>>()
+        out.into_iter()
+            .map(|(_, label, msg)| (label, msg))
+            .collect::<Vec<_>>()
     });
 
     // Recipe is "valid" once marked complete and no validation errors remain.
@@ -64,7 +66,10 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             .sum::<f64>()
     });
 
-    let show_knospe_icon = props.rules.read().contains(&RuleDef::Knospe_ShowBioSuisseLogo);
+    let show_knospe_icon = props
+        .rules
+        .read()
+        .contains(&RuleDef::Knospe_ShowBioSuisseLogo);
 
     rsx! {
         div { class: "grid grid-cols-3 gap-4 items-center border-top",

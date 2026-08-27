@@ -33,9 +33,24 @@ async fn validation_clears_when_origin_restored() {
         sachbezeichnung: "Rindshackbraten",
         certification_body: None,
         ingredients: &[
-            RecipeIngredient { name: "Rindfleisch", grams: 350.0, origin: None,        bio: BioStatus::Conventional },
-            RecipeIngredient { name: "Zwiebel",     grams: 80.0,  origin: Some("CH"), bio: BioStatus::Conventional },
-            RecipeIngredient { name: "Salz",        grams: 5.0,   origin: None,       bio: BioStatus::Conventional },
+            RecipeIngredient {
+                name: "Rindfleisch",
+                grams: 350.0,
+                origin: None,
+                bio: BioStatus::Conventional,
+            },
+            RecipeIngredient {
+                name: "Zwiebel",
+                grams: 80.0,
+                origin: Some("CH"),
+                bio: BioStatus::Conventional,
+            },
+            RecipeIngredient {
+                name: "Salz",
+                grams: 5.0,
+                origin: None,
+                bio: BioStatus::Conventional,
+            },
         ],
     };
     seed_recipe_via_ui(&c, &recipe).await;
@@ -104,9 +119,12 @@ async fn success_badge_shows_when_recipe_valid() {
         product_name: "Zucker pur",
         sachbezeichnung: "Zucker",
         certification_body: None,
-        ingredients: &[
-            RecipeIngredient { name: "Zucker", grams: 100.0, origin: Some("CH"), bio: BioStatus::Conventional },
-        ],
+        ingredients: &[RecipeIngredient {
+            name: "Zucker",
+            grams: 100.0,
+            origin: Some("CH"),
+            bio: BioStatus::Conventional,
+        }],
     };
     goto_config(&c, recipe.config).await;
     seed_recipe_via_ui(&c, &recipe).await; // also presses "Rezeptur vollständig"
@@ -140,8 +158,18 @@ async fn success_badge_hidden_when_validation_error() {
         sachbezeichnung: "Rindshackbraten",
         certification_body: None,
         ingredients: &[
-            RecipeIngredient { name: "Rindfleisch", grams: 350.0, origin: None,       bio: BioStatus::Conventional },
-            RecipeIngredient { name: "Zwiebel",     grams: 80.0,  origin: Some("CH"), bio: BioStatus::Conventional },
+            RecipeIngredient {
+                name: "Rindfleisch",
+                grams: 350.0,
+                origin: None,
+                bio: BioStatus::Conventional,
+            },
+            RecipeIngredient {
+                name: "Zwiebel",
+                grams: 80.0,
+                origin: Some("CH"),
+                bio: BioStatus::Conventional,
+            },
         ],
     };
     goto_config(&c, recipe.config).await;
@@ -221,14 +249,12 @@ async fn bio_cert_body_required() {
         product_name: "Bio Test ohne CH-BIO",
         sachbezeichnung: "Bio Test",
         certification_body: None,
-        ingredients: &[
-            RecipeIngredient {
-                name: "Erdbeeren",
-                grams: 100.0,
-                origin: Some("CH"),
-                bio: BioStatus::BioCh,
-            },
-        ],
+        ingredients: &[RecipeIngredient {
+            name: "Erdbeeren",
+            grams: 100.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioCh,
+        }],
     };
     goto_config(&c, recipe.config).await;
     seed_recipe_via_ui(&c, &recipe).await;
@@ -274,7 +300,7 @@ async fn knospe_origin_required_for_all() {
             },
             RecipeIngredient {
                 name: "Rohrzucker",
-                grams: 60.0, // majority share → <90% Swiss → Import-Knospe on the label
+                grams: 60.0,  // majority share → <90% Swiss → Import-Knospe on the label
                 origin: None, // Import-Knospe without a country — must be flagged.
                 bio: BioStatus::BioKnospeImport,
             },
@@ -367,7 +393,10 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
     use std::time::Duration;
     let c = connect().await;
     goto_config(&c, Config::Knospe).await;
-    assert!(open_add_ingredient(&c).await, "could not open genesis add-ingredient modal");
+    assert!(
+        open_add_ingredient(&c).await,
+        "could not open genesis add-ingredient modal"
+    );
     tokio::time::sleep(Duration::from_millis(400)).await;
 
     // Enter a name + amount so the bio/quality block renders.
@@ -378,7 +407,12 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
         let _ = input.send_keys("\u{E007}").await; // Enter commits exact match / custom
         tokio::time::sleep(Duration::from_millis(300)).await;
     }
-    if let Ok(num) = c.find(fantoccini::Locator::Css("dialog[open] input[type='number']")).await {
+    if let Ok(num) = c
+        .find(fantoccini::Locator::Css(
+            "dialog[open] input[type='number']",
+        ))
+        .await
+    {
         let _ = num.click().await;
         let _ = num.send_keys("100").await;
     }
@@ -387,8 +421,14 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
     let dialog_text = |c: &fantoccini::Client| {
         let c = c.clone();
         async move {
-            c.execute("const d=document.querySelector('dialog[open]'); return d?d.innerText:'';", vec![])
-                .await.ok().and_then(|v| v.as_str().map(|s| s.to_string())).unwrap_or_default()
+            c.execute(
+                "const d=document.querySelector('dialog[open]'); return d?d.innerText:'';",
+                vec![],
+            )
+            .await
+            .ok()
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+            .unwrap_or_default()
         }
     };
 
@@ -408,7 +448,8 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
 
     // Variante b: click the "Herkunft Import" logo card (first match = plain
     // Knospe Import) → origin editable again (picker reappears).
-    let import_xpath = "//dialog[@open]//button[.//span[contains(normalize-space(.), 'Herkunft Import')]]";
+    let import_xpath =
+        "//dialog[@open]//button[.//span[contains(normalize-space(.), 'Herkunft Import')]]";
     if let Ok(el) = c.find(fantoccini::Locator::XPath(import_xpath)).await {
         let _ = el.click().await;
     }

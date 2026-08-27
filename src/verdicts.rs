@@ -67,8 +67,13 @@ pub enum KnospeBlockReason {
 pub enum KnospeVerdict {
     /// Knospe-fähig. `bio_suffix` = « Bio» an der Sachbezeichnung (DEC-10;
     /// entfällt für zusammengesetzte Umstellungsprodukte).
-    Logo { logo: KnospeLogo, bio_suffix: bool },
-    NoLogo { reasons: Vec<KnospeBlockReason> },
+    Logo {
+        logo: KnospeLogo,
+        bio_suffix: bool,
+    },
+    NoLogo {
+        reasons: Vec<KnospeBlockReason>,
+    },
 }
 
 /// Tri-State des «Rezeptur prüfen»-Buttons. Bei Einzelzutat-Modus (DEC-3)

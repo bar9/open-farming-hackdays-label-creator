@@ -73,7 +73,9 @@ fn golden_joghurt_salatsauce() {
         .ingredient(
             IngredientBuilder::new("Bouillonpaste", 9.0)
                 .children(vec![
-                    IngredientBuilder::new("Salz", 0.0).origin(Country::CH).build(),
+                    IngredientBuilder::new("Salz", 0.0)
+                        .origin(Country::CH)
+                        .build(),
                     IngredientBuilder::new("Sojasauce", 0.0).build(),
                     IngredientBuilder::new("Maltodextrin auf Weizenbasis", 0.0).build(),
                     IngredientBuilder::new("Karotte", 0.0).build(),

@@ -30,8 +30,7 @@ const KNOWN_MISSING_IT: &[&str] = &[
 /// Tracks indentation depth to build dotted key paths. Only emits a path
 /// when the line has a non-empty value after the colon (i.e., a leaf).
 fn extract_keys(path: &str) -> HashSet<String> {
-    let content = fs::read_to_string(path)
-        .unwrap_or_else(|e| panic!("could not read {path}: {e}"));
+    let content = fs::read_to_string(path).unwrap_or_else(|e| panic!("could not read {path}: {e}"));
     let mut keys = HashSet::new();
     let mut stack: Vec<(usize, String)> = Vec::new();
 
@@ -42,9 +41,15 @@ fn extract_keys(path: &str) -> HashSet<String> {
             continue;
         }
         let indent = line.len() - trimmed.len();
-        let Some(colon) = trimmed.find(':') else { continue };
+        let Some(colon) = trimmed.find(':') else {
+            continue;
+        };
         let key = trimmed[..colon].trim();
-        if key.is_empty() || !key.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        if key.is_empty()
+            || !key
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        {
             continue;
         }
         while stack.last().is_some_and(|(i, _)| *i >= indent) {

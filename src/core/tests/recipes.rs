@@ -1,5 +1,5 @@
-use crate::conditional_keys as keys;
 use super::*;
+use crate::conditional_keys as keys;
 use crate::shared::Configuration;
 
 // =============================================================================
@@ -120,32 +120,84 @@ fn recipe_schoggi_cookie_bk() {
     let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None, "Should NOT have bio_suisse_regular logo");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        Some(&true),
+        "Expected bio_suisse_no_cross logo"
+    );
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        None,
+        "Should NOT have bio_suisse_regular logo"
+    );
 
     // Origin display per Excel "Herkunft muss angegeben werden":
     // Butter: Ja → show (CH)
-    assert!(output.label.contains("Butter* (CH)"), "Butter should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Butter* (CH)"),
+        "Butter should show origin (CH). Label: {}",
+        output.label
+    );
     // Eier: Ja → show (CH)
-    assert!(output.label.contains("Eier* (CH)"), "Eier should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Eier* (CH)"),
+        "Eier should show origin (CH). Label: {}",
+        output.label
+    );
     // Zucker: Nein
-    assert!(!output.label.contains("Zucker* (PE)"), "Zucker should NOT show origin. Label: {}", output.label);
-    assert!(output.label.contains("Zucker*"), "Zucker should have bio asterisk. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Zucker* (PE)"),
+        "Zucker should NOT show origin. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Zucker*"),
+        "Zucker should have bio asterisk. Label: {}",
+        output.label
+    );
     // Weizenmehl: Ja (>10% Swiss agricultural)
-    assert!(output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}", output.label);
+    assert!(
+        output.label.contains("Weizenmehl* (CH)"),
+        "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}",
+        output.label
+    );
     // Schokoladewürfel: Nein
-    assert!(!output.label.contains("Schokoladewürfel* (EU)"), "Schokoladewürfel should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Schokoladewürfel* (EU)"),
+        "Schokoladewürfel should NOT show origin. Label: {}",
+        output.label
+    );
     // Orangenschale: Nein
-    assert!(!output.label.contains("Orangenschale* (EU)"), "Orangenschale should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Orangenschale* (EU)"),
+        "Orangenschale should NOT show origin. Label: {}",
+        output.label
+    );
     // Salz: Nein (non-agricultural, no bio asterisk)
-    assert!(!output.label.contains("Salz (CH)"), "Salz should NOT show origin. Label: {}", output.label);
-    assert!(!output.label.contains("Salz*"), "Salz should NOT have bio asterisk. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Salz (CH)"),
+        "Salz should NOT show origin. Label: {}",
+        output.label
+    );
+    assert!(
+        !output.label.contains("Salz*"),
+        "Salz should NOT have bio asterisk. Label: {}",
+        output.label
+    );
 
     // Bio asterisk legend
-    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Should have bio legend. Label: {}", output.label);
+    assert!(
+        output.label.contains("aus biologischer Landwirtschaft"),
+        "Should have bio legend. Label: {}",
+        output.label
+    );
 
     // No validation errors
-    assert!(output.validation_messages.is_empty(), "Expected no validation errors, got: {:?}", output.validation_messages);
+    assert!(
+        output.validation_messages.is_empty(),
+        "Expected no validation errors, got: {:?}",
+        output.validation_messages
+    );
 }
 
 // =============================================================================
@@ -204,30 +256,74 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
     let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None, "Should NOT have bio_suisse_regular logo");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        Some(&true),
+        "Expected bio_suisse_no_cross logo"
+    );
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        None,
+        "Should NOT have bio_suisse_regular logo"
+    );
 
     // Origin display per Excel:
     // Butter: Ja → show (CH)
-    assert!(output.label.contains("Butter* (CH)"), "Butter should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Butter* (CH)"),
+        "Butter should show origin (CH). Label: {}",
+        output.label
+    );
     // Sub-ingredient Vollmilchpulver: Nein (4.6% < 10% Swiss threshold, Knospe Under90% rules apply to composites too)
-    assert!(!output.label.contains("Vollmilchpulver* (CH)"), "Vollmilchpulver should NOT show origin (4.6%% < 10%% threshold). Label: {}", output.label);
+    assert!(
+        !output.label.contains("Vollmilchpulver* (CH)"),
+        "Vollmilchpulver should NOT show origin (4.6%% < 10%% threshold). Label: {}",
+        output.label
+    );
     // Zucker: Ja (18% Swiss agricultural, >10%)
-    assert!(output.label.contains("Zucker* (CH)"), "Zucker should show origin (CH) because >10%% Swiss. Label: {}", output.label);
+    assert!(
+        output.label.contains("Zucker* (CH)"),
+        "Zucker should show origin (CH) because >10%% Swiss. Label: {}",
+        output.label
+    );
     // Weizenmehl: Ja (33.5% Swiss agricultural, >10%)
-    assert!(output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}", output.label);
+    assert!(
+        output.label.contains("Weizenmehl* (CH)"),
+        "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}",
+        output.label
+    );
     // Eier: Nein (9% < 10%)
-    assert!(!output.label.contains("Eier* (CH)"), "Eier should NOT show origin (9%% < 10%%). Label: {}", output.label);
+    assert!(
+        !output.label.contains("Eier* (CH)"),
+        "Eier should NOT show origin (9%% < 10%%). Label: {}",
+        output.label
+    );
     // Schokoladewürfel: Nein
-    assert!(!output.label.contains("Milchschokoladewürfel* (EU)"), "Milchschokoladewürfel should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Milchschokoladewürfel* (EU)"),
+        "Milchschokoladewürfel should NOT show origin. Label: {}",
+        output.label
+    );
     // Salz: Nein
-    assert!(!output.label.contains("Salz (CH)"), "Salz should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Salz (CH)"),
+        "Salz should NOT show origin. Label: {}",
+        output.label
+    );
 
     // Bio asterisk legend
-    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Should have bio legend. Label: {}", output.label);
+    assert!(
+        output.label.contains("aus biologischer Landwirtschaft"),
+        "Should have bio legend. Label: {}",
+        output.label
+    );
 
     // No validation errors
-    assert!(output.validation_messages.is_empty(), "Expected no validation errors, got: {:?}", output.validation_messages);
+    assert!(
+        output.validation_messages.is_empty(),
+        "Expected no validation errors, got: {:?}",
+        output.validation_messages
+    );
 }
 
 // =============================================================================
@@ -286,30 +382,74 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
     let c = &output.conditionals();
 
     // Logo: bio_suisse_regular (90-99% Swiss)
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Expected bio_suisse_regular logo");
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None, "Should NOT have bio_suisse_no_cross logo");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        Some(&true),
+        "Expected bio_suisse_regular logo"
+    );
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        None,
+        "Should NOT have bio_suisse_no_cross logo"
+    );
 
     // Origin display per Excel (90-99% rule: show origin for Swiss agricultural ingredients):
     // Weizenmehl: Ja* → show (CH)
-    assert!(output.label.contains("Weizenmehl* (CH)"), "Weizenmehl should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Weizenmehl* (CH)"),
+        "Weizenmehl should show origin (CH). Label: {}",
+        output.label
+    );
     // Zucker: Ja* → show (CH)
-    assert!(output.label.contains("Zucker* (CH)"), "Zucker should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Zucker* (CH)"),
+        "Zucker should show origin (CH). Label: {}",
+        output.label
+    );
     // Butter: Ja* → show (CH)
-    assert!(output.label.contains("Butter* (CH)"), "Butter should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Butter* (CH)"),
+        "Butter should show origin (CH). Label: {}",
+        output.label
+    );
     // Eier: Ja* → show (CH)
-    assert!(output.label.contains("Eier* (CH)"), "Eier should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Eier* (CH)"),
+        "Eier should show origin (CH). Label: {}",
+        output.label
+    );
     // Schokoladewürfel: Nein (EU, not Swiss)
-    assert!(!output.label.contains("Milchschokoladewürfel* (EU)"), "Milchschokoladewürfel should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Milchschokoladewürfel* (EU)"),
+        "Milchschokoladewürfel should NOT show origin. Label: {}",
+        output.label
+    );
     // Sub-ingredient Vollmilchpulver: Ja* (shown inside composite)
-    assert!(output.label.contains("Vollmilchpulver* (CH)"), "Vollmilchpulver should show origin inside composite. Label: {}", output.label);
+    assert!(
+        output.label.contains("Vollmilchpulver* (CH)"),
+        "Vollmilchpulver should show origin inside composite. Label: {}",
+        output.label
+    );
     // Salz: Nein (non-agricultural, should NOT show origin even though CH)
-    assert!(!output.label.contains("Salz (CH)"), "Salz should NOT show origin (non-agricultural). Label: {}", output.label);
+    assert!(
+        !output.label.contains("Salz (CH)"),
+        "Salz should NOT show origin (non-agricultural). Label: {}",
+        output.label
+    );
 
     // Bio asterisk legend
-    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Should have bio legend. Label: {}", output.label);
+    assert!(
+        output.label.contains("aus biologischer Landwirtschaft"),
+        "Should have bio legend. Label: {}",
+        output.label
+    );
 
     // No validation errors
-    assert!(output.validation_messages.is_empty(), "Expected no validation errors, got: {:?}", output.validation_messages);
+    assert!(
+        output.validation_messages.is_empty(),
+        "Expected no validation errors, got: {:?}",
+        output.validation_messages
+    );
 }
 
 // =============================================================================
@@ -363,29 +503,68 @@ fn recipe_baerlauch_pesto_bk() {
     let c = &output.conditionals();
 
     // Logo: bio_suisse_no_cross (Under90% Swiss)
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true), "Expected bio_suisse_no_cross logo");
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None, "Should NOT have bio_suisse_regular logo");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        Some(&true),
+        "Expected bio_suisse_no_cross logo"
+    );
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        None,
+        "Should NOT have bio_suisse_regular logo"
+    );
 
     // Origin display per Excel:
     // Bärlauch: Ja → show (CH) — namensgebende Zutat (name-giving ingredient of "Bärlauch Pesto")
     // Note: namensgebend also triggers percentage display
-    assert!(output.label.contains("Bärlauch*") && output.label.contains("(CH)"),
-        "Bärlauch should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Bärlauch*") && output.label.contains("(CH)"),
+        "Bärlauch should show origin (CH). Label: {}",
+        output.label
+    );
     // Rapsöl: Ja → show (CH) — Swiss agricultural with category, ≥10%
-    assert!(output.label.contains("Rapsöl* (CH)"), "Rapsöl should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Rapsöl* (CH)"),
+        "Rapsöl should show origin (CH). Label: {}",
+        output.label
+    );
     // Parmesan: Ja → show (IT) — dairy category, always shows
-    assert!(output.label.contains("Parmesan* (IT)"), "Parmesan should show origin (IT) as dairy. Label: {}", output.label);
+    assert!(
+        output.label.contains("Parmesan* (IT)"),
+        "Parmesan should show origin (IT) as dairy. Label: {}",
+        output.label
+    );
     // Mandeln: Nein — not Swiss, no special category
-    assert!(!output.label.contains("Mandeln* (TR)"), "Mandeln should NOT show origin. Label: {}", output.label);
-    assert!(output.label.contains("Mandeln*"), "Mandeln should have bio asterisk. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Mandeln* (TR)"),
+        "Mandeln should NOT show origin. Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Mandeln*"),
+        "Mandeln should have bio asterisk. Label: {}",
+        output.label
+    );
     // Salz: Nein — non-agricultural
-    assert!(!output.label.contains("Salz (EU)"), "Salz should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Salz (EU)"),
+        "Salz should NOT show origin. Label: {}",
+        output.label
+    );
 
     // Bio asterisk legend
-    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Should have bio legend. Label: {}", output.label);
+    assert!(
+        output.label.contains("aus biologischer Landwirtschaft"),
+        "Should have bio legend. Label: {}",
+        output.label
+    );
 
     // No validation errors
-    assert!(output.validation_messages.is_empty(), "Expected no validation errors, got: {:?}", output.validation_messages);
+    assert!(
+        output.validation_messages.is_empty(),
+        "Expected no validation errors, got: {:?}",
+        output.validation_messages
+    );
 }
 
 // =============================================================================
@@ -439,26 +618,65 @@ fn recipe_baerlauch_pesto_bsk() {
     let c = &output.conditionals();
 
     // Logo: bio_suisse_regular (90-99% Swiss)
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true), "Expected bio_suisse_regular logo");
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), None, "Should NOT have bio_suisse_no_cross logo");
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        Some(&true),
+        "Expected bio_suisse_regular logo"
+    );
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        None,
+        "Should NOT have bio_suisse_no_cross logo"
+    );
 
     // Origin display per Excel (90-99% rule: show origin for Swiss agricultural ingredients only):
     // Rapsöl: Ja* → show (CH)
-    assert!(output.label.contains("Rapsöl* (CH)"), "Rapsöl should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Rapsöl* (CH)"),
+        "Rapsöl should show origin (CH). Label: {}",
+        output.label
+    );
     // Bärlauch: Ja* → show (CH) — also namensgebend so includes percentage
-    assert!(output.label.contains("Bärlauch*") && output.label.contains("(CH)"),
-        "Bärlauch should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Bärlauch*") && output.label.contains("(CH)"),
+        "Bärlauch should show origin (CH). Label: {}",
+        output.label
+    );
     // Baumnüsse: Ja* → show (CH)
-    assert!(output.label.contains("Baumnüsse* (CH)"), "Baumnüsse should show origin (CH). Label: {}", output.label);
+    assert!(
+        output.label.contains("Baumnüsse* (CH)"),
+        "Baumnüsse should show origin (CH). Label: {}",
+        output.label
+    );
     // Parmesan: Nein — not Swiss, 90-99% rule only shows Swiss origins
-    assert!(!output.label.contains("Parmesan* (IT)"), "Parmesan should NOT show origin (not Swiss, 90-99% rule). Label: {}", output.label);
-    assert!(output.label.contains("Parmesan*"), "Parmesan should have bio asterisk. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Parmesan* (IT)"),
+        "Parmesan should NOT show origin (not Swiss, 90-99% rule). Label: {}",
+        output.label
+    );
+    assert!(
+        output.label.contains("Parmesan*"),
+        "Parmesan should have bio asterisk. Label: {}",
+        output.label
+    );
     // Salz: Nein — non-agricultural
-    assert!(!output.label.contains("Salz (EU)"), "Salz should NOT show origin. Label: {}", output.label);
+    assert!(
+        !output.label.contains("Salz (EU)"),
+        "Salz should NOT show origin. Label: {}",
+        output.label
+    );
 
     // Bio asterisk legend
-    assert!(output.label.contains("aus biologischer Landwirtschaft"), "Should have bio legend. Label: {}", output.label);
+    assert!(
+        output.label.contains("aus biologischer Landwirtschaft"),
+        "Should have bio legend. Label: {}",
+        output.label
+    );
 
     // No validation errors
-    assert!(output.validation_messages.is_empty(), "Expected no validation errors, got: {:?}", output.validation_messages);
+    assert!(
+        output.validation_messages.is_empty(),
+        "Expected no validation errors, got: {:?}",
+        output.validation_messages
+    );
 }

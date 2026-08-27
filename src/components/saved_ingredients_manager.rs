@@ -1,4 +1,4 @@
-use crate::persistence::{get_saved_ingredients, delete_saved_ingredient};
+use crate::persistence::{delete_saved_ingredient, get_saved_ingredients};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
@@ -7,21 +7,23 @@ pub fn SavedIngredientsManager() -> Element {
     let mut saved_ingredients = use_signal(get_saved_ingredients);
     let mut is_open = use_signal(|| false);
     let mut delete_status = use_signal(|| None::<String>);
-    
+
     // Refresh the list when modal opens
     use_effect(move || {
         if is_open() {
             saved_ingredients.set(get_saved_ingredients());
         }
     });
-    
+
     let mut handle_delete = move |name: String| {
         match delete_saved_ingredient(&name) {
             Ok(_) => {
                 // Refresh the list
                 saved_ingredients.set(get_saved_ingredients());
-                delete_status.set(Some(t!("messages.ingredient_deleted", name = name).to_string()));
-                
+                delete_status.set(Some(
+                    t!("messages.ingredient_deleted", name = name).to_string(),
+                ));
+
                 // Clear status after 2 seconds
                 let mut delete_status_clone = delete_status;
                 spawn(async move {
@@ -31,7 +33,7 @@ pub fn SavedIngredientsManager() -> Element {
             }
             Err(e) => {
                 delete_status.set(Some(t!("messages.error_deleting", error = e).to_string()));
-                
+
                 // Clear status after 3 seconds
                 let mut delete_status_clone = delete_status;
                 spawn(async move {
@@ -41,7 +43,7 @@ pub fn SavedIngredientsManager() -> Element {
             }
         }
     };
-    
+
     rsx! {
         span { class: "tooltip tooltip-bottom", "data-tip": t!("tooltips.manage_saved_ingredients").to_string(),
             button {
@@ -50,20 +52,20 @@ pub fn SavedIngredientsManager() -> Element {
                 {t!("nav.saved_ingredients").to_string()}
             }
         }
-        
+
         dialog { open: is_open(), class: "modal",
             div { class: "modal-box bg-base-100 max-w-3xl",
-                h3 { class: "font-bold text-lg mb-4", 
-                    {t!("headers.saved_composite_ingredients").to_string()} 
+                h3 { class: "font-bold text-lg mb-4",
+                    {t!("headers.saved_composite_ingredients").to_string()}
                 }
-                
+
                 // Show delete status if any
                 if let Some(status) = delete_status() {
                     div { class: "alert alert-info mb-4",
                         span { "{status}" }
                     }
                 }
-                
+
                 if saved_ingredients().is_empty() {
                     div { class: "text-center py-8 text-gray-500",
                         {t!("messages.no_saved_ingredients").to_string()}
@@ -81,7 +83,7 @@ pub fn SavedIngredientsManager() -> Element {
                             tbody {
                                 for saved in saved_ingredients() {
                                     tr {
-                                        td { 
+                                        td {
                                             class: if saved.ingredient.is_allergen { "font-bold" } else { "" },
                                             "{saved.ingredient.name}"
                                         }
@@ -116,7 +118,7 @@ pub fn SavedIngredientsManager() -> Element {
                         }
                     }
                 }
-                
+
                 div { class: "modal-action",
                     button {
                         class: "btn",
@@ -125,7 +127,7 @@ pub fn SavedIngredientsManager() -> Element {
                     }
                 }
             }
-            
+
             form {
                 method: "dialog",
                 class: "modal-backdrop",

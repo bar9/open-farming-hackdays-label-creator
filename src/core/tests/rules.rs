@@ -1,12 +1,17 @@
-use crate::conditional_keys as keys;
 use super::*;
+use crate::conditional_keys as keys;
 
 #[test]
 fn ap1_2_namensgebend() {
     let calculator = calculator_with(vec![RuleDef::AP1_2_ProzentOutputNamensgebend]);
     let input = InputBuilder::new()
         .ingredient(IngredientBuilder::new("Hafer", 300.0).build())
-        .ingredient(IngredientBuilder::new("Milch", 700.0).allergen().namensgebend().build())
+        .ingredient(
+            IngredientBuilder::new("Milch", 700.0)
+                .allergen()
+                .namensgebend()
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     let label = output.label;
@@ -40,7 +45,12 @@ fn ap1_4_manualTotalChangesPercent() {
         RuleDef::AP1_4_ManuelleEingabeTotal,
     ]);
     let input = InputBuilder::new()
-        .ingredient(IngredientBuilder::new("Milch", 700.0).allergen().namensgebend().build())
+        .ingredient(
+            IngredientBuilder::new("Milch", 700.0)
+                .allergen()
+                .namensgebend()
+                .build(),
+        )
         .total(350.0)
         .build();
     let output = calculator.execute(input);
