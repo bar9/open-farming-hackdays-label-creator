@@ -286,8 +286,7 @@ link_short_disclaimer_provider: "Nota: Il contenuto della ricetta è memorizzato
 link_copied_success: Il link è stato copiato negli appunti!
 shorten_url_button: Accorcia link
 shortening: Accorciamento...
-link_shorten_error: "Nessun servizio di abbreviazione era raggiungibile (alcune reti li bloccano). Si prega di utilizzare il link completo o riprovare."
-link_shorten_local_error: "Questo indirizzo è raggiungibile solo localmente (ad es. localhost). I link brevi funzionano solo sul sito pubblicato."
+link_shorten_error: "Il servizio di abbreviazione (da.gd) non era raggiungibile — alcune reti lo bloccano. Si prega di utilizzare il link completo o riprovare."
 close: Chiudi
 
 disclaimer:

@@ -293,8 +293,7 @@ link_short_disclaimer_provider: "Hinweis: Der Inhalt des Rezepts ist im Kurz-Lin
 link_copied_success: Link wurde in die Zwischenablage kopiert!
 shorten_url_button: Link kürzen
 shortening: Wird gekürzt...
-link_shorten_error: "Kein Kurz-Link-Dienst war erreichbar (in manchen Netzen sind diese gesperrt). Bitte den vollständigen Link verwenden oder erneut versuchen."
-link_shorten_local_error: "Diese Adresse ist nur lokal erreichbar (z.B. localhost). Kurz-Links funktionieren erst auf der veröffentlichten Seite."
+link_shorten_error: "Der Kurz-Link-Dienst (da.gd) war nicht erreichbar — in manchen Netzen ist er gesperrt. Bitte den vollständigen Link verwenden oder erneut versuchen."
 close: Schliessen
 
 disclaimer:

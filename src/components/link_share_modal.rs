@@ -86,9 +86,8 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
             show_shorten_button.set(false);
             shorten_error.set(None);
 
-            // Mehrere Anbieter mit Fallback (siehe services::url_shortener):
-            // ein einzelner Dienst ist in manchen Netzen gesperrt und scheitert
-            // dann mit einem CORS-/Netzwerkfehler.
+            // da.gd (siehe services::url_shortener): kostenlos, werbefrei und
+            // der einzige getestete Dienst, der auch localhost-Adressen kürzt.
             match url_shortener::shorten(&url_to_shorten).await {
                 Ok(link) => {
                     short_url.set(Some(link.url));
@@ -97,15 +96,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 }
                 Err(e) => {
                     tracing::error!("Failed to shorten URL: {}", e);
-                    // Lokale Adressen sind kein Netzproblem: eine
-                    // "Dienst nicht erreichbar"-Meldung wäre hier irreführend.
-                    let msg = match e {
-                        url_shortener::ShortenError::NotPubliclyReachable(_) => {
-                            t!("link_shorten_local_error").to_string()
-                        }
-                        _ => t!("link_shorten_error").to_string(),
-                    };
-                    shorten_error.set(Some(msg));
+                    shorten_error.set(Some(t!("link_shorten_error").to_string()));
                     // Erneut versuchen erlauben (z.B. nach Netzwechsel).
                     show_shorten_button.set(true);
                 }
