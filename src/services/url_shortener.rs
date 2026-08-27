@@ -323,13 +323,9 @@ mod tests {
     fn block_on<F: std::future::Future>(fut: F) -> F::Output {
         // Minimaler Executor: die Kette enthält keine echten Wakeups, alle
         // Test-Futures sind sofort fertig.
-        use std::task::{Context, Poll, Wake, Waker};
-        struct Noop;
-        impl Wake for Noop {
-            fn wake(self: std::sync::Arc<Self>) {}
-        }
-        let waker = Waker::from(std::sync::Arc::new(Noop));
-        let mut cx = Context::from_waker(&waker);
+        use std::task::{Context, Poll, Waker};
+        let waker = Waker::noop();
+        let mut cx = Context::from_waker(waker);
         let mut fut = Box::pin(fut);
         loop {
             if let Poll::Ready(out) = fut.as_mut().poll(&mut cx) {
