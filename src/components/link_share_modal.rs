@@ -86,8 +86,8 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
             show_shorten_button.set(false);
             shorten_error.set(None);
 
-            // da.gd (siehe services::url_shortener): kostenlos, werbefrei und
-            // der einzige getestete Dienst, der auch localhost-Adressen kürzt.
+            // Anbieter-Kette (siehe services::url_shortener): is.gd/v.gd leiten ohne
+            // Zwischenseite weiter, da.gd fängt Ausfälle und localhost ab.
             match url_shortener::shorten(&url_to_shorten).await {
                 Ok(link) => {
                     short_url.set(Some(link.url));
