@@ -197,7 +197,14 @@ von declarino.ch, steht das da; springt ausnahmsweise die Rückfallebene ein,
 wird der Fremdanbieter genannt. Ein pauschaler Text wäre in einem der beiden
 Fälle falsch.
 
+Scheitert das Kürzen, schaltet der Dialog auf den vollständigen Link um und
+zeigt einen Hinweis, statt ein leeres Feld stehen zu lassen: Wer teilen will,
+soll immer etwas zum Kopieren haben.
+
 Geprüft mit `api/uitest_share_modal.mjs` (WebDriver, siehe Kopf der Datei).
+Zusätzlich gegen die Produktion verifiziert, in allen drei Sprachen, sowie
+der Fehlerpfad mit auf Protokollebene blockierten Endpunkten (das WASM nutzt
+nicht `window.fetch`, ein Abfangen im JavaScript greift also nicht).
 
 ## SPA-Routing
 
