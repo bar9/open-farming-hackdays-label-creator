@@ -93,5 +93,12 @@ jobs:
             );
           })"
 
+      # Die Rewrites in vercel.json entscheiden, ob Kurz-Links funktionieren.
+      # Ein Catch-all ohne die Ausnahme für /s/ würde jeden Kurz-Link stumm
+      # auf die App umleiten (HTTP 200 statt 301) -- gedruckte Etiketten wären
+      # tot. Geprüft wird mit derselben Bibliothek, die Vercel benutzt.
+      - name: Check vercel.json routing
+        run: npm run check:routes
+
       - name: Dioxus build
         run: dx build --release

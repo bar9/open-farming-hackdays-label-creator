@@ -1,0 +1,16 @@
+[
+ {"path":"/s/UWKJ6Pe",   "expect":"/api/redirect?code=UWKJ6Pe"},
+ {"path":"/s/bqoIJ4I",   "expect":"/api/redirect?code=bqoIJ4I"},
+ {"path":"/api/shorten", "expect":"/api/shorten"},
+ {"path":"/api/redirect","expect":"/api/redirect"},
+ {"path":"/lebensmittelrecht","expect":"/index.html"},
+ {"path":"/bio",         "expect":"/index.html"},
+ {"path":"/knospe",      "expect":"/index.html"},
+ {"path":"/",            "expect":"/index.html"},
+ {"path":"/index.html",  "expect":"/index.html"},
+ {"path":"/404.html",    "expect":"/404.html"},
+ {"path":"/CNAME",       "expect":"/CNAME"},
+ {"path":"/assets/open-farming-hackdays-label-creator_bg-dxh2e22bebfc77d5b5c.wasm","expect":"/assets/open-farming-hackdays-label-creator_bg-dxh2e22bebfc77d5b5c.wasm"},
+ {"path":"/assets/tailwind-dxhb2187c5f8e774034.css","expect":"/assets/tailwind-dxhb2187c5f8e774034.css"},
+ {"path":"/favicon.ico", "expect":"/index.html"}
+]

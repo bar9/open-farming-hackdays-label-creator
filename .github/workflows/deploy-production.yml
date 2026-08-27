@@ -85,8 +85,12 @@ jobs:
           # eine Redis-Instanz, die Doku wäre sonst unter /api/README.md
           # öffentlich abrufbar. (_lib.mjs bleibt: Vercel behandelt Dateien mit
           # Unterstrich als Hilfsmodul, nicht als eigene Funktion.)
+          # Nur die beiden Endpunkte und ihre Hilfsmodule gehören ins
+          # Deployment. Test-, Sicherungs- und Doku-Dateien wären sonst
+          # öffentlich abrufbar.
           rm -f "$PUBLIC_DIR/api/selftest.mjs" "$PUBLIC_DIR/api/README.md" \
-                "$PUBLIC_DIR/api/backup.mjs"
+                "$PUBLIC_DIR/api/backup.mjs" "$PUBLIC_DIR/api/routecheck.cjs" \
+                "$PUBLIC_DIR/api/routecases.json"
           cp ./vercel.json "$PUBLIC_DIR/vercel.json"
 
       - name: Deploy to Production GitHub Pages

@@ -182,10 +182,25 @@ tinyurl und da.gd (Details in `src/services/url_shortener.rs`). Der
 Teilen-Button ist also nie ganz tot, liefert dann aber wieder Links mit den
 oben beschriebenen Nachteilen.
 
-## Offener Nebenbefund: Deep-Links liefern HTTP 404
+## SPA-Routing
 
-Nicht Teil des Kurz-Link-Dienstes, aber beim Testen aufgefallen und bewusst
-**nicht** mitgeändert:
+`vercel.json` enthält neben der Kurz-Link-Regel einen Fallback, der
+Deep-Links wie `/lebensmittelrecht?v=2` auf `index.html` leitet. Ohne ihn
+antwortete Vercel mit HTTP 404 (die App lud zwar, weil `404.html` eine Kopie
+von `index.html` ist, aber Suchmaschinen, Link-Vorschauen und
+Fehler-Monitoring sahen einen Fehler).
+
+Die Reihenfolge und der Ausschluss sind sicherheitsrelevant: Ein Catch-all
+`/(.*)` ohne die Ausnahme für `/s/` liefert bei einem Kurz-Link die App mit
+HTTP 200 statt der 301-Weiterleitung — **alle gedruckten Etiketten wären
+still tot**. Deshalb prüft `npm run check:routes` die Regeln mit
+`@vercel/routing-utils`, derselben Bibliothek, die Vercel benutzt. Der Test
+läuft in CI; die Fälle stehen in `api/routecases.json`.
+
+## Behobener Nebenbefund: Deep-Links lieferten HTTP 404
+
+Beim Testen aufgefallen und inzwischen behoben (siehe SPA-Routing oben).
+Ausgangslage war:
 
 ```
 curl -o /dev/null -w '%{http_code}' 'https://www.declarino.ch/lebensmittelrecht?v=2'
@@ -200,7 +215,7 @@ er auf genau solche Deep-Links zeigt.
 Folgen: Suchmaschinen indexieren die Seiten nicht, Link-Vorschauen (z.B. in
 Messengern) können fehlschlagen, Fehler-Monitoring meldet Rauschen.
 
-Behebbar wäre es mit einem SPA-Fallback-Rewrite in `vercel.json`, der nach
-der `/s/:code`-Regel stehen müsste, damit er die Kurz-Links nicht
-verschluckt. Ein fehlerhafter Rewrite legt allerdings die ganze Seite lahm,
-deshalb gehört das zuerst auf ein Preview-Deployment.
+Behoben durch den SPA-Fallback in `vercel.json`. Verifiziert wurde er vor dem
+Deploy gegen einen nachgebauten Vercel-Router (echte Dateinamen aus dem
+Deployment, echte Funktionen, echter libSQL-Server): Deep-Link 200 statt 404,
+Kurz-Link weiterhin 301, Assets unberührt.

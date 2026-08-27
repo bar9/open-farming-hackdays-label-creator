@@ -4,6 +4,10 @@
     {
       "source": "/s/:code",
       "destination": "/api/redirect?code=:code"
+    },
+    {
+      "source": "/((?!api/|assets/|s/).*)",
+      "destination": "/index.html"
     }
   ]
 }
