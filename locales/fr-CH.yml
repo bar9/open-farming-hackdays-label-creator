@@ -288,6 +288,7 @@ link_copied_success: Le lien a été copié dans le presse-papiers !
 shorten_url_button: Raccourcir le lien
 shortening: Raccourcissement...
 link_shorten_error: "Aucun service de raccourcissement n'était joignable (certains réseaux les bloquent). Veuillez utiliser le lien complet ou réessayer."
+link_shorten_local_error: "Cette adresse n'est accessible qu'en local (p. ex. localhost). Les liens courts ne fonctionnent que sur le site publié."
 close: Fermer
 
 disclaimer:

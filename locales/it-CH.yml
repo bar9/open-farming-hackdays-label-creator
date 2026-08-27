@@ -287,6 +287,7 @@ link_copied_success: Il link è stato copiato negli appunti!
 shorten_url_button: Accorcia link
 shortening: Accorciamento...
 link_shorten_error: "Nessun servizio di abbreviazione era raggiungibile (alcune reti li bloccano). Si prega di utilizzare il link completo o riprovare."
+link_shorten_local_error: "Questo indirizzo è raggiungibile solo localmente (ad es. localhost). I link brevi funzionano solo sul sito pubblicato."
 close: Chiudi
 
 disclaimer:

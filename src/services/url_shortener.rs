@@ -101,6 +101,10 @@ pub enum ShortenError {
     Unreachable(String),
     /// Alle Anbieter der Kette sind gescheitert.
     AllProvidersFailed,
+    /// Die Adresse ist nur lokal erreichbar (localhost, 127.0.0.1, .local).
+    /// Kein öffentlicher Shortener kann darauf zeigen — und ein Kurz-Link auf
+    /// `localhost` wäre für Empfänger ohnehin wertlos.
+    NotPubliclyReachable(String),
 }
 
 impl fmt::Display for ShortenError {
@@ -109,8 +113,51 @@ impl fmt::Display for ShortenError {
             ShortenError::ProviderRejected(msg) => write!(f, "provider rejected: {}", msg),
             ShortenError::Unreachable(msg) => write!(f, "unreachable: {}", msg),
             ShortenError::AllProvidersFailed => f.write_str("all providers failed"),
+            ShortenError::NotPubliclyReachable(host) => {
+                write!(f, "not publicly reachable: {}", host)
+            }
         }
     }
+}
+
+/// Host einer URL grob extrahieren (ohne url-Crate, reicht für die Prüfung).
+fn host_of(url: &str) -> String {
+    let rest = url
+        .split_once("://")
+        .map(|(_, r)| r)
+        .unwrap_or(url);
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+    let host = authority.rsplit_once('@').map(|(_, h)| h).unwrap_or(authority);
+    let host = host.split_once(':').map(|(h, _)| h).unwrap_or(host);
+    host.trim_matches(['[', ']']).to_lowercase()
+}
+
+/// Nur öffentlich auflösbare Adressen lassen sich sinnvoll kürzen.
+pub fn is_publicly_reachable(url: &str) -> bool {
+    let host = host_of(url);
+    if host.is_empty() {
+        return false;
+    }
+    if host == "localhost"
+        || host == "::1"
+        || host.ends_with(".localhost")
+        || host.ends_with(".local")
+        || host.ends_with(".internal")
+        || host.ends_with(".test")
+    {
+        return false;
+    }
+    // Private IPv4-Bereiche (RFC 1918) und Loopback.
+    let octets: Vec<&str> = host.split('.').collect();
+    if octets.len() == 4 && octets.iter().all(|o| o.parse::<u8>().is_ok()) {
+        let n: Vec<u8> = octets.iter().map(|o| o.parse::<u8>().unwrap()).collect();
+        return !(n[0] == 127
+            || n[0] == 10
+            || (n[0] == 192 && n[1] == 168)
+            || (n[0] == 172 && (16..=31).contains(&n[1])));
+    }
+    // Ein Hostname ohne Punkt ist ein reiner Intranet-Name.
+    host.contains('.')
 }
 
 /// Ergebnis einer erfolgreichen Kürzung — inklusive Anbieter, damit die UI
@@ -166,6 +213,13 @@ where
     F: Fn(String, Option<String>) -> Fut,
     Fut: std::future::Future<Output = Result<String, String>>,
 {
+    // Öffentliche Shortener lehnen localhost & Co. ab (is.gd/v.gd/spoo.me mit
+    // "invalid URL"); nur tinyurl kürzt sie klaglos — und produziert damit
+    // einen Link, der ausserhalb dieses Rechners ins Leere zeigt. Deshalb hier
+    // abbrechen statt die Kette bis tinyurl durchlaufen zu lassen.
+    if !is_publicly_reachable(long_url) {
+        return Err(ShortenError::NotPubliclyReachable(host_of(long_url)));
+    }
     let mut last_error = ShortenError::AllProvidersFailed;
     for provider in Provider::CHAIN {
         match fetch(provider.request_url(long_url), provider.request_body(long_url)).await {
@@ -366,5 +420,43 @@ mod tests {
         }))
         .unwrap_err();
         assert_eq!(err, ShortenError::Unreachable("blocked".into()));
+    }
+
+    #[test]
+    fn recognises_non_public_hosts() {
+        for local in [
+            "http://localhost:8080/app/?a=1",
+            "http://127.0.0.1:8080/",
+            "http://192.168.1.20/label",
+            "http://10.0.0.5/",
+            "http://172.16.4.1/",
+            "http://nas.local/x",
+            "http://buildserver/x",
+        ] {
+            assert!(!is_publicly_reachable(local), "should be local: {}", local);
+        }
+        for public in [
+            "https://www.declarino.ch/?a=1",
+            "https://bar9.github.io/open-farming-hackdays-label-creator/",
+            "http://172.32.0.1/",
+        ] {
+            assert!(is_publicly_reachable(public), "should be public: {}", public);
+        }
+    }
+
+    #[test]
+    fn localhost_is_not_shortened_via_tinyurl() {
+        // tinyurl kürzt localhost-Links klaglos — das Ergebnis zeigt für
+        // Empfänger aber ins Leere. Erst gar nicht anfragen.
+        let err = block_on(shorten_with(
+            "http://localhost:8080/open-farming-hackdays-label-creator/?a=1",
+            |url, _| async move {
+                panic!("no provider must be contacted, but got {}", url);
+                #[allow(unreachable_code)]
+                Err::<String, String>("unreachable".to_string())
+            },
+        ))
+        .unwrap_err();
+        assert_eq!(err, ShortenError::NotPubliclyReachable("localhost".into()));
     }
 }

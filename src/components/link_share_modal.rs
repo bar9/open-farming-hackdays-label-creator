@@ -97,7 +97,15 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                 }
                 Err(e) => {
                     tracing::error!("Failed to shorten URL: {}", e);
-                    shorten_error.set(Some(t!("link_shorten_error").to_string()));
+                    // Lokale Adressen sind kein Netzproblem: eine
+                    // "Dienst nicht erreichbar"-Meldung wäre hier irreführend.
+                    let msg = match e {
+                        url_shortener::ShortenError::NotPubliclyReachable(_) => {
+                            t!("link_shorten_local_error").to_string()
+                        }
+                        _ => t!("link_shorten_error").to_string(),
+                    };
+                    shorten_error.set(Some(msg));
                     // Erneut versuchen erlauben (z.B. nach Netzwechsel).
                     show_shorten_button.set(true);
                 }
