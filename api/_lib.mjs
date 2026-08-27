@@ -95,52 +95,7 @@ export function codeForUrl(url, length = 7) {
   return code;
 }
 
-/** Zugangsdaten für Upstash Redis.
- *
- *  Sie kommen aus Umgebungsvariablen und liegen damit serverseitig — im
- *  WASM-Frontend wäre jeder Schlüssel sofort auslesbar (`strings … | grep`).
- *  Die Vercel-Upstash-Integration setzt die KV_REST_API_*-Namen selbst; die
- *  UPSTASH_*-Namen sind der Fallback beim manuellen Eintragen. */
-function redisConfig() {
-  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-  const token =
-    process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) {
-    throw new Error(
-      "Redis ist nicht konfiguriert: KV_REST_API_URL/TOKEN fehlen"
-    );
-  }
-  return { url: url.replace(/\/$/, ""), token };
-}
-
-/** Ein Redis-Kommando über die REST-API ausführen. */
-async function redisCommand(command) {
-  const { url, token } = redisConfig();
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(command),
-  });
-  if (!response.ok) {
-    throw new Error(`Redis HTTP ${response.status}: ${await response.text()}`);
-  }
-  const body = await response.json();
-  if (body.error) throw new Error(`Redis: ${body.error}`);
-  return body.result;
-}
-
-/** Eintrag anlegen, wenn der Code noch frei ist.
- *  Gibt true zurück, wenn geschrieben wurde, false bei belegtem Code.
- *  Bewusst ohne TTL: geteilte oder gedruckte Links sollen nicht ablaufen. */
-export async function storeIfAbsent(code, url) {
-  const result = await redisCommand(["SET", `s:${code}`, url, "NX"]);
-  return result === "OK";
-}
-
-/** Ziel-URL zu einem Code, oder null. */
-export async function lookup(code) {
-  return await redisCommand(["GET", `s:${code}`]);
-}
+// Speicherzugriff liegt in _storage.mjs (Turso oder Upstash, je nach
+// gesetzten Umgebungsvariablen) und wird hier nur weitergereicht, damit die
+// Funktionen einen einzigen Import haben.
+export { storeIfAbsent, lookup, storageBackend } from "./_storage.mjs";

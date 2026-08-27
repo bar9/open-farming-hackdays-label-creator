@@ -5,12 +5,23 @@
 // Code, der später deployt wird — inklusive Redis-Zugriff, CORS und Rewrite-
 // Parameter.
 //
-// Aufruf:
-//   KV_REST_API_URL=... KV_REST_API_TOKEN=... node api/selftest.mjs
+// Läuft gegen den Anbieter, dessen Variablen gesetzt sind:
+//   TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=...   node api/selftest.mjs
+//   KV_REST_API_URL=...    KV_REST_API_TOKEN=...  node api/selftest.mjs
 
 import shorten from "./shorten.mjs";
 import redirect from "./redirect.mjs";
-import { codeForUrl } from "./_lib.mjs";
+import { codeForUrl, storageBackend } from "./_lib.mjs";
+
+const backend = storageBackend();
+if (!backend) {
+  console.error(
+    "Kein Speicher konfiguriert. Setze TURSO_DATABASE_URL/TURSO_AUTH_TOKEN\n" +
+      "oder KV_REST_API_URL/KV_REST_API_TOKEN."
+  );
+  process.exit(2);
+}
+console.log(`Speicher: ${backend}\n`);
 
 let failures = 0;
 function check(name, condition, detail = "") {
@@ -157,5 +168,9 @@ check(
 );
 check("verschiedene URLs -> verschiedene Codes", codeForUrl("a") !== codeForUrl("b"));
 
-console.log(failures === 0 ? "\nAlle Prüfungen bestanden." : `\n${failures} Prüfung(en) fehlgeschlagen.`);
+console.log(
+  failures === 0
+    ? `\nAlle Prüfungen bestanden (Speicher: ${backend}).`
+    : `\n${failures} Prüfung(en) fehlgeschlagen (Speicher: ${backend}).`
+);
 process.exit(failures === 0 ? 0 : 1);

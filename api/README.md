@@ -38,7 +38,8 @@ GET  /s/:code    -> 301 auf die hinterlegte Adresse
 
 | Datei | Zweck |
 |---|---|
-| `api/_lib.mjs` | Allowlists, Code-Erzeugung, Redis-Zugriff |
+| `api/_lib.mjs` | Allowlists, Code-Erzeugung |
+| `api/_storage.mjs` | Speicherzugriff, Turso **oder** Upstash |
 | `api/shorten.mjs` | Kürzen (POST) |
 | `api/redirect.mjs` | Auflösen (301), erreichbar über den Rewrite in `vercel.json` |
 | `api/selftest.mjs` | End-to-End-Test gegen eine echte Redis-Instanz |
@@ -57,24 +58,46 @@ ein bereits verschickter Link stillschweigend woanders landen.
 Einträge haben **kein** Ablaufdatum: Kurz-Links landen auf gedruckten
 Etiketten und dürfen nicht verschwinden.
 
+## Speicher
+
+Vercel-Funktionen haben ein read-only Dateisystem und leben nur Millisekunden;
+eine lokale SQLite-Datei ist deshalb unmöglich (sie wäre beim nächsten Aufruf
+weg). Beide unterstützten Anbieter sprechen daher **HTTPS** statt eines
+Verbindungsprotokolls:
+
+| Anbieter | Erkennungsvariable | Modell |
+|---|---|---|
+| **Turso** (libSQL) | `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` | SQLite über HTTPS |
+| **Upstash** (Redis) | `KV_REST_API_URL` + `KV_REST_API_TOKEN` | Key/Value über HTTPS |
+
+Die Wahl trifft allein die Umgebung, im Code steht keine Festlegung (siehe
+`_storage.mjs`). Sind beide gesetzt, gewinnt Turso. Ein Anbieterwechsel ist
+damit eine Frage der Projekteinstellungen — wichtig, weil Kurz-Links auf
+gedruckten Etiketten landen und den Anbieter überleben müssen.
+
+Bei Turso legt der erste Schreibzugriff die Tabelle selbst an; eine frisch
+bereitgestellte Datenbank ist ohne manuellen Schritt benutzbar.
+
 ## Einrichtung
 
 Einmalig für das Vercel-Projekt hinter `declarino.ch`:
 
-1. **Upstash Redis verbinden** (Gratis-Kontingent: 256 MB, 500'000
-   Kommandos/Monat — ein Eintrag ist ~1 KB, das reicht für Zehntausende
-   Rezepte):
+1. **Datenbank verbinden** — über den Vercel Marketplace, es braucht also
+   kein separates Konto beim Anbieter:
 
    ```
-   vercel install upstash
+   vercel install turso      # oder: vercel install upstash
    ```
 
-   Alternativ im Vercel-Dashboard unter *Storage → Marketplace → Upstash*.
-   Die Integration setzt `KV_REST_API_URL` und `KV_REST_API_TOKEN` selbst.
+   Alternativ im Dashboard unter *Storage → Marketplace*. Die Integration
+   setzt die Umgebungsvariablen selbst.
 
-2. **Prüfen**, dass die Variablen im Projekt gesetzt sind. Ohne sie
-   antwortet `/api/shorten` mit HTTP 500, und das Frontend fällt still auf
-   die Fremddienste zurück.
+2. **Neu deployen.** Umgebungsvariablen greifen erst beim nächsten
+   Deployment; blosses Speichern reicht nicht.
+
+Ohne Konfiguration antwortet `/api/shorten` mit HTTP 500, und das Frontend
+fällt still auf die Fremddienste zurück — der Teilen-Button bleibt also
+funktionsfähig.
 
 Die Zugangsdaten liegen ausschliesslich serverseitig. Im WASM-Frontend wäre
 jedes Geheimnis auslesbar (`strings …wasm | grep`).
@@ -82,17 +105,25 @@ jedes Geheimnis auslesbar (`strings …wasm | grep`).
 ## Testen
 
 ```bash
-KV_REST_API_URL=… KV_REST_API_TOKEN=… node api/selftest.mjs
+TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… node api/selftest.mjs
+KV_REST_API_URL=…    KV_REST_API_TOKEN=… node api/selftest.mjs
 ```
 
 Prüft gegen eine echte Redis-Instanz: Kürzen, 301-Auflösung, Wiederholbarkeit
 der Codes, Ablehnung fremder Ziele und Herkünfte, Preflight, unbekannte Codes,
 Grössenlimit.
 
-Eine Wegwerf-Datenbank für Tests gibt es ohne Anmeldung:
+Testdatenbanken ohne Anmeldung:
 
 ```bash
-curl -X POST https://upstash.com/start-redis   # gültig 3 Tage
+# Turso: echter libSQL-Server lokal, gleiche HTTP-API wie Turso Cloud
+docker run -d -p 8090:8080 -e SQLD_NODE=primary \
+  ghcr.io/tursodatabase/libsql-server:latest
+TURSO_DATABASE_URL=http://localhost:8090 TURSO_AUTH_TOKEN=dummy \
+  node api/selftest.mjs
+
+# Upstash: Wegwerf-Datenbank, gültig 3 Tage
+curl -X POST https://upstash.com/start-redis
 ```
 
 ## Deployment

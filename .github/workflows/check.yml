@@ -68,8 +68,8 @@ jobs:
 
       # Die Shortener-Funktionen laufen auf Vercel, nicht im WASM-Build, und
       # würden von cargo also nie angefasst. Ein Syntaxfehler fiele sonst erst
-      # in der Produktion auf. Der volle Selbsttest braucht eine Redis-Instanz
-      # und läuft deshalb nicht in CI (siehe api/README.md).
+      # in der Produktion auf. Der volle Selbsttest braucht eine Datenbank und
+      # läuft deshalb nicht in CI (siehe api/README.md).
       - name: Check shortener functions
         run: |
           for f in api/*.mjs; do node --check "$f"; done
@@ -79,6 +79,18 @@ jobs:
             if (!m.isAllowedTarget('https://www.declarino.ch/x')) throw new Error('declarino.ch must be allowed');
             if (m.isAllowedTarget('https://example.com/x')) throw new Error('foreign hosts must be rejected');
             console.log('shortener functions ok');
+          })"
+          node -e "import('./api/_storage.mjs').then(m => {
+            // Ohne Konfiguration darf nichts stillschweigend passieren:
+            // ein falsch gesetztes Projekt soll einen klaren Fehler geben.
+            if (m.storageBackend() !== null) throw new Error('backend detected without env vars');
+            return m.lookup('x').then(
+              () => { throw new Error('lookup must fail without storage config'); },
+              (e) => {
+                if (!/Kein Speicher konfiguriert/.test(e.message)) throw e;
+                console.log('storage backend selection ok');
+              }
+            );
           })"
 
       - name: Dioxus build
