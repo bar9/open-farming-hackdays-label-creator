@@ -90,7 +90,8 @@ jobs:
           # öffentlich abrufbar.
           rm -f "$PUBLIC_DIR/api/selftest.mjs" "$PUBLIC_DIR/api/README.md" \
                 "$PUBLIC_DIR/api/backup.mjs" "$PUBLIC_DIR/api/routecheck.cjs" \
-                "$PUBLIC_DIR/api/routecases.json"
+                "$PUBLIC_DIR/api/routecases.json" \
+                "$PUBLIC_DIR/api/uitest_share_modal.mjs"
           cp ./vercel.json "$PUBLIC_DIR/vercel.json"
 
       - name: Deploy to Production GitHub Pages

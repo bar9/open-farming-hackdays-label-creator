@@ -183,6 +183,22 @@ tinyurl und da.gd (Details in `src/services/url_shortener.rs`). Der
 Teilen-Button ist also nie ganz tot, liefert dann aber wieder Links mit den
 oben beschriebenen Nachteilen.
 
+## Oberfläche
+
+Der Teilen-Dialog kürzt seit dem eigenen Dienst **standardmässig und ohne
+Zusatzklick**: Kurz-Link ist vorausgewählt, das Kürzen startet beim Öffnen,
+der vollständige Link bleibt als zweite Option daneben. Der frühere Ablauf
+(voller Link als Vorgabe, dann Klick auf "Link kürzen") stammte aus der Zeit
+der Fremddienste, als Kürzen langsam, unzuverlässig und mit einem
+Datenschutz-Hinweis behaftet war.
+
+Der Hinweistext richtet sich nach dem tatsächlichen Anbieter: Kommt der Link
+von declarino.ch, steht das da; springt ausnahmsweise die Rückfallebene ein,
+wird der Fremdanbieter genannt. Ein pauschaler Text wäre in einem der beiden
+Fälle falsch.
+
+Geprüft mit `api/uitest_share_modal.mjs` (WebDriver, siehe Kopf der Datei).
+
 ## SPA-Routing
 
 `vercel.json` enthält neben der Kurz-Link-Regel einen Fallback, der

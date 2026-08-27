@@ -102,13 +102,17 @@ impl Provider {
                 Provider::DaGd,
             ]
         } else {
-            // Nur da.gd und tinyurl kürzen lokale Adressen; spoo.me würde mit
-            // "invalid URL" antworten. Lokal ist eine Zwischenseite egal,
-            // deshalb bleibt da.gd hier vorn.
-            // Der eigene Endpunkt kürzt auch localhost (die Allowlist prüft
-            // das Ziel, nicht dessen Erreichbarkeit) — nur ist er im lokalen
-            // Betrieb oft nicht deployt, deshalb folgen die Fremddienste.
-            &[Provider::Declarino, Provider::DaGd, Provider::TinyUrl]
+            // Der eigene Endpunkt lehnt localhost ab (ALLOWED_TARGET_HOSTS in
+            // api/_lib.mjs lässt nur declarino.ch und die Staging-Domain zu),
+            // wird hier also gar nicht erst gefragt.
+            //
+            // Bleiben da.gd und tinyurl: nur sie kürzen nicht-öffentliche
+            // Hosts, spoo.me antwortet mit "invalid URL". Lokal ist eine
+            // Zwischenseite egal, deshalb steht da.gd vorn. Sind beide im Netz
+            // gesperrt, scheitert das Kürzen lokal — für einen Link, der
+            // ohnehin nur auf diesem Rechner funktioniert, ist das
+            // verschmerzbar; die Oberfläche zeigt dann den vollen Link.
+            &[Provider::DaGd, Provider::TinyUrl]
         }
     }
 
@@ -346,10 +350,7 @@ mod tests {
         // spoo.me antwortet für localhost mit "invalid URL"; es zu fragen
         // kostet nur Zeit und produziert Fehlermeldungen.
         let chain = Provider::chain_for("http://localhost:8080/app/?a=1");
-        assert_eq!(
-            chain,
-            &[Provider::Declarino, Provider::DaGd, Provider::TinyUrl]
-        );
+        assert_eq!(chain, &[Provider::DaGd, Provider::TinyUrl]);
     }
 
     #[test]
@@ -595,10 +596,6 @@ mod tests {
             "http://localhost:8080/open-farming-hackdays-label-creator/?a=1",
             |req| async move {
                 let url = req.url();
-                if url.contains("declarino.ch/api/") {
-                    // Lokal ist der eigene Endpunkt in der Regel nicht deployt.
-                    return Err("HTTP 404".to_string());
-                }
                 assert!(url.contains("localhost"), "localhost must be forwarded");
                 if url.contains("tinyurl.com") {
                     return Err("blocked here".to_string());

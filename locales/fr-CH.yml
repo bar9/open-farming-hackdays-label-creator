@@ -282,12 +282,11 @@ help:
 link_share_title: Partager le lien
 link_type_full: Lien complet
 link_type_short: Lien court
-link_short_disclaimer: "Remarque : Le contenu de la recette sera stocké dans le lien d'un service tiers pour un lien court."
-link_short_disclaimer_provider: "Remarque : Le contenu de la recette est stocké dans le lien court du service tiers %{provider}."
+link_short_disclaimer: "Le lien court renvoie à declarino.ch et reste valable durablement."
+link_short_disclaimer_provider: "Remarque : declarino.ch n'était pas joignable. Le lien court est hébergé par le service tiers %{provider}."
 link_copied_success: Le lien a été copié dans le presse-papiers !
-shorten_url_button: Raccourcir le lien
 shortening: Raccourcissement...
-link_shorten_error: "Aucun service de raccourcissement n'était joignable (certains réseaux les bloquent). Veuillez utiliser le lien complet ou réessayer."
+link_shorten_error: "Le lien court n'a pas pu être créé. Le lien complet ci-dessous fonctionne et contient toutes les données."
 close: Fermer
 
 disclaimer:

@@ -1,4 +1,5 @@
 use crate::services::url_shortener;
+use crate::services::url_shortener::Provider;
 use dioxus::prelude::*;
 use rust_i18n::t;
 use wasm_bindgen::JsCast;
@@ -12,31 +13,78 @@ pub enum LinkType {
 
 #[component]
 pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
-    let mut link_type = use_signal(|| LinkType::Full);
+    // Kurz-Link ist die Vorgabe: Seit der Dienst unter declarino.ch läuft, ist
+    // er schnell, zuverlässig und speichert nichts bei Dritten. Der volle Link
+    // bleibt einen Klick entfernt, für Fälle wie Archivierung oder wenn jemand
+    // den Inhalt im Link selbst behalten will.
+    let mut link_type = use_signal(|| LinkType::Short);
     let mut is_copying = use_signal(|| false);
     let mut copy_success = use_signal(|| false);
     let mut short_url = use_signal(|| None::<String>);
     let mut is_shortening = use_signal(|| false);
-    let mut show_shorten_button = use_signal(|| true);
     let mut shorten_error = use_signal(|| None::<String>);
-    // Welcher Dienst den Kurz-Link erzeugt hat — wird unter dem Feld angezeigt,
-    // damit transparent bleibt, wo das Rezept gespeichert liegt.
-    let mut short_provider = use_signal(|| None::<String>);
+    // Welcher Dienst den Link erzeugt hat. Normalerweise declarino.ch; fällt
+    // der aus (oder lehnt das Ziel ab, etwa bei localhost), springt ein
+    // Fremddienst ein — dann muss der Hinweis das auch sagen, statt weiter
+    // declarino.ch zu versprechen.
+    let mut short_provider = use_signal(|| None::<Provider>);
 
-    let url_clone1 = url.clone();
-    let url_clone2 = url.clone();
+    // Der volle Link als Signal, damit die Closures unten kopierbar bleiben
+    // (ein `String` liesse sich nur einmal in eine `move`-Closure ziehen).
+    let full_url = use_signal(|| url.clone());
+    let url_for_shorten = url.clone();
+
+    // Was im Eingabefeld steht und kopiert wird.
+    let displayed_url = move || match link_type() {
+        LinkType::Full => Some(full_url()),
+        // Solange gekürzt wird, gibt es noch nichts anzuzeigen.
+        LinkType::Short => short_url(),
+    };
+
+    let start_shortening = move || {
+        let url_to_shorten = url_for_shorten.clone();
+        spawn(async move {
+            is_shortening.set(true);
+            shorten_error.set(None);
+
+            // Anbieter-Kette (siehe services::url_shortener): der eigene
+            // Endpunkt zuerst, Fremddienste nur als Rückfallebene.
+            match url_shortener::shorten(&url_to_shorten).await {
+                Ok(link) => {
+                    short_url.set(Some(link.url));
+                    short_provider.set(Some(link.provider));
+                    shorten_error.set(None);
+                }
+                Err(e) => {
+                    tracing::error!("Failed to shorten URL: {}", e);
+                    shorten_error.set(Some(t!("link_shorten_error").to_string()));
+                    // Beim Scheitern den vollen Link zeigen, statt ein leeres
+                    // Feld: der Nutzer wollte teilen, nicht kürzen.
+                    link_type.set(LinkType::Full);
+                }
+            }
+
+            is_shortening.set(false);
+        });
+    };
+
+    // Beim Öffnen sofort kürzen. Der frühere Ablauf verlangte einen
+    // zusätzlichen Klick auf "Link kürzen"; da der Dienst nun zur Anwendung
+    // gehört, ist dieser Zwischenschritt nur noch Reibung.
+    use_effect(move || {
+        if show() && short_url().is_none() && !is_shortening() && shorten_error().is_none() {
+            start_shortening();
+        }
+    });
 
     let copy_to_clipboard = move |_| {
-        let display_url = match link_type() {
-            LinkType::Full => url_clone1.clone(),
-            LinkType::Short => short_url().unwrap_or_else(|| url_clone1.clone()),
+        let Some(url_to_copy) = displayed_url() else {
+            return;
         };
 
         spawn(async move {
             is_copying.set(true);
             copy_success.set(false);
-
-            let url_to_copy = display_url;
 
             // Use simple textarea fallback method
             let mut success = false;
@@ -79,42 +127,11 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
         });
     };
 
-    let shorten_url_action = move |_| {
-        let url_to_shorten = url_clone2.clone();
-        spawn(async move {
-            is_shortening.set(true);
-            show_shorten_button.set(false);
-            shorten_error.set(None);
-
-            // Anbieter-Kette (siehe services::url_shortener): spoo.me leitet
-            // ohne Zwischenseite weiter, tinyurl und da.gd fangen Ausfälle,
-            // Netzsperren und localhost ab.
-            match url_shortener::shorten(&url_to_shorten).await {
-                Ok(link) => {
-                    short_url.set(Some(link.url));
-                    short_provider.set(Some(link.provider.host().to_string()));
-                    shorten_error.set(None);
-                }
-                Err(e) => {
-                    tracing::error!("Failed to shorten URL: {}", e);
-                    shorten_error.set(Some(t!("link_shorten_error").to_string()));
-                    // Erneut versuchen erlauben (z.B. nach Netzwechsel).
-                    show_shorten_button.set(true);
-                }
-            }
-
-            is_shortening.set(false);
-        });
-    };
-
-    // Reset short URL and button when switching back to full link
+    // Beim Wechsel der Auswahl die Erfolgsmeldung zurücksetzen, sonst stünde
+    // "kopiert" neben einem Link, der gar nicht kopiert wurde.
     use_effect(move || {
-        if link_type() == LinkType::Full {
-            short_url.set(None);
-            short_provider.set(None);
-            show_shorten_button.set(true);
-            shorten_error.set(None);
-        }
+        let _ = link_type();
+        copy_success.set(false);
     });
 
     rsx! {
@@ -163,59 +180,54 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                     if link_type() == LinkType::Short {
                         div {
                             class: "text-sm text-base-content/70 mb-4",
-                            if let Some(provider) = short_provider() {
-                                {t!("link_short_disclaimer_provider", provider = provider).to_string()}
-                            } else {
-                                {t!("link_short_disclaimer").to_string()}
-                            }
-                        }
-
-                        if short_url().is_none() && show_shorten_button() {
-                            div {
-                                class: "mb-4",
-                                button {
-                                    class: "btn btn-warning btn-sm",
-                                    disabled: is_shortening(),
-                                    onclick: shorten_url_action,
-                                    if is_shortening() {
-                                        span { class: "loading loading-spinner loading-sm" }
-                                        {t!("shortening").to_string()}
-                                    } else {
-                                        {t!("shorten_url_button").to_string()}
-                                    }
+                            match short_provider() {
+                                // Regelfall: eigener Dienst.
+                                Some(Provider::Declarino) | None => {
+                                    t!("link_short_disclaimer").to_string()
                                 }
-                            }
-                        }
-
-                        if let Some(error_msg) = shorten_error() {
-                            div {
-                                class: "alert alert-error mb-4",
-                                svg {
-                                    class: "w-6 h-6 shrink-0 stroke-current",
-                                    fill: "none",
-                                    view_box: "0 0 24 24",
-                                    path {
-                                        stroke_linecap: "round",
-                                        stroke_linejoin: "round",
-                                        stroke_width: "2",
-                                        d: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    }
+                                // Rückfallebene: transparent machen, wo der
+                                // Link nun liegt.
+                                Some(other) => {
+                                    t!("link_short_disclaimer_provider", provider = other.host())
+                                        .to_string()
                                 }
-                                span { {error_msg} }
                             }
                         }
                     }
 
-                    if link_type() == LinkType::Full || short_url().is_some() {
+                    if is_shortening() {
+                        div {
+                            class: "flex items-center gap-2 text-sm text-base-content/70 mb-4",
+                            span { class: "loading loading-spinner loading-sm" }
+                            {t!("shortening").to_string()}
+                        }
+                    }
+
+                    if let Some(error_msg) = shorten_error() {
+                        div {
+                            class: "alert alert-warning mb-4",
+                            svg {
+                                class: "w-6 h-6 shrink-0 stroke-current",
+                                fill: "none",
+                                view_box: "0 0 24 24",
+                                path {
+                                    stroke_linecap: "round",
+                                    stroke_linejoin: "round",
+                                    stroke_width: "2",
+                                    d: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                }
+                            }
+                            span { {error_msg} }
+                        }
+                    }
+
+                    if let Some(current_url) = displayed_url() {
                         div {
                             class: "flex gap-2",
                             input {
                                 r#type: "text",
                                 class: "input input-bordered flex-1",
-                                value: match link_type() {
-                                    LinkType::Full => url.clone(),
-                                    LinkType::Short => short_url().unwrap_or_else(|| url.clone()),
-                                },
+                                value: current_url,
                                 readonly: true,
                                 disabled: is_shortening(),
                             }
