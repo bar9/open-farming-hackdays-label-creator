@@ -1,5 +1,5 @@
 //! URL-Shortener: bevorzugt interstitial-freie Anbieter, mit da.gd als
-//! Rückfallebene und als einzigem Weg für lokale Adressen.
+//! Rückfallebene und als bevorzugtem Weg für lokale Adressen.
 //!
 //! Zwei Anforderungen stehen hier im Konflikt und erklären den Aufbau:
 //!
@@ -7,41 +7,36 @@
 //!    der jünger als eine Stunde ist, eine Zwischenseite ein
 //!    (`shorten.shorturl_interstitial_cooldown => 3600` in dagd/dagd). Genau
 //!    frische Links werden aber geteilt — der Empfänger sähe fast immer erst
-//!    die Warnseite. is.gd, v.gd und spoo.me leiten sofort weiter.
-//! 2. **Lokal soll der Button funktionieren.** is.gd, v.gd, spoo.me, cleanuri
-//!    und ulvis lehnen `http://localhost:8080/...` als ungültig ab. Nur da.gd
-//!    kürzt nicht-öffentliche Hosts — und dort ist die Zwischenseite egal,
+//!    die Warnseite. spoo.me leitet sofort weiter.
+//! 2. **Lokal soll der Button funktionieren.** spoo.me lehnt
+//!    `http://localhost:8080/...` als ungültig ab. Nur da.gd und tinyurl
+//!    kürzen nicht-öffentliche Hosts — und dort ist die Zwischenseite egal,
 //!    weil der Link ohnehin nur auf diesem Rechner funktioniert.
 //!
-//! tinyurl ist am zuverlässigsten *erreichbar* (Cloudflare, kaum je durch
-//! Netzfilter gesperrt) und kürzt als einziger neben da.gd auch localhost.
-//! Ein frischer Link leitet in der Messung vom 2026-08-27 per reinem 301
-//! weiter. Trotzdem steht tinyurl **nicht** vorn: in der Praxis kam es dort
-//! wiederholt zu Warn-/Preview-Zwischenseiten, die je nach Ziel-Reputation und
-//! Client eingeblendet werden und sich von aussen nicht vorhersagen lassen.
-//! Bei is.gd/v.gd/spoo.me ist das nie aufgetreten.
+//! Reihenfolge: öffentlich spoo.me → tinyurl → da.gd, lokal da.gd → tinyurl.
+//! Alle Endpunkte sind kostenlos, ohne API-Key und senden
+//! `Access-Control-Allow-Origin`.
 //!
-//! Reihenfolge deshalb: öffentlich is.gd → v.gd → spoo.me → tinyurl → da.gd,
-//! lokal da.gd → tinyurl. tinyurl ist damit die Netzfilter-Versicherung, wird
-//! aber nur benutzt, wenn die interstitial-freien Dienste ausfallen. Alle
-//! Endpunkte sind kostenlos und ohne API-Key.
+//! Zu tinyurl: es ist am zuverlässigsten *erreichbar* (Cloudflare, kaum je
+//! durch Netzfilter gesperrt) und ein frischer Link leitet in der Messung vom
+//! 2026-08-27 per reinem 301 weiter. Es steht trotzdem nicht vorn, weil dort
+//! in der Praxis wiederholt Warn-/Preview-Zwischenseiten auftraten, die sich
+//! von aussen nicht vorhersagen lassen. Ganz entfernen lässt es sich aber
+//! nicht: spoo.me und da.gd laufen auf derselben Infrastruktur (gleicher
+//! IPv6-Block 2001:4d98:4:b10c::), fallen also gemeinsam aus. tinyurl ist der
+//! einzige davon unabhängige Anbieter in der Kette.
 //!
-//! Getestet und verworfen: cleanuri und ulvis senden keinen CORS-Header (im
-//! Browser also unbrauchbar), clck.ru leitet über einen Yandex-Zwischenhost.
+//! Getestet und verworfen: is.gd und v.gd (dieselbe Software und Datenbank,
+//! fielen am 2026-08-27 gemeinsam mit "Error, database insert failed" aus und
+//! sind in mehreren Netzen per Filter gesperrt), cleanuri und ulvis (senden
+//! keinen CORS-Header, im Browser also unbrauchbar), clck.ru (leitet über
+//! einen Yandex-Zwischenhost).
 
 use std::fmt;
 
 /// Ein Anbieter der Fallback-Kette.
-// Die Varianten enden alle auf "Gd" — das sind aber die echten Domainnamen
-// der Dienste, ein Umbenennen würde sie nur verschleiern.
-#[allow(clippy::enum_variant_names)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Provider {
-    /// is.gd — `ACAO: *`, JSON-Antwort, leitet ohne Zwischenseite weiter.
-    IsGd,
-    /// v.gd — gleiche Software/API wie is.gd, aber eigene Domain: fällt nicht
-    /// unter dieselben Sperrlisten.
-    VGd,
     /// spoo.me — unabhängige Infrastruktur, leitet ohne Zwischenseite weiter.
     /// Nutzt die v1-JSON-API: die alte Formular-API ist auf wenige Anfragen
     /// gedrosselt und liefert `http://`-Links, v1 erlaubt 20/Minute und
@@ -77,30 +72,21 @@ impl Request {
 impl Provider {
     /// Anbieter für `long_url`, in Reihenfolge der Versuche.
     ///
-    /// is.gd und v.gd laufen auf derselben Software: fällt deren Datenbank aus
-    /// ("Error, database insert failed"), scheitern beide gleichzeitig —
-    /// da.gd als unabhängige Infrastruktur fängt das ab.
+    /// spoo.me und da.gd teilen sich eine Infrastruktur und fallen gemeinsam
+    /// aus; tinyurl liegt dazwischen und fängt genau diesen Fall ab.
     pub fn chain_for(long_url: &str) -> &'static [Provider] {
         if is_publicly_reachable(long_url) {
-            &[
-                Provider::IsGd,
-                Provider::VGd,
-                Provider::Spoo,
-                Provider::TinyUrl,
-                Provider::DaGd,
-            ]
+            &[Provider::Spoo, Provider::TinyUrl, Provider::DaGd]
         } else {
-            // Nur da.gd und tinyurl kürzen lokale Adressen; is.gd, v.gd und
-            // spoo.me würden mit "invalid URL" antworten. Lokal ist eine
-            // Zwischenseite egal, deshalb bleibt da.gd hier vorn.
+            // Nur da.gd und tinyurl kürzen lokale Adressen; spoo.me würde mit
+            // "invalid URL" antworten. Lokal ist eine Zwischenseite egal,
+            // deshalb bleibt da.gd hier vorn.
             &[Provider::DaGd, Provider::TinyUrl]
         }
     }
 
     pub fn host(&self) -> &'static str {
         match self {
-            Provider::IsGd => "is.gd",
-            Provider::VGd => "v.gd",
             Provider::Spoo => "spoo.me",
             Provider::TinyUrl => "tinyurl.com",
             Provider::DaGd => "da.gd",
@@ -111,12 +97,6 @@ impl Provider {
     pub fn request(&self, long_url: &str) -> Request {
         let encoded = urlencoding::encode(long_url);
         match self {
-            Provider::IsGd => Request::Get {
-                url: format!("https://is.gd/create.php?format=json&url={}", encoded),
-            },
-            Provider::VGd => Request::Get {
-                url: format!("https://v.gd/create.php?format=json&url={}", encoded),
-            },
             Provider::Spoo => Request::PostJson {
                 url: "https://spoo.me/api/v1/shorten".to_string(),
                 // serde_json baut den Body, damit Anführungszeichen und
@@ -141,7 +121,6 @@ impl Provider {
     pub fn parse_response(&self, body: &str) -> Result<String, ShortenError> {
         let body = body.trim();
         let candidate = match self {
-            Provider::IsGd | Provider::VGd => extract_json_shorturl(body)?,
             Provider::Spoo => extract_json_field(body, "short_url")?,
             // Beide antworten mit einer Zeile Klartext (ggf. mit Umbruch).
             Provider::TinyUrl | Provider::DaGd => body.to_string(),
@@ -187,10 +166,6 @@ impl fmt::Display for ShortenError {
 pub struct ShortLink {
     pub url: String,
     pub provider: Provider,
-}
-
-fn extract_json_shorturl(body: &str) -> Result<String, ShortenError> {
-    extract_json_field(body, "shorturl")
 }
 
 fn extract_json_field(body: &str, field: &str) -> Result<String, ShortenError> {
@@ -323,19 +298,17 @@ mod tests {
         // geteilte Links also praktisch immer. Es darf deshalb nur die
         // Rückfallebene sein, nie der erste Anbieter.
         let chain = Provider::chain_for("https://www.declarino.ch/?a=1");
-        assert_eq!(chain[0], Provider::IsGd);
-        assert_eq!(chain[1], Provider::VGd);
-        assert_eq!(chain[2], Provider::Spoo);
+        assert_eq!(chain[0], Provider::Spoo);
         // tinyurl zeigt sporadisch Warnseiten (Praxiserfahrung) und darf
         // deshalb erst nach den interstitial-freien Diensten drankommen.
-        assert_eq!(chain[3], Provider::TinyUrl);
+        assert_eq!(chain[1], Provider::TinyUrl);
         assert_eq!(*chain.last().unwrap(), Provider::DaGd);
     }
 
     #[test]
     fn local_urls_use_only_providers_that_accept_them() {
-        // is.gd/v.gd antworten für localhost mit "Please enter a valid URL";
-        // sie zu fragen kostet nur Zeit und produziert Fehlermeldungen.
+        // spoo.me antwortet für localhost mit "invalid URL"; es zu fragen
+        // kostet nur Zeit und produziert Fehlermeldungen.
         let chain = Provider::chain_for("http://localhost:8080/app/?a=1");
         assert_eq!(chain, &[Provider::DaGd, Provider::TinyUrl]);
     }
@@ -368,12 +341,7 @@ mod tests {
 
     #[test]
     fn request_urls_are_encoded() {
-        for provider in [
-            Provider::IsGd,
-            Provider::VGd,
-            Provider::TinyUrl,
-            Provider::DaGd,
-        ] {
+        for provider in [Provider::TinyUrl, Provider::DaGd] {
             let request = provider.request("https://declarino.ch/?a=1&b=2");
             let url = request.url();
             assert!(url.contains(provider.host()), "wrong host: {}", url);
@@ -398,13 +366,7 @@ mod tests {
     }
 
     #[test]
-    fn parses_isgd_json_and_dagd_plaintext() {
-        assert_eq!(
-            Provider::IsGd
-                .parse_response("{ \"shorturl\": \"https://is.gd/abc123\" }")
-                .unwrap(),
-            "https://is.gd/abc123"
-        );
+    fn parses_spoo_json_and_plaintext_responses() {
         // da.gd antwortet mit einer Zeile Klartext (inkl. Zeilenumbruch).
         assert_eq!(
             Provider::DaGd
@@ -430,22 +392,22 @@ mod tests {
     #[test]
     fn rejects_error_text_instead_of_putting_it_in_the_field() {
         assert_eq!(
-            Provider::IsGd
-                .parse_response(
-                    "{ \"errorcode\": 1, \"errormessage\": \"Please enter a valid URL\" }"
-                )
+            Provider::Spoo
+                .parse_response(r#"{"error":"Invalid URL"}"#)
                 .unwrap_err(),
-            ShortenError::ProviderRejected("Please enter a valid URL".into())
+            ShortenError::ProviderRejected("Invalid URL".into())
         );
-        assert!(Provider::IsGd
-            .parse_response("Error, database insert failed")
-            .is_err());
-        for body in ["Error: Invalid Url!", "", "http://da.gd/abc"] {
-            assert!(
-                Provider::DaGd.parse_response(body).is_err(),
-                "must reject: {:?}",
-                body
-            );
+        // Klartext-Anbieter: Fehlermeldungen und http:// dürfen nie im
+        // Eingabefeld landen.
+        for provider in [Provider::DaGd, Provider::TinyUrl] {
+            for body in ["Error: Invalid Url!", "", "http://da.gd/abc"] {
+                assert!(
+                    provider.parse_response(body).is_err(),
+                    "{} must reject: {:?}",
+                    provider,
+                    body
+                );
+            }
         }
     }
 
@@ -464,47 +426,42 @@ mod tests {
     }
 
     #[test]
-    fn public_url_is_shortened_by_isgd() {
-        // is.gd hat in der Praxis nie eine Zwischenseite gezeigt und bleibt
-        // deshalb erste Wahl.
+    fn public_url_is_shortened_by_spoo() {
+        // spoo.me leitet ohne Zwischenseite weiter und ist deshalb erste Wahl.
         let result = block_on(shorten_with(
             "https://declarino.ch/?a=1",
             |req| async move {
                 assert!(
-                    req.url().contains("is.gd"),
-                    "is.gd must be tried first: {}",
+                    req.url().contains("spoo.me"),
+                    "spoo.me must be tried first: {}",
                     req.url()
                 );
-                Ok("{ \"shorturl\": \"https://is.gd/abc123\" }".to_string())
-            },
-        ))
-        .unwrap();
-        assert_eq!(result.provider, Provider::IsGd);
-    }
-
-    #[test]
-    fn falls_back_to_spoo_when_both_gd_services_fail() {
-        // Realer Ausfall vom 2026-08-27: is.gd und v.gd antworteten beide mit
-        // HTTP 200 und "Error, database insert failed". spoo.me leitet ohne
-        // Zwischenseite weiter und kommt deshalb vor da.gd.
-        let result = block_on(shorten_with(
-            "https://declarino.ch/?a=1",
-            |req| async move {
-                if req.url().contains("tinyurl.com") {
-                    // In diesem Szenario ist tinyurl gesperrt (Netzwerkfilter).
-                    Ok("Error".to_string())
-                } else if req.url().contains("spoo.me") {
-                    Ok(r#"{"short_url":"https://spoo.me/abc123"}"#.to_string())
-                } else if req.url().contains("da.gd") {
-                    Ok("https://da.gd/should-not-be-used".to_string())
-                } else {
-                    Ok("Error, database insert failed".to_string())
-                }
+                Ok(r#"{"short_url":"https://spoo.me/abc123"}"#.to_string())
             },
         ))
         .unwrap();
         assert_eq!(result.provider, Provider::Spoo);
-        assert_eq!(result.url, "https://spoo.me/abc123");
+    }
+
+    #[test]
+    fn prefers_tinyurl_over_da_gd_when_spoo_rejects() {
+        // da.gd zeigt für frische Links eine Zwischenseite; solange tinyurl
+        // antwortet, darf es nicht drankommen.
+        let result = block_on(shorten_with(
+            "https://declarino.ch/?a=1",
+            |req| async move {
+                if req.url().contains("tinyurl.com") {
+                    Ok("https://tinyurl.com/abc123".to_string())
+                } else if req.url().contains("da.gd") {
+                    Ok("https://da.gd/should-not-be-used".to_string())
+                } else {
+                    Ok(r#"{"error":"Too many requests"}"#.to_string())
+                }
+            },
+        ))
+        .unwrap();
+        assert_eq!(result.provider, Provider::TinyUrl);
+        assert_eq!(result.url, "https://tinyurl.com/abc123");
     }
 
     #[test]
@@ -515,7 +472,7 @@ mod tests {
                 if req.url().contains("da.gd") {
                     Ok("https://da.gd/abc123".to_string())
                 } else {
-                    Ok("Error, database insert failed".to_string())
+                    Ok("Error".to_string())
                 }
             },
         ))
@@ -526,8 +483,9 @@ mod tests {
 
     #[test]
     fn tinyurl_catches_networks_that_block_the_small_services() {
-        // Realer Fall: in manchen Netzen sind is.gd, v.gd, spoo.me und da.gd
-        // per DNS/Firewall gesperrt, die Kette lieferte dann gar nichts.
+        // Realer Fall: spoo.me und da.gd teilen sich eine Infrastruktur und
+        // waren gemeinsam nicht erreichbar — ohne tinyurl lieferte die Kette
+        // dann gar nichts.
         let result = block_on(shorten_with(
             "https://declarino.ch/?a=1",
             |req| async move {
@@ -544,7 +502,7 @@ mod tests {
     }
 
     #[test]
-    fn localhost_is_shortened_without_asking_the_gd_services() {
+    fn localhost_is_shortened_without_asking_spoo() {
         let result = block_on(shorten_with(
             "http://localhost:8080/open-farming-hackdays-label-creator/?a=1",
             |req| async move {
