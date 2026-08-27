@@ -26,6 +26,14 @@ antworten beide normal.
 eigene Reputation hat. Der Endpunkt nimmt zudem nur Declarino-Adressen an und
 taugt damit nicht als Phishing-Werkzeug.
 
+## Stand
+
+In Produktion verifiziert am 2026-08-27 gegen `declarino.ch` mit Turso als
+Speicher: ein vollständiges Rezept (4444 Zeichen) ergibt einen 34 Zeichen
+langen Kurz-Link, der mit HTTP 301 und **0 Bytes Body** auf die
+zeichengenau identische Original-URL weiterleitet — also ohne
+Zwischenseite. Weiterleitung ~75 ms, Kürzen ~600 ms.
+
 ## Aufbau
 
 ```
@@ -129,10 +137,15 @@ curl -X POST https://upstash.com/start-redis
 ## Deployment
 
 `declarino.ch` wird von Vercel aus dem Repo `bar9/declarino` (Branch
-`gh-pages`) gebaut, das der Workflow `deploy-production.yml` mit `clean: true`
-überschreibt. `api/` und `vercel.json` werden deshalb bei jedem Lauf aus
-diesem Repo mitkopiert — lägen sie nur im Zielrepo, wären sie nach dem
-nächsten Deploy weg.
+`gh-pages`) bedient. Der Workflow `deploy-production.yml` publiziert dorthin
+und ersetzt den Inhalt dabei vollständig (`keep_files` ist standardmässig
+`false`). `api/` und `vercel.json` werden deshalb bei jedem Lauf aus diesem
+Repo mitkopiert — lägen sie nur im Zielrepo, wären sie nach dem nächsten
+Deploy weg.
+
+Der Workflow übergibt zusätzlich `clean: true`. Diese Option kennt
+`peaceiris/actions-gh-pages` nicht; sie wird mit einer Warnung ignoriert und
+hat keine Wirkung. Das Ersetzen passiert ohnehin über `keep_files: false`.
 
 ## Rückfallebene
 
@@ -140,3 +153,26 @@ Fällt der Endpunkt aus, versucht das Frontend der Reihe nach spoo.me,
 tinyurl und da.gd (Details in `src/services/url_shortener.rs`). Der
 Teilen-Button ist also nie ganz tot, liefert dann aber wieder Links mit den
 oben beschriebenen Nachteilen.
+
+## Offener Nebenbefund: Deep-Links liefern HTTP 404
+
+Nicht Teil des Kurz-Link-Dienstes, aber beim Testen aufgefallen und bewusst
+**nicht** mitgeändert:
+
+```
+curl -o /dev/null -w '%{http_code}' 'https://www.declarino.ch/lebensmittelrecht?v=2'
+404
+```
+
+Die App lädt trotzdem, weil `404.html` eine Kopie von `index.html` ist. Der
+Status ist aber formal falsch. Betrifft auch Staging, besteht also seit
+jeher und unabhängig vom Shortener. Ein Kurz-Link erbt das Verhalten, weil
+er auf genau solche Deep-Links zeigt.
+
+Folgen: Suchmaschinen indexieren die Seiten nicht, Link-Vorschauen (z.B. in
+Messengern) können fehlschlagen, Fehler-Monitoring meldet Rauschen.
+
+Behebbar wäre es mit einem SPA-Fallback-Rewrite in `vercel.json`, der nach
+der `/s/:code`-Regel stehen müsste, damit er die Kurz-Links nicht
+verschluckt. Ein fehlerhafter Rewrite legt allerdings die ganze Seite lahm,
+deshalb gehört das zuerst auf ein Preview-Deployment.

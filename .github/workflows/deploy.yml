@@ -93,4 +93,6 @@ jobs:
         with:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           publish_dir: ./target/dx/open-farming-hackdays-label-creator/release/web/public
-          clean: true
+          # Kein `clean: true`: die Option kennt diese Action nicht und wurde
+          # nur mit einer Warnung ignoriert. Ersetzt wird ohnehin vollständig,
+          # weil `keep_files` standardmässig false ist.

@@ -72,10 +72,11 @@ jobs:
           cp "./public/CNAME" "$PUBLIC_DIR/CNAME"
           rm -f "$PUBLIC_DIR/robots.txt"
 
-      # declarino.ch wird von Vercel aus bar9/declarino gebaut, und der Deploy
-      # unten läuft mit clean:true. Der Kurz-Link-Endpunkt muss deshalb bei
-      # jedem Deploy mitgeliefert werden — läge er nur im Zielrepo, würde er
-      # beim nächsten Lauf gelöscht.
+      # declarino.ch wird von Vercel aus bar9/declarino bedient, und der Deploy
+      # unten ersetzt dort den gesamten Inhalt (keep_files ist standardmässig
+      # false). Der Kurz-Link-Endpunkt muss deshalb bei jedem Deploy
+      # mitgeliefert werden — läge er nur im Zielrepo, würde er beim nächsten
+      # Lauf gelöscht.
       - name: Add URL shortener functions
         run: |
           PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
@@ -94,4 +95,6 @@ jobs:
           external_repository: bar9/declarino
           publish_branch: gh-pages
           publish_dir: ./target/dx/open-farming-hackdays-label-creator/release/web/public
-          clean: true
+          # Kein `clean: true`: die Option kennt diese Action nicht, sie wurde
+          # nur mit einer Warnung ignoriert. Der Zielinhalt wird ohnehin
+          # vollständig ersetzt, weil `keep_files` standardmässig false ist.
