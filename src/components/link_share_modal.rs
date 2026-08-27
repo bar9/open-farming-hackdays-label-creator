@@ -86,8 +86,9 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
             show_shorten_button.set(false);
             shorten_error.set(None);
 
-            // Anbieter-Kette (siehe services::url_shortener): tinyurl zuerst,
-            // die übrigen Dienste fangen einen Ausfall ab.
+            // Anbieter-Kette (siehe services::url_shortener): is.gd/v.gd/spoo.me
+            // leiten ohne Zwischenseite weiter, tinyurl und da.gd fangen
+            // Netzsperren, Ausfälle und localhost ab.
             match url_shortener::shorten(&url_to_shorten).await {
                 Ok(link) => {
                     short_url.set(Some(link.url));

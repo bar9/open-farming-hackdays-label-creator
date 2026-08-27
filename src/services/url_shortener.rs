@@ -13,17 +13,18 @@
 //!    kürzt nicht-öffentliche Hosts — und dort ist die Zwischenseite egal,
 //!    weil der Link ohnehin nur auf diesem Rechner funktioniert.
 //!
-//! tinyurl erfüllt als einziger Dienst beide Anforderungen zugleich (am
-//! 2026-08-27 nachgemessen): `api-create.php` sendet CORS-Header, der Kurz-Link
-//! antwortet mit einem reinen 301 ohne Zwischenseite, und localhost/IP-Adressen
-//! werden akzeptiert. Zudem läuft er über Cloudflare und ist damit auch in
-//! Netzen erreichbar, in denen die kleineren Dienste per DNS-Filter gesperrt
-//! sind — genau der Ausfall, bei dem die alte Kette komplett scheiterte.
+//! tinyurl ist am zuverlässigsten *erreichbar* (Cloudflare, kaum je durch
+//! Netzfilter gesperrt) und kürzt als einziger neben da.gd auch localhost.
+//! Ein frischer Link leitet in der Messung vom 2026-08-27 per reinem 301
+//! weiter. Trotzdem steht tinyurl **nicht** vorn: in der Praxis kam es dort
+//! wiederholt zu Warn-/Preview-Zwischenseiten, die je nach Ziel-Reputation und
+//! Client eingeblendet werden und sich von aussen nicht vorhersagen lassen.
+//! Bei is.gd/v.gd/spoo.me ist das nie aufgetreten.
 //!
-//! Deshalb steht tinyurl vorn; die übrigen Anbieter bleiben als Redundanz für
-//! den Fall, dass tinyurl ausfällt oder ein Ziel ablehnt. Reihenfolge:
-//! öffentlich tinyurl → is.gd → v.gd → spoo.me → da.gd, lokal tinyurl → da.gd.
-//! Alle Endpunkte sind kostenlos und ohne API-Key.
+//! Reihenfolge deshalb: öffentlich is.gd → v.gd → spoo.me → tinyurl → da.gd,
+//! lokal da.gd → tinyurl. tinyurl ist damit die Netzfilter-Versicherung, wird
+//! aber nur benutzt, wenn die interstitial-freien Dienste ausfallen. Alle
+//! Endpunkte sind kostenlos und ohne API-Key.
 //!
 //! Getestet und verworfen: cleanuri und ulvis senden keinen CORS-Header (im
 //! Browser also unbrauchbar), clck.ru leitet über einen Yandex-Zwischenhost.
@@ -48,6 +49,8 @@ pub enum Provider {
     Spoo,
     /// tinyurl.com — Cloudflare-Infrastruktur, damit auch in Netzen
     /// erreichbar, die die kleineren Dienste sperren. Kürzt auch localhost.
+    /// Kann aber Warn-/Preview-Zwischenseiten zeigen (in der Praxis mehrfach
+    /// beobachtet), steht deshalb nur als Rückfallebene in der Kette.
     TinyUrl,
     /// da.gd — kostenlos, werbefrei, akzeptiert als einziger auch localhost/IPs.
     /// Zeigt bei Links unter einer Stunde eine Zwischenseite, steht deshalb
@@ -80,16 +83,17 @@ impl Provider {
     pub fn chain_for(long_url: &str) -> &'static [Provider] {
         if is_publicly_reachable(long_url) {
             &[
-                Provider::TinyUrl,
                 Provider::IsGd,
                 Provider::VGd,
                 Provider::Spoo,
+                Provider::TinyUrl,
                 Provider::DaGd,
             ]
         } else {
-            // Nur tinyurl und da.gd kürzen lokale Adressen; is.gd, v.gd und
-            // spoo.me würden mit "invalid URL" antworten.
-            &[Provider::TinyUrl, Provider::DaGd]
+            // Nur da.gd und tinyurl kürzen lokale Adressen; is.gd, v.gd und
+            // spoo.me würden mit "invalid URL" antworten. Lokal ist eine
+            // Zwischenseite egal, deshalb bleibt da.gd hier vorn.
+            &[Provider::DaGd, Provider::TinyUrl]
         }
     }
 
@@ -319,10 +323,12 @@ mod tests {
         // geteilte Links also praktisch immer. Es darf deshalb nur die
         // Rückfallebene sein, nie der erste Anbieter.
         let chain = Provider::chain_for("https://www.declarino.ch/?a=1");
-        assert_eq!(chain[0], Provider::TinyUrl);
-        assert_eq!(chain[1], Provider::IsGd);
-        assert_eq!(chain[2], Provider::VGd);
-        assert_eq!(chain[3], Provider::Spoo);
+        assert_eq!(chain[0], Provider::IsGd);
+        assert_eq!(chain[1], Provider::VGd);
+        assert_eq!(chain[2], Provider::Spoo);
+        // tinyurl zeigt sporadisch Warnseiten (Praxiserfahrung) und darf
+        // deshalb erst nach den interstitial-freien Diensten drankommen.
+        assert_eq!(chain[3], Provider::TinyUrl);
         assert_eq!(*chain.last().unwrap(), Provider::DaGd);
     }
 
@@ -331,7 +337,7 @@ mod tests {
         // is.gd/v.gd antworten für localhost mit "Please enter a valid URL";
         // sie zu fragen kostet nur Zeit und produziert Fehlermeldungen.
         let chain = Provider::chain_for("http://localhost:8080/app/?a=1");
-        assert_eq!(chain, &[Provider::TinyUrl, Provider::DaGd]);
+        assert_eq!(chain, &[Provider::DaGd, Provider::TinyUrl]);
     }
 
     #[test]
@@ -458,22 +464,22 @@ mod tests {
     }
 
     #[test]
-    fn public_url_is_shortened_by_tinyurl() {
-        // tinyurl kann als einziger alles: CORS, direkte Weiterleitung,
-        // localhost — und ist am zuverlässigsten erreichbar.
+    fn public_url_is_shortened_by_isgd() {
+        // is.gd hat in der Praxis nie eine Zwischenseite gezeigt und bleibt
+        // deshalb erste Wahl.
         let result = block_on(shorten_with(
             "https://declarino.ch/?a=1",
             |req| async move {
                 assert!(
-                    req.url().contains("tinyurl.com"),
-                    "tinyurl must be tried first: {}",
+                    req.url().contains("is.gd"),
+                    "is.gd must be tried first: {}",
                     req.url()
                 );
-                Ok("https://tinyurl.com/abc123".to_string())
+                Ok("{ \"shorturl\": \"https://is.gd/abc123\" }".to_string())
             },
         ))
         .unwrap();
-        assert_eq!(result.provider, Provider::TinyUrl);
+        assert_eq!(result.provider, Provider::IsGd);
     }
 
     #[test]
