@@ -155,12 +155,12 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                 r#type: "radio",
                                 name: "link-type",
                                 class: "radio radio-primary",
-                                checked: link_type() == LinkType::Full,
+                                checked: link_type() == LinkType::Short,
                                 onchange: move |_| {
-                                    link_type.set(LinkType::Full);
+                                    link_type.set(LinkType::Short);
                                 }
                             }
-                            span { class: "label-text", {t!("link_type_full").to_string()} }
+                            span { class: "label-text", {t!("link_type_short").to_string()} }
                         }
                         label {
                             class: "label cursor-pointer flex items-center gap-2",
@@ -168,12 +168,12 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                 r#type: "radio",
                                 name: "link-type",
                                 class: "radio radio-primary",
-                                checked: link_type() == LinkType::Short,
+                                checked: link_type() == LinkType::Full,
                                 onchange: move |_| {
-                                    link_type.set(LinkType::Short);
+                                    link_type.set(LinkType::Full);
                                 }
                             }
-                            span { class: "label-text", {t!("link_type_short").to_string()} }
+                            span { class: "label-text", {t!("link_type_full").to_string()} }
                         }
                     }
 
