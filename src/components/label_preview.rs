@@ -170,7 +170,7 @@ pub fn LabelPreview(
                 // Bio Suisse logo display. With Umstellungs ingredients the artwork
                 // switches to the official Umstellungsknospe, pre-baked together with
                 // the Umstellungssatz text into one combined image (logo left, text
-                // right — see `make umstellung-assets`).
+                // right, the PNGs live in `assets/logos/`).
                 {
                     // TD-1 Stufe 3: the artwork follows the typed Knospe verdict
                     // directly. Logo variant and Umstellung are one value, so the

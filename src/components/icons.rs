@@ -318,8 +318,9 @@ pub fn UmstellungsknospeNoCross() -> Element {
 /// Umstellungsknospe (Swiss cross) pre-baked together with the Umstellungssatz
 /// text-image into a single combined PNG — logo on the left, text on the right.
 /// Used in the label preview so the mandatory sentence travels with the mark as
-/// one image (built offline via `make umstellung-assets`). No `en` arm: there is
-/// no English UI locale, so English is asset-only / not wired.
+/// one image. The PNGs are committed under `assets/logos/`; they were baked
+/// offline once and are edited by replacing the file, not by a build step.
+/// No `en` arm: there is no English UI locale, so English is asset-only.
 #[component]
 pub fn UmstellungsknospeSatzRegular() -> Element {
     let src = match rust_i18n::locale().as_ref() {
