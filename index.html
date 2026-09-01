@@ -10,6 +10,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!--
+      Umami (cookiefreie Reichweitenmessung, EU-Hosting).
+
+      data-exclude-search ist hier KEINE Feinheit, sondern zwingend: Der
+      Teilen-Link traegt die ganze Rezeptur im Query-String, inklusive
+      producer_name, producer_address, producer_phone und producer_email.
+      Wer einen geteilten Link oder einen Kurz-Link oeffnet, haette diese
+      Personendaten sonst an Umami gesendet. Beim blossen Ausfuellen
+      entsteht das Problem nicht, weil der Query-String nur in den
+      Kopier-Knopf fliesst und nie in die Adresszeile.
+
+      data-domains grenzt auf die Produktion ein, damit Staging
+      (bar9.github.io) und lokale Entwicklung die Zahlen nicht verfaelschen.
+
+      data-do-not-track respektiert die Browser-Einstellung.
+    -->
+    <script defer
+            src="https://cloud.umami.is/script.js"
+            data-website-id="ab1669ee-d98b-4d05-8c61-394a79ae2bdf"
+            data-exclude-search="true"
+            data-do-not-track="true"
+            data-domains="www.declarino.ch,declarino.ch"></script>
   </head>
   <body>
     <script>

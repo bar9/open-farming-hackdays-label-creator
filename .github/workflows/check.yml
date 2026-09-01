@@ -94,6 +94,39 @@ jobs:
             ]).then(() => console.log('storage backend selection ok'));
           })"
 
+      # Der Teilen-Link traegt die ganze Rezeptur im Query-String, inklusive
+      # producer_name, -address, -phone und -email. Faellt data-exclude-search
+      # weg, sendet der Tracker diese Personendaten bei jedem Aufruf eines
+      # geteilten oder gedruckten Kurz-Links an Umami. Das waere von aussen
+      # unsichtbar, deshalb hier als harte Bedingung.
+      - name: Check analytics privacy flags
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+            if (!html.includes('cloud.umami.is')) {
+              console.log('kein Umami-Snippet vorhanden, nichts zu pruefen');
+              process.exit(0);
+            }
+            const required = {
+              'data-exclude-search=\"true\"': 'Rezeptur/Personendaten im Query-String',
+              'data-do-not-track=\"true\"': 'Do-Not-Track des Browsers',
+              'data-domains=': 'Begrenzung auf die Produktionsdomaene',
+            };
+            const missing = Object.entries(required).filter(([a]) => !html.includes(a));
+            if (missing.length) {
+              for (const [a, why] of missing) console.error('FEHLT: ' + a + '  (' + why + ')');
+              process.exit(1);
+            }
+            // Das Snippet muss im head stehen, sonst greift es nicht.
+            const head = html.slice(html.indexOf('<head'), html.indexOf('</head>'));
+            if (!head.includes('cloud.umami.is')) {
+              console.error('Umami-Snippet steht nicht im <head>');
+              process.exit(1);
+            }
+            console.log('analytics privacy flags ok');
+          "
+
       # Die Rewrites in vercel.json entscheiden, ob Kurz-Links funktionieren.
       # Ein Catch-all ohne die Ausnahme für /s/ würde jeden Kurz-Link stumm
       # auf die App umleiten (HTTP 200 statt 301) -- gedruckte Etiketten wären
