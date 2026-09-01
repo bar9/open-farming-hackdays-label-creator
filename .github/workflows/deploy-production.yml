@@ -80,19 +80,19 @@ jobs:
       - name: Add URL shortener functions
         run: |
           PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
-          cp -r ./api "$PUBLIC_DIR/api"
-          # Selbsttest und Doku gehören nicht ins Deployment: der Test braucht
-          # eine Redis-Instanz, die Doku wäre sonst unter /api/README.md
-          # öffentlich abrufbar. (_lib.mjs bleibt: Vercel behandelt Dateien mit
-          # Unterstrich als Hilfsmodul, nicht als eigene Funktion.)
-          # Nur die beiden Endpunkte und ihre Hilfsmodule gehören ins
-          # Deployment. Test-, Sicherungs- und Doku-Dateien wären sonst
-          # öffentlich abrufbar.
-          rm -f "$PUBLIC_DIR/api/selftest.mjs" "$PUBLIC_DIR/api/README.md" \
-                "$PUBLIC_DIR/api/backup.mjs" "$PUBLIC_DIR/api/routecheck.cjs" \
-                "$PUBLIC_DIR/api/routecases.json" \
-                "$PUBLIC_DIR/api/uitest_share_modal.mjs"
+          # Positivliste statt "alles kopieren und dann aufräumen": Nur die
+          # beiden Endpunkte und ihre Hilfsmodule gehören ins Deployment.
+          # Test-, Sicherungs- und Doku-Dateien wären sonst öffentlich
+          # abrufbar, und eine künftig hinzugefügte Datei würde stillschweigend
+          # mit veröffentlicht.
+          # (_lib.mjs und _storage.mjs sind keine eigenen Funktionen: Vercel
+          # behandelt Dateien mit führendem Unterstrich als Hilfsmodul.)
+          mkdir -p "$PUBLIC_DIR/api"
+          for f in _lib.mjs _storage.mjs shorten.mjs redirect.mjs; do
+            cp "./api/$f" "$PUBLIC_DIR/api/$f"
+          done
           cp ./vercel.json "$PUBLIC_DIR/vercel.json"
+          echo "Deployte API-Dateien:" && ls "$PUBLIC_DIR/api"
 
       - name: Deploy to Production GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -101,6 +101,5 @@ jobs:
           external_repository: bar9/declarino
           publish_branch: gh-pages
           publish_dir: ./target/dx/open-farming-hackdays-label-creator/release/web/public
-          # Kein `clean: true`: die Option kennt diese Action nicht, sie wurde
-          # nur mit einer Warnung ignoriert. Der Zielinhalt wird ohnehin
-          # vollständig ersetzt, weil `keep_files` standardmässig false ist.
+          # Ohne `keep_files` (Standard: false) wird der Zielinhalt vollständig
+          # ersetzt — deshalb muss api/ oben bei jedem Lauf mitkopiert werden.

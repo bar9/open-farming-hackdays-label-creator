@@ -1,30 +1,33 @@
 // Speicher-Anbindung für den Kurz-Link-Dienst.
 //
-// Unterstützt zwei Anbieter aus dem Vercel Marketplace, weil beide über
-// HTTPS ansprechbar sind: Vercel-Funktionen leben nur Millisekunden und
-// können keine dauerhafte TCP-Verbindung halten, wie sie klassisches Redis
-// oder Postgres erwarten.
+// Zwei Anbieter, beide über HTTPS statt eines Verbindungsprotokolls:
+// Vercel-Funktionen leben nur Millisekunden und können keine dauerhafte
+// TCP-Verbindung halten, wie klassisches Redis oder Postgres sie erwarten.
 //
-//   * Turso (libSQL)  — SQLite über HTTPS, erkannt an TURSO_DATABASE_URL
-//   * Upstash Redis   — Key/Value über HTTPS, erkannt an KV_REST_API_URL
+//   Turso (libSQL)  SQLite über HTTPS, erkannt an TURSO_DATABASE_URL
+//   Upstash Redis   Key/Value über HTTPS, erkannt an KV_REST_API_URL
 //
-// Welcher benutzt wird, entscheiden allein die gesetzten Umgebungsvariablen;
-// im Code steht keine Festlegung. Ein Anbieterwechsel ist damit eine Frage
-// der Projekteinstellungen, nicht des Quelltexts — wichtig, weil geteilte
-// Kurz-Links auf gedruckten Etiketten landen und den Anbieter überleben
-// müssen.
+// Die Wahl trifft allein die Umgebung; im Code steht keine Festlegung. Ein
+// Anbieterwechsel ist damit eine Frage der Projekteinstellungen, nicht des
+// Quelltexts — wichtig, weil geteilte Kurz-Links auf gedruckten Etiketten
+// landen und den Anbieter überleben müssen.
 //
-// Die Zugangsdaten kommen ausschliesslich aus Umgebungsvariablen und liegen
-// damit serverseitig. Im WASM-Frontend wäre jedes Geheimnis auslesbar
-// (`strings …wasm | grep`).
+// Zugangsdaten kommen ausschliesslich aus Umgebungsvariablen und bleiben
+// damit serverseitig. Im WASM-Frontend wäre jedes Geheimnis auslesbar.
 
-/** Name des aktiven Anbieters, für Fehlermeldungen und Diagnose. */
+/** Name des aktiven Anbieters, oder null wenn keiner konfiguriert ist. */
 export function storageBackend() {
   if (process.env.TURSO_DATABASE_URL) return "turso";
   if (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL) {
     return "upstash";
   }
   return null;
+}
+
+function noStorageConfigured() {
+  return new Error(
+    "Kein Speicher konfiguriert: TURSO_DATABASE_URL oder KV_REST_API_URL setzen"
+  );
 }
 
 // ---------------------------------------------------------------- Turso ---
@@ -43,7 +46,7 @@ function tursoConfig() {
 
 /** Eine Folge von SQL-Anweisungen über die Pipeline-API ausführen.
  *
- *  `close` wird immer mitgeschickt: offene Verbindungen laufen sonst 10
+ *  `close` wird immer mitgeschickt: offene Verbindungen laufen sonst zehn
  *  Sekunden im Leerlauf weiter, und bei einer Funktion pro Anfrage würden
  *  sich die schnell summieren. */
 async function tursoExecute(statements) {
@@ -72,6 +75,13 @@ async function tursoExecute(statements) {
     throw new Error(`Turso: ${failed.error?.message ?? "unbekannter Fehler"}`);
   }
   return body.results ?? [];
+}
+
+/** Ob ein Fehler nur bedeutet, dass noch nie etwas gespeichert wurde.
+ *  Vor dem ersten Kürzen existiert die Tabelle nicht; das ist ein leerer
+ *  Bestand, kein Fehler. */
+function isMissingTable(error) {
+  return /no such table/i.test(String(error?.message ?? ""));
 }
 
 /** Tabelle anlegen, falls sie fehlt.
@@ -114,16 +124,36 @@ async function tursoLookup(code) {
       },
     ]);
   } catch (error) {
-    // Vor dem ersten Kürzen existiert die Tabelle noch nicht; das ist kein
-    // Fehler, sondern schlicht ein unbekannter Code.
-    if (/no such table/i.test(String(error.message))) return null;
+    if (isMissingTable(error)) return null;
     throw error;
   }
   const rows = results[0]?.response?.result?.rows ?? [];
   return rows.length > 0 ? rows[0][0].value : null;
 }
 
+async function tursoListAll() {
+  let results;
+  try {
+    results = await tursoExecute([
+      { sql: "SELECT code, url, created_at FROM links ORDER BY created_at" },
+    ]);
+  } catch (error) {
+    if (isMissingTable(error)) return [];
+    throw error;
+  }
+  const rows = results[0]?.response?.result?.rows ?? [];
+  return rows.map((row) => ({
+    code: row[0].value,
+    url: row[1].value,
+    created_at: Number(row[2].value),
+  }));
+}
+
 // -------------------------------------------------------------- Upstash ---
+
+/** Schlüssel-Präfix, damit die Kurz-Links in einer mitbenutzten Redis-Instanz
+ *  nicht mit fremden Schlüsseln kollidieren. */
+const UPSTASH_PREFIX = "s:";
 
 function upstashConfig() {
   // Die Vercel-Upstash-Integration setzt die KV_REST_API_*-Namen; die
@@ -155,6 +185,31 @@ async function upstashCommand(command) {
   return body.result;
 }
 
+async function upstashListAll() {
+  // SCAN in Schritten, damit auch grosse Bestände vollständig durchlaufen.
+  const entries = [];
+  let cursor = "0";
+  do {
+    const [next, keys] = await upstashCommand([
+      "SCAN",
+      cursor,
+      "MATCH",
+      `${UPSTASH_PREFIX}*`,
+      "COUNT",
+      "200",
+    ]);
+    cursor = next;
+    for (const key of keys) {
+      const url = await upstashCommand(["GET", key]);
+      // Redis kennt kein Anlagedatum; der Export lässt das Feld dann leer.
+      if (url !== null) {
+        entries.push({ code: key.slice(UPSTASH_PREFIX.length), url, created_at: null });
+      }
+    }
+  } while (cursor !== "0");
+  return entries;
+}
+
 // ------------------------------------------------------------ Schnittstelle
 
 /** Eintrag anlegen, wenn der Code noch frei ist.
@@ -167,11 +222,11 @@ export async function storeIfAbsent(code, url) {
       return await tursoStoreIfAbsent(code, url);
     case "upstash":
       // NX schreibt nur, wenn der Schlüssel noch nicht existiert.
-      return (await upstashCommand(["SET", `s:${code}`, url, "NX"])) === "OK";
-    default:
-      throw new Error(
-        "Kein Speicher konfiguriert: TURSO_DATABASE_URL oder KV_REST_API_URL setzen"
+      return (
+        (await upstashCommand(["SET", `${UPSTASH_PREFIX}${code}`, url, "NX"])) === "OK"
       );
+    default:
+      throw noStorageConfigured();
   }
 }
 
@@ -181,10 +236,25 @@ export async function lookup(code) {
     case "turso":
       return await tursoLookup(code);
     case "upstash":
-      return await upstashCommand(["GET", `s:${code}`]);
+      return await upstashCommand(["GET", `${UPSTASH_PREFIX}${code}`]);
     default:
-      throw new Error(
-        "Kein Speicher konfiguriert: TURSO_DATABASE_URL oder KV_REST_API_URL setzen"
-      );
+      throw noStorageConfigured();
+  }
+}
+
+/** Alle Einträge als `{ code, url, created_at }`, für Sicherung und
+ *  Anbieterwechsel (siehe backup.mjs).
+ *
+ *  Anbieterabhängig, weil Auflisten die einzige Operation ist, die sich nicht
+ *  auf einen gemeinsamen Aufruf abbilden lässt: SQL kennt SELECT, Redis
+ *  braucht SCAN. */
+export async function listAll() {
+  switch (storageBackend()) {
+    case "turso":
+      return await tursoListAll();
+    case "upstash":
+      return await upstashListAll();
+    default:
+      throw noStorageConfigured();
   }
 }

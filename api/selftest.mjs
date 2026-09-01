@@ -1,17 +1,19 @@
-// End-to-End-Test der Shortener-Funktionen gegen eine echte Redis-Instanz.
+// End-to-End-Test der Shortener-Funktionen gegen eine echte Datenbank.
 //
 // Läuft ohne Vercel-CLI: die Handler sind gewöhnliche (req, res)-Funktionen,
-// also genügt ein Minimal-Double für `res`. Getestet wird damit genau der
-// Code, der später deployt wird — inklusive Redis-Zugriff, CORS und Rewrite-
-// Parameter.
+// also genügt ein Minimal-Double für `res`. Geprüft wird damit genau der
+// Code, der später deployt wird — inklusive Speicherzugriff, CORS und den
+// Parametern aus dem Rewrite.
 //
 // Läuft gegen den Anbieter, dessen Variablen gesetzt sind:
 //   TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=...   node api/selftest.mjs
 //   KV_REST_API_URL=...    KV_REST_API_TOKEN=...  node api/selftest.mjs
+//
+// Testdatenbanken ohne Anmeldung: siehe api/README.md.
 
 import shorten from "./shorten.mjs";
 import redirect from "./redirect.mjs";
-import { codeForUrl, storageBackend } from "./_lib.mjs";
+import { codeForUrl, listAll, storageBackend } from "./_lib.mjs";
 
 const backend = storageBackend();
 if (!backend) {
@@ -88,7 +90,6 @@ check("Vary: Origin gesetzt", created.headers["vary"] === "Origin");
 
 const code = created.body?.code;
 check("Code ist 7 Zeichen Base62", /^[0-9a-zA-Z]{7}$/.test(code ?? ""), code);
-
 // 2. Der Redirect muss ohne Zwischenseite auf das Original zeigen.
 const hop = await call(redirect, { method: "GET", query: { code } });
 check("redirect antwortet 301", hop.statusCode === 301, String(hop.statusCode));
@@ -167,6 +168,13 @@ check(
   codeForUrl(RECIPE) === codeForUrl(RECIPE) && codeForUrl(RECIPE) === code
 );
 check("verschiedene URLs -> verschiedene Codes", codeForUrl("a") !== codeForUrl("b"));
+
+// 12. Der Bestand muss auflistbar sein, sonst ist keine Sicherung möglich und
+//     ein Anbieterwechsel würde alle gedruckten Links entwerten.
+const all = await listAll();
+const backed_up = all.find((entry) => entry.code === code);
+check("listAll findet den neuen Eintrag", backed_up !== undefined, `${all.length} Einträge`);
+check("gesicherter Eintrag trägt die Original-URL", backed_up?.url === RECIPE, backed_up?.url);
 
 console.log(
   failures === 0

@@ -1,12 +1,12 @@
 // Gemeinsame Helfer für die beiden Shortener-Funktionen.
 //
-// Warum es diesen Endpunkt überhaupt gibt: Fremd-Shortener sind für Declarino
-// unbrauchbar geworden. da.gd und spoo.me werden von Swisscoms DNS auf einen
-// Sperrserver umgebogen (195.186.4.x), weil die Kategorie "URL-Shortener" als
-// Phishing-Vektor gilt; der Browser meldet dann nur "Failed to fetch". is.gd
-// und v.gd fielen mit "Error, database insert failed" aus, und tinyurl zeigt
-// sporadisch Warn-Zwischenseiten. Ein Kurz-Link unter declarino.ch steht auf
-// keiner solchen Liste, weil die Domain eine eigene Reputation hat.
+// Warum es diesen Endpunkt gibt: Fremd-Shortener sind für Declarino
+// unbrauchbar. Provider sperren die Kategorie per DNS, weil ein Dienst, der
+// ohne Konto beliebige Ziele kürzt, das Standardwerkzeug für Phishing-Links
+// ist; andere zeigen Warn-Zwischenseiten oder verlangen einen API-Key, der im
+// WASM-Frontend auslesbar wäre. Ein Kurz-Link unter declarino.ch steht auf
+// keiner solchen Liste, weil die Domain eine eigene Reputation hat. Details
+// und Messwerte in api/README.md.
 
 import { createHash } from "node:crypto";
 
@@ -19,7 +19,7 @@ export const SHORT_BASE = "https://www.declarino.ch";
  *  Diese Liste ist der Missbrauchsschutz: Wer keine fremden Ziele hinterlegen
  *  kann, kann den Endpunkt nicht als Phishing-Werkzeug verwenden. Genau das
  *  hält declarino.ch von den Sperrlisten fern, an denen die Fremddienste
- *  gescheitert sind. Sie begrenzt zugleich das Datenwachstum. */
+ *  gescheitert sind, und begrenzt zugleich das Datenwachstum. */
 const ALLOWED_TARGET_HOSTS = [
   "www.declarino.ch",
   "declarino.ch",
@@ -45,7 +45,7 @@ export function allowedOrigin(origin) {
 }
 
 /** CORS-Header setzen. Ohne diese ist der Endpunkt aus dem WASM-Frontend
- *  nicht aufrufbar — daran sind cleanuri und ulvis gescheitert. */
+ *  nicht aufrufbar — daran sind mehrere Fremddienste gescheitert. */
 export function applyCors(req, res) {
   const origin = allowedOrigin(req.headers.origin);
   if (origin) {
@@ -82,7 +82,7 @@ const BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
  *  den Datenbestand klein und macht die Funktion wiederholbar.
  *
  *  7 Zeichen sind rund 3.5e12 Möglichkeiten. Kollisionen werden beim
- *  Schreiben trotzdem erkannt (siehe shorten.js), nicht bloss angenommen. */
+ *  Schreiben trotzdem erkannt (siehe shorten.mjs), nicht bloss angenommen. */
 export function codeForUrl(url, length = 7) {
   const digest = createHash("sha256").update(url).digest();
   let value = 0n;
@@ -96,6 +96,6 @@ export function codeForUrl(url, length = 7) {
 }
 
 // Speicherzugriff liegt in _storage.mjs (Turso oder Upstash, je nach
-// gesetzten Umgebungsvariablen) und wird hier nur weitergereicht, damit die
-// Funktionen einen einzigen Import haben.
-export { storeIfAbsent, lookup, storageBackend } from "./_storage.mjs";
+// gesetzten Umgebungsvariablen) und wird hier weitergereicht, damit die
+// Endpunkte einen einzigen Import haben.
+export { storeIfAbsent, lookup, listAll, storageBackend } from "./_storage.mjs";

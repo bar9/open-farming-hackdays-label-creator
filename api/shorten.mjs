@@ -1,8 +1,8 @@
 // POST /api/shorten  { "url": "https://www.declarino.ch/..." }
-//   -> 200 { "short_url": "https://www.declarino.ch/s/AbC1234", "code": "..." }
+//   -> 200 { "code": "AbC1234", "short_url": "https://www.declarino.ch/s/AbC1234" }
 //
 // Antwortet bewusst im selben JSON-Format wie spoo.me (`short_url`), damit die
-// Rust-Seite denselben Parser verwenden kann.
+// Rust-Seite (src/services/url_shortener.rs) denselben Parser verwendet.
 
 import {
   SHORT_BASE,
@@ -17,6 +17,10 @@ import {
  *  lassen viel Luft und verhindern trotzdem, dass jemand den Speicher mit
  *  Riesen-URLs füllt. */
 const MAX_URL_LENGTH = 16 * 1024;
+
+/** Länge des Kurz-Codes, und wie weit er bei einer Kollision wachsen darf. */
+const CODE_LENGTH = 7;
+const MAX_CODE_LENGTH = 12;
 
 export default async function handler(req, res) {
   const origin = applyCors(req, res);
@@ -57,17 +61,14 @@ export default async function handler(req, res) {
 
   try {
     // Der Code ist der Hash der URL, dieselbe URL ergibt also denselben Link.
-    // Bei einer Kollision (anderes Ziel, gleicher Code) wird der Code
-    // schrittweise verlängert, statt den fremden Eintrag zu überschreiben —
-    // sonst würde ein bereits geteilter Link stillschweigend woanders landen.
-    for (let length = 7; length <= 12; length++) {
+    // Bei einer Kollision (gleicher Code, anderes Ziel) wächst der Code, statt
+    // den fremden Eintrag zu überschreiben — sonst landete ein bereits
+    // verschickter Link stillschweigend woanders.
+    for (let length = CODE_LENGTH; length <= MAX_CODE_LENGTH; length++) {
       const code = codeForUrl(url, length);
-      if (await storeIfAbsent(code, url)) {
-        return res.status(200).json({ code, short_url: `${SHORT_BASE}/s/${code}` });
-      }
-      const existing = await lookup(code);
-      if (existing === url) {
-        // Schon vorhanden: derselbe Link, kein neuer Eintrag.
+      // Neu angelegt, oder derselbe Link schon vorhanden: beides ist ein
+      // Treffer und ergibt dieselbe Antwort.
+      if ((await storeIfAbsent(code, url)) || (await lookup(code)) === url) {
         return res.status(200).json({ code, short_url: `${SHORT_BASE}/s/${code}` });
       }
     }

@@ -84,13 +84,14 @@ jobs:
             // Ohne Konfiguration darf nichts stillschweigend passieren:
             // ein falsch gesetztes Projekt soll einen klaren Fehler geben.
             if (m.storageBackend() !== null) throw new Error('backend detected without env vars');
-            return m.lookup('x').then(
-              () => { throw new Error('lookup must fail without storage config'); },
-              (e) => {
-                if (!/Kein Speicher konfiguriert/.test(e.message)) throw e;
-                console.log('storage backend selection ok');
-              }
+            const mustFail = (name, promise) => promise.then(
+              () => { throw new Error(name + ' must fail without storage config'); },
+              (e) => { if (!/Kein Speicher konfiguriert/.test(e.message)) throw e; }
             );
+            return Promise.all([
+              mustFail('lookup', m.lookup('x')),
+              mustFail('listAll', m.listAll()),
+            ]).then(() => console.log('storage backend selection ok'));
           })"
 
       # Die Rewrites in vercel.json entscheiden, ob Kurz-Links funktionieren.

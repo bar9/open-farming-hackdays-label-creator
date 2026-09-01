@@ -1,15 +1,19 @@
 // GET /s/:code -> 301 auf die hinterlegte Declarino-Adresse.
 //
 // Wird über den Rewrite in vercel.json erreicht. Ein echter 301 ohne
-// Zwischenseite ist der ganze Zweck der Übung: da.gd blendet für frische
-// Links eine Warnseite ein, tinyurl sporadisch ebenfalls.
+// Zwischenseite ist der ganze Zweck der Übung: Fremddienste blenden für
+// frische Links Warnseiten ein.
 
 import { lookup } from "./_lib.mjs";
 
+/** Erlaubte Codeform. Grosszügiger als die vergebenen 7 bis 12 Zeichen, damit
+ *  eine spätere Längenänderung alte Links nicht ungültig macht; alles andere
+ *  hält Unfug wie Pfad-Traversal aus dem Datenbankschlüssel heraus. */
+const CODE_PATTERN = /^[0-9a-zA-Z]{4,16}$/;
+
 export default async function handler(req, res) {
   const code = (req.query?.code ?? "").toString();
-  // Nur Base62: hält Unfug wie Pfad-Traversal aus dem Redis-Key heraus.
-  if (!/^[0-9a-zA-Z]{4,16}$/.test(code)) {
+  if (!CODE_PATTERN.test(code)) {
     return res.status(404).send("Unbekannter Link");
   }
 
