@@ -18,7 +18,7 @@ A web application for creating food labels compliant with Swiss food labeling la
 - Bio certification tracking with Bio Suisse logo logic
 - Shareable labels via URL query parameters
 - Multilingual: German (de-CH), French (fr-CH), Italian (it-CH)
-- No backend -- all data stays in the browser (URL params + localStorage)
+- No backend for recipe data -- it stays in the browser (URL params + localStorage). The only server-side pieces are the short-link functions in `api/` and cookieless analytics.
 
 ## Prerequisites
 
@@ -91,6 +91,7 @@ requirements/          # Architecture documentation
 | Build | Dioxus CLI (`dx`) + Cargo |
 | Task runner | GNU Make |
 | i18n | rust-i18n (YAML) |
+| Analytics | Umami Cloud (cookieless, EU) |
 | CI/CD | GitHub Actions → GitHub Pages (staging) / Vercel (production) |
 
 ## Deployment
@@ -99,6 +100,26 @@ Both workflows trigger on push to `main`:
 
 - **Staging** (`deploy.yml`): Builds all pages, deploys to `bar9.github.io/open-farming-hackdays-label-creator/`
 - **Production** (`deploy-production.yml`): Builds with `--features hidebio`, deploys to `bar9/declarino` repo → served by Vercel at declarino.ch. Also ships the short-link functions in `api/` (see `api/README.md`)
+
+## Analytics & privacy
+
+Reach is measured with [Umami](https://umami.is) Cloud (cookieless, EU-hosted).
+The snippet sits in the `<head>` of `index.html`; `data-domains` limits it to the
+production domain, so staging and local development do not skew the numbers.
+
+**`data-exclude-search="true"` is mandatory, not cosmetic.** A share link carries
+the whole recipe in the query string, including `producer_name`,
+`producer_address`, `producer_phone` and `producer_email`. Without the flag,
+opening a shared or printed short link would send those personal details to
+Umami. Filling the form is unaffected: the query string only feeds the copy-link
+button and never reaches the address bar. The CI step *Check analytics privacy
+flags* enforces this, because losing the flag would otherwise be invisible.
+
+The privacy declaration is a [PrivacyBee](https://privacybee.io) document embedded
+on `/impressum`; its language follows the UI language. PrivacyBee rescans the site
+about every six weeks and lists newly detected services on its own. **After
+changing or adding an analytics service, declare it in PrivacyBee right away**
+instead of waiting for that scan, otherwise the declaration lags behind reality.
 
 ## Architecture Docs
 
