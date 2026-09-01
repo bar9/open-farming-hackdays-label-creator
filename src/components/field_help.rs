@@ -25,7 +25,6 @@ pub fn FieldHelp(props: FieldHelpProps) -> Element {
             }
             if is_open() {
                 div {
-                    // class: "fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md",
                     dialog { open: "{is_open}", class: "modal",
                     div { class: "modal-box max-h-[80vh] flex flex-col text-left",
                         h3 { class: "font-bold text-lg text-left flex-shrink-0", dangerous_inner_html: externalize_links(&to_html_with_options(&props.label, &Options::gfm()).unwrap()) }

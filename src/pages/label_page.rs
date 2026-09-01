@@ -52,18 +52,6 @@ pub enum MonoQuality {
 }
 
 impl MonoQuality {
-    /// Whether this variant is a Knospe (incl. Umstellungsknospe) choice, which
-    /// only the Knospe configuration offers.
-    pub fn is_knospe(&self) -> bool {
-        matches!(
-            self,
-            MonoQuality::KnospeCh
-                | MonoQuality::KnospeImport
-                | MonoQuality::UmstellungKnospeCh
-                | MonoQuality::UmstellungKnospeImport
-        )
-    }
-
     /// The single ingredient a mono product implies, so the calculator can run
     /// its normal Bio/Knospe percentage math. `name` stays empty: the label
     /// prints no ingredient list in this mode, only logos and the

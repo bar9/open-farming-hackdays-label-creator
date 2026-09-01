@@ -31,6 +31,10 @@ pub fn MonoQualitySelect(mut props: MonoQualitySelectProps) -> Element {
     // Top-level category. The four Knospe variants collapse into one "knospe"
     // category whose specific logo is picked in the artwork row below, matching
     // the ingredient pane's Variante-b layout.
+    //
+    // Bewusst ein erschöpfendes `match` statt `MonoQuality::is_knospe()`: So
+    // erzwingt eine neue Variante hier eine Entscheidung, statt stillschweigend
+    // in einer Sammelkategorie zu landen.
     let category = match current {
         MonoQuality::KnospeCh
         | MonoQuality::KnospeImport

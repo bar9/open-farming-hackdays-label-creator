@@ -329,12 +329,10 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                 price.set(Price::Single(Some(cents)));
             }
         }
-        // }
     }
 
     rsx! {
         FieldGroup2 {
-            // label: t!("label.gewichtUndPreis").to_string(),
             FormField {
                 label: t!("label.mengenart").to_string(),
                 required: true,
@@ -567,7 +565,6 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             r#type: "number",
                             step: "any",
                             placeholder: "4.00",
-                            //value: display_money(props.price.read().get_value_tuple().0),
                             value: einheitsgroesse_input(),
                             oninput: move |evt| einheitsgroesse_input.set(evt.data.value()),
                             onblur: move |_evt| {set_price_single(einheitsgroesse_input(), props.price); einheitsgroesse_input.set(display_money(props.price.read().get_value_tuple().0));},
