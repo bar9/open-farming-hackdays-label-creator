@@ -99,6 +99,11 @@ jobs:
       # weg, sendet der Tracker diese Personendaten bei jedem Aufruf eines
       # geteilten oder gedruckten Kurz-Links an Umami. Das waere von aussen
       # unsichtbar, deshalb hier als harte Bedingung.
+      #
+      # Der Schritt schuetzt wirklich: Beide Deploy-Workflows haengen per
+      # workflow_run an diesem hier und laufen nur bei conclusion == 'success'.
+      # Einen manuellen Deploy-Pfad (workflow_dispatch) gibt es nicht. Schlaegt
+      # die Pruefung fehl, wird also nichts veroeffentlicht.
       - name: Check analytics privacy flags
         run: |
           node -e "
