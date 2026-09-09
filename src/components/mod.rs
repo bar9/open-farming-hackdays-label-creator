@@ -15,6 +15,7 @@ pub use knospe_variant_picker::{
     knospe_variant_key, variant_is_umstellung, variant_origins, KnospeVariantPicker,
 };
 pub use label_preview::LabelPreview;
+pub use language_select::LanguageSelect;
 pub use link_share_modal::LinkShareModal;
 pub use mono_quality_select::MonoQualitySelect;
 pub use multi_country_select::MultiCountrySelect;
@@ -45,6 +46,7 @@ mod ingredients_table;
 mod internal_note_mark;
 mod knospe_variant_picker;
 mod label_preview;
+mod language_select;
 mod link_share_modal;
 mod mono_quality_select;
 mod multi_country_select;

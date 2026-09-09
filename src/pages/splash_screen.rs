@@ -1,4 +1,5 @@
 use crate::built_info;
+use crate::components::LanguageSelect;
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -96,80 +97,7 @@ pub fn SplashScreen() -> Element {
                                 { rsx! { {t!("app.title").to_string()} } }
                             }
                         }
-                        div {
-                            class: "dropdown dropdown-end",
-                            div {
-                                tabindex: "0",
-                                role: "button",
-                                class: "btn btn-ghost btn-sm",
-                                {match rust_i18n::locale().as_ref() {
-                                    "fr-CH" => t!("languages.fr").to_string(),
-                                    "it-CH" => t!("languages.it").to_string(),
-                                    _ => t!("languages.de").to_string(),
-                                }}
-                                svg {
-                                    class: "w-4 h-4 ml-1",
-                                    fill: "none",
-                                    stroke: "currentColor",
-                                    view_box: "0 0 24 24",
-                                    path {
-                                        stroke_linecap: "round",
-                                        stroke_linejoin: "round",
-                                        stroke_width: "2",
-                                        d: "M19 9l-7 7-7-7"
-                                    }
-                                }
-                            }
-                            ul {
-                                tabindex: "0",
-                                class: "dropdown-content menu bg-base-100 rounded-box z-[1] w-20 p-2 shadow-lg",
-                                li {
-                                    button {
-                                        class: "btn btn-ghost btn-sm justify-start",
-                                        onclick: move |_| {
-                                            rust_i18n::set_locale("de-CH");
-                                            if let Some(window) = web_sys::window() {
-                                                if let Ok(Some(storage)) = window.local_storage() {
-                                                    let _ = storage.set_item("locale", "de-CH");
-                                                }
-                                                let _ = window.location().reload();
-                                            }
-                                        },
-                                        {t!("languages.de").to_string()}
-                                    }
-                                }
-                                li {
-                                    button {
-                                        class: "btn btn-ghost btn-sm justify-start",
-                                        onclick: move |_| {
-                                            rust_i18n::set_locale("fr-CH");
-                                            if let Some(window) = web_sys::window() {
-                                                if let Ok(Some(storage)) = window.local_storage() {
-                                                    let _ = storage.set_item("locale", "fr-CH");
-                                                }
-                                                let _ = window.location().reload();
-                                            }
-                                        },
-                                        {t!("languages.fr").to_string()}
-                                    }
-                                }
-                                li {
-                                    button {
-                                        class: "btn btn-ghost btn-sm justify-start",
-                                        onclick: move |_| {
-                                            rust_i18n::set_locale("it-CH");
-                                            if let Some(window) = web_sys::window() {
-                                                if let Ok(Some(storage)) = window.local_storage() {
-                                                    let _ = storage.set_item("locale", "it-CH");
-                                                }
-                                                let _ = window.location().reload();
-                                            }
-                                        },
-                                        {t!("languages.it").to_string()}
-                                    }
-                                }
-                            }
-                        }
+                        LanguageSelect {}
                     }
                 }
                 div {
