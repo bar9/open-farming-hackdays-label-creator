@@ -866,6 +866,78 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // Focus trigger signal (use provided or create a dummy)
     let focus_signal = props.focus_trigger.unwrap_or_else(|| use_signal(|| false));
 
+    // The Menge field: number input plus the g/ml unit select. The composite
+    // branch shows it when the children carry no weights (parent supplies the
+    // total top-down), the leaf branch always. Same markup either way, so it
+    // lives in one closure.
+    //
+    // `with_scaling_hint` adds the "Rezept mitskalieren?" note the leaf branch
+    // shows below the input. It sits INSIDE the FormField, so it must be part of
+    // this closure rather than appended at the call site: the field wraps its
+    // children in a `flex-col gap-2` div, and moving the note out of that div
+    // would change its spacing.
+    let amount_field = move |with_scaling_hint: bool| {
+        rsx! {
+            FormField {
+                label: {
+                    let n = edit_name();
+                    if n.trim().is_empty() {
+                        format!("{} (g)", t!("label.menge"))
+                    } else {
+                        format!("{} {} (g)", t!("label.menge"), n.trim())
+                    }
+                },
+                help: Some(t!("help.menge").to_string()),
+                ValidationDisplay {
+                    paths: vec![
+                        format!("ingredients[{}][amount]", validation_index)
+                    ],
+                    div { class: "flex gap-2",
+                        input {
+                            r#type: "number",
+                            placeholder: t!("placeholders.amount_in_grams").to_string(),
+                            class: "input input-bordered flex-1",
+                            min: "0",
+                            step: "any",
+                            oninput: move |evt| {
+                                let value = evt.data.value();
+                                if value.is_empty() {
+                                    edit_amount.set(None);
+                                } else if let Ok(amount) = value.parse::<f64>() {
+                                    edit_amount.set(Some(amount));
+                                }
+                            },
+                            value: edit_amount().map_or(String::new(), |v| v.to_string()),
+                        }
+                        select {
+                            class: "select select-accent w-20",
+                            value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
+                            onchange: move |evt| {
+                                let value = evt.data.value();
+                                if value == "ml" {
+                                    edit_unit.set(AmountUnit::Milliliter);
+                                } else {
+                                    edit_unit.set(AmountUnit::Gram);
+                                }
+                            },
+                            option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
+                            option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
+                        }
+                    }
+                }
+                if with_scaling_hint && props.depth == 0 && !props.is_genesis && amount_has_changed() {
+                    div { class: "text-sm text-info mt-2",
+                        if let Some(amt) = edit_amount() {
+                            {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_amount().to_string(), after = amt.to_string()).to_string()}
+                        } else {
+                            {t!("messages.please_enter_amount").to_string()}
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     // Herkunft field for leaf ingredients. Rendered in one of two spots — directly
     // under the Knospe variant cards (Knospe quality, Testing 25.06.2026) or at the
     // classic position further down — so it lives in a closure; exactly one call
@@ -1129,54 +1201,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                 // total is their (read-only) sum shown in the summary below.
                 if !composite_has_weighted_child() {
                     br {}
-                    FormField {
-                        label: {
-                            let n = edit_name();
-                            if n.trim().is_empty() {
-                                format!("{} (g)", t!("label.menge"))
-                            } else {
-                                format!("{} {} (g)", t!("label.menge"), n.trim())
-                            }
-                        },
-                        help: Some(t!("help.menge").to_string()),
-                        ValidationDisplay {
-                            paths: vec![
-                                format!("ingredients[{}][amount]", validation_index)
-                            ],
-                            div { class: "flex gap-2",
-                                input {
-                                    r#type: "number",
-                                    placeholder: t!("placeholders.amount_in_grams").to_string(),
-                                    class: "input input-bordered flex-1",
-                                    min: "0",
-                                    step: "any",
-                                    oninput: move |evt| {
-                                        let value = evt.data.value();
-                                        if value.is_empty() {
-                                            edit_amount.set(None);
-                                        } else if let Ok(amount) = value.parse::<f64>() {
-                                            edit_amount.set(Some(amount));
-                                        }
-                                    },
-                                    value: edit_amount().map_or(String::new(), |v| v.to_string()),
-                                }
-                                select {
-                                    class: "select select-accent w-20",
-                                    value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
-                                    onchange: move |evt| {
-                                        let value = evt.data.value();
-                                        if value == "ml" {
-                                            edit_unit.set(AmountUnit::Milliliter);
-                                        } else {
-                                            edit_unit.set(AmountUnit::Gram);
-                                        }
-                                    },
-                                    option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
-                                    option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
-                                }
-                            }
-                        }
-                    }
+                    {amount_field(false)}
                 } else {
                     // Weighted children: the composite weight is their (read-only) sum.
                     // Greyed, with go-to / clear-weight on each weighted sub-ingredient.
@@ -1431,63 +1456,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             } else {
                 // === LEAF MODE: editable form fields ===
                 br {}
-                FormField {
-                    label: {
-                        let n = edit_name();
-                        if n.trim().is_empty() {
-                            format!("{} (g)", t!("label.menge"))
-                        } else {
-                            format!("{} {} (g)", t!("label.menge"), n.trim())
-                        }
-                    },
-                    help: Some(t!("help.menge").to_string()),
-                    ValidationDisplay {
-                        paths: vec![
-                            format!("ingredients[{}][amount]", validation_index)
-                        ],
-                        div { class: "flex gap-2",
-                            input {
-                                r#type: "number",
-                                placeholder: t!("placeholders.amount_in_grams").to_string(),
-                                class: "input input-bordered flex-1",
-                                min: "0",
-                                step: "any",
-                                oninput: move |evt| {
-                                    let value = evt.data.value();
-                                    if value.is_empty() {
-                                        edit_amount.set(None);
-                                    } else if let Ok(amount) = value.parse::<f64>() {
-                                        edit_amount.set(Some(amount));
-                                    }
-                                },
-                                value: edit_amount().map_or(String::new(), |v| v.to_string()),
-                            }
-                            select {
-                                class: "select select-accent w-20",
-                                value: if edit_unit() == AmountUnit::Gram { "g" } else { "ml" },
-                                onchange: move |evt| {
-                                    let value = evt.data.value();
-                                    if value == "ml" {
-                                        edit_unit.set(AmountUnit::Milliliter);
-                                    } else {
-                                        edit_unit.set(AmountUnit::Gram);
-                                    }
-                                },
-                                option { value: "g", selected: edit_unit() == AmountUnit::Gram, {t!("units.g").to_string()} }
-                                option { value: "ml", selected: edit_unit() == AmountUnit::Milliliter, {t!("units.ml").to_string()} }
-                            }
-                        }
-                    }
-                    if props.depth == 0 && !props.is_genesis && amount_has_changed() {
-                        div { class: "text-sm text-info mt-2",
-                            if let Some(amt) = edit_amount() {
-                                {t!("messages.scaling_factor", factor = format!("{:.2}", scaling_factor()), before = original_amount().to_string(), after = amt.to_string()).to_string()}
-                            } else {
-                                {t!("messages.please_enter_amount").to_string()}
-                            }
-                        }
-                    }
-                }
+                {amount_field(true)}
 
                 br {}
 
