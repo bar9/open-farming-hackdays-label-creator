@@ -449,10 +449,7 @@ fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
     agricultural_share(
         ingredients,
         |_| true,
-        |i| {
-            i.computed_origins()
-                .is_some_and(|o| o.contains(&Country::CH))
-        },
+        |i| i.has_swiss_origin(),
         0.0,
     )
 }
@@ -463,10 +460,7 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f6
     agricultural_share(
         ingredients,
         |i| i.computed_bio_status().unwrap_or(false),
-        |i| {
-            i.computed_origins()
-                .is_some_and(|o| o.contains(&Country::CH))
-        },
+        |i| i.has_swiss_origin(),
         0.0,
     )
 }
@@ -1367,6 +1361,14 @@ impl Ingredient {
         } else {
             self.origins.clone()
         }
+    }
+
+    /// Is Switzerland among the effective origins? The Knospe variant, the "(CH)"
+    /// suffix and the Swiss-share calculations all hinge on exactly this question,
+    /// so they ask it in one place.
+    pub fn has_swiss_origin(&self) -> bool {
+        self.computed_origins()
+            .is_some_and(|o| o.contains(&Country::CH))
     }
 
     /// Any node in this subtree marked with the Import-(Umstellungs-)Knospe —
@@ -2468,9 +2470,7 @@ fn format_origin_for_knospe_rules(
     } else if has_knospe_90_99_rule {
         // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
         if ingredient.is_agricultural()
-            && ingredient
-                .computed_origins()
-                .is_some_and(|o| o.contains(&Country::CH))
+            && ingredient.has_swiss_origin()
         {
             Some("(CH)".to_string())
         } else {
@@ -2614,9 +2614,7 @@ fn should_show_origin_knospe_under90(
 
     // Swiss agricultural ingredients with >=10% share (regardless of category)
     if ingredient.is_agricultural()
-        && ingredient
-            .computed_origins()
-            .is_some_and(|o| o.contains(&Country::CH))
+        && ingredient.has_swiss_origin()
         && percentage >= 10.0
     {
         return true;
@@ -2859,9 +2857,7 @@ fn validate_knospe_under90_origin(
                 {
                     t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
                 } else if ingredient.is_agricultural()
-                    && ingredient
-                        .computed_origins()
-                        .is_some_and(|o| o.contains(&Country::CH))
+                    && ingredient.has_swiss_origin()
                     && percentage >= 10.0
                 {
                     t!("validation.knospe_over_10_percent_origin_required").to_string()
