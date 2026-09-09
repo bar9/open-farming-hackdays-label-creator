@@ -938,6 +938,43 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
         }
     };
 
+    // "Andere" (non-organic) branch: the Annex-3 exception checkbox plus its
+    // internal note. Identical in the Knospe and the Bio-V leaf form, so it is
+    // written once.
+    let erlaubte_ausnahme_bio_field = move || {
+        rsx! {
+            div { class: "border-t border-base-300 pt-2 mt-2",
+                FormField {
+                    help: Some(t!("help.erlaubte_ausnahme_bio").to_string()),
+                    label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
+                    inline_checkbox: true,
+                    input {
+                        r#type: "checkbox",
+                        class: "checkbox checkbox-accent",
+                        checked: edit_erlaubte_ausnahme_bio(),
+                        onchange: move |evt| {
+                            edit_erlaubte_ausnahme_bio.set(evt.data.value() == "true");
+                        }
+                    }
+                }
+                if edit_erlaubte_ausnahme_bio() {
+                    div { class: "flex justify-end mt-2",
+                        InternalNoteMark {}
+                    }
+                    textarea {
+                        class: "textarea textarea-bordered w-full",
+                        placeholder: t!("bio_labels.erlaubte_ausnahme_details_placeholder").to_string(),
+                        rows: 2,
+                        value: "{edit_erlaubte_ausnahme_bio_details}",
+                        oninput: move |evt| {
+                            edit_erlaubte_ausnahme_bio_details.set(evt.data.value());
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     // Herkunft field for leaf ingredients. Rendered in one of two spots — directly
     // under the Knospe variant cards (Knospe quality, Testing 25.06.2026) or at the
     // classic position further down — so it lives in a closure; exactly one call
@@ -1663,35 +1700,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                 }
                             } else if bio_cat == "andere" {
                                 br {}
-                                div { class: "border-t border-base-300 pt-2 mt-2",
-                                    FormField {
-                                        help: Some(t!("help.erlaubte_ausnahme_bio").to_string()),
-                                        label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
-                                        inline_checkbox: true,
-                                        input {
-                                            r#type: "checkbox",
-                                            class: "checkbox checkbox-accent",
-                                            checked: edit_erlaubte_ausnahme_bio(),
-                                            onchange: move |evt| {
-                                                edit_erlaubte_ausnahme_bio.set(evt.data.value() == "true");
-                                            }
-                                        }
-                                    }
-                                    if edit_erlaubte_ausnahme_bio() {
-                                        div { class: "flex justify-end mt-2",
-                                            InternalNoteMark {}
-                                        }
-                                        textarea {
-                                            class: "textarea textarea-bordered w-full",
-                                            placeholder: t!("bio_labels.erlaubte_ausnahme_details_placeholder").to_string(),
-                                            rows: 2,
-                                            value: "{edit_erlaubte_ausnahme_bio_details}",
-                                            oninput: move |evt| {
-                                                edit_erlaubte_ausnahme_bio_details.set(evt.data.value());
-                                            }
-                                        }
-                                    }
-                                }
+                                {erlaubte_ausnahme_bio_field()}
                             }
                         }
                     } else {
@@ -1787,35 +1796,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                 }
                             } else if bio_cat == "andere" {
                                 br {}
-                                div { class: "border-t border-base-300 pt-2 mt-2",
-                                    FormField {
-                                        help: Some(t!("help.erlaubte_ausnahme_bio").to_string()),
-                                        label: t!("bio_labels.erlaubte_ausnahme_bio").to_string(),
-                                        inline_checkbox: true,
-                                        input {
-                                            r#type: "checkbox",
-                                            class: "checkbox checkbox-accent",
-                                            checked: edit_erlaubte_ausnahme_bio(),
-                                            onchange: move |evt| {
-                                                edit_erlaubte_ausnahme_bio.set(evt.data.value() == "true");
-                                            }
-                                        }
-                                    }
-                                    if edit_erlaubte_ausnahme_bio() {
-                                        div { class: "flex justify-end mt-2",
-                                            InternalNoteMark {}
-                                        }
-                                        textarea {
-                                            class: "textarea textarea-bordered w-full",
-                                            placeholder: t!("bio_labels.erlaubte_ausnahme_details_placeholder").to_string(),
-                                            rows: 2,
-                                            value: "{edit_erlaubte_ausnahme_bio_details}",
-                                            oninput: move |evt| {
-                                                edit_erlaubte_ausnahme_bio_details.set(evt.data.value());
-                                            }
-                                        }
-                                    }
-                                }
+                                {erlaubte_ausnahme_bio_field()}
                             }
                         }
                     }
