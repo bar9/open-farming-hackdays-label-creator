@@ -1,6 +1,5 @@
-use crate::built_info;
 use crate::components::icons;
-use crate::components::{LanguageSelect, LinkShareModal, SavedIngredientsManager};
+use crate::components::{LanguageSelect, LinkShareModal, SavedIngredientsManager, SiteFooter};
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -286,45 +285,7 @@ pub fn SplitLayout() -> Element {
                 class: "grid grid-cols-1 md:grid-cols-2 flex-1 min-h-0",
                 Outlet::<Route> {}
             }
-            footer {
-                class: "bg-base-200 p-4 text-center text-sm mt-auto border-t border-base-300",
-                div {
-                    class: "flex justify-center items-center gap-4",
-                    span {
-                        {t!("version.version").to_string()} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from").to_string()} " " {
-                            // Convert UTC time string to a more readable format
-                            let build_time = built_info::BUILT_TIME_UTC;
-                            // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
-                            if let Ok(datetime) = chrono::DateTime::parse_from_rfc2822(build_time) {
-                                format!("{}", datetime.format("%d.%m.%Y"))
-                            } else {
-                                build_time.to_string()
-                            }
-                        }
-                    }
-                    Link {
-                        to: Route::Faq {},
-                        class: "link link-blue hover:link-primary",
-                        {t!("app.faq").to_string()}
-                    }
-                    Link {
-                        to: Route::Support {},
-                        class: "link link-blue hover:link-primary",
-                        {t!("app.support").to_string()}
-                    }
-                    Link {
-                        to: Route::Impressum {},
-                        class: "link link-blue hover:link-primary",
-                        {t!("app.impressum").to_string()}
-                    }
-                    a {
-                        class: "link link-blue hover:link-primary",
-                        href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                        target: "_blank",
-                        {t!("app.release_notes").to_string()}
-                    }
-                }
-            }
+            SiteFooter { class: "mt-auto" }
         }
 
         // Link share modal

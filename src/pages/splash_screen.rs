@@ -1,5 +1,4 @@
-use crate::built_info;
-use crate::components::LanguageSelect;
+use crate::components::{LanguageSelect, SiteFooter};
 use crate::routes::Route;
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -361,45 +360,7 @@ pub fn SplashScreen() -> Element {
                     } }
                 }
 
-                footer {
-                    class: "flex-none bg-base-200 p-4 text-center text-sm border-t border-base-300",
-                    div {
-                        class: "flex justify-center items-center gap-4",
-                        span {
-                            {t!("version.version").to_string()} " " {env!("CARGO_PKG_VERSION")} " " {t!("version.from").to_string()} " " {
-                                // Convert UTC time string to a more readable format
-                                let build_time = built_info::BUILT_TIME_UTC;
-                                // Parse the RFC 2822 formatted string and format it as dd.mm.yyyy
-                                if let Ok(datetime) = chrono::DateTime::parse_from_rfc2822(build_time) {
-                                    format!("{}", datetime.format("%d.%m.%Y"))
-                                } else {
-                                    build_time.to_string()
-                                }
-                            }
-                        }
-                        Link {
-                            to: Route::Faq {},
-                            class: "link link-blue hover:link-primary",
-                            {t!("app.faq").to_string()}
-                        }
-                        Link {
-                            to: Route::Support {},
-                            class: "link link-blue hover:link-primary",
-                            {t!("app.support").to_string()}
-                        }
-                        Link {
-                            to: Route::Impressum {},
-                            class: "link link-blue hover:link-primary",
-                            {t!("app.impressum").to_string()}
-                        }
-                        a {
-                            class: "link link-blue hover:link-primary",
-                            href: "https://github.com/bar9/open-farming-hackdays-label-creator/wiki/Release-notes",
-                            target: "_blank",
-                            {t!("app.release_notes").to_string()}
-                        }
-                    }
-                }
+                SiteFooter { class: "flex-none" }
             }
         }
 }
