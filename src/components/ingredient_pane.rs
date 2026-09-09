@@ -1253,13 +1253,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                         edit_is_bio.set(true);
                         edit_bio_ch.set(false);
                         edit_nicht_landwirtschaftlich.set(false);
-                        edit_aus_umstellbetrieb.set(matches!(variant, "umstellung_ch" | "umstellung_import"));
-                        if matches!(variant, "knospe_ch" | "umstellung_ch") {
-                            edit_origins.set(Some(vec![Country::CH]));
-                        } else {
-                            let keep = edit_origins().filter(|o| !o.is_empty() && !o.contains(&Country::CH));
-                            edit_origins.set(keep.or(Some(vec![Country::Import])));
-                        }
+                        edit_aus_umstellbetrieb.set(variant_is_umstellung(variant));
+                        let origins = variant_origins(variant, edit_origins());
+                        edit_origins.set(origins);
                     };
                     let cur = if edit_is_bio() { "knospe" } else if edit_bio_ch() { "bio" }
                         else if edit_nicht_landwirtschaftlich() { "nicht_lw" } else { "andere" };
@@ -1347,45 +1343,15 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                                                         }
                                                     } else {
                                                         let origins_have_ch = edit_origins().as_ref().is_some_and(|o| o.contains(&Country::CH));
-                                                        let comp_variant = match (origins_have_ch, edit_aus_umstellbetrieb()) {
-                                                            (true, false) => "knospe_ch",
-                                                            (false, false) => "knospe_import",
-                                                            (true, true) => "umstellung_ch",
-                                                            (false, true) => "umstellung_import",
-                                                        };
+                                                        let comp_variant = knospe_variant_key(
+                                                            origins_have_ch,
+                                                            edit_aus_umstellbetrieb(),
+                                                        );
                                                         rsx! {
-                                                            div { class: "grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2",
-                                                                for (key, label) in [
-                                                                    ("knospe_ch", t!("bio_labels.knospe_ch").to_string()),
-                                                                    ("knospe_import", t!("bio_labels.knospe_import").to_string()),
-                                                                    ("umstellung_ch", t!("bio_labels.umstellung_ch").to_string()),
-                                                                    ("umstellung_import", t!("bio_labels.umstellung_import").to_string()),
-                                                                ].into_iter() {
-                                                                    {
-                                                                        let selected = comp_variant == key;
-                                                                        let umstellung = key.starts_with("umstellung");
-                                                                        let ch = key.ends_with("_ch");
-                                                                        rsx! {
-                                                                            button {
-                                                                                r#type: "button",
-                                                                                class: if selected { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-primary bg-primary/5" } else { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-base-300 hover:border-base-content/30" },
-                                                                                onclick: move |_| { set_comp_knospe_variant(key); },
-                                                                                div { class: "h-16 flex items-center",
-                                                                                    if umstellung && ch {
-                                                                                        crate::components::icons::UmstellungsknospeRegular {}
-                                                                                    } else if umstellung {
-                                                                                        crate::components::icons::UmstellungsknospeNoCross {}
-                                                                                    } else if ch {
-                                                                                        crate::components::icons::BioSuisseRegular {}
-                                                                                    } else {
-                                                                                        crate::components::icons::BioSuisseNoCross {}
-                                                                                    }
-                                                                                }
-                                                                                span { class: "text-xs text-center leading-tight font-medium", "{label}" }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
+                                                            KnospeVariantPicker {
+                                                                selected: comp_variant.to_string(),
+                                                                grid_class: "mt-2",
+                                                                on_select: move |key| { set_comp_knospe_variant(key); },
                                                             }
                                                         }
                                                     }
@@ -1573,12 +1539,8 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             else { "andere" };
 
                         // Which Knospe logo is active, derived from origin + Umstellbetrieb.
-                        let knospe_variant = match (origins_have_ch, edit_aus_umstellbetrieb()) {
-                            (true, false) => "knospe_ch",
-                            (false, false) => "knospe_import",
-                            (true, true) => "umstellung_ch",
-                            (false, true) => "umstellung_import",
-                        };
+                        let knospe_variant =
+                            knospe_variant_key(origins_have_ch, edit_aus_umstellbetrieb());
 
                         let mut set_bio_cat = move |cat: &str| {
                             edit_is_bio.set(cat == "knospe");
@@ -1603,13 +1565,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             edit_is_bio.set(true);
                             edit_bio_ch.set(false);
                             edit_nicht_landwirtschaftlich.set(false);
-                            edit_aus_umstellbetrieb.set(matches!(variant, "umstellung_ch" | "umstellung_import"));
-                            if matches!(variant, "knospe_ch" | "umstellung_ch") {
-                                edit_origins.set(Some(vec![Country::CH]));
-                            } else {
-                                let keep = edit_origins().filter(|o| !o.is_empty() && !o.contains(&Country::CH));
-                                edit_origins.set(keep.or(Some(vec![Country::Import])));
-                            }
+                            edit_aus_umstellbetrieb.set(variant_is_umstellung(variant));
+                            let origins = variant_origins(variant, edit_origins());
+                            edit_origins.set(origins);
                         };
 
                         rsx! {
@@ -1681,38 +1639,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             if bio_cat == "knospe" {
                                 br {}
                                 div { class: "border-t border-base-300 pt-2 mt-2",
-                                    div { class: "grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3",
-                                        for (key, label) in [
-                                            ("knospe_ch", t!("bio_labels.knospe_ch").to_string()),
-                                            ("knospe_import", t!("bio_labels.knospe_import").to_string()),
-                                            ("umstellung_ch", t!("bio_labels.umstellung_ch").to_string()),
-                                            ("umstellung_import", t!("bio_labels.umstellung_import").to_string()),
-                                        ].into_iter() {
-                                            {
-                                                let selected = knospe_variant == key;
-                                                let umstellung = key.starts_with("umstellung");
-                                                let ch = key.ends_with("_ch");
-                                                rsx! {
-                                                    button {
-                                                        r#type: "button",
-                                                        class: if selected { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-primary bg-primary/5" } else { "flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-base-300 hover:border-base-content/30" },
-                                                        onclick: move |_| { set_knospe_variant(key); },
-                                                        div { class: "h-16 flex items-center",
-                                                            if umstellung && ch {
-                                                                crate::components::icons::UmstellungsknospeRegular {}
-                                                            } else if umstellung {
-                                                                crate::components::icons::UmstellungsknospeNoCross {}
-                                                            } else if ch {
-                                                                crate::components::icons::BioSuisseRegular {}
-                                                            } else {
-                                                                crate::components::icons::BioSuisseNoCross {}
-                                                            }
-                                                        }
-                                                        span { class: "text-xs text-center leading-tight font-medium", "{label}" }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    KnospeVariantPicker {
+                                        selected: knospe_variant.to_string(),
+                                        grid_class: "mb-3",
+                                        on_select: move |key| { set_knospe_variant(key); },
                                     }
                                     {wildsammlung_field()}
                                     {leaf_origin_field()}

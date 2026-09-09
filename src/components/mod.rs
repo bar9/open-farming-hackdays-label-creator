@@ -11,6 +11,9 @@ pub use form_field::FormField;
 pub use impressum::Impressum;
 pub use ingredients_table::IngredientsTable;
 pub use internal_note_mark::InternalNoteMark;
+pub use knospe_variant_picker::{
+    knospe_variant_key, variant_is_umstellung, variant_origins, KnospeVariantPicker,
+};
 pub use label_preview::LabelPreview;
 pub use link_share_modal::LinkShareModal;
 pub use mono_quality_select::MonoQualitySelect;
@@ -40,6 +43,7 @@ pub mod ingredient_pane;
 pub mod ingredient_path;
 mod ingredients_table;
 mod internal_note_mark;
+mod knospe_variant_picker;
 mod label_preview;
 mod link_share_modal;
 mod mono_quality_select;
