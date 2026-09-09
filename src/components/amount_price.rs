@@ -14,6 +14,29 @@ pub enum AmountType {
     Volume,
 }
 
+/// Reference quantity the unit price is stated for: per 100 g/ml for the small
+/// units, per 1 kg/l for the large ones. Three components derive this, so the
+/// table lives in one place.
+pub fn base_factor(amount_type: &AmountType, weight_unit: &str, volume_unit: &str) -> usize {
+    match (amount_type, weight_unit, volume_unit) {
+        (AmountType::Weight, "mg", _) => 100,
+        (AmountType::Weight, "g", _) => 100,
+        (AmountType::Weight, "kg", _) => 1,
+        (AmountType::Volume, _, "ml") => 100,
+        (AmountType::Volume, _, "cl") => 100,
+        (AmountType::Volume, _, "l") => 1,
+        (_, _, _) => 1,
+    }
+}
+
+/// The unit that goes with the amount: the weight unit or the volume one.
+pub fn display_unit(amount_type: &AmountType, weight_unit: &str, volume_unit: &str) -> String {
+    match amount_type {
+        AmountType::Weight => weight_unit.to_string(),
+        AmountType::Volume => volume_unit.to_string(),
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum Amount {
     Single(Option<usize>),
@@ -102,19 +125,11 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
     });
 
     let get_base_factor = use_memo(move || {
-        match (
-            &*amount_type.read(),
+        base_factor(
+            &amount_type.read(),
             weight_unit.read().as_str(),
             volume_unit.read().as_str(),
-        ) {
-            (AmountType::Weight, "mg", _) => 100_usize,
-            (AmountType::Weight, "g", _) => 100_usize,
-            (AmountType::Weight, "kg", _) => 1_usize,
-            (AmountType::Volume, _, "ml") => 100_usize,
-            (AmountType::Volume, _, "cl") => 100_usize,
-            (AmountType::Volume, _, "l") => 1_usize,
-            (_, _, _) => 1_usize,
-        }
+        )
     });
 
     let calculated_amount = use_memo(move || match price() {
@@ -166,14 +181,11 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
     });
 
     let get_unit = use_memo(move || {
-        match (
-            &*amount_type.read(),
-            &*weight_unit.read(),
-            &*volume_unit.read(),
-        ) {
-            (AmountType::Weight, unit, _) => unit.clone(),
-            (AmountType::Volume, _, unit) => unit.clone(),
-        }
+        display_unit(
+            &amount_type.read(),
+            weight_unit.read().as_str(),
+            volume_unit.read().as_str(),
+        )
     });
 
     let get_base_factor_and_unit = use_memo(move || match get_base_factor() {
@@ -621,5 +633,36 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The unit price is stated per 100 g/ml for the small units and per 1 kg/l
+    // for the large ones. Getting this wrong misprices the label, and the table
+    // is now shared by three components, so it is pinned here.
+    #[test]
+    fn base_factor_is_100_for_small_units_and_1_for_large_ones() {
+        assert_eq!(base_factor(&AmountType::Weight, "mg", "ml"), 100);
+        assert_eq!(base_factor(&AmountType::Weight, "g", "ml"), 100);
+        assert_eq!(base_factor(&AmountType::Weight, "kg", "ml"), 1);
+        assert_eq!(base_factor(&AmountType::Volume, "g", "ml"), 100);
+        assert_eq!(base_factor(&AmountType::Volume, "g", "cl"), 100);
+        assert_eq!(base_factor(&AmountType::Volume, "g", "l"), 1);
+    }
+
+    // An unknown unit must not silently scale the price by 100.
+    #[test]
+    fn base_factor_falls_back_to_1_for_unknown_units() {
+        assert_eq!(base_factor(&AmountType::Weight, "stk", "ml"), 1);
+        assert_eq!(base_factor(&AmountType::Volume, "g", "dl"), 1);
+    }
+
+    #[test]
+    fn display_unit_follows_the_amount_type() {
+        assert_eq!(display_unit(&AmountType::Weight, "kg", "l"), "kg");
+        assert_eq!(display_unit(&AmountType::Volume, "kg", "l"), "l");
     }
 }

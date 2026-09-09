@@ -414,19 +414,11 @@ pub fn LabelPage(configuration: Configuration) -> Element {
 
     // Calculate derived values for amount and price
     let get_base_factor = use_memo(move || {
-        match (
-            &*amount_type.read(),
+        base_factor(
+            &amount_type.read(),
             weight_unit.read().as_str(),
             volume_unit.read().as_str(),
-        ) {
-            (AmountType::Weight, "mg", _) => 100_usize,
-            (AmountType::Weight, "g", _) => 100_usize,
-            (AmountType::Weight, "kg", _) => 1_usize,
-            (AmountType::Volume, _, "ml") => 100_usize,
-            (AmountType::Volume, _, "cl") => 100_usize,
-            (AmountType::Volume, _, "l") => 1_usize,
-            (_, _, _) => 1_usize,
-        }
+        )
     });
 
     let calculated_amount = use_memo(move || match price() {
