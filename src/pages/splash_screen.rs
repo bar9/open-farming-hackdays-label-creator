@@ -61,6 +61,28 @@ const OFH_LOGO_SVG: &str = r##"<svg class="h-10 md:h-12 w-auto" xmlns="http://ww
 pub fn SplashScreen() -> Element {
     let nav = use_navigator();
 
+    // Status badge on the Bio and Knospe cards. In the hidebio build both
+    // regimes are hidden behind "Coming Soon"; otherwise they are marked as in
+    // development. Same badge on both cards, so it is written once.
+    let status_badge = || {
+        rsx! {
+            div {
+                class: if cfg!(feature = "hidebio") {
+                    "badge badge-secondary text-xs px-2 py-1"
+                } else {
+                    "badge badge-warning text-xs px-2 py-1"
+                },
+                {
+                    if cfg!(feature = "hidebio") {
+                        "Coming Soon".to_string()
+                    } else {
+                        t!("badges.in_development").to_string()
+                    }
+                }
+            }
+        }
+    };
+
     // Animated Trägerschaft/Unterstützt-durch ribbon (non-hidebio build only).
     // `logos_visible` drives per-logo opacity; combined with per-logo
     // transition-delay this yields the staggered "logo by logo" fade in both
@@ -191,20 +213,7 @@ pub fn SplashScreen() -> Element {
                                     span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
                                     span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                                 }
-                                div {
-                                    class: if cfg!(feature = "hidebio") {
-                                        "badge badge-secondary text-xs px-2 py-1"
-                                    } else {
-                                        "badge badge-warning text-xs px-2 py-1"
-                                    },
-    {
-                                        if cfg!(feature = "hidebio") {
-                                            "Coming Soon".to_string()
-                                        } else {
-                                            t!("badges.in_development").to_string()
-                                        }
-                                    }
-                                }
+                                {status_badge()}
                             }
                         }
 
@@ -266,20 +275,7 @@ pub fn SplashScreen() -> Element {
                                         }
                                     }
                                 }
-                                div {
-                                    class: if cfg!(feature = "hidebio") {
-                                        "badge badge-secondary text-xs px-2 py-1"
-                                    } else {
-                                        "badge badge-warning text-xs px-2 py-1"
-                                    },
-    {
-                                        if cfg!(feature = "hidebio") {
-                                            "Coming Soon".to_string()
-                                        } else {
-                                            t!("badges.in_development").to_string()
-                                        }
-                                    }
-                                }
+                                {status_badge()}
                             }
                         }
                         }
