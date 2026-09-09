@@ -35,10 +35,15 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
     let url_for_shorten = url.clone();
 
     // Was im Eingabefeld steht und kopiert wird.
+    //
+    // Solange der Kurz-Link noch unterwegs ist, steht der volle Link im Feld,
+    // statt gar keines zu zeigen. Vorher war das Modal in dieser Zeitspanne
+    // (und dauerhaft, wenn der Dienst das Ziel ablehnt, etwa bei localhost)
+    // ohne jedes kopierbare Feld: der Nutzer wollte teilen und stand vor einem
+    // Kasten ohne Link. Sobald der Kurz-Link da ist, ersetzt er ihn.
     let displayed_url = move || match link_type() {
         LinkType::Full => Some(full_url()),
-        // Solange gekürzt wird, gibt es noch nichts anzuzeigen.
-        LinkType::Short => short_url(),
+        LinkType::Short => short_url().or_else(|| Some(full_url())),
     };
 
     let start_shortening = move || {

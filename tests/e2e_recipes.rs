@@ -11,6 +11,7 @@
 
 mod common;
 
+use common::recipes::Config;
 use common::*;
 use fantoccini::Locator;
 use std::time::Duration;
@@ -456,7 +457,10 @@ async fn switch_bio_to_knospe_with_data() {
 #[tokio::test]
 async fn link_copy_modal_opens() {
     let c = connect().await;
-    goto(&c, "lebensmittelrecht").await;
+    // Der Teilen-Knopf ist gesperrt, solange der Haftungshinweis nicht
+    // bestätigt ist, und sein Klick-Handler kehrt still zurück. Mit blossem
+    // `goto` öffnete sich das Modal nie und der Test las ein leeres Feld.
+    goto_config(&c, Config::Lebensmittelrecht).await;
 
     set_product_title(&c, "ShareTest").await;
     add_simple_ingredient(&c, "Mehl", 100).await;
@@ -481,7 +485,7 @@ async fn link_copy_modal_opens() {
 #[tokio::test]
 async fn link_copy_and_reuse() {
     let c1 = connect().await;
-    goto(&c1, "lebensmittelrecht").await;
+    goto_config(&c1, Config::Lebensmittelrecht).await;
     set_product_title(&c1, "RoundtripTest").await;
     add_simple_ingredient(&c1, "Mehl", 100).await;
 
