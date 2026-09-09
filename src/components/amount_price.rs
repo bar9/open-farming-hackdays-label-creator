@@ -37,55 +37,98 @@ pub fn display_unit(amount_type: &AmountType, weight_unit: &str, volume_unit: &s
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-pub enum Amount {
-    Single(Option<usize>),
-    Double(Option<usize>, Option<usize>),
+/// The declared quantity of the pack.
+///
+/// `net` is the Nettogewicht/-volumen, `drained` the optional Abtropfgewicht.
+/// Both are stored in the unit picked in the form (g/kg, ml/l, ...), not in a
+/// canonical one.
+///
+/// This used to be an enum with `Single`/`Double` variants. That encoded "is the
+/// second field filled in" twice — once in the variant and once in the `Option`
+/// — and the two could disagree: `Double(Some(x), None)` and `Single(Some(x))`
+/// mean the same thing, but the label preview only handled the latter and
+/// dropped the weight for the former.
+#[derive(Clone, Copy, PartialEq, Serialize, Debug, Default)]
+pub struct Amount {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub net: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub drained: Option<usize>,
 }
+
+/// The price of the pack.
+///
+/// `unit` is the Grundpreis (per `base_factor` units, so per 100 g or per kg),
+/// `total` the Gesamtpreis for the whole pack. Both in Rappen. Same story as
+/// `Amount`: this was a `Single`/`Double` enum.
+#[derive(Clone, Copy, PartialEq, Serialize, Debug, Default)]
+pub struct Price {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unit: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total: Option<usize>,
+}
+
+/// Reads both the current shape and the `Single`/`Double` one that shared and
+/// printed links still carry. Serialization always writes the current shape.
+///
+/// Shipped links are permanent: a Kurz-Link can sit on a printed label, so a
+/// link written years ago must keep resolving. Dropping the legacy keys here
+/// would silently reset the whole form to defaults, because a single field that
+/// fails to deserialize takes the entire `Form` with it.
+#[derive(Deserialize, Default)]
+struct PairCompat {
+    #[serde(default)]
+    net: Option<usize>,
+    #[serde(default)]
+    drained: Option<usize>,
+    #[serde(default)]
+    unit: Option<usize>,
+    #[serde(default)]
+    total: Option<usize>,
+    #[serde(default, rename = "Single")]
+    single: Option<Option<usize>>,
+    #[serde(default, rename = "Double")]
+    double: Option<(Option<usize>, Option<usize>)>,
+}
+
+impl PairCompat {
+    /// The two slots in order, whichever shape they arrived in.
+    fn slots(self) -> (Option<usize>, Option<usize>) {
+        if let Some(first) = self.single {
+            (first, None)
+        } else if let Some((first, second)) = self.double {
+            (first, second)
+        } else if self.net.is_some() || self.drained.is_some() {
+            (self.net, self.drained)
+        } else {
+            (self.unit, self.total)
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Amount {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let (net, drained) = PairCompat::deserialize(d)?.slots();
+        Ok(Amount { net, drained })
+    }
+}
+
+impl<'de> Deserialize<'de> for Price {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let (unit, total) = PairCompat::deserialize(d)?.slots();
+        Ok(Price { unit, total })
+    }
+}
+
+/// Amounts that count as a standard pack size, for which Swiss law does not
+/// require a Grundpreis alongside the total price.
+const EINHEITSGROESSEN: [usize; 4] = [1, 100, 250, 500];
 
 impl Amount {
-    fn get_value_tuple(self) -> (Option<usize>, Option<usize>) {
-        match self {
-            Amount::Single(v) => (v, None),
-            Amount::Double(v1, v2) => (v1, v2),
-        }
-    }
-}
-
-/// The net amount the price refers to: the first of the two amount fields.
-/// `0` means "not entered yet" and callers treat it as "cannot calculate".
-pub fn net_amount(amount: Amount) -> usize {
-    match amount {
-        Amount::Single(Some(x)) => x,
-        Amount::Double(Some(x), _) => x,
-        _ => 0,
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum Price {
-    Single(Option<usize>),
-    Double(Option<usize>, Option<usize>),
-}
-
-impl Price {
-    fn get_value_tuple(self) -> (Option<usize>, Option<usize>) {
-        match self {
-            Price::Single(v) => (v, None),
-            Price::Double(v1, v2) => (v1, v2),
-        }
-    }
-}
-
-impl Default for Price {
-    fn default() -> Self {
-        Price::Single(None)
-    }
-}
-
-impl Default for Amount {
-    fn default() -> Self {
-        Amount::Single(None)
+    /// Is this one of the standard pack sizes?
+    pub fn is_einheitsgroesse(&self) -> bool {
+        EINHEITSGROESSEN.contains(&self.net.unwrap_or(0))
     }
 }
 
@@ -120,10 +163,8 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
     // (DEC-13). Drop any value already entered, otherwise it would linger in
     // the model and keep printing on the label with no field to clear it.
     use_effect(move || {
-        if props.is_egg_pack {
-            if let Amount::Double(x, Some(_)) = amount() {
-                amount.set(Amount::Double(x, None));
-            }
+        if props.is_egg_pack && amount().drained.is_some() {
+            amount.with_mut(|a| a.drained = None);
         }
     });
     let invalid_class = use_memo(move || {
@@ -142,8 +183,10 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
         )
     });
 
-    let calculated_amount = use_memo(move || match price() {
-        Price::Double(Some(unit_price), Some(total_price)) => (
+    // With both prices known the amount follows from them, so the field is
+    // filled in and locked rather than asked for twice.
+    let calculated_amount = use_memo(move || match (price().unit, price().total) {
+        (Some(unit_price), Some(total_price)) if unit_price > 0 => (
             true,
             ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize,
         ),
@@ -151,32 +194,22 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
     });
 
     let calculated_total_price = use_memo(move || {
-        let net_amount = net_amount(amount());
-        if net_amount == 0 {
-            return (false, 0);
-        }
-        match price() {
-            Price::Double(Some(unit_price), Some(_)) => (
+        let net = amount().net.unwrap_or(0);
+        match price().unit {
+            Some(unit_price) if net > 0 => (
                 true,
-                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
-            ),
-            Price::Single(Some(unit_price)) => (
-                true,
-                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
+                (unit_price as f64 * (net as f64 / get_base_factor() as f64)) as usize,
             ),
             _ => (false, 0),
         }
     });
 
     let calculated_unit_price = use_memo(move || {
-        let net_amount = net_amount(amount());
-        if net_amount == 0 {
-            return (false, 0);
-        }
-        match price() {
-            Price::Double(_, Some(total_price)) => (
+        let net = amount().net.unwrap_or(0);
+        match price().total {
+            Some(total_price) if net > 0 => (
                 true,
-                (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize,
+                (total_price as f64 / (net as f64 / get_base_factor() as f64)) as usize,
             ),
             _ => (false, 0),
         }
@@ -200,17 +233,11 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
         _ => format!("{} {}", get_base_factor(), get_unit()),
     });
 
-    let is_einheitsgroesse = use_memo(move || match amount() {
-        Amount::Single(x) => [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0)),
-        Amount::Double(x, _) => {
-            [1_usize, 100_usize, 250_usize, 500_usize].contains(&x.unwrap_or(0))
-        }
-    });
+    let is_einheitsgroesse = use_memo(move || amount().is_einheitsgroesse());
 
-    let mut einheitsgroesse_input =
-        use_signal(|| display_money(props.price.read().get_value_tuple().0));
-    let mut price_input_0 = use_signal(|| display_money(props.price.read().get_value_tuple().0));
-    let mut price_input_1 = use_signal(|| display_money(props.price.read().get_value_tuple().1));
+    let mut einheitsgroesse_input = use_signal(|| display_money(props.price.read().unit));
+    let mut price_input_0 = use_signal(|| display_money(props.price.read().unit));
+    let mut price_input_1 = use_signal(|| display_money(props.price.read().total));
 
     fn set_amount_type(new_amount_type: String, mut amount_type: Signal<AmountType>) {
         match new_amount_type.as_str() {
@@ -237,35 +264,14 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
         }
     }
 
-    fn set_amount_single(new_amount: String, mut amount: Signal<Amount>) {
+    fn set_net_amount(new_amount: String, mut amount: Signal<Amount>) {
         let val = new_amount.parse().ok();
-        amount.set(Amount::Single(val));
+        amount.with_mut(|a| a.net = val);
     }
 
-    fn set_amount_0(new_amount: String, mut amount: Signal<Amount>) {
-        let old_amount = amount();
+    fn set_drained_amount(new_amount: String, mut amount: Signal<Amount>) {
         let val = new_amount.parse().ok();
-        match old_amount {
-            Amount::Single(_) => {
-                amount.set(Amount::Single(val));
-            }
-            Amount::Double(_, x) => {
-                amount.set(Amount::Double(val, x));
-            }
-        }
-    }
-
-    fn set_amount_1(new_amount: String, mut amount: Signal<Amount>) {
-        let old_amount = amount();
-        let val = new_amount.parse().ok();
-        match old_amount {
-            Amount::Single(x) => {
-                amount.set(Amount::Double(x, val));
-            }
-            Amount::Double(x, _) => {
-                amount.set(Amount::Double(x, val));
-            }
-        }
+        amount.with_mut(|a| a.drained = val);
     }
 
     fn display_money(cents: Option<usize>) -> String {
@@ -275,73 +281,28 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
         }
     }
 
-    fn set_price_0(input: String, mut price: Signal<Price>) {
-        let old_price = price();
+    /// Parse a price field: empty clears it, a comma is accepted as the decimal
+    /// separator, and anything unparseable leaves the old value alone rather
+    /// than silently zeroing a price that goes on a label.
+    fn parse_money(input: &str) -> Result<Option<usize>, ()> {
         if input.is_empty() {
-            match old_price {
-                Price::Single(_) => {
-                    price.set(Price::Single(None));
-                }
-                Price::Double(_, old) => {
-                    price.set(Price::Double(None, old));
-                }
-            }
-        } else {
-            let cleaned = input.replace(',', "."); // Handle potential comma input
-            if let Ok(parsed) = f64::from_str(&cleaned) {
-                let cents = (parsed * 100.0) as usize; // Ensure rounding
-                match old_price {
-                    Price::Single(_) => {
-                        price.set(Price::Single(Some(cents))); // Assuming Price::Single(i64)
-                    }
-                    Price::Double(_, old) => {
-                        price.set(Price::Double(Some(cents), old)); // Assuming Price::Single(i64)
-                    }
-                }
-            } else {
-                price.set(old_price);
-            }
+            return Ok(None);
+        }
+        match f64::from_str(&input.replace(',', ".")) {
+            Ok(parsed) => Ok(Some((parsed * 100.0) as usize)),
+            Err(_) => Err(()),
         }
     }
 
-    fn set_price_1(input: String, mut price: Signal<Price>) {
-        let old_price = price();
-        if input.is_empty() {
-            match old_price {
-                Price::Single(old) => {
-                    price.set(Price::Double(old, None));
-                }
-                Price::Double(old, _) => {
-                    price.set(Price::Double(old, None));
-                }
-            }
-        } else {
-            let cleaned = input.replace(',', "."); // Handle potential comma input
-            if let Ok(parsed) = f64::from_str(&cleaned) {
-                let cents = (parsed * 100.0) as usize; // Ensure rounding
-                match old_price {
-                    Price::Single(old) => {
-                        price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
-                    }
-                    Price::Double(old, _) => {
-                        price.set(Price::Double(old, Some(cents))); // Assuming Price::Single(i64)
-                    }
-                }
-            } else {
-                price.set(old_price);
-            }
+    fn set_unit_price(input: String, mut price: Signal<Price>) {
+        if let Ok(cents) = parse_money(&input) {
+            price.with_mut(|p| p.unit = cents);
         }
     }
 
-    fn set_price_single(input: String, mut price: Signal<Price>) {
-        if input.is_empty() {
-            price.set(Price::Single(None));
-        } else {
-            let cleaned = input.replace(',', "."); // Handle potential comma input
-            if let Ok(parsed) = f64::from_str(&cleaned) {
-                let cents = (parsed * 100.0) as usize; // Ensure rounding
-                price.set(Price::Single(Some(cents)));
-            }
+    fn set_total_price(input: String, mut price: Signal<Price>) {
+        if let Ok(cents) = parse_money(&input) {
+            price.with_mut(|p| p.total = cents);
         }
     }
 
@@ -390,8 +351,8 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                                 min: "0",
                                 required: true,
                                 disabled: calculated_amount().0,
-                                value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
-                                oninput: move |evt| set_amount_0(evt.data.value(), props.amount),
+                                value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().net.map(|v| v.to_string()).unwrap_or_default()},
+                                oninput: move |evt| set_net_amount(evt.data.value(), props.amount),
                                 onblur: move |_evt| is_pristine.set(true)
                             }
                             span {
@@ -411,8 +372,8 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                                     class: "input input-bordered bg-base-200 w-1/2",
                                     r#type: "number",
                                     placeholder: "200",
-                                    value: props.amount.read().get_value_tuple().1.map(|v| v.to_string()).unwrap_or_default(),
-                                    oninput: move |evt| set_amount_1(evt.data.value(), props.amount)
+                                    value: props.amount.read().drained.map(|v| v.to_string()).unwrap_or_default(),
+                                    oninput: move |evt| set_drained_amount(evt.data.value(), props.amount)
                                 }
                                 span {
                                     class: "badge",
@@ -428,10 +389,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                                     has_abtropfgewicht.set(evt.checked());
                                     if !evt.checked() {
                                         // Clear abtropfgewicht when hiding the field
-                                        match amount() {
-                                            Amount::Single(x) => amount.set(Amount::Single(x)),
-                                            Amount::Double(x, _) => amount.set(Amount::Double(x, None)),
-                                        }
+                                        amount.with_mut(|a| a.drained = None);
                                     }
                                 }
                             }
@@ -452,8 +410,8 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                                 min: "0",
                                 required: true,
                                 disabled: calculated_amount().0,
-                                value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
-                                oninput: move |evt| set_amount_single(evt.data.value(), props.amount),
+                                value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().net.map(|v| v.to_string()).unwrap_or_default()},
+                                oninput: move |evt| set_net_amount(evt.data.value(), props.amount),
                                 onblur: move |_evt| is_pristine.set(false)
                             }
                             span {
@@ -476,10 +434,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                                         has_abtropfgewicht.set(evt.checked());
                                         if !evt.checked() {
                                             // Clear abtropfgewicht when hiding the field
-                                            match amount() {
-                                                Amount::Single(x) => amount.set(Amount::Single(x)),
-                                                Amount::Double(x, _) => amount.set(Amount::Double(x, None)),
-                                            }
+                                            amount.with_mut(|a| a.drained = None);
                                         }
                                     }
                                 }
@@ -502,8 +457,8 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             min: "0",
                             required: true,
                             disabled: calculated_amount().0,
-                            value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().get_value_tuple().0.map(|v| v.to_string()).unwrap_or_default()},
-                            oninput: move |evt| set_amount_single(evt.data.value(), props.amount),
+                            value: if calculated_amount().0 {"{calculated_amount().1}"} else {props.amount.read().net.map(|v| v.to_string()).unwrap_or_default()},
+                            oninput: move |evt| set_net_amount(evt.data.value(), props.amount),
                             onblur: move |_evt| is_pristine.set(false)
                         }
                         span {
@@ -560,7 +515,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             placeholder: "12.00",
                             value: price_input_1(),
                             oninput: move |evt| price_input_1.set(evt.data.value()),
-                            onblur: move |_evt| {set_price_1(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().get_value_tuple().1));}
+                            onblur: move |_evt| {set_total_price(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().total));}
                         }
                         span {
                             class: "badge",
@@ -581,7 +536,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             placeholder: "4.00",
                             value: einheitsgroesse_input(),
                             oninput: move |evt| einheitsgroesse_input.set(evt.data.value()),
-                            onblur: move |_evt| {set_price_single(einheitsgroesse_input(), props.price); einheitsgroesse_input.set(display_money(props.price.read().get_value_tuple().0));},
+                            onblur: move |_evt| {set_unit_price(einheitsgroesse_input(), props.price); einheitsgroesse_input.set(display_money(props.price.read().unit));},
                         }
                         span {
                             class: "badge",
@@ -603,7 +558,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             disabled: calculated_unit_price().0,
                             value: if calculated_unit_price().0 {display_money(Some(calculated_unit_price().1))} else {price_input_0()},
                             oninput: move |evt| price_input_0.set(evt.data.value()),
-                            onblur: move |_evt| {set_price_0(price_input_0(), props.price); price_input_0.set(display_money(props.price.read().get_value_tuple().0));}
+                            onblur: move |_evt| {set_unit_price(price_input_0(), props.price); price_input_0.set(display_money(props.price.read().unit));}
                         }
                         span {
                             class: "badge",
@@ -625,7 +580,7 @@ pub fn AmountPrice(props: AmountPriceProps) -> Element {
                             disabled: calculated_total_price().0,
                             value: if calculated_total_price().0 {display_money(Some(calculated_total_price().1))} else {price_input_1()},
                             oninput: move |evt| price_input_1.set(evt.data.value()),
-                            onblur: move |_evt| {set_price_1(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().get_value_tuple().1));}
+                            onblur: move |_evt| {set_total_price(price_input_1(), props.price); price_input_1.set(display_money(props.price.read().total));}
                         }
                         span {
                             class: "badge",
@@ -666,5 +621,99 @@ mod tests {
     fn display_unit_follows_the_amount_type() {
         assert_eq!(display_unit(&AmountType::Weight, "kg", "l"), "kg");
         assert_eq!(display_unit(&AmountType::Volume, "kg", "l"), "l");
+    }
+}
+
+#[cfg(test)]
+mod link_compat_tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    // A Kurz-Link can sit on a printed label, so links written before Amount and
+    // Price became structs must keep resolving. These tests read the exact query
+    // strings the old enum shape produced.
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Form {
+        #[serde(default)]
+        amount: Amount,
+        #[serde(default)]
+        price: Price,
+    }
+
+    fn parse(query: &str) -> Form {
+        serde_qs::Config::new()
+            .max_depth(20)
+            .deserialize_str::<Form>(query)
+            .expect("query string should deserialize")
+    }
+
+    fn write(form: &Form) -> String {
+        serde_qs::Config::new()
+            .max_depth(20)
+            .serialize_string(form)
+            .expect("form should serialize")
+    }
+
+    #[test]
+    fn legacy_single_links_still_resolve() {
+        let form = parse("amount[Single]=250&price[Single]=450");
+        assert_eq!(form.amount.net, Some(250));
+        assert_eq!(form.amount.drained, None);
+        assert_eq!(form.price.unit, Some(450));
+        assert_eq!(form.price.total, None);
+    }
+
+    #[test]
+    fn legacy_double_links_still_resolve() {
+        let form = parse("amount[Double][0]=250&amount[Double][1]=200&price[Double][0]=450&price[Double][1]=1125");
+        assert_eq!(form.amount.net, Some(250));
+        assert_eq!(form.amount.drained, Some(200));
+        assert_eq!(form.price.unit, Some(450));
+        assert_eq!(form.price.total, Some(1125));
+    }
+
+    // The half-filled state: the Abtropfgewicht field was revealed but left
+    // empty, so the old form wrote an empty second slot.
+    #[test]
+    fn legacy_double_links_with_an_empty_second_slot_still_resolve() {
+        let form = parse("amount[Double][0]=250&amount[Double][1]");
+        assert_eq!(form.amount.net, Some(250));
+        assert_eq!(form.amount.drained, None);
+    }
+
+    #[test]
+    fn a_link_without_amount_or_price_falls_back_to_empty() {
+        let form = parse("");
+        assert_eq!(form.amount, Amount::default());
+        assert_eq!(form.price, Price::default());
+    }
+
+    #[test]
+    fn current_links_round_trip() {
+        let form = Form {
+            amount: Amount {
+                net: Some(250),
+                drained: Some(200),
+            },
+            price: Price {
+                unit: Some(450),
+                total: Some(1125),
+            },
+        };
+        assert_eq!(parse(&write(&form)), form);
+    }
+
+    // Empty fields are left out of the query string entirely rather than
+    // written as empty keys, keeping shared links short.
+    #[test]
+    fn empty_fields_are_omitted_from_the_query_string() {
+        let written = write(&Form {
+            amount: Amount {
+                net: Some(250),
+                drained: None,
+            },
+            price: Price::default(),
+        });
+        assert_eq!(written, "amount[net]=250");
     }
 }

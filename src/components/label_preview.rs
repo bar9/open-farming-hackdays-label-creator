@@ -262,8 +262,11 @@ pub fn LabelPreview(
                         if calc_amount().0 { Some(calc_amount().1) } else { None }
                     } else { None };
 
+                    // The calculated amount wins when both prices are known;
+                    // otherwise the entered weights are printed. A drained
+                    // weight is optional, and leaving it empty must not take the
+                    // net weight off the label with it.
                     match (amount(), amount_display) {
-                        // Show calculated amount when available
                         (_, Some(calculated_amt)) => rsx! {
                             div {
                                 span {
@@ -272,25 +275,24 @@ pub fn LabelPreview(
                                 }
                             }
                         },
-                        // Show raw amounts when no calculation is available
-                        (Amount::Single(Some(amt)), None) => rsx! {
-                            div {
-                                span {
-                                    class: "text-sm",
-                                    "{amt} {get_unit()}"
-                                }
-                            }
-                        },
-                        (Amount::Double(Some(netto), Some(brutto)), None) => rsx! {
+                        (Amount { net: Some(net), drained: Some(drained) }, None) => rsx! {
                             div {
                                 class: "text-sm",
                                 span {
                                     span {class: "pr-2", "{t!(\"preview.nettogewicht\").to_string()}" }
-                                    " {netto} {get_unit()}"
+                                    " {net} {get_unit()}"
                                 }
                                 span {
                                     span {class: "pl-2 pr-2", " {t!(\"preview.abtropfgewicht\").to_string()}" }
-                                    " {brutto} {get_unit()}"
+                                    " {drained} {get_unit()}"
+                                }
+                            }
+                        },
+                        (Amount { net: Some(net), drained: None }, None) => rsx! {
+                            div {
+                                span {
+                                    class: "text-sm",
+                                    "{net} {get_unit()}"
                                 }
                             }
                         },
@@ -356,73 +358,33 @@ pub fn LabelPreview(
                         }
                     }
                 }
-                    match (price(), amount()) {
-                        (Price::Single(None), _) => rsx! {},
-                        (Price::Single(x), Amount::Single(Some(1))) |
-                        (Price::Single(x), Amount::Single(Some(100))) |
-                        (Price::Single(x), Amount::Single(Some(250))) |
-                        (Price::Single(x), Amount::Single(Some(500))) |
-                        (Price::Single(x), Amount::Double(Some(1), _)) |
-                        (Price::Single(x), Amount::Double(Some(100), _)) |
-                        (Price::Single(x), Amount::Double(Some(250), _)) |
-                        (Price::Single(x), Amount::Double(Some(500), _)) => rsx! {
-                            span {
-                                class: "text-sm",
-                                "{display_money_rounded(x)} " {t!("units.chf").to_string()}
+                    // A standard pack size (1/100/250/500) needs no Grundpreis
+                    // next to the total, so the price is printed on its own.
+                    // Otherwise both are shown, falling back to the derived
+                    // values when only one was entered.
+                    {
+                        let Price { unit, total } = price();
+                        if unit.is_none() && total.is_none() {
+                            rsx! {}
+                        } else if amount().is_einheitsgroesse() {
+                            rsx! {
+                                span {
+                                    class: "text-sm",
+                                    "{display_money_rounded(unit)} " {t!("units.chf").to_string()}
+                                }
                             }
-                        },
-                        // Handle non-unitary amounts with Price::Single - show both unit price and calculated total
-                        (Price::Single(x), _) => {
-                            if let Some(unit_price) = x {
-                                let total_price_display = if let Some(calc_total) = &calculated_total_price {
-                                    if calc_total().0 { Some(calc_total().1) } else { None }
-                                } else { None };
+                        } else {
+                            let unit_price_display = match &calculated_unit_price {
+                                Some(calc) if calc().0 => Some(calc().1),
+                                _ => unit,
+                            };
+                            let total_price_display = match &calculated_total_price {
+                                Some(calc) if calc().0 => Some(calc().1),
+                                _ => total,
+                            };
 
-                                rsx! (
-                                    div {
-                                        class: "text-sm",
-                                        span {
-                                            span {class: "pr-2", {t!("units.chfPro").to_string()} {get_base_factor_and_unit()} }
-                                            " {display_money_exact(Some(unit_price))} " {t!("units.chf").to_string()}
-                                        }
-                                        if let Some(total_price) = total_price_display {
-                                            span {
-                                                span {class: "pl-2 pr-2", " " {t!("preview.preis").to_string()} }
-                                                " {display_money_rounded(Some(total_price))} " {t!("units.chf").to_string()}
-                                            }
-                                        }
-                                    }
-                                )
-                            } else {
-                                rsx! {}
-                            }
-                        },
-                        (Price::Double(x, _), Amount::Single(Some(1))) |
-                        (Price::Double(x, _), Amount::Single(Some(100))) |
-                        (Price::Double(x, _), Amount::Single(Some(250))) |
-                        (Price::Double(x, _), Amount::Single(Some(500))) |
-                        (Price::Double(x, _), Amount::Double(Some(1), _)) |
-                        (Price::Double(x, _), Amount::Double(Some(100), _)) |
-                        (Price::Double(x, _), Amount::Double(Some(250), _)) |
-                        (Price::Double(x, _), Amount::Double(Some(500), _)) => rsx! {
-                            span {
-                                class: "text-sm",
-                                "{display_money_rounded(x)} " {t!("units.chf").to_string()}
-                            }
-                        },
-                        (Price::Double(x, y), _) => {
-                            // Use calculated values if available, otherwise use raw price values
-                            let unit_price_display = if let Some(calc_unit) = &calculated_unit_price {
-                                if calc_unit().0 { Some(calc_unit().1) } else { x }
-                            } else { x };
-
-                            let total_price_display = if let Some(calc_total) = &calculated_total_price {
-                                if calc_total().0 { Some(calc_total().1) } else { y }
-                            } else { y };
-
-                            // Show prices if we have either raw values or calculated values
                             if unit_price_display.is_some() || total_price_display.is_some() {
-                                rsx! (
+                                rsx! {
                                     div {
                                         class: "text-sm",
                                         if let Some(unit_price) = unit_price_display {
@@ -438,7 +400,7 @@ pub fn LabelPreview(
                                             }
                                         }
                                     }
-                                )
+                                }
                             } else {
                                 rsx! {}
                             }

@@ -226,8 +226,17 @@ impl Default for Form {
             amount_type: AmountType::Weight,
             weight_unit: t!("weight_units.g").to_string(),
             volume_unit: t!("volume_units.ml").to_string(),
-            amount: Amount::Single(Some(0)),
-            price: Price::Single(Some(0)),
+            // Deliberately 0 rather than empty: this is what the form has
+            // always started with, and the preview prints "0 g" until a real
+            // weight is entered.
+            amount: Amount {
+                net: Some(0),
+                drained: None,
+            },
+            price: Price {
+                unit: Some(0),
+                total: None,
+            },
             egg_count: None,
             rezeptur_vollstaendig: false,
         }
@@ -421,8 +430,8 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         )
     });
 
-    let calculated_amount = use_memo(move || match price() {
-        Price::Double(Some(unit_price), Some(total_price)) => (
+    let calculated_amount = use_memo(move || match (price().unit, price().total) {
+        (Some(unit_price), Some(total_price)) if unit_price > 0 => (
             true,
             ((total_price as f64 / unit_price as f64) * get_base_factor() as f64) as usize,
         ),
@@ -430,34 +439,23 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     });
 
     let calculated_total_price = use_memo(move || {
-        let net_amount = net_amount(amount());
-        if net_amount == 0 {
-            return (false, 0);
-        }
-        match price() {
-            // Calculate total price when only unit price is provided
-            Price::Double(Some(unit_price), None) => (
+        let net = amount().net.unwrap_or(0);
+        // Only derive the total when it was not entered by hand.
+        match (price().unit, price().total) {
+            (Some(unit_price), None) if net > 0 => (
                 true,
-                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
-            ),
-            // For single price fields, calculate total
-            Price::Single(Some(unit_price)) => (
-                true,
-                (unit_price as f64 * (net_amount as f64 / get_base_factor() as f64)) as usize,
+                (unit_price as f64 * (net as f64 / get_base_factor() as f64)) as usize,
             ),
             _ => (false, 0),
         }
     });
 
     let calculated_unit_price = use_memo(move || {
-        let net_amount = net_amount(amount());
-        if net_amount == 0 {
-            return (false, 0);
-        }
-        match price() {
-            Price::Double(_, Some(total_price)) => (
+        let net = amount().net.unwrap_or(0);
+        match price().total {
+            Some(total_price) if net > 0 => (
                 true,
-                (total_price as f64 / (net_amount as f64 / get_base_factor() as f64)) as usize,
+                (total_price as f64 / (net as f64 / get_base_factor() as f64)) as usize,
             ),
             _ => (false, 0),
         }
