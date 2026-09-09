@@ -446,12 +446,7 @@ fn agricultural_share(
 
 /// Swiss share of the agricultural weight.
 fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
-    agricultural_share(
-        ingredients,
-        |_| true,
-        |i| i.has_swiss_origin(),
-        0.0,
-    )
+    agricultural_share(ingredients, |_| true, |i| i.has_swiss_origin(), 0.0)
 }
 
 /// Swiss share of the *bio* agricultural weight — the Knospe logo variant is
@@ -2469,9 +2464,7 @@ fn format_origin_for_knospe_rules(
         None
     } else if has_knospe_90_99_rule {
         // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
-        if ingredient.is_agricultural()
-            && ingredient.has_swiss_origin()
-        {
+        if ingredient.is_agricultural() && ingredient.has_swiss_origin() {
             Some("(CH)".to_string())
         } else {
             None
@@ -2613,10 +2606,7 @@ fn should_show_origin_knospe_under90(
     }
 
     // Swiss agricultural ingredients with >=10% share (regardless of category)
-    if ingredient.is_agricultural()
-        && ingredient.has_swiss_origin()
-        && percentage >= 10.0
-    {
+    if ingredient.is_agricultural() && ingredient.has_swiss_origin() && percentage >= 10.0 {
         return true;
     }
 

@@ -88,8 +88,6 @@ pub fn Clipboard() -> Element {
     }
 }
 
-
-
 #[component]
 pub fn DashedPlus() -> Element {
     rsx! {
@@ -146,7 +144,6 @@ pub fn DashedX() -> Element {
         }
     }
 }
-
 
 /// Small green Knospe bud used in the route selector: no Swiss cross, no text,
 /// sized by the caller. Two spots in the layout drew the same two paths inline.

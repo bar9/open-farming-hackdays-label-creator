@@ -19,8 +19,9 @@ pub fn Impressum() -> Element {
         "it-CH" => "it",
         _ => "de",
     };
-    let privacy_src =
-        format!("https://app.privacybee.io/v/clldi3nqp2313020rttms8eh7y?lang={privacy_lang}&type=dsg");
+    let privacy_src = format!(
+        "https://app.privacybee.io/v/clldi3nqp2313020rttms8eh7y?lang={privacy_lang}&type=dsg"
+    );
 
     rsx! {
         div { class: "prose m-auto pt-4 px-4 sm:px-6 lg:px-8", dangerous_inner_html: externalize_links(&to_html(&text)) }
