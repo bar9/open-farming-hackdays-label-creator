@@ -430,11 +430,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     });
 
     let calculated_total_price = use_memo(move || {
-        let net_amount = match amount() {
-            Amount::Single(Some(x)) => x,
-            Amount::Double(Some(x), _) => x,
-            _ => 0,
-        };
+        let net_amount = net_amount(amount());
         if net_amount == 0 {
             return (false, 0);
         }
@@ -454,11 +450,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     });
 
     let calculated_unit_price = use_memo(move || {
-        let net_amount = match amount() {
-            Amount::Single(Some(x)) => x,
-            Amount::Double(Some(x), _) => x,
-            _ => 0,
-        };
+        let net_amount = net_amount(amount());
         if net_amount == 0 {
             return (false, 0);
         }
