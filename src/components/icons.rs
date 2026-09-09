@@ -148,6 +148,27 @@ pub fn DashedX() -> Element {
 }
 
 
+/// Small green Knospe bud used in the route selector: no Swiss cross, no text,
+/// sized by the caller. Two spots in the layout drew the same two paths inline.
+#[component]
+pub fn KnospeMark(class: String) -> Element {
+    rsx! {
+        svg {
+            class: "{class}",
+            view_box: "22 3 50 50",
+            xmlns: "http://www.w3.org/2000/svg",
+            path {
+                d: "m 24.38225,28.0565 c 0,-12.39625 10.04875,-22.44375 22.445,-22.44375 12.395,0 22.44375,10.0475 22.44375,22.44375 0,12.395 -10.04875,22.44375 -22.44375,22.44375 -12.39625,0 -22.445,-10.04875 -22.445,-22.44375",
+                style: "fill:#30a32d;fill-opacity:1;fill-rule:nonzero;stroke:none"
+            }
+            path {
+                d: "m 47.154,8.39425 c 0,0 -18.9025,11.39375 -6.43875,30.80375 0,0 -7.20625,-3.63125 -8.79375,-14.2175 -0.0475,-0.4375 -0.565,-0.95875 -0.93875,0.105 -3.7425,10.69125 1.84875,24.12 17.10875,23.4725 15.38875,-0.65375 18.88,-18.325 10.955,-29.23875 -0.28625,-0.4475 -0.7,-0.56375 -0.4625,0.2975 1.53875,5.57875 -1.02375,12.12375 -1.93875,13.605 C 61.249,18.10925 48.17025,8.518 47.154,8.39425",
+                style: "fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+            }
+        }
+    }
+}
+
 #[component]
 pub fn BioSuisseRegular() -> Element {
     rsx! {
