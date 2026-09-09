@@ -287,17 +287,21 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             .first()
             .and_then(|i| i.children.clone());
         let mut root_ingredients = ingredients;
+        // Flush through `make_ingredient` rather than assigning field by field.
+        // The hand-written version copied only ten of the pane's fields, so
+        // Aufzucht-/Schlachtort, Verarbeitungsschritte, the Ausnahme flags and
+        // the canonical name were left at their pre-edit values for as long as
+        // it took the auto-sync effect to catch up. `override_children` is not
+        // owned by this pane, so the stored value is carried over.
         if let Some(mut ing) = root_ingredients.get_mut(index) {
-            ing.name = edit_name();
-            ing.amount = edit_amount().unwrap_or(0.0);
-            ing.unit = edit_unit();
-            ing.is_allergen = is_allergen_custom();
-            ing.is_namensgebend = Some(edit_is_namensgebend());
-            ing.children = live_children;
-            ing.origins = edit_origins();
-            ing.is_bio = Some(edit_is_bio());
-            ing.bio_ch = Some(edit_bio_ch());
-            ing.category = edit_category();
+            let override_children = ing.override_children;
+            let mut flushed = make_ingredient(
+                edit_amount().unwrap_or(0.0),
+                is_allergen_custom(),
+                live_children,
+            );
+            flushed.override_children = override_children;
+            *ing = flushed;
         }
         if let Some(mut ep) = props.editing_path {
             let mut new_path = ep.read().clone();
@@ -369,68 +373,15 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
             if is_genesis || disabled_sig() {
                 return;
             }
-            // Read all edit signals to subscribe to their changes
-            let name = edit_name();
-            let amount = edit_amount().unwrap_or(0.0);
-            let unit = edit_unit();
-            let children = edit_children();
-            let allergen = is_allergen_custom();
-            let namensgebend = edit_is_namensgebend();
-            let category = edit_category();
-            let origins = edit_origins();
-            let aufzucht_ort = edit_aufzucht_ort();
-            let schlachtungs_ort = edit_schlachtungs_ort();
-            let fangort = edit_fangort();
-            let is_bio = edit_is_bio();
-            let bio_ch = edit_bio_ch();
-            let erlaubte_ausnahme_bio = edit_erlaubte_ausnahme_bio();
-            let erlaubte_ausnahme_bio_details = edit_erlaubte_ausnahme_bio_details();
-            let erlaubte_ausnahme_knospe = edit_erlaubte_ausnahme_knospe();
-            let erlaubte_ausnahme_knospe_details = edit_erlaubte_ausnahme_knospe_details();
-            let processing_steps = edit_processing_steps();
-            let aus_umstellbetrieb = edit_aus_umstellbetrieb();
-            let canonical = edit_canonical();
-            // Resolve allergen/agricultural against the canonical entry when the
-            // displayed name is an alias (the alias itself isn't in food_db).
-            let lookup_name = canonical.clone().unwrap_or_else(|| name.clone());
-
-            let new_ing = Ingredient {
-                name,
-                amount,
-                unit,
-                is_allergen: allergen,
-                is_namensgebend: Some(namensgebend),
-                sub_components: None,
-                children,
-                origins,
-                is_agricultural: if edit_nicht_landwirtschaftlich() {
-                    false
-                } else {
-                    lookup_agricultural(&lookup_name)
-                },
-                is_bio: Some(is_bio),
-                category,
-                aufzucht_ort,
-                schlachtungs_ort,
-                fangort,
-                bio_ch: Some(bio_ch),
-                erlaubte_ausnahme_bio: Some(erlaubte_ausnahme_bio),
-                erlaubte_ausnahme_bio_details: if erlaubte_ausnahme_bio_details.is_empty() {
-                    None
-                } else {
-                    Some(erlaubte_ausnahme_bio_details)
-                },
-                erlaubte_ausnahme_knospe: Some(erlaubte_ausnahme_knospe),
-                erlaubte_ausnahme_knospe_details: if erlaubte_ausnahme_knospe_details.is_empty() {
-                    None
-                } else {
-                    Some(erlaubte_ausnahme_knospe_details)
-                },
-                processing_steps,
-                aus_umstellbetrieb: Some(aus_umstellbetrieb),
-                override_children: None,
-                canonical,
-            };
+            // `make_ingredient` reads every edit signal, which is also what
+            // subscribes this effect to their changes. It used to be spelled
+            // out a second time here, twenty-odd fields deep, purely so the
+            // reads happened — a copy that had to be kept in step by hand.
+            let new_ing = make_ingredient(
+                edit_amount().unwrap_or(0.0),
+                is_allergen_custom(),
+                edit_children(),
+            );
 
             let needs_update = ingredients
                 .get(pane_index)
