@@ -151,6 +151,21 @@ pub struct RuleRegistry {
     rules_by_config: HashMap<Configuration, Vec<RuleDef>>,
 }
 
+/// Rules that apply regardless of the organic regime: amount validation,
+/// percentage output, composites and the origin-declaration duties. Every
+/// configuration starts from these and adds its own on top.
+const BASE_RULES: [RuleDef; 9] = [
+    RuleDef::AP1_1_ZutatMengeValidierung,
+    RuleDef::AP1_2_ProzentOutputNamensgebend,
+    RuleDef::AP1_3_EingabeNamensgebendeZutat,
+    RuleDef::AP1_4_ManuelleEingabeTotal,
+    RuleDef::AP2_1_ZusammegesetztOutput,
+    RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
+    RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
+    RuleDef::AP7_4_RindfleischHerkunftDetails,
+    RuleDef::AP7_5_FischFangort,
+];
+
 impl RuleRegistry {
     pub fn new() -> Self {
         let mut registry = RuleRegistry {
@@ -162,64 +177,42 @@ impl RuleRegistry {
 
     fn init_configurations(&mut self) {
         // Define rule sets for each configuration
-        self.rules_by_config.insert(
-            Configuration::Conventional,
-            vec![
-                RuleDef::AP1_1_ZutatMengeValidierung,
-                RuleDef::AP1_2_ProzentOutputNamensgebend,
-                RuleDef::AP1_3_EingabeNamensgebendeZutat,
-                RuleDef::AP1_4_ManuelleEingabeTotal,
-                RuleDef::AP2_1_ZusammegesetztOutput,
-                RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-                RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
-                RuleDef::AP7_4_RindfleischHerkunftDetails,
-                RuleDef::AP7_5_FischFangort,
-            ],
-        );
+        self.rules_by_config
+            .insert(Configuration::Conventional, BASE_RULES.to_vec());
 
         self.rules_by_config.insert(
             Configuration::Bio,
-            vec![
-                RuleDef::AP1_1_ZutatMengeValidierung,
-                RuleDef::AP1_2_ProzentOutputNamensgebend,
-                RuleDef::AP1_3_EingabeNamensgebendeZutat,
-                RuleDef::AP1_4_ManuelleEingabeTotal,
-                RuleDef::AP2_1_ZusammegesetztOutput,
-                RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-                RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
-                RuleDef::AP7_4_RindfleischHerkunftDetails,
-                RuleDef::AP7_5_FischFangort,
-                RuleDef::Bio_Knospe_EingabeIstBio,
-                RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
-                RuleDef::Bio_ShowBioSachbezeichnung,
-                // DEC-16: the 10% °-marking is a Bio-Suisse rule. The Bio-V knows
-                // wild collection (DEC-11) and prints it with its own wording, but
-                // always inline next to the ingredient — never as a ° legend. So
-                // `Wildsammlung_Ueber10Prozent` stays out of this configuration.
-            ],
+            [
+                BASE_RULES.as_slice(),
+                &[
+                    RuleDef::Bio_Knospe_EingabeIstBio,
+                    RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
+                    RuleDef::Bio_ShowBioSachbezeichnung,
+                    // DEC-16: the 10% °-marking is a Bio-Suisse rule. The Bio-V knows
+                    // wild collection (DEC-11) and prints it with its own wording, but
+                    // always inline next to the ingredient — never as a ° legend. So
+                    // `Wildsammlung_Ueber10Prozent` stays out of this configuration.
+                ],
+            ]
+            .concat(),
         );
 
         self.rules_by_config.insert(
             Configuration::Knospe,
-            vec![
-                RuleDef::AP1_1_ZutatMengeValidierung,
-                RuleDef::AP1_2_ProzentOutputNamensgebend,
-                RuleDef::AP1_3_EingabeNamensgebendeZutat,
-                RuleDef::AP1_4_ManuelleEingabeTotal,
-                RuleDef::AP2_1_ZusammegesetztOutput,
-                RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent,
-                RuleDef::AP7_3_HerkunftFleischUeber20Prozent,
-                RuleDef::AP7_4_RindfleischHerkunftDetails,
-                RuleDef::AP7_5_FischFangort,
-                RuleDef::Knospe_AlleZutatenHerkunft,
-                RuleDef::Knospe_100_Percent_CH_NoOrigin,
-                RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
-                RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
-                RuleDef::Bio_Knospe_EingabeIstBio,
-                RuleDef::Knospe_ShowBioSuisseLogo,
-                RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
-                RuleDef::Wildsammlung_Ueber10Prozent,
-            ],
+            [
+                BASE_RULES.as_slice(),
+                &[
+                    RuleDef::Knospe_AlleZutatenHerkunft,
+                    RuleDef::Knospe_100_Percent_CH_NoOrigin,
+                    RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
+                    RuleDef::Knospe_Under90_Percent_CH_IngredientRules,
+                    RuleDef::Bio_Knospe_EingabeIstBio,
+                    RuleDef::Knospe_ShowBioSuisseLogo,
+                    RuleDef::Bio_Knospe_ZertifizierungsstellePflicht,
+                    RuleDef::Wildsammlung_Ueber10Prozent,
+                ],
+            ]
+            .concat(),
         );
     }
 
