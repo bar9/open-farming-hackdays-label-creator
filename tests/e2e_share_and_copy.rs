@@ -373,3 +373,41 @@ async fn the_footnote_legend_stands_on_its_own_line() {
     assert_no_errors(&c, "footnote legend").await;
     c.close().await.ok();
 }
+
+/// Eigene Zeilenumbrüche in den Freitextfeldern müssen erhalten bleiben.
+///
+/// «Weitere Angaben» und «Lagerhinweis» dürfen mehrzeilig sein; die Vorschau
+/// bildet das ab. Im kopierten Text müssen dieselben Umbrüche stehen, und
+/// zwar als einfache: eine Leerzeile dazwischen sähe aus wie ein neuer
+/// Abschnitt der Etikette.
+#[tokio::test]
+async fn multi_line_free_text_keeps_its_own_breaks() {
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+    let query = "v=2&product_subtitle=Bergk%C3%A4se&amount_type=Weight&weight_unit=g\
+&amount[Single]=250&additional_info=Rohmilchk%C3%A4se%0AMindestens%206%20Monate%20gereift\
+&storage_info=K%C3%BChl%20lagern%0ANach%20dem%20%C3%96ffnen%20rasch%20verbrauchen\
+&producer_name=Hof%20Muster&production_country=Schweiz";
+    goto(&c, &format!("lebensmittelrecht?{query}")).await;
+    tokio::time::sleep(mount_delay()).await;
+    tokio::time::sleep(Duration::from_millis(700)).await;
+
+    let copied = capture_copied_text(&c, "Etikette kopieren").await;
+
+    assert!(
+        copied.contains("Rohmilchkäse\nMindestens 6 Monate gereift"),
+        "line breaks typed into «Weitere Angaben» must survive: {copied:?}"
+    );
+    assert!(
+        copied.contains("Kühl lagern\nNach dem Öffnen rasch verbrauchen"),
+        "line breaks typed into the storage hint must survive: {copied:?}"
+    );
+    // Beide Freitexte gehören in denselben Abschnitt, wie in der Vorschau.
+    assert!(
+        copied.contains("Mindestens 6 Monate gereift\nKühl lagern"),
+        "both free texts form one block: {copied:?}"
+    );
+
+    assert_no_errors(&c, "multi-line free text").await;
+    c.close().await.ok();
+}
