@@ -338,3 +338,68 @@ async fn footer_links_to_the_support_page() {
 
     let _ = c.close().await;
 }
+
+/// Die beiden Kopierwege müssen in jeder Sprache benannt sein.
+///
+/// Der Teilen-Knopf und der Etiketten-Knopf kamen zusammen mit vier neuen
+/// Übersetzungsschlüsseln. Fehlt einer davon in fr-CH oder it-CH, fällt die
+/// Anwendung still auf Deutsch zurück, und die Schaltfläche steht mitten in
+/// einer französischen Oberfläche auf Deutsch da.
+#[tokio::test]
+async fn share_and_label_copy_are_named_in_every_language() {
+    for (locale, share, label_copy) in [
+        ("de-CH", "Teilen", "Etikette kopieren"),
+        ("fr-CH", "Partager", "Copier l'étiquette"),
+        ("it-CH", "Condividi", "Copia etichetta"),
+    ] {
+        let c = connect().await;
+        // Haftungshinweis zuerst bestätigen: ohne ihn rendert die Vorschau
+        // nicht, und der Etiketten-Knopf gehört zu ihr.
+        goto(&c, "lebensmittelrecht").await;
+        accept_disclaimer(&c).await;
+        goto_with_locale(&c, locale, "lebensmittelrecht").await;
+        // Nach dem Sprachwechsel lädt die App ein zweites Mal; ohne diese
+        // Pause steht das Formular noch nicht.
+        tokio::time::sleep(mount_delay()).await;
+
+        // Sachbezeichnung sprachunabhängig füllen: der Platzhalter ist je
+        // Sprache anders, das zweite Textfeld ist es nicht.
+        c.execute(
+            r#"
+            const inputs = [...document.querySelectorAll('input[type=text]')];
+            const el = inputs[1] || inputs[0];
+            if (!el) return null;
+            const setter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype, 'value').set;
+            setter.call(el, 'Bergkäse');
+            el.dispatchEvent(new Event('input', {bubbles: true}));
+            return null;
+            "#,
+            vec![],
+        )
+        .await
+        .expect("fill Sachbezeichnung");
+        tokio::time::sleep(Duration::from_millis(1500)).await;
+
+        let buttons = c
+            .execute(
+                "return [...document.querySelectorAll('button')].map(b => b.textContent.trim()).join('|');",
+                vec![],
+            )
+            .await
+            .ok()
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+            .unwrap_or_default();
+
+        assert!(
+            buttons.contains(share),
+            "{locale}: the share button must read {share:?}, buttons were: {buttons}"
+        );
+        assert!(
+            buttons.contains(label_copy),
+            "{locale}: the label copy button must read {label_copy:?}, buttons were: {buttons}"
+        );
+
+        let _ = c.close().await;
+    }
+}
