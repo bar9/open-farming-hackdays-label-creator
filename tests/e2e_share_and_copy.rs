@@ -454,3 +454,80 @@ async fn the_certification_body_is_part_of_the_copied_label() {
     assert_no_errors(&c, "certification body").await;
     c.close().await.ok();
 }
+
+/// Auch der vollständige Link muss im Dialog brauchbar bleiben.
+///
+/// Er trägt die ganze Rezeptur im Query-String und wird dadurch lang. Passt
+/// er noch in einen QR-Code, muss dieser den Link tragen; passt er nicht mehr
+/// hinein, darf kein leeres oder kaputtes Bild stehenbleiben. In beiden
+/// Fällen bleibt das Textfeld der verlässliche Weg.
+#[tokio::test]
+async fn the_full_link_keeps_the_dialog_usable() {
+    let c = connect().await;
+    seed_small_recipe(&c).await;
+
+    assert!(
+        open_share_dialog(&c).await,
+        "the «Teilen» button must open the dialog"
+    );
+    tokio::time::sleep(Duration::from_millis(2500)).await;
+
+    // Auf «Vollständiger Link» umschalten.
+    let switched = c
+        .execute(
+            r#"
+            const d = document.querySelector('dialog[open]');
+            if (!d) return false;
+            const radios = [...d.querySelectorAll('input[type=radio]')];
+            if (radios.length < 2) return false;
+            radios[1].click();
+            return true;
+            "#,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(switched, "the dialog must offer the full link as an option");
+    tokio::time::sleep(Duration::from_millis(1200)).await;
+
+    let state = c
+        .execute(
+            r#"
+            const d = document.querySelector('dialog[open]');
+            const input = d.querySelector('input[type=text]');
+            let qrLength = -1;
+            for (const svg of d.querySelectorAll('svg')) {
+                if ((svg.getAttribute('aria-label') || '').includes('QR')) {
+                    const paths = svg.querySelectorAll('path');
+                    qrLength = paths.length > 1 ? paths[1].getAttribute('d').length : 0;
+                }
+            }
+            return JSON.stringify({
+                link: input ? input.value : '',
+                qr: qrLength,
+            });
+            "#,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+
+    // Das Textfeld trägt in jedem Fall den vollen Link mit der Rezeptur.
+    assert!(
+        state.contains("product_subtitle") || state.contains("Bergk"),
+        "the full link must carry the recipe in its query string: {state}"
+    );
+    // Entweder ein Code mit echten Modulen oder gar keiner; ein leeres SVG
+    // wäre eine Attrappe, die zum Scannen einlädt und nichts liefert.
+    assert!(
+        !state.contains("\"qr\":0"),
+        "an empty QR image must not be shown: {state}"
+    );
+
+    assert_no_errors(&c, "full link dialog").await;
+    c.close().await.ok();
+}
