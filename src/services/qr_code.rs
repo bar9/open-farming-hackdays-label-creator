@@ -133,4 +133,66 @@ mod tests {
         let huge = "x".repeat(5000);
         assert_eq!(svg_path(&huge), None);
     }
+
+    /// Rastert den erzeugten SVG-Pfad zurück in ein Schwarzweissbild.
+    ///
+    /// Damit lässt sich prüfen, ob der Code wirklich lesbar ist, statt nur
+    /// festzustellen, dass irgendein Pfad entstanden ist. Ein vertauschtes
+    /// x/y oder eine falsche ruhige Zone fällt sonst nicht auf.
+    #[cfg(test)]
+    fn render_to_image(qr: &QrSvg, scale: u32) -> image::GrayImage {
+        let side = qr.size as u32 * scale;
+        let mut img = image::GrayImage::from_pixel(side, side, image::Luma([255u8]));
+
+        for cmd in qr.path.split(' ') {
+            let coords = cmd.trim_start_matches('M');
+            let (x, rest) = coords.split_once(',').expect("path command has x,y");
+            let y = rest.split('h').next().expect("y before the h command");
+            let x: u32 = x.parse().expect("x is a number");
+            let y: u32 = y.parse().expect("y is a number");
+
+            for dy in 0..scale {
+                for dx in 0..scale {
+                    img.put_pixel(x * scale + dx, y * scale + dy, image::Luma([0u8]));
+                }
+            }
+        }
+
+        img
+    }
+
+    #[test]
+    fn a_real_decoder_reads_the_link_back() {
+        let link = "https://www.declarino.ch/s/AbC1234";
+        let qr = svg_path(link).expect("must encode");
+
+        let img = render_to_image(&qr, 4);
+        let mut prepared = rqrr::PreparedImage::prepare(img);
+        let grids = prepared.detect_grids();
+
+        assert_eq!(grids.len(), 1, "exactly one QR code must be detectable");
+        let (_meta, content) = grids[0].decode().expect("the code must decode");
+        assert_eq!(
+            content, link,
+            "what a scanner reads must be the link we put in"
+        );
+    }
+
+    #[test]
+    fn a_link_with_a_recipe_query_survives_the_round_trip() {
+        // Der Regelfall im Dialog ist der Kurz-Link, aber wer den vollen Link
+        // wählt, bekommt Umlaute und Prozentkodierung in den Code. Auch das
+        // muss ein Scanner unverändert zurückgeben.
+        let link = "https://www.declarino.ch/lebensmittelrecht?v=2\
+&product_subtitle=Bergk%C3%A4se&zutat=Rohmilch&herkunft=CH&producer_name=Hof%20M%C3%BCller";
+        let qr = svg_path(link).expect("must encode");
+
+        let img = render_to_image(&qr, 4);
+        let mut prepared = rqrr::PreparedImage::prepare(img);
+        let grids = prepared.detect_grids();
+
+        assert_eq!(grids.len(), 1, "the code must be detectable");
+        let (_meta, content) = grids[0].decode().expect("the code must decode");
+        assert_eq!(content, link, "the query string must survive unchanged");
+    }
 }
