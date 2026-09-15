@@ -22,6 +22,14 @@ GET  /s/:code    -> 301 auf die hinterlegte Adresse
 | `routecheck.cjs` | Prüft die Rewrites in `vercel.json` |
 | `uitest_share_modal.mjs` | Prüft den Teilen-Dialog im Browser |
 
+`routecheck.cjs` nutzt `@vercel/routing-utils`. Dessen `path-to-regexp` wird von
+`npm audit` als hoch eingestuft (GHSA-9wv6-86v2-598j, ReDoS über
+zurückverfolgende Ausdrücke). Die Meldung bleibt bewusst stehen: das Paket ist
+eine devDependency, läuft nur lokal und in der CI, verarbeitet ausschliesslich
+unsere eigene `vercel.json` und erreicht nie den Browser. `npm audit fix --force`
+würde auf `@vercel/routing-utils@4` zurückfallen, also einen Rückschritt statt
+einer Behebung.
+
 Nur die ersten vier Dateien werden deployt; der Workflow kopiert sie einzeln
 (Positivliste in `deploy-production.yml`).
 
