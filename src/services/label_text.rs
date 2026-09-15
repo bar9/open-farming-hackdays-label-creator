@@ -25,33 +25,67 @@ pub fn join_sections(sections: &[String]) -> String {
 
 /// Macht aus dem HTML der Zutatenliste reinen Text.
 ///
-/// Die Liste entsteht in `core` mit `<b>` für Allergene und HTML-Entities für
-/// Sonderzeichen (siehe `html_escape` dort). Beides muss hier rückgängig
-/// gemacht werden, sonst klebt `&amp;` oder `<b>` im kopierten Text.
+/// Die Liste entsteht in `core` mit `<b>` für Allergene, `<br>` vor der
+/// Fussnotenlegende und HTML-Entities für Sonderzeichen (siehe `html_escape`
+/// dort). Alles drei muss hier übersetzt werden, sonst klebt `&amp;` im Text
+/// oder die Legende «* aus biologischer Landwirtschaft» hängt ohne Umbruch an
+/// der letzten Zutat, wodurch deren Fussnotenzeichen zu «**» verschmilzt.
 ///
-/// Fett gesetzte Allergene gehen dabei verloren, weil reiner Text keine
-/// Auszeichnung kennt. Der Wortlaut bleibt vollständig, und genau der ist
-/// beim Übertragen in ein Druckprogramm gefragt.
+/// Fett gesetzte Allergene gehen verloren, weil reiner Text keine Auszeichnung
+/// kennt. Der Wortlaut bleibt vollständig, und genau der ist beim Übertragen
+/// in ein Druckprogramm gefragt.
 pub fn html_to_plain(html: &str) -> String {
     // Erst die Tags weg, dann die Entities: andernfalls würde ein im Text
     // stehendes «&lt;b&gt;» zu einem echten Tag und anschliessend entfernt.
     let mut out = String::with_capacity(html.len());
+    let mut tag = String::new();
     let mut in_tag = false;
     for ch in html.chars() {
         match ch {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            c if !in_tag => out.push(c),
-            _ => {}
+            '<' => {
+                in_tag = true;
+                tag.clear();
+            }
+            '>' if in_tag => {
+                in_tag = false;
+                // `<br>` trennt in der Vorschau die Fussnotenlegende von der
+                // Zutatenliste. Im Klartext muss daraus ein echter Umbruch
+                // werden, sonst geht die Trennung verloren.
+                if tag.trim_end_matches('/').trim().eq_ignore_ascii_case("br") {
+                    out.push('\n');
+                }
+            }
+            c if in_tag => tag.push(c),
+            c => out.push(c),
         }
     }
 
     // Reihenfolge: `&amp;` zuletzt, sonst würde aus «&amp;lt;» fälschlich «<».
-    out.replace("&quot;", "\"")
+    let text = out
+        .replace("&quot;", "\"")
         .replace("&#x27;", "'")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
-        .replace("&amp;", "&")
+        .replace("&amp;", "&");
+
+    // Aus `<br><br>` würden zwei Umbrüche und damit eine Leerzeile mitten im
+    // Abschnitt. Die Vorschau setzt die Legende direkt unter die Liste, also
+    // bleibt es bei einem Umbruch.
+    let mut collapsed = String::with_capacity(text.len());
+    let mut last_was_newline = false;
+    for ch in text.chars() {
+        if ch == '\n' {
+            if last_was_newline {
+                continue;
+            }
+            last_was_newline = true;
+        } else {
+            last_was_newline = false;
+        }
+        collapsed.push(ch);
+    }
+
+    collapsed.trim().to_string()
 }
 
 /// Legt Text in die Zwischenablage. `true`, wenn es geklappt hat.
@@ -133,6 +167,43 @@ mod tests {
         // Das ° trägt bei Wildsammlung eine rechtliche Bedeutung (DEC-11)
         // und muss im kopierten Text erhalten bleiben.
         assert_eq!(html_to_plain("Bärlauch°, Salz"), "Bärlauch°, Salz");
+    }
+
+    #[test]
+    fn the_footnote_legend_gets_its_own_line() {
+        // So sieht die Liste bei Bio-Zutaten aus: die Legende steht in der
+        // Vorschau unter der Liste, getrennt durch <br><br>. Ohne Umbruch
+        // stünde dort «Bärlauch* * aus biologischer Landwirtschaft», und das
+        // Fussnotenzeichen der letzten Zutat verschmölze optisch zu «**».
+        let html = "<b>Weizenmehl</b>*, Bärlauch*<br><br>* aus biologischer Landwirtschaft";
+        assert_eq!(
+            html_to_plain(html),
+            "Weizenmehl*, Bärlauch*\n* aus biologischer Landwirtschaft"
+        );
+    }
+
+    #[test]
+    fn a_single_br_also_becomes_a_line_break() {
+        assert_eq!(
+            html_to_plain("Zeile eins<br>Zeile zwei"),
+            "Zeile eins\nZeile zwei"
+        );
+    }
+
+    #[test]
+    fn self_closing_and_uppercase_br_count_too() {
+        assert_eq!(html_to_plain("eins<BR/>zwei<br />drei"), "eins\nzwei\ndrei");
+    }
+
+    #[test]
+    fn the_legend_line_carries_no_blank_line_before_it() {
+        // Eine Leerzeile mitten im Zutaten-Abschnitt sähe aus wie ein neuer
+        // Abschnitt und würde die Gliederung der Etikette verfälschen.
+        let text = html_to_plain("Salz*<br><br>* aus biologischer Landwirtschaft");
+        assert!(
+            !text.contains("\n\n"),
+            "the legend belongs directly under the list: {text:?}"
+        );
     }
 
     #[test]

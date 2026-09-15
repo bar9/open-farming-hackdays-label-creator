@@ -11,7 +11,7 @@
 
 mod common;
 
-use common::recipes::Config;
+use common::recipes::{BioStatus, Config, RecipeIngredient};
 use common::*;
 use std::time::Duration;
 
@@ -321,5 +321,55 @@ async fn the_label_copy_button_stays_away_until_there_is_a_label() {
     );
 
     assert_no_errors(&c, "empty label").await;
+    c.close().await.ok();
+}
+
+/// Die Fussnotenlegende der Bio-Zutaten braucht eine eigene Zeile.
+///
+/// In der Vorschau trennt ein `<br>` die Legende von der Zutatenliste. Wurde
+/// das beim Umwandeln in Klartext verschluckt, stand dort
+/// «Bärlauch** aus biologischer Landwirtschaft»: das Fussnotenzeichen der
+/// letzten Zutat verschmolz mit dem der Legende zu einem doppelten Stern, der
+/// eine zweite Fussnote vortäuscht. Auf einer Etikette ist das eine falsche
+/// Angabe, kein Schönheitsfehler.
+#[tokio::test]
+async fn the_footnote_legend_stands_on_its_own_line() {
+    let c = connect().await;
+    goto_config(&c, Config::Knospe).await;
+    set_sachbezeichnung(&c, "Bärlauchpesto").await;
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Weizenmehl",
+            grams: 600.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioCh,
+        },
+    )
+    .await;
+    add_full_ingredient(
+        &c,
+        &RecipeIngredient {
+            name: "Bärlauch",
+            grams: 400.0,
+            origin: Some("CH"),
+            bio: BioStatus::BioCh,
+        },
+    )
+    .await;
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+
+    let copied = capture_copied_text(&c, "Etikette kopieren").await;
+
+    assert!(
+        copied.contains("Bärlauch*\n* aus biologischer Landwirtschaft"),
+        "the legend needs its own line below the list: {copied:?}"
+    );
+    assert!(
+        !copied.contains("**"),
+        "a doubled asterisk would pretend a second footnote: {copied:?}"
+    );
+
+    assert_no_errors(&c, "footnote legend").await;
     c.close().await.ok();
 }
