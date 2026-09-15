@@ -28,6 +28,13 @@ pub fn webdriver_url() -> String {
     std::env::var("E2E_WEBDRIVER").unwrap_or_else(|_| "http://localhost:4444".into())
 }
 
+/// Wartezeit, bis die WASM-App im Browser steht.
+///
+/// Die 1500 ms reichen für einen warmen Dev-Server. Nach einem frischen
+/// `dx serve` ist das Debug-WASM rund 90 MB gross, und Chrome braucht dafür
+/// spürbar länger: die Tests finden dann weder Knöpfe noch Eingabefelder und
+/// scheitern reihenweise mit Meldungen, die nach echten Fehlern aussehen.
+/// In dem Fall `E2E_MOUNT_DELAY_MS=6000 make e2e` setzen.
 pub fn mount_delay() -> Duration {
     let ms: u64 = std::env::var("E2E_MOUNT_DELAY_MS")
         .ok()

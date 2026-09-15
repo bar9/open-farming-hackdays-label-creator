@@ -78,7 +78,7 @@ label:
   verarbeitungsschritte: Verarbeitungsschritte
 
 nav:
-  linkKopieren: Link kopieren
+  teilen: Teilen
   schliessen: Schliessen
   hinzufuegen: Zutat hinzufügen
   speichern: Speichern
@@ -275,6 +275,9 @@ preview:
   zutatenliste: Zutatenliste
   herstelleradresse: Herstelleradresse
   preis: Preis
+  copy_label: Etikette kopieren
+  copy_label_done: Etikettentext wurde in die Zwischenablage kopiert!
+  copy_label_hint: Kopiert den Text der Etikette, zum Einfügen in ein Druck- oder Schreibprogramm.
 
 units:
   g: g
@@ -291,6 +294,10 @@ link_type_short: Kurz-Link
 link_short_disclaimer: "Der Kurz-Link verweist auf declarino.ch und bleibt dauerhaft gültig."
 link_short_disclaimer_provider: "Hinweis: declarino.ch war nicht erreichbar. Der Kurz-Link liegt beim Drittanbieter %{provider}."
 link_copied_success: Link wurde in die Zwischenablage kopiert!
+link_copy_button: Kopieren
+link_qr_title: QR-Code zum Abscannen
+link_qr_hint: Mit der Handy-Kamera abscannen, um die Rezeptur dort zu öffnen.
+link_qr_alt: QR-Code des Links zu dieser Rezeptur
 shortening: Wird gekürzt...
 link_shorten_error: "Der Kurz-Link konnte nicht erstellt werden. Der vollständige Link unten funktioniert und enthält alle Angaben."
 close: Schliessen

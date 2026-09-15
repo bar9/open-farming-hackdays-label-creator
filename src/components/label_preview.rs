@@ -1,9 +1,12 @@
+use crate::components::icons;
 use crate::components::icons::{
     BioSuisseNoCross, BioSuisseRegular, UmstellungsknospeSatzImport, UmstellungsknospeSatzRegular,
 };
 use crate::components::{base_factor, display_unit, Amount, AmountType, Price};
 use crate::layout::DisclaimerContext;
 use crate::nl2br::Nl2Br;
+use crate::services::label_text;
+use crate::services::label_text::copy_to_clipboard;
 use crate::shared::VerdictsContext;
 use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeVerdict};
 use dioxus::prelude::*;
@@ -139,6 +142,214 @@ pub fn LabelPreview(
     let verdicts = use_context::<VerdictsContext>();
     let mut disclaimer_context = use_context::<Signal<DisclaimerContext>>();
     let disclaimer_accepted = use_memo(move || disclaimer_context.read().accepted);
+
+    // Die Etikette als reiner Text, zum Kopieren in ein Druck- oder
+    // Schreibprogramm. Bewusst aus denselben Signalen gebaut wie die Vorschau
+    // darunter, damit beide nicht auseinanderlaufen können. Aufgenommen wird
+    // nur der Inhalt der weissen Karte: die Bio-Hinweise darunter gehören
+    // nicht auf die gedruckte Etikette.
+    let label_plain_text: Memo<String> = use_memo(move || {
+        let mut sections: Vec<String> = Vec::new();
+
+        // Produktname und Sachbezeichnung, mit «Bio» genau dann, wenn die
+        // Vorschau es auch anhängt (DEC-10).
+        {
+            let v = verdicts.0();
+            let suffix_allowed = matches!(v.bio, Some(BioVerdict::Allowed { .. }))
+                || matches!(
+                    v.knospe,
+                    Some(KnospeVerdict::Logo {
+                        bio_suffix: true,
+                        ..
+                    })
+                );
+            let bio_suffix = if suffix_allowed {
+                t!("preview.bio_suffix").to_string()
+            } else {
+                String::new()
+            };
+
+            let title = product_title();
+            let subtitle = product_subtitle();
+            if !subtitle.is_empty() {
+                if title.is_empty() {
+                    sections.push(format!("{subtitle}{bio_suffix}"));
+                } else {
+                    sections.push(format!("{title}\n{subtitle}{bio_suffix}"));
+                }
+            } else if !title.is_empty() {
+                sections.push(title);
+            }
+        }
+
+        if !ignore_ingredients() {
+            let list = label_text::html_to_plain(&label.read());
+            if !list.is_empty() {
+                sections.push(format!("{} {}", t!("preview.zutaten"), list));
+            }
+        }
+
+        if date_prefix() != t!("label.keinDatum") && !date().is_empty() {
+            sections.push(format!("{} {}", date_prefix(), date()));
+        }
+
+        // Menge: dieselbe Reihenfolge wie in der Vorschau, damit berechnete
+        // und eingegebene Werte gleich behandelt werden.
+        {
+            let unit = get_unit();
+            let amount_display =
+                calculated_amount.and_then(|c| if c().0 { Some(c().1) } else { None });
+            let line = match (amount(), amount_display) {
+                (_, Some(calculated)) => Some(format!("{calculated} {unit}")),
+                (
+                    Amount {
+                        net: Some(net),
+                        drained: Some(drained),
+                    },
+                    None,
+                ) => Some(format!(
+                    "{} {net} {unit}\n{} {drained} {unit}",
+                    t!("preview.nettogewicht"),
+                    t!("preview.abtropfgewicht"),
+                )),
+                (
+                    Amount {
+                        net: Some(net),
+                        drained: None,
+                    },
+                    None,
+                ) => Some(format!("{net} {unit}")),
+                _ => None,
+            };
+
+            // Die Stückzahl bei Eiern steht in der Vorschau direkt unter der
+            // Menge, also gehört sie in denselben Abschnitt (DEC-13).
+            let pieces = egg_count
+                .and_then(|c| *c.read())
+                .map(|count| format!("{count} {}", t!("units.stueck")));
+
+            match (line, pieces) {
+                (Some(l), Some(p)) => sections.push(format!("{l}\n{p}")),
+                (Some(l), None) => sections.push(l),
+                (None, Some(p)) => sections.push(p),
+                (None, None) => {}
+            }
+        }
+
+        {
+            let mut infos: Vec<String> = Vec::new();
+            if !additional_info().is_empty() {
+                infos.push(additional_info());
+            }
+            if !storage_info().is_empty() {
+                infos.push(storage_info());
+            }
+            if !infos.is_empty() {
+                sections.push(infos.join("\n"));
+            }
+        }
+
+        // Herstellerangaben: Adresse und Kontaktzeilen bilden einen Block,
+        // wie auf der gedruckten Etikette.
+        {
+            let mut producer: Vec<String> = Vec::new();
+            if !address_combined.read().is_empty() {
+                producer.push(address_combined.read().clone());
+            }
+            if !producer_phone.read().is_empty() {
+                producer.push(t!("preview.tel", phone = producer_phone()).to_string());
+            }
+            if !producer_email.read().is_empty() {
+                producer.push(t!("preview.email", email = producer_email()).to_string());
+            }
+            if !producer_website.read().is_empty() {
+                producer.push(t!("preview.website", website = producer_website()).to_string());
+            }
+            if !producer.is_empty() {
+                sections.push(producer.join("\n"));
+            }
+        }
+
+        // Preis: Einheitsgrösse braucht keinen Grundpreis daneben.
+        {
+            let Price { unit, total } = price();
+            if unit.is_some() || total.is_some() {
+                if amount().is_einheitsgroesse() {
+                    sections.push(format!(
+                        "{} {}",
+                        display_money_rounded(unit),
+                        t!("units.chf")
+                    ));
+                } else {
+                    let unit_price = match &calculated_unit_price {
+                        Some(calc) if calc().0 => Some(calc().1),
+                        _ => unit,
+                    };
+                    let total_price = match &calculated_total_price {
+                        Some(calc) if calc().0 => Some(calc().1),
+                        _ => total,
+                    };
+
+                    let mut lines: Vec<String> = Vec::new();
+                    if let Some(up) = unit_price {
+                        let base = match get_base_factor() {
+                            1 => get_unit(),
+                            factor => format!("{factor} {}", get_unit()),
+                        };
+                        lines.push(format!(
+                            "{}{base} {} {}",
+                            t!("units.chfPro"),
+                            display_money_exact(Some(up)),
+                            t!("units.chf")
+                        ));
+                    }
+                    if let Some(tp) = total_price {
+                        lines.push(format!(
+                            "{} {} {}",
+                            t!("preview.preis"),
+                            display_money_rounded(Some(tp)),
+                            t!("units.chf")
+                        ));
+                    }
+                    if !lines.is_empty() {
+                        sections.push(lines.join("\n"));
+                    }
+                }
+            }
+        }
+
+        if let Some(cert_body_signal) = certification_body {
+            if !cert_body_signal.read().is_empty() {
+                sections
+                    .push(t!("preview.bio_zertifizierung", body = cert_body_signal()).to_string());
+            }
+        }
+
+        label_text::join_sections(&sections)
+    });
+
+    let mut label_copied = use_signal(|| false);
+
+    // Ob es überhaupt etwas zu kopieren gibt. Nicht am Gesamttext gemessen:
+    // der ist nie leer, weil das Formular ein Vorgabedatum, «0 g» und einen
+    // Nullpreis mitbringt. Eine Etikette wird sie erst durch das, was sie
+    // benennt, also Sachbezeichnung, Produktname oder Zutatenliste.
+    let has_label_content = use_memo(move || {
+        !product_subtitle().is_empty()
+            || !product_title().is_empty()
+            || (!ignore_ingredients() && !label.read().is_empty())
+    });
+
+    let copy_label_text = move |_| {
+        let text = label_plain_text();
+        spawn(async move {
+            if copy_to_clipboard(&text) {
+                label_copied.set(true);
+                gloo::timers::future::TimeoutFuture::new(2000).await;
+                label_copied.set(false);
+            }
+        });
+    };
 
     use_effect(move || {
         let accepted = disclaimer_accepted();
@@ -419,6 +630,46 @@ pub fn LabelPreview(
                         }
                     }
                 }
+                }
+            }
+
+            // Etikettentext zum Mitnehmen. Steht bewusst unter der weissen
+            // Karte und ausserhalb von ihr: er ist ein Werkzeug, kein Teil der
+            // gedruckten Etikette. Der Teilen-Knopf oben gibt den Link zur
+            // Rezeptur weiter, dieser hier den fertigen Text zum Einsetzen in
+            // ein Druck- oder Schreibprogramm.
+            if has_label_content() {
+                div { class: "mx-4 mt-4 flex flex-col items-start gap-1",
+                    button {
+                        class: "btn btn-outline btn-sm",
+                        onclick: copy_label_text,
+                        if label_copied() {
+                            svg {
+                                class: "w-5 h-5",
+                                fill: "none",
+                                stroke: "currentColor",
+                                stroke_width: "2",
+                                view_box: "0 0 24 24",
+                                path {
+                                    stroke_linecap: "round",
+                                    stroke_linejoin: "round",
+                                    d: "M5 13l4 4L19 7"
+                                }
+                            }
+                        } else {
+                            icons::Clipboard {}
+                        }
+                        {t!("preview.copy_label").to_string()}
+                    }
+                    if label_copied() {
+                        div { class: "text-success text-sm",
+                            {t!("preview.copy_label_done").to_string()}
+                        }
+                    } else {
+                        div { class: "text-xs text-base-content/70",
+                            {t!("preview.copy_label_hint").to_string()}
+                        }
+                    }
                 }
             }
 

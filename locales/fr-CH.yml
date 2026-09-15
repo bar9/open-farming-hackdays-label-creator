@@ -79,7 +79,7 @@ label:
   verarbeitungsschritte: Procédés de transformation
 
 nav:
-  linkKopieren: Copier le lien
+  teilen: Partager
   schliessen: Fermer
   hinzufuegen: Ajouter un ingrédient
   speichern: Sauvegarder
@@ -103,6 +103,9 @@ preview:
   zutatenliste: Liste des ingrédients
   herstelleradresse: Adresse du fabricant
   preis: Prix
+  copy_label: Copier l'étiquette
+  copy_label_done: Le texte de l'étiquette a été copié dans le presse-papiers !
+  copy_label_hint: Copie le texte de l'étiquette, pour le coller dans un programme d'impression ou de traitement de texte.
 
 units:
   g: g
@@ -285,6 +288,10 @@ link_type_short: Lien court
 link_short_disclaimer: "Le lien court renvoie à declarino.ch et reste valable durablement."
 link_short_disclaimer_provider: "Remarque : declarino.ch n'était pas joignable. Le lien court est hébergé par le service tiers %{provider}."
 link_copied_success: Le lien a été copié dans le presse-papiers !
+link_copy_button: Copier
+link_qr_title: Code QR à scanner
+link_qr_hint: Scannez avec l'appareil photo du téléphone pour y ouvrir la recette.
+link_qr_alt: Code QR du lien vers cette recette
 shortening: Raccourcissement...
 link_shorten_error: "Le lien court n'a pas pu être créé. Le lien complet ci-dessous fonctionne et contient toutes les données."
 close: Fermer

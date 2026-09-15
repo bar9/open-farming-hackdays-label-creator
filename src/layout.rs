@@ -239,8 +239,8 @@ pub fn SplitLayout() -> Element {
                                                     show_link_modal.set(true);
                                                 }
                                             },
-                                            icons::Clipboard {}
-                                            "{t!(\"nav.linkKopieren\").to_string()}"
+                                            icons::Share {}
+                                            "{t!(\"nav.teilen\").to_string()}"
                                         }
                                     }
                                 }

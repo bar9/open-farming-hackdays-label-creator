@@ -1,9 +1,9 @@
+use crate::services::label_text;
+use crate::services::qr_code;
 use crate::services::url_shortener;
 use crate::services::url_shortener::Provider;
 use dioxus::prelude::*;
 use rust_i18n::t;
-use wasm_bindgen::JsCast;
-use web_sys::{js_sys, window, HtmlTextAreaElement};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum LinkType {
@@ -91,36 +91,8 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
             is_copying.set(true);
             copy_success.set(false);
 
-            // Use simple textarea fallback method
-            let mut success = false;
-            if let Some(window) = window() {
-                if let Some(document) = window.document() {
-                    if let Ok(textarea) = document.create_element("textarea") {
-                        if let Ok(textarea) = textarea.dyn_into::<HtmlTextAreaElement>() {
-                            textarea.set_value(&url_to_copy);
-                            textarea
-                                .set_attribute(
-                                    "style",
-                                    "position: fixed; left: -999999px; top: -999999px;",
-                                )
-                                .ok();
-
-                            if let Some(body) = document.body() {
-                                if let Ok(node) = textarea.clone().dyn_into::<web_sys::Node>() {
-                                    body.append_child(&node).ok();
-                                    textarea.select();
-
-                                    // Use JavaScript to copy
-                                    let _ = js_sys::eval("document.execCommand('copy')");
-                                    success = true;
-
-                                    body.remove_child(&node).ok();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            // Gemeinsam mit dem Knopf unter der Etikette (services::label_text).
+            let success = label_text::copy_to_clipboard(&url_to_copy);
 
             if success {
                 copy_success.set(true);
@@ -232,7 +204,7 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                             input {
                                 r#type: "text",
                                 class: "input input-bordered flex-1",
-                                value: current_url,
+                                value: current_url.clone(),
                                 readonly: true,
                                 disabled: is_shortening(),
                             }
@@ -269,12 +241,44 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                         }
                                     }
                                 }
+                                // Der Knopf oben heisst jetzt «Teilen», also
+                                // muss der eigentliche Kopiervorgang hier
+                                // benannt sein. Vorher stand hier nur ein
+                                // Symbol, dessen Bedeutung man raten musste.
+                                span { class: "ml-2", {t!("link_copy_button").to_string()} }
                             }
 
                             if copy_success() {
                                 div {
                                     class: "text-success text-sm mt-2",
                                     {t!("link_copied_success").to_string()}
+                                }
+                            }
+                        }
+
+                        // QR-Code: holt den Link auf ein Handy, ohne ihn
+                        // abzutippen. Fuer einen vollstaendigen Link mit ganzer
+                        // Rezeptur kann er zu lang werden, dann bleibt das Feld
+                        // oben der Weg (siehe services::qr_code).
+                        if let Some(qr) = qr_code::svg_path(&current_url) {
+                            div {
+                                class: "mt-6 flex flex-col items-center gap-2",
+                                div {
+                                    class: "text-sm font-medium",
+                                    {t!("link_qr_title").to_string()}
+                                }
+                                svg {
+                                    class: "w-48 h-48 bg-white p-2 rounded border border-base-300",
+                                    view_box: "0 0 {qr.size} {qr.size}",
+                                    role: "img",
+                                    "aria-label": t!("link_qr_alt").to_string(),
+                                    "shape-rendering": "crispEdges",
+                                    path { fill: "#ffffff", d: "M0,0h{qr.size}v{qr.size}h-{qr.size}z" }
+                                    path { fill: "#000000", d: "{qr.path}" }
+                                }
+                                div {
+                                    class: "text-xs text-base-content/70 text-center",
+                                    {t!("link_qr_hint").to_string()}
                                 }
                             }
                         }

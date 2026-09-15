@@ -26,6 +26,7 @@ gloo = { version = "0.12", features = ["net", "timers", "futures"] }
 urlencoding = "2.1.3"
 tracing = "0.1.44"
 serde_yaml = "0.9"
+qrcodegen = "1.8"
 
 [build-dependencies]
 built = { version = "0.8", features = ["chrono"] }

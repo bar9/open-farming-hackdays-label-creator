@@ -79,7 +79,7 @@ label:
   saved_ingredients: Ingredienti salvati
 
 nav:
-  linkKopieren: Copia link
+  teilen: Condividi
   schliessen: Chiudi
   hinzufuegen: Aggiungi ingrediente
   speichern: Salvare
@@ -103,6 +103,9 @@ preview:
   zutatenliste: Elenco degli ingredienti
   herstelleradresse: Indirizzo del produttore
   preis: Prezzo
+  copy_label: Copia etichetta
+  copy_label_done: Il testo dell'etichetta è stato copiato negli appunti!
+  copy_label_hint: Copia il testo dell'etichetta, da incollare in un programma di stampa o di scrittura.
 
 units:
   g: g
@@ -284,6 +287,10 @@ link_type_short: Link breve
 link_short_disclaimer: "Il link breve rimanda a declarino.ch e resta valido nel tempo."
 link_short_disclaimer_provider: "Nota: declarino.ch non era raggiungibile. Il link breve è ospitato dal servizio di terze parti %{provider}."
 link_copied_success: Il link è stato copiato negli appunti!
+link_copy_button: Copia
+link_qr_title: Codice QR da scansionare
+link_qr_hint: Scansiona con la fotocamera del telefono per aprire lì la ricetta.
+link_qr_alt: Codice QR del link a questa ricetta
 shortening: Accorciamento...
 link_shorten_error: "Non è stato possibile creare il link breve. Il link completo qui sotto funziona e contiene tutti i dati."
 close: Chiudi
