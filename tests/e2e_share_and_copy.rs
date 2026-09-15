@@ -411,3 +411,46 @@ async fn multi_line_free_text_keeps_its_own_breaks() {
     assert_no_errors(&c, "multi-line free text").await;
     c.close().await.ok();
 }
+
+/// Die Bio-Zertifizierungsstelle gehört in den kopierten Text.
+///
+/// Sie ist eine Pflichtangabe der Bio-Verordnung und steht in der Vorschau
+/// als eigener Block unter der Etikette. Fehlte sie im Klartext, wäre eine
+/// daraus gedruckte Etikette unvollständig.
+#[tokio::test]
+async fn the_certification_body_is_part_of_the_copied_label() {
+    let c = connect().await;
+    goto_config(&c, Config::Bio).await;
+    let query = "v=2&product_subtitle=Bergk%C3%A4se&amount_type=Weight&weight_unit=g\
+&amount[Single]=250&producer_name=Hof%20Muster&production_country=Schweiz\
+&certification_body=bio.inspecta%20AG";
+    goto(&c, &format!("bio?{query}")).await;
+    tokio::time::sleep(mount_delay()).await;
+
+    // Auf den Knopf warten, statt auf eine feste Zeit zu hoffen: die
+    // Bio-Route baut die Vorschau spürbar später auf als die anderen.
+    let mut ready = false;
+    for _ in 0..20 {
+        if button_by_text(&c, "Etikette kopieren").await.is_some() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    assert!(ready, "the copy button must appear on the Bio route");
+
+    let copied = capture_copied_text(&c, "Etikette kopieren").await;
+
+    assert!(
+        copied.contains("bio.inspecta AG"),
+        "the certification body is mandatory on an organic label: {copied:?}"
+    );
+    // Eigener Abschnitt, wie in der Vorschau: davor eine Leerzeile.
+    assert!(
+        copied.contains("\n\nBio-Zertifizierung: bio.inspecta AG"),
+        "it belongs in its own section: {copied:?}"
+    );
+
+    assert_no_errors(&c, "certification body").await;
+    c.close().await.ok();
+}
