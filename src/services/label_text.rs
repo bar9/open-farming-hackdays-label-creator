@@ -191,6 +191,29 @@ mod tests {
     }
 
     #[test]
+    fn the_wild_collection_legend_gets_its_own_line_too() {
+        // `core` hängt die °-Legende mit einem einfachen `<br>` an (DEC-11).
+        // Ohne Umbruch stünde «Bärlauch°° aus zertifizierter Wildsammlung»,
+        // also ein Zeichen, das es auf der Etikette nicht gibt.
+        let html = "Bärlauch°, Salz<br>° aus zertifizierter Wildsammlung";
+        assert_eq!(
+            html_to_plain(html),
+            "Bärlauch°, Salz\n° aus zertifizierter Wildsammlung"
+        );
+    }
+
+    #[test]
+    fn both_legends_below_each_other_keep_single_breaks() {
+        // Bio und Wildsammlung können zusammen auftreten; dann stehen zwei
+        // Legendenzeilen untereinander, ohne Leerzeile dazwischen.
+        let html = "Bärlauch°*<br><br>* aus biologischer Landwirtschaft<br>° aus zertifizierter Wildsammlung";
+        assert_eq!(
+            html_to_plain(html),
+            "Bärlauch°*\n* aus biologischer Landwirtschaft\n° aus zertifizierter Wildsammlung"
+        );
+    }
+
+    #[test]
     fn self_closing_and_uppercase_br_count_too() {
         assert_eq!(html_to_plain("eins<BR/>zwei<br />drei"), "eins\nzwei\ndrei");
     }
