@@ -23,7 +23,7 @@ A web application for creating food labels compliant with Swiss food labeling la
 ## Prerequisites
 
 - **Rust** with wasm target: `rustup target add wasm32-unknown-unknown`
-- **Dioxus CLI** v0.7.10 (matches CI): `cargo install dioxus-cli --version 0.7.10`
+- **Dioxus CLI** v0.7.10 (matches CI): `cargo install dioxus-cli --version 0.7.10`. `dx` refuses to build against a dioxus version other than its own, so `make dev`, `make build` and `make build-production` verify this first; run `make check-dx` to check on its own.
 - **Node.js** + npm (for Tailwind CSS + daisyUI)
 
 ## Setup

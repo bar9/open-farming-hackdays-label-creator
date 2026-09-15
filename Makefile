@@ -1,4 +1,18 @@
-.PHONY: setup css dev build build-production check check-rust lint test e2e e2e-ux clean help
+.PHONY: setup css dev build build-production check check-rust check-dx lint test e2e e2e-ux clean help
+
+# The dx CLI refuses to build when its version differs from the dioxus
+# dependency, and that error only surfaces once a build is already underway.
+# DX_VERSION is the version pinned in the CI workflows; keep the three in sync.
+DX_VERSION := 0.7.10
+
+check-dx:
+	@have=$$(dx --version 2>/dev/null | awk '{print $$2}'); \
+	if [ -z "$$have" ]; then \
+		echo "dx not found. Install it: cargo install dioxus-cli --version $(DX_VERSION)"; exit 1; \
+	elif [ "$$have" != "$(DX_VERSION)" ]; then \
+		echo "dx $$have does not match the pinned $(DX_VERSION) (see .github/workflows)."; \
+		echo "Install the matching one: cargo install dioxus-cli --version $(DX_VERSION)"; exit 1; \
+	fi
 
 setup:
 	npm install
@@ -6,13 +20,13 @@ setup:
 css:
 	npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css
 
-dev:
+dev: check-dx
 	dx serve
 
-build:
+build: check-dx
 	dx build --release
 
-build-production:
+build-production: check-dx
 	dx build --release --features hidebio
 
 check-rust: css
@@ -48,6 +62,7 @@ help:
 	@echo "make setup            Install npm dependencies (Tailwind, daisyUI)"
 	@echo "make css              Compile Tailwind CSS"
 	@echo "make dev              Start Dioxus dev server (hot-reload)"
+	@echo "make check-dx         Verify the dx CLI matches the pinned version"
 	@echo "make build            Production build (dx build --release)"
 	@echo "make build-production Production build with hidebio feature"
 	@echo "make check-rust       cargo check"
