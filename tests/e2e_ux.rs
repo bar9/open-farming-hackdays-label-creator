@@ -65,7 +65,7 @@ async fn link_share_modal_sized_well() {
     set_product_title(&c, "ShareSizingTest").await;
     add_simple_ingredient(&c, "Mehl", 100).await;
 
-    click_button_by_text(&c, "Link kopieren").await;
+    click_button_by_text(&c, "Teilen").await;
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     let issues = check_modal_sizing(&c).await;

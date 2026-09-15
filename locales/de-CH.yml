@@ -737,7 +737,7 @@ faq:
     - Werden meine Rezepturen auf einem Server gespeichert?
   answers:
     - Nein. Declarino unterstützt dich beim Erstellen einer Etikette, erhebt aber keinen Anspruch auf Vollständigkeit und ersetzt keine rechtliche Prüfung. Die Verantwortung für die Richtigkeit der Deklaration liegt bei der Person, die das Lebensmittel in Verkehr bringt.
-    - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Link kopieren» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur.
+    - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Teilen» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur.
 
 impressum: |
   # Impressum, Datenschutz

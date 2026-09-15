@@ -465,7 +465,7 @@ async fn link_copy_modal_opens() {
     set_product_title(&c, "ShareTest").await;
     add_simple_ingredient(&c, "Mehl", 100).await;
 
-    let opened = click_button_by_text(&c, "Link kopieren").await;
+    let opened = click_button_by_text(&c, "Teilen").await;
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     let url = read_share_url(&c).await.unwrap_or_default();
@@ -473,7 +473,7 @@ async fn link_copy_modal_opens() {
     let errs = read_errors(&c).await;
     c.close().await.ok();
 
-    assert!(opened, "could not find 'Link kopieren' button");
+    assert!(opened, "could not find the «Teilen» button");
     assert!(!url.is_empty(), "share URL was empty");
     assert!(
         errs.is_empty(),
@@ -489,7 +489,10 @@ async fn link_copy_and_reuse() {
     set_product_title(&c1, "RoundtripTest").await;
     add_simple_ingredient(&c1, "Mehl", 100).await;
 
-    click_button_by_text(&c1, "Link kopieren").await;
+    // Der Rückgabewert wird geprüft: ohne ihn blieb ein umbenannter Knopf
+    // unbemerkt, und der Test lief mit leerem Link weiter.
+    let opened = click_button_by_text(&c1, "Teilen").await;
+    assert!(opened, "the «Teilen» button must open the dialog");
     tokio::time::sleep(Duration::from_millis(500)).await;
     let share_url = read_share_url(&c1).await;
     let errs1 = read_errors(&c1).await;

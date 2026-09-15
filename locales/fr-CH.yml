@@ -731,7 +731,7 @@ faq:
     - Mes recettes sont-elles enregistrées sur un serveur ?
   answers:
     - Non. Declarino t'aide à créer une étiquette, mais ne prétend pas être exhaustif et ne remplace pas un examen juridique. La responsabilité de l'exactitude de la déclaration incombe à la personne qui met la denrée alimentaire sur le marché.
-    - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Copier le lien ». Toute personne disposant de ce lien voit la recette qu'il contient.
+    - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Partager ». Toute personne disposant de ce lien voit la recette qu'il contient.
 
 impressum: |
   # Mentions légales, Protection des données
