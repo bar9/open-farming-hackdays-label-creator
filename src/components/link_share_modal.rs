@@ -31,8 +31,23 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
 
     // Der volle Link als Signal, damit die Closures unten kopierbar bleiben
     // (ein `String` liesse sich nur einmal in eine `move`-Closure ziehen).
-    let full_url = use_signal(|| url.clone());
-    let url_for_shorten = url.clone();
+    //
+    // Nachgefuehrt, nicht nur einmal gesetzt: Das Fenster haengt im Layout und
+    // entsteht schon beim Start der Anwendung, zu einem Zeitpunkt also, an dem
+    // das Formular noch leer ist. `use_signal` merkt sich aber allein den
+    // ersten Wert. Der Link blieb dadurch fuer immer der des leeren Formulars,
+    // und wer teilte, verschickte eine leere Etikette.
+    let mut full_url = use_signal(|| url.clone());
+    use_effect(use_reactive!(|url| {
+        if full_url.peek().as_str() != url.as_str() {
+            full_url.set(url.clone());
+            // Der Kurz-Link zeigte auf die vorige Fassung; er muss neu geholt
+            // werden, statt weiter auf veraltete Daten zu verweisen.
+            short_url.set(None);
+            short_provider.set(None);
+            shorten_error.set(None);
+        }
+    }));
 
     // Was im Eingabefeld steht und kopiert wird.
     //
@@ -47,7 +62,9 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
     };
 
     let start_shortening = move || {
-        let url_to_shorten = url_for_shorten.clone();
+        // Aus dem Signal, nicht aus der beim Bauen eingefangenen Fassung:
+        // sonst kuerzt der Dienst weiterhin den Link des leeren Formulars.
+        let url_to_shorten = full_url();
         spawn(async move {
             is_shortening.set(true);
             shorten_error.set(None);
