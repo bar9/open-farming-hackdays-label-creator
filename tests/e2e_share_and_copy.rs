@@ -531,3 +531,53 @@ async fn the_full_link_keeps_the_dialog_usable() {
     assert_no_errors(&c, "full link dialog").await;
     c.close().await.ok();
 }
+
+// Der Erfolg des Kopierens ist sonst nur am Knopf sichtbar, während der Blick
+// auf der Vorschau liegt. Die Etikette selbst quittiert ihn deshalb kurz und
+// nimmt die Quittung danach wieder zurück; ein dauerhafter Rahmen wäre Dekor.
+#[tokio::test]
+async fn the_label_itself_acknowledges_a_successful_copy() {
+    let c = connect().await;
+    seed_small_recipe(&c).await;
+
+    let flashing = |c: &fantoccini::Client| {
+        let c = c.clone();
+        async move {
+            c.execute(
+                "return document.querySelectorAll('.label-copied-flash').length;",
+                vec![],
+            )
+            .await
+            .ok()
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0)
+        }
+    };
+
+    assert_eq!(
+        flashing(&c).await,
+        0,
+        "the label must be calm before anything was copied"
+    );
+
+    click_button_by_text(&c, "Etikette kopieren").await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
+
+    assert_eq!(
+        flashing(&c).await,
+        1,
+        "the label must acknowledge the copy right after the click"
+    );
+
+    // Die Quittung am Knopf dauert zwei Sekunden; danach ist auch die
+    // Etikette wieder ruhig.
+    tokio::time::sleep(Duration::from_millis(2200)).await;
+    assert_eq!(
+        flashing(&c).await,
+        0,
+        "the acknowledgement must fade instead of staying on the label"
+    );
+
+    assert_no_errors(&c, "label copy effect").await;
+    c.close().await.ok();
+}

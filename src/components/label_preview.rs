@@ -366,7 +366,12 @@ pub fn LabelPreview(
     rsx! {
         div { class: "p-8 flex flex-col bg-base-200",
             if disclaimer_accepted() {
-            div { class: "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative",
+            div {
+                class: if label_copied() {
+                    "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative label-copied-flash"
+                } else {
+                    "bg-white rounded-lg shadow-lg p-8 mx-4 my-4 relative"
+                },
                 // Bio Suisse logo display. With Umstellungs ingredients the artwork
                 // switches to the official Umstellungsknospe, pre-baked together with
                 // the Umstellungssatz text into one combined image (logo left, text

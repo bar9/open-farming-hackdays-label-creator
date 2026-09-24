@@ -5,6 +5,36 @@
     themes: corporate --default;
 }
 
+/* Die Etikette meldet kurz, dass ihr Text kopiert wurde: ein grüner Schimmer
+   entlang der Kante und ein kaum merkliches Anheben. Der Knopf allein sagt es
+   auch, doch der Blick liegt beim Kopieren auf der Vorschau, nicht auf dem
+   Knopf. Wer Bewegung abbestellt hat, bekommt nur die Farbe. */
+@keyframes label-copied-flash {
+    0% {
+        box-shadow: 0 0 0 0 var(--color-success);
+        transform: scale(1);
+    }
+    30% {
+        box-shadow: 0 0 0 6px color-mix(in oklch, var(--color-success) 35%, transparent);
+        transform: scale(1.015);
+    }
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-success) 0%, transparent);
+        transform: scale(1);
+    }
+}
+
+.label-copied-flash {
+    animation: label-copied-flash 900ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .label-copied-flash {
+        animation: none;
+        box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-success) 35%, transparent);
+    }
+}
+
 /* Theme-specific font rules */
 [data-theme="swiss"] {
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
