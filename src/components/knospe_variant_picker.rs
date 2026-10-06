@@ -28,6 +28,28 @@ pub fn variant_is_umstellung(variant: &str) -> bool {
     variant.starts_with("umstellung")
 }
 
+/// Origin to use when the «Bio (Knospe)» quality is picked for an ingredient.
+///
+/// A fresh selection defaults to the Swiss Knospe (CH). But when the user has
+/// already entered a non-Swiss country (e.g. Parmesan from IT), that country is
+/// kept, which makes the selection the Import Knospe. Overwriting it with CH
+/// made a later click on «Herkunft Import» fall back to the generic `Import`
+/// placeholder, so the country silently disappeared from the label (DEC-25
+/// follow-up).
+pub fn knospe_default_origins(current: Option<Vec<Country>>) -> Option<Vec<Country>> {
+    let real_foreign = current.as_ref().is_some_and(|o| {
+        !o.is_empty()
+            && !o.contains(&Country::CH)
+            && o.iter()
+                .any(|c| !matches!(c, Country::Import | Country::NoOriginRequired))
+    });
+    if real_foreign {
+        current
+    } else {
+        Some(vec![Country::CH])
+    }
+}
+
 /// The origin implied by a variant, given the origins currently selected.
 /// Swiss variants force CH; import variants keep any non-CH selection and
 /// otherwise fall back to the generic `Import` origin.
@@ -97,5 +119,45 @@ pub fn KnospeVariantPicker(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn knospe_pick_keeps_an_entered_foreign_country() {
+        // Parmesan: IT entered first, then «Bio (Knospe)» → stays IT (Import Knospe).
+        assert_eq!(
+            knospe_default_origins(Some(vec![Country::IT])),
+            Some(vec![Country::IT])
+        );
+        assert_eq!(knospe_variant_key(false, false), "knospe_import");
+        // A following click on «Herkunft Import» keeps IT as well.
+        assert_eq!(
+            variant_origins("knospe_import", Some(vec![Country::IT])),
+            Some(vec![Country::IT])
+        );
+    }
+
+    #[test]
+    fn knospe_pick_defaults_to_ch_without_a_real_foreign_country() {
+        assert_eq!(knospe_default_origins(None), Some(vec![Country::CH]));
+        assert_eq!(knospe_default_origins(Some(vec![])), Some(vec![Country::CH]));
+        // Placeholders are not a country.
+        assert_eq!(
+            knospe_default_origins(Some(vec![Country::Import])),
+            Some(vec![Country::CH])
+        );
+        assert_eq!(
+            knospe_default_origins(Some(vec![Country::NoOriginRequired])),
+            Some(vec![Country::CH])
+        );
+        // Mixed CH + foreign: Swiss Knospe as before.
+        assert_eq!(
+            knospe_default_origins(Some(vec![Country::CH, Country::IT])),
+            Some(vec![Country::CH])
+        );
     }
 }

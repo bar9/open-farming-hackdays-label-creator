@@ -12,7 +12,8 @@ pub use impressum::Impressum;
 pub use ingredients_table::IngredientsTable;
 pub use internal_note_mark::InternalNoteMark;
 pub use knospe_variant_picker::{
-    knospe_variant_key, variant_is_umstellung, variant_origins, KnospeVariantPicker,
+    knospe_default_origins, knospe_variant_key, variant_is_umstellung, variant_origins,
+    KnospeVariantPicker,
 };
 pub use label_preview::LabelPreview;
 pub use language_select::LanguageSelect;

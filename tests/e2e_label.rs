@@ -335,11 +335,10 @@ async fn knospe_label_baerlauch_pesto_bsk() {
     assert_label_contains(&c, "Bärlauch", "baerlauch BSK / namensgebend present").await;
     assert_label_contains(&c, "Baumnüsse* (CH)", "baerlauch BSK / walnuts with CH").await;
     // Non-Swiss origins are printed too (formerly hidden by tier B). The UI
-    // seeding sets the country BEFORE clicking «Herkunft Import», and that
-    // click resets the origin to the generic «Import» placeholder, which is
-    // never printed. So Parmesan carries no country here; the IT case is
-    // covered at the core tier (recipes.rs::recipe_baerlauch_pesto_bsk).
-    assert_label_contains(&c, "Parmesan*", "baerlauch BSK / cheese bio star").await;
+    // seeding enters the country BEFORE picking «Bio (Knospe)»/«Herkunft
+    // Import»; that order used to drop the country (DEC-25 follow-up) and must
+    // keep IT now.
+    assert_label_contains(&c, "Parmesan* (IT)", "baerlauch BSK / IT origin").await;
     assert_label_contains(
         &c,
         "aus biologischer Landwirtschaft",

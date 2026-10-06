@@ -1514,8 +1514,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             edit_bio_ch.set(cat == "bio");
                             edit_nicht_landwirtschaftlich.set(cat == "nicht_lw");
                             if cat == "knospe" {
-                                // Default a fresh Knospe selection to the Swiss Knospe.
-                                edit_origins.set(Some(vec![Country::CH]));
+                                // Default a fresh Knospe selection to the Swiss Knospe,
+                                // but keep a country already entered (DEC-25 follow-up).
+                                edit_origins.set(knospe_default_origins(edit_origins()));
                                 edit_aus_umstellbetrieb.set(false);
                             } else if cat == "nicht_lw" {
                                 edit_origins.set(None);
