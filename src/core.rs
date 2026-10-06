@@ -1565,7 +1565,7 @@ impl OutputFormatter {
                     &self.RuleDefs,
                     self.total_amount,
                 );
-            output = format! {"{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin)};
+            output = format!("{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin));
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps

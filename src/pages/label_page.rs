@@ -381,7 +381,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
     });
 
     let query_string = use_memo(move || {
-        format! {"?{}",to_query_string(&current_state()).unwrap()}
+        format!("?{}", to_query_string(&current_state()).unwrap())
     });
 
     let mut copy_link_context = use_context::<Signal<CopyLinkContext>>();
