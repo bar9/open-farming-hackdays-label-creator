@@ -4,6 +4,7 @@ use crate::components::*;
 use crate::core::Ingredient;
 use crate::rules::RuleDef;
 use crate::shared::VerdictsContext;
+use crate::verdicts::{BlockingReason, CheckState};
 use dioxus::prelude::*;
 use rust_i18n::t;
 use std::collections::HashMap;
@@ -18,6 +19,7 @@ pub struct IngredientsTableProps {
 }
 pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
     let editing_path: Signal<IngredientPath> = use_signal(Vec::new);
+    let verdicts = use_context::<VerdictsContext>().0;
 
     // Flatten the recipe-scoped validation messages into an ordered (ingredient
     // label, message) list. Only "ingredients[i][field]" keys count — `i` is the
@@ -47,6 +49,29 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
                 out.push((idx, label.clone(), m.clone()));
             }
         }
+        // DEC-22: ingredients that block Bio/Knospe marketing are recipe
+        // problems too. Without them the panel said «Keine Fehler gefunden»
+        // while the preview warned «erfüllt die Anforderungen nicht».
+        for b in &verdicts().blocking {
+            let label = ingredients
+                .get(b.index)
+                .map(|ing| ing.name.clone())
+                .unwrap_or_default();
+            let msg = match b.reason {
+                BlockingReason::NotKnospe => t!("validation.blocking_not_knospe"),
+                BlockingReason::NotBio => t!("validation.blocking_not_bio"),
+            };
+            out.push((b.index, label, msg.to_string()));
+        }
+        // A failed check with no ingredient to blame (e.g. permitted exceptions
+        // above 5 % in sum) still needs one line, else the red box would read
+        // «0 Problem(e) gefunden».
+        let v = verdicts();
+        let check_failed = matches!(v.bio_check, Some(CheckState::Failed))
+            || matches!(v.knospe_check, Some(CheckState::Failed));
+        if check_failed && out.is_empty() {
+            out.push((usize::MAX, String::new(), t!("validation.blocking_generic").to_string()));
+        }
         // Deterministic order: HashMap iteration is unordered.
         out.sort_by(|a, b| a.0.cmp(&b.0).then(a.2.cmp(&b.2)));
         out.into_iter()
@@ -54,8 +79,15 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
             .collect::<Vec<_>>()
     });
 
-    // Recipe is "valid" once marked complete and no validation errors remain.
-    let recipe_valid = use_memo(move || (props.rezeptur_vollstaendig)() && issues().is_empty());
+    // Recipe is "valid" once marked complete, no problems remain, and neither
+    // Bio nor Knospe check failed (DEC-22: the green «Keine Fehler gefunden»
+    // must never sit next to the preview's «erfüllt die Anforderungen nicht»).
+    let recipe_valid = use_memo(move || {
+        let v = verdicts();
+        let check_failed = matches!(v.bio_check, Some(CheckState::Failed))
+            || matches!(v.knospe_check, Some(CheckState::Failed));
+        (props.rezeptur_vollstaendig)() && issues().is_empty() && !check_failed
+    });
 
     let total_amount = use_memo(move || {
         props

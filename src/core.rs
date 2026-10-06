@@ -5,7 +5,8 @@ use crate::category_service::{
 use crate::model::{lookup_agricultural, lookup_allergen, Country};
 use crate::rules::RuleDef;
 use crate::verdicts::{
-    BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeLogo, KnospeVerdict, Verdicts,
+    BioBlockReason, BioVerdict, BlockingIngredient, BlockingReason, CheckState, KnospeBlockReason,
+    KnospeLogo, KnospeVerdict, Verdicts,
 };
 use rust_i18n::t;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -572,6 +573,43 @@ fn has_agricultural_ingredient(ingredients: &[Ingredient]) -> bool {
         .iter()
         .flat_map(|i| i.leaves())
         .any(|i| i.is_agricultural() && i.amount > 0.0)
+}
+
+/// DEC-22: the top-level ingredients that keep the recipe from Bio/Knospe
+/// marketing, so the recipe check can name them instead of reporting «no
+/// errors» next to a generic «does not meet the requirements». Only filled
+/// when the respective verdict actually blocks; non-agricultural ingredients
+/// never block. Einzelzutat mode has no recipe list to point at.
+fn blocking_ingredients(
+    input: &Input,
+    bio: &Option<BioVerdict>,
+    knospe: &Option<KnospeVerdict>,
+) -> Vec<BlockingIngredient> {
+    if input.ignore_ingredients {
+        return Vec::new();
+    }
+    let mut out = Vec::new();
+    if matches!(knospe, Some(KnospeVerdict::NoLogo { .. })) {
+        for (index, ing) in input.ingredients.iter().enumerate() {
+            if ing.subtree_has_agricultural() && !ing.is_knospe_compliant() {
+                out.push(BlockingIngredient {
+                    index,
+                    reason: BlockingReason::NotKnospe,
+                });
+            }
+        }
+    }
+    if matches!(bio, Some(BioVerdict::NotAllowed { .. })) {
+        for (index, ing) in input.ingredients.iter().enumerate() {
+            if ing.has_undeclared_non_bio() {
+                out.push(BlockingIngredient {
+                    index,
+                    reason: BlockingReason::NotBio,
+                });
+            }
+        }
+    }
+    out
 }
 
 /// Determines if a product is a Monoprodukt (single agricultural ingredient)
@@ -2279,6 +2317,7 @@ impl Calculator {
         // legacy key→bool contract from them. This is the only place where
         // verdict → key happens; the exclusivity invariants follow from the
         // enum structure instead of insert/remove discipline.
+        let blocking = blocking_ingredients(&input, &bio_verdict, &knospe_verdict);
         let verdicts = Verdicts {
             bio: bio_verdict,
             knospe: knospe_verdict,
@@ -2288,6 +2327,7 @@ impl Calculator {
             namensgebende_zutat_input,
             manuelles_total_input,
             origin_required_indices,
+            blocking,
         };
         let verdicts_out = verdicts;
 

@@ -2412,3 +2412,54 @@ fn knospe_wildsammlung_under_10_percent_keeps_its_wording_inline() {
         label
     );
 }
+
+// --- DEC-22: the recipe check names the ingredients that block marketing ---
+
+#[test]
+fn dec22_knospe_names_the_non_knospe_ingredient() {
+    use crate::verdicts::BlockingReason;
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Karotten", 400.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Rotwein", 200.0).origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new("Salz", 10.0).agricultural(false).build())
+        .build();
+    let output = calculator.execute(input);
+    let v = &output.verdicts;
+    assert_eq!(v.knospe_check, Some(CheckState::Failed));
+    assert_eq!(v.blocking.len(), 1, "{:?}", v.blocking);
+    assert_eq!(v.blocking[0].index, 1, "Rotwein is input index 1");
+    assert_eq!(v.blocking[0].reason, BlockingReason::NotKnospe);
+}
+
+#[test]
+fn dec22_bio_names_undeclared_non_bio_but_not_salt() {
+    use crate::verdicts::BlockingReason;
+    let calculator = calculator_for(crate::shared::Configuration::Bio);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio_ch().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new_agri("Eier", 90.0).origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new("Salz", 10.0).agricultural(false).build())
+        .build();
+    let output = calculator.execute(input);
+    let v = &output.verdicts;
+    assert_eq!(v.bio_check, Some(CheckState::Failed));
+    assert_eq!(
+        v.blocking.iter().map(|b| (b.index, b.reason)).collect::<Vec<_>>(),
+        vec![(1, BlockingReason::NotBio)]
+    );
+}
+
+#[test]
+fn dec22_nothing_blocks_a_fully_knospe_recipe() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 900.0).bio().origin(Country::CH).build())
+        .ingredient(IngredientBuilder::new("Salz", 10.0).agricultural(false).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(output.verdicts.blocking.is_empty());
+}

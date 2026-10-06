@@ -106,6 +106,27 @@ pub struct Verdicts {
     /// AP7.1/Fleisch: Indizes der Zutaten, die eine Herkunftsangabe brauchen.
     /// Leer = keine. Ersetzt die dynamische `herkunft_benoetigt_{i}`-Familie.
     pub origin_required_indices: Vec<usize>,
+    /// DEC-22: Zutaten, die die Bio- bzw. Knospe-Vermarktung verhindern, mit
+    /// Grund. Füllt die Problemliste unter «Rezeptur prüfen», damit «Keine
+    /// Fehler gefunden» nie neben «erfüllt die Anforderungen nicht» steht.
+    pub blocking: Vec<BlockingIngredient>,
+}
+
+/// Warum eine einzelne (Top-Level-)Zutat die Zertifizierung verhindert.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BlockingReason {
+    /// Landwirtschaftlich, aber nicht Knospe-zertifiziert (Knospe-Konfiguration).
+    NotKnospe,
+    /// Landwirtschaftlich, aber weder Bio noch erlaubte Ausnahme (Bio-V).
+    NotBio,
+}
+
+/// Eine Zutat aus der Rezeptur, die die Vermarktung blockiert.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BlockingIngredient {
+    /// Index der Top-Level-Zutat (wie bei `ingredients[i]` der Validierung).
+    pub index: usize,
+    pub reason: BlockingReason,
 }
 
 impl Verdicts {
