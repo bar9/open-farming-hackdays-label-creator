@@ -176,11 +176,26 @@ pub async fn search_unified(query: &str, lang: &str) -> Result<Vec<UnifiedIngred
         return Ok(Vec::new());
     }
 
+    // Search BLV API. A failing BLV request must not take the local food_db and
+    // curated alias suggestions down with it: before, the `?` here turned any
+    // BLV hiccup (network, timeout, a single unparsable item) into an empty
+    // dropdown. Fall back to local-only suggestions instead.
+    let blv_results = match search_food(query, lang).await {
+        Ok(results) => results,
+        Err(e) => {
+            tracing::warn!("BLV search failed for '{}', showing local suggestions only: {}", query, e);
+            Vec::new()
+        }
+    };
+
+    Ok(merge_results(query, blv_results))
+}
+
+/// Merge local food_db hits, curated aliases and BLV results into one ranked,
+/// deduplicated suggestion list. Pure, so it is testable without the network.
+fn merge_results(query: &str, blv_results: Vec<FoodItem>) -> Vec<UnifiedIngredient> {
     // Search local database
     let local_results = search_local_db(query);
-
-    // Search BLV API
-    let blv_results = search_food(query, lang).await?;
 
     // Merge results
     let mut unified = Vec::new();
@@ -232,7 +247,7 @@ pub async fn search_unified(query: &str, lang: &str) -> Result<Vec<UnifiedIngred
     rank_unified(&mut unified, query);
     unified.dedup_by(|a, b| a.name == b.name && a.canonical == b.canonical);
 
-    Ok(unified)
+    unified
 }
 
 /// Sort suggestions by curated priority, then query-match quality, then source,
@@ -410,6 +425,17 @@ mod tests {
             is_bio: None,
             source,
         }
+    }
+
+    #[test]
+    fn local_suggestions_survive_without_blv_results() {
+        // What search_unified falls back to when the BLV request fails.
+        let results = merge_results("Mehl", Vec::new());
+        assert!(
+            results.iter().any(|r| r.name == "Weizenmehl"),
+            "local/alias suggestions must remain without BLV: {:?}",
+            results.iter().map(|r| &r.name).collect::<Vec<_>>()
+        );
     }
 
     #[test]
