@@ -1241,7 +1241,17 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     let synth = vec![Ingredient { children: edit_children(), ..Default::default() }];
                     let locked = cross_level_locked(&synth, &claims_quality);
                     let derived = Ingredient { children: edit_children(), ..Default::default() };
-                    let derived_label = if derived.is_knospe_compliant() { t!("bio_labels.bio_knospe").to_string() }
+                    // DEC-21: same derivation as the ingredient list (non-agricultural
+                    // sub-ingredients like Wasser are neutral), plus the Knospe variant
+                    // so «Bio (Knospe)» no longer hides whether it is Swiss or Import.
+                    let derived_label = if is_knospe_config() && derived.is_knospe_compliant() {
+                        let base = t!("bio_labels.bio_knospe").to_string();
+                        match derived.derived_knospe_swiss() {
+                            Some(true) => format!("{base} · {}", t!("bio_labels.knospe_ch")),
+                            Some(false) => format!("{base} · {}", t!("bio_labels.knospe_import")),
+                            None => base,
+                        }
+                    }
                         else if derived.computed_bio_ch_status() == Some(true) { t!("bio_labels.bio_ch").to_string() }
                         else { t!("bio_labels.andere").to_string() };
                     // Decoupled composite quality setter — sets the quality flags only,

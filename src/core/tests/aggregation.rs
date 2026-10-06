@@ -315,3 +315,87 @@ fn import_origin_no_flag_and_roundtrips() {
     let decoded: Ingredient = qs_from_str(&encoded).unwrap();
     assert_eq!(decoded.origins, Some(vec![Country::Import]));
 }
+
+// --- DEC-21: non-agricultural sub-ingredients are neutral for quality ---
+
+fn knospe_ch(name: &str, g: f64) -> Ingredient {
+    IngredientBuilder::new_agri(name, g).bio().origin(Country::CH).build()
+}
+fn knospe_import(name: &str, g: f64) -> Ingredient {
+    IngredientBuilder::new_agri(name, g).bio().origin(Country::EU).build()
+}
+fn non_agri(name: &str, g: f64) -> Ingredient {
+    IngredientBuilder::new(name, g).agricultural(false).build()
+}
+
+#[test]
+fn dec21_sauerteig_knospe_mehl_plus_wasser_is_knospe() {
+    // Screenshot case: Sauerteig = Mehl (Knospe CH) + Wasser, no weights.
+    let st = IngredientBuilder::new_agri("Sauerteig", 9.0)
+        .children(vec![knospe_ch("Mehl", 0.0), non_agri("Wasser", 0.0)])
+        .build();
+    assert!(st.is_knospe_compliant());
+    assert_eq!(st.computed_bio_status(), Some(true));
+    assert_eq!(st.derived_knospe_swiss(), Some(true));
+}
+
+#[test]
+fn dec21_import_knospe_plus_salt_is_import_knospe() {
+    let c = IngredientBuilder::new_agri("Teig", 10.0)
+        .children(vec![knospe_import("Mehl", 9.0), non_agri("Salz", 1.0)])
+        .build();
+    assert!(c.is_knospe_compliant());
+    assert_eq!(c.derived_knospe_swiss(), Some(false));
+}
+
+#[test]
+fn dec21_only_water_and_salt_has_no_quality() {
+    let c = IngredientBuilder::new_agri("Lake", 10.0)
+        .children(vec![non_agri("Wasser", 9.0), non_agri("Salz", 1.0)])
+        .build();
+    assert!(!c.is_knospe_compliant());
+    assert!(!c.is_bio_ch_compliant());
+    assert_eq!(c.computed_bio_status(), None);
+    assert_eq!(c.derived_knospe_swiss(), None);
+}
+
+#[test]
+fn dec21_non_bio_agricultural_child_still_breaks_quality() {
+    // Neutrality is only for non-agricultural children; a conventional
+    // agricultural one must still make the composite non-Knospe.
+    let c = IngredientBuilder::new_agri("Teig", 10.0)
+        .children(vec![
+            knospe_ch("Mehl", 8.0),
+            IngredientBuilder::new_agri("Zucker", 1.0).origin(Country::CH).build(),
+            non_agri("Wasser", 1.0),
+        ])
+        .build();
+    assert!(!c.is_knospe_compliant());
+    assert_eq!(c.computed_bio_status(), Some(false));
+}
+
+#[test]
+fn dec21_bio_ch_aggregation_ignores_water_too() {
+    let mehl = IngredientBuilder::new_agri("Mehl", 6.0).bio_ch().origin(Country::CH).build();
+    let c = IngredientBuilder::new_agri("Sauerteig", 9.0)
+        .children(vec![mehl, non_agri("Wasser", 3.0)])
+        .build();
+    assert!(c.is_bio_ch_compliant());
+    assert_eq!(c.computed_bio_ch_status(), Some(true));
+}
+
+#[test]
+fn dec21_swiss_variant_uses_90_percent_threshold() {
+    let mostly_ch = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![knospe_ch("A", 91.0), knospe_import("B", 9.0)])
+        .build();
+    assert_eq!(mostly_ch.derived_knospe_swiss(), Some(true));
+    let below = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![knospe_ch("A", 30.0), knospe_import("B", 70.0)])
+        .build();
+    assert_eq!(below.derived_knospe_swiss(), Some(false));
+    let mixed_unweighed = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![knospe_ch("A", 0.0), knospe_import("B", 0.0)])
+        .build();
+    assert_eq!(mixed_unweighed.derived_knospe_swiss(), None);
+}

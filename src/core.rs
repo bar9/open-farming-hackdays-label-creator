@@ -915,17 +915,40 @@ impl Ingredient {
         self.aggregates_from_children() && !self.claims_own_quality()
     }
 
+    /// The children that carry a quality at all. Non-agricultural sub-ingredients
+    /// (Wasser, Salz, additives) are never bio and never need to be: they are
+    /// neutral for Bio-V and Knospe alike, exactly as the product-level shares
+    /// (`agricultural_share`) already treat them. Counting them made a Sauerteig
+    /// of Knospe-Mehl + Wasser «Nicht-biologisch» in the editor while the
+    /// ingredient list showed it as Knospe (DEC-21).
+    fn agricultural_children(&self) -> impl Iterator<Item = &Ingredient> {
+        self.children
+            .iter()
+            .flatten()
+            .filter(|c| c.subtree_has_agricultural())
+    }
+
+    /// True when this node or any descendant is agricultural. A composite made
+    /// only of water and salt has no quality to aggregate.
+    fn subtree_has_agricultural(&self) -> bool {
+        if self.aggregates_from_children() {
+            self.children
+                .iter()
+                .flatten()
+                .any(|c| c.subtree_has_agricultural())
+        } else {
+            self.is_agricultural()
+        }
+    }
+
     /// Counts toward Knospe certification: Knospe-certified bio, or a permitted
     /// non-organic / non-Knospe exception (Annex 3 WBF / Bio Suisse Part III).
-    /// For composites this aggregates bottom-up: compliant iff every child is.
+    /// For composites this aggregates bottom-up: compliant iff every agricultural
+    /// child is (and there is at least one).
     pub fn is_knospe_compliant(&self) -> bool {
         if self.aggregates_quality_from_children() {
-            return self
-                .children
-                .as_ref()
-                .unwrap()
-                .iter()
-                .all(|c| c.is_knospe_compliant());
+            let mut agri = self.agricultural_children().peekable();
+            return agri.peek().is_some() && agri.all(|c| c.is_knospe_compliant());
         }
         self.is_bio.unwrap_or(false)
             || self.erlaubte_ausnahme_bio.unwrap_or(false)
@@ -936,15 +959,12 @@ impl Ingredient {
     /// conversion farm. A permitted non-organic exception (Annex 3 WBF, e.g. Pektin)
     /// is NOT bio — it is tolerated only up to 5% of the agricultural weight, which
     /// the >= 95% Sachbezeichnung threshold enforces, so it must NOT count here.
-    /// For composites this aggregates bottom-up: compliant iff every child is.
+    /// For composites this aggregates bottom-up: compliant iff every agricultural
+    /// child is (and there is at least one).
     pub fn is_bio_ch_compliant(&self) -> bool {
         if self.aggregates_quality_from_children() {
-            return self
-                .children
-                .as_ref()
-                .unwrap()
-                .iter()
-                .all(|c| c.is_bio_ch_compliant());
+            let mut agri = self.agricultural_children().peekable();
+            return agri.peek().is_some() && agri.all(|c| c.is_bio_ch_compliant());
         }
         self.bio_ch.unwrap_or(false) && !self.aus_umstellbetrieb.unwrap_or(false)
     }
@@ -1274,16 +1294,18 @@ impl Ingredient {
         }
     }
 
-    /// Effective bio status (bottom-up): all-children-bio when it has children,
-    /// own value otherwise. Aggregates regardless of child weights, since quality
-    /// is a bottom-up attribute (weight is the top-down one).
+    /// Effective bio status (bottom-up): all-agricultural-children-bio when it has
+    /// children, own value otherwise. Non-agricultural children are neutral
+    /// (DEC-21). Aggregates regardless of child weights, since quality is a
+    /// bottom-up attribute (weight is the top-down one).
     pub fn computed_bio_status(&self) -> Option<bool> {
         if self.aggregates_quality_from_children() {
-            let children = self.children.as_ref().unwrap();
-            if children.iter().any(|c| c.computed_bio_status().is_some()) {
+            if self
+                .agricultural_children()
+                .any(|c| c.computed_bio_status().is_some())
+            {
                 Some(
-                    children
-                        .iter()
+                    self.agricultural_children()
                         .all(|c| c.computed_bio_status().unwrap_or(false)),
                 )
             } else {
@@ -1294,17 +1316,16 @@ impl Ingredient {
         }
     }
 
-    /// Effective bio_ch status: same bottom-up logic as bio
+    /// Effective bio_ch status: same bottom-up logic as bio (non-agricultural
+    /// children neutral, DEC-21).
     pub fn computed_bio_ch_status(&self) -> Option<bool> {
         if self.aggregates_quality_from_children() {
-            let children = self.children.as_ref().unwrap();
-            if children
-                .iter()
+            if self
+                .agricultural_children()
                 .any(|c| c.computed_bio_ch_status().is_some())
             {
                 Some(
-                    children
-                        .iter()
+                    self.agricultural_children()
                         .all(|c| c.computed_bio_ch_status().unwrap_or(false)),
                 )
             } else {
@@ -1312,6 +1333,49 @@ impl Ingredient {
             }
         } else {
             self.bio_ch
+        }
+    }
+
+    /// Knospe variant of a composite derived from its agricultural sub-ingredients,
+    /// for the editor's quality display (DEC-21): `Some(true)` = Swiss (>= 90% of
+    /// the weighed agricultural sub-ingredients are CH, the same threshold as the
+    /// product logo), `Some(false)` = Import. Without weights their origins
+    /// decide: all CH → Swiss, none CH → Import, mixed → `None` (cannot tell).
+    ///
+    /// Walks the quality tree (like `computed_bio_status`), not `leaves()`: the
+    /// latter treats a composite with weightless children as a leaf, which would
+    /// read the parent's own origin instead of the children's.
+    pub fn derived_knospe_swiss(&self) -> Option<bool> {
+        fn collect<'a>(ing: &'a Ingredient, out: &mut Vec<&'a Ingredient>) {
+            if ing.aggregates_from_children() {
+                for c in ing.children.iter().flatten() {
+                    collect(c, out);
+                }
+            } else if ing.is_agricultural() {
+                out.push(ing);
+            }
+        }
+        let mut leaves = Vec::new();
+        collect(self, &mut leaves);
+        if leaves.is_empty() {
+            return None;
+        }
+        let total: f64 = leaves.iter().map(|l| l.amount).sum();
+        if total > 0.0 {
+            let swiss: f64 = leaves
+                .iter()
+                .filter(|l| l.has_swiss_origin())
+                .map(|l| l.amount)
+                .sum();
+            return Some(swiss / total * 100.0 >= 90.0);
+        }
+        let swiss_count = leaves.iter().filter(|l| l.has_swiss_origin()).count();
+        if swiss_count == leaves.len() {
+            Some(true)
+        } else if swiss_count == 0 {
+            Some(false)
+        } else {
+            None
         }
     }
 
