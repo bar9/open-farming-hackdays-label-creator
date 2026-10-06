@@ -1977,7 +1977,10 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                             }
                         } else {
                             rsx! {
-                                span { class: "tooltip", "data-tip": t!("tooltips.save_needs_amount").to_string(),
+                                // tooltip-end: the button sits at the right edge of the
+                                // dialog; a centered tooltip overflowed it and was cut
+                                // off (DEC-17). End-aligned, it grows to the left.
+                                span { class: "tooltip tooltip-end", "data-tip": t!("tooltips.save_needs_amount").to_string(),
                                     button {
                                         class: "btn btn-primary btn-disabled",
                                         disabled: true,
@@ -1989,7 +1992,7 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     }
                 }
                 if props.depth == 0 && !props.is_genesis && !edit_is_composite() && amount_has_changed() {
-                    span { class: "tooltip", "data-tip": t!("buttons.transfer_scaling_title", factor = format!("{:.2}", scaling_factor())).to_string(),
+                    span { class: "tooltip tooltip-end", "data-tip": t!("buttons.transfer_scaling_title", factor = format!("{:.2}", scaling_factor())).to_string(),
                         button {
                             class: "btn btn-secondary",
                             onclick: move |_| handle_save(true),
