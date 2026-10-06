@@ -56,24 +56,39 @@ pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String
 
     tracing::info!("Fetching food suggestions for '{}' from API", name);
 
-    let response = Request::get(&url)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
-
-    if !response.ok() {
-        return Err(format!(
-            "BLV API returned status {} for '{}'",
-            response.status(),
-            name
-        ));
+    // The BLV API intermittently answers 500 (observed ~1 in 1000 requests,
+    // in bursts) or drops the connection. A single miss used to leave the
+    // dropdown without any BLV suggestion, so retry transient failures with a
+    // short backoff. 4xx and parse errors are not transient and fail at once.
+    const BACKOFF_MS: [u32; 3] = [0, 300, 900];
+    let mut last_err = String::new();
+    let mut foods: Option<Vec<FoodItem>> = None;
+    for (attempt, delay) in BACKOFF_MS.iter().enumerate() {
+        if *delay > 0 {
+            gloo::timers::future::TimeoutFuture::new(*delay).await;
+        }
+        match Request::get(&url).send().await {
+            Ok(response) if response.ok() => {
+                // Parse as array directly since the API returns an array
+                let parsed: Vec<FoodItem> = response
+                    .json()
+                    .await
+                    .map_err(|e| format!("Failed to parse response: {}", e))?;
+                foods = Some(parsed);
+                break;
+            }
+            Ok(response) => {
+                let status = response.status();
+                last_err = format!("BLV API returned status {} for '{}'", status, name);
+                if status < 500 {
+                    return Err(last_err);
+                }
+            }
+            Err(e) => last_err = format!("Failed to send request: {}", e),
+        }
+        tracing::warn!("BLV attempt {} failed: {}", attempt + 1, last_err);
     }
-
-    // Parse as array directly since the API returns an array
-    let foods: Vec<FoodItem> = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+    let foods = foods.ok_or(last_err)?;
 
     tracing::info!("Found {} food items for '{}'", foods.len(), name);
 
