@@ -113,10 +113,9 @@ pub fn SplitLayout() -> Element {
                                         },
                                         #[cfg(not(feature = "hidebio"))]
                                         Route::Knospe { .. } => rsx! {
-                                            div {
-                                                class: "w-4 h-4 mr-2",
-                                                icons::KnospeMark { class: "w-4 h-4" }
-                                            }
+                                            // Full Bio Suisse logo as on the splash card
+                                            // (DEC-18), not just the bud.
+                                            icons::BioSuisseLogo { class: "h-7 w-auto mr-2" }
                                             {t!("routes.knospe").to_string()}
                                         },
                                         _ => rsx! { {t!("routes.configuration").to_string()} },
@@ -208,8 +207,8 @@ pub fn SplitLayout() -> Element {
                                                 }
                                             },
                                             div {
-                                                class: "w-8 h-8 flex items-center justify-center bg-green-50 rounded",
-                                                icons::KnospeMark { class: "w-6 h-6" }
+                                                class: "w-8 h-8 flex items-center justify-center",
+                                                icons::BioSuisseLogo { class: "max-w-full max-h-full" }
                                             }
                                             div {
                                                 class: "flex flex-col",
