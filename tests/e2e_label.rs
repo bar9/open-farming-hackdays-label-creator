@@ -20,8 +20,18 @@ async fn bio_label_erdbeer_fruchtaufstrich() {
     goto_config(&c, ERDBEER_FRUCHTAUFSTRICH.config).await;
     seed_recipe_via_ui(&c, &ERDBEER_FRUCHTAUFSTRICH).await;
 
-    // Sachbezeichnung suffix " Bio" (Bio_ShowBioSachbezeichnung when 100% bio-CH).
-    assert_label_contains(&c, "Bio", "erdbeer / sachbezeichnung suffix").await;
+    // DEC-23: «Bio» is no longer appended automatically; for a 100% bio-CH
+    // recipe the «Bio» ergänzen button is offered under the Sachbezeichnung.
+    let body: String = c
+        .execute("return document.body.innerText;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    assert!(
+        body.contains("«Bio» ergänzen"),
+        "erdbeer / «Bio» ergänzen button expected"
+    );
     // Erdbeere namensgebend with origin (food_db entry is singular).
     assert_label_contains(&c, "Erdbeere", "erdbeer / ingredient list").await;
     assert_label_contains(&c, "(CH)", "erdbeer / origin display").await;

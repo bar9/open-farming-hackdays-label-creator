@@ -90,7 +90,6 @@ nav:
 
 preview:
   zutaten: "Ingrédients:"
-  bio_suffix: " Bio"
   nettogewicht: Poids net
   abtropfgewicht: Poids égoutté
   tel: "Tél: %{phone}"
@@ -318,6 +317,9 @@ errors:
   parse_saved_ingredients_failed: "Erreur lors de l'analyse des ingrédients enregistrés: %{error}"
 
 validation:
+  blocking_not_knospe: "non certifié Bourgeon (empêche le marquage Bourgeon)"
+  blocking_not_bio: "non biologique et non marqué comme exception autorisée (empêche «Bio»)"
+  blocking_generic: "Les exigences Bio ou Bourgeon ne sont pas remplies (détails dans la remarque à droite)."
   amount_greater_than_zero: La quantité doit être supérieure à 0.
   origin_required_over_50_percent: Le pays d'origine est requis pour les ingrédients de plus de 50%.
   origin_required_meat_over_20: Le pays d'origine est requis pour les ingrédients de viande de plus de 20%.
@@ -692,13 +694,13 @@ bio_hints:
   erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (selon l'annexe 3 de l'ordonnance du DEFR, p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le produit ne peut pas être commercialisé comme produit bio."
   umstellbetrieb_mono: "En tant que produit mono issu d'une exploitation en reconversion, «Bio» peut figurer dans la dénomination. Mention obligatoire sur l'étiquette : «Produit dans le cadre de la reconversion à l'agriculture biologique» (marquée par ** dans la liste des ingrédients)."
   bio_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
-  bio_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences Bio. Veuillez vérifier la saisie."
+  bio_check_failed: "La recette ne satisfait pas aux exigences Bio. Les raisons figurent à gauche sous la vérification de la recette."
   alternative_marking: "Remarque : En plus du marquage *, les variantes suivantes sont également autorisées : «Tous les ingrédients agricoles proviennent de l'agriculture biologique» ou le préfixe «Bio-» devant chaque ingrédient."
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le logo Bourgeon ne peut pas être utilisé et le produit ne peut pas être commercialisé avec le Bourgeon."
 
   knospe_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
   knospe_check_ok: "La recette saisie satisfait aux exigences du Bourgeon et le produit peut être commercialisé avec le Bourgeon."
-  knospe_check_failed: "La recette saisie est incomplète ou ne satisfait pas aux exigences du Bourgeon. Veuillez vérifier la saisie."
+  knospe_check_failed: "La recette ne satisfait pas aux exigences du Bourgeon. Les raisons figurent à gauche sous la vérification de la recette."
 umstellbetrieb:
 
 weight_units:
@@ -763,3 +765,9 @@ impressum: |
   ## Droits d'auteur
   
   Les droits d'auteur et tous les autres droits sur le contenu, les images, les photos ou autres fichiers de ce site Web appartiennent à l'organisme responsable. Pour la reproduction de tout élément, le consentement écrit des détenteurs des droits d'auteur doit être obtenu à l'avance. Bâle,
+
+bio_name:
+  may_add: "Cette recette peut être commercialisée comme bio. «Bio» dans la dénomination est autorisé, mais pas obligatoire."
+  add_button: "Ajouter «bio»"
+  not_allowed_warning: "La dénomination contient «bio», mais la recette ne satisfait pas aux exigences Bio. Veuillez retirer «bio» ou vérifier la recette."
+  not_allowed_warning_knospe: "La dénomination contient «bio», mais la recette ne satisfait pas aux exigences du Bourgeon. Veuillez retirer «bio» ou vérifier la recette."

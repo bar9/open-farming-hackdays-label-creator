@@ -262,7 +262,6 @@ placeholder:
 
 preview:
   zutaten: "Zutaten:"
-  bio_suffix: " Bio"
   nettogewicht: Nettogewicht
   abtropfgewicht: Abtropfgewicht
   tel: "Tel: %{phone}"
@@ -324,6 +323,9 @@ errors:
   parse_saved_ingredients_failed: "Fehler beim Parsen der gespeicherten Zutaten: %{error}"
 
 validation:
+  blocking_not_knospe: "nicht Knospe-zertifiziert (verhindert die Knospe-Kennzeichnung)"
+  blocking_not_bio: "nicht biologisch und nicht als erlaubte Ausnahme markiert (verhindert «Bio»)"
+  blocking_generic: "Die Bio- bzw. Knospe-Anforderungen sind nicht erfüllt (Details im Hinweis rechts)."
   amount_greater_than_zero: Die Menge muss grösser als 0 sein.
   origin_required_over_50_percent: Herkunftsland ist erforderlich für Zutaten über 50%.
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
@@ -675,13 +677,13 @@ bio_hints:
   erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (gemäss Anhang 3 der WBF-Verordnung, z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Produkt darf nicht als Bio-Produkt vermarktet werden."
   umstellbetrieb_mono: "Als Monoprodukt aus einem Umstellbetrieb darf «Bio» in der Sachbezeichnung stehen. Pflichthinweis auf der Etikette: «Hergestellt im Rahmen der Umstellung auf biologische Landwirtschaft» (im Zutatenverzeichnis mit ** gekennzeichnet)."
   bio_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
-  bio_check_failed: "Die Rezeptur-Eingabe ist unvollständig oder erfüllt die Bio-Anforderungen nicht. Bitte überprüfe die Eingabe."
+  bio_check_failed: "Die Rezeptur erfüllt die Bio-Anforderungen nicht. Die Gründe stehen links unter «Rezeptur vollständig – überprüfen»."
   alternative_marking: "Hinweis: Neben der *-Kennzeichnung sind auch folgende Varianten zulässig: «Alle landwirtschaftlichen Zutaten stammen aus biologischer Landwirtschaft» oder der Präfix «Bio-» vor den einzelnen Zutaten."
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Knospe-Logo darf nicht verwendet und das Produkt nicht mit der Knospe vermarktet werden."
 
   knospe_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
   knospe_check_ok: "Die Rezeptur-Eingabe erfüllt die Knospe-Anforderungen und das Produkt darf mit der Knospe vermarktet werden."
-  knospe_check_failed: "Die Rezeptur-Eingabe ist unvollständig oder erfüllt die Knospe-Anforderungen nicht. Bitte überprüfe die Eingabe."
+  knospe_check_failed: "Die Rezeptur erfüllt die Knospe-Anforderungen nicht. Die Gründe stehen links unter «Rezeptur vollständig – überprüfen»."
 umstellbetrieb:
 
 buttons:
@@ -769,3 +771,9 @@ impressum: |
   ## Urheberrechte
   
   Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen Dateien auf dieser Website, gehörender Trägerschaft. Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen. Basel,
+
+bio_name:
+  may_add: "Diese Rezeptur darf als Bio vermarktet werden. «Bio» in der Sachbezeichnung ist erlaubt, aber nicht Pflicht."
+  add_button: "«Bio» ergänzen"
+  not_allowed_warning: "Die Sachbezeichnung enthält «Bio», die Rezeptur erfüllt die Bio-Anforderungen aber nicht. Bitte «Bio» entfernen oder die Rezeptur prüfen."
+  not_allowed_warning_knospe: "Die Sachbezeichnung enthält «Bio», die Rezeptur erfüllt die Knospe-Anforderungen aber nicht. Bitte «Bio» entfernen oder die Rezeptur prüfen."

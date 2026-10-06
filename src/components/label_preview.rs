@@ -151,31 +151,17 @@ pub fn LabelPreview(
     let label_plain_text: Memo<String> = use_memo(move || {
         let mut sections: Vec<String> = Vec::new();
 
-        // Produktname und Sachbezeichnung, mit «Bio» genau dann, wenn die
-        // Vorschau es auch anhängt (DEC-10).
+        // Produktname und Sachbezeichnung, so wie eingegeben. «Bio» hängt die
+        // Etikette nicht mehr selbst an (DEC-23/24); die Eingabemaske bietet
+        // dafür einen Knopf an, der es ins Feld schreibt.
         {
-            let v = verdicts.0();
-            let suffix_allowed = matches!(v.bio, Some(BioVerdict::Allowed { .. }))
-                || matches!(
-                    v.knospe,
-                    Some(KnospeVerdict::Logo {
-                        bio_suffix: true,
-                        ..
-                    })
-                );
-            let bio_suffix = if suffix_allowed {
-                t!("preview.bio_suffix").to_string()
-            } else {
-                String::new()
-            };
-
             let title = product_title();
             let subtitle = product_subtitle();
             if !subtitle.is_empty() {
                 if title.is_empty() {
-                    sections.push(format!("{subtitle}{bio_suffix}"));
+                    sections.push(subtitle);
                 } else {
-                    sections.push(format!("{title}\n{subtitle}{bio_suffix}"));
+                    sections.push(format!("{title}\n{subtitle}"));
                 }
             } else if !title.is_empty() {
                 sections.push(title);
@@ -424,21 +410,16 @@ pub fn LabelPreview(
                         span {class: "badge badge-warning", {t!("preview.produktnameSachbezeichnung").to_string()}}
                     } else {
                         {
-                            // « Bio» after the Sachbezeichnung: granted by either
-                            // regime's verdict (Bio-V allowed, or a Knospe logo whose
-                            // bio_suffix flag is set — DEC-10).
-                            let v = verdicts.0();
-                            let suffix_allowed = matches!(v.bio, Some(BioVerdict::Allowed { .. }))
-                                || matches!(v.knospe, Some(KnospeVerdict::Logo { bio_suffix: true, .. }));
-                            let bio_suffix = if suffix_allowed { t!("preview.bio_suffix").to_string() } else { String::new() };
+                            // Sachbezeichnung exactly as entered (DEC-23/24: no
+                            // automatic « Bio» suffix any more).
                             if !(*product_title.read()).is_empty() {
                                 rsx! {
                                     h3 { class: "text-2xl", "{product_title}" }
-                                    span { class: "mb-1 text-base", "{product_subtitle}{bio_suffix}" }
+                                    span { class: "mb-1 text-base", "{product_subtitle}" }
                                 }
                             } else {
                                 rsx! {
-                                    h3 { class: "text-2xl mb-1", "{product_subtitle}{bio_suffix}" }
+                                    h3 { class: "text-2xl mb-1", "{product_subtitle}" }
                                 }
                             }
                         }

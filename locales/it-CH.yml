@@ -90,7 +90,6 @@ nav:
 
 preview:
   zutaten: "Ingredienti:"
-  bio_suffix: " Bio"
   nettogewicht: Peso netto
   abtropfgewicht: Peso sgocciolato
   tel: "Tel: %{phone}"
@@ -317,6 +316,9 @@ errors:
   parse_saved_ingredients_failed: "Errore nell'analisi degli ingredienti salvati: %{error}"
 
 validation:
+  blocking_not_knospe: "non certificato Gemma (impedisce la marcatura Gemma)"
+  blocking_not_bio: "non biologico e non segnato come eccezione consentita (impedisce «Bio»)"
+  blocking_generic: "I requisiti Bio o Gemma non sono soddisfatti (dettagli nella nota a destra)."
   amount_greater_than_zero: La quantità deve essere maggiore di 0.
   origin_required_over_50_percent: Il paese di origine è richiesto per gli ingredienti superiori al 50%.
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
@@ -691,13 +693,13 @@ bio_hints:
   erlaubte_ausnahme_ueber_5_prozent: "Gli ingredienti non biologici ammessi (secondo l'allegato 3 dell'ordinanza del DEFR, p. es. la pectina) non possono superare il 5% degli ingredienti agricoli. Questo limite è superato – il prodotto non può essere commercializzato come prodotto biologico."
   umstellbetrieb_mono: "Come prodotto mono proveniente da un'azienda in conversione, «Bio» può figurare nella denominazione. Indicazione obbligatoria sull'etichetta: «Prodotto nel quadro della conversione all'agricoltura biologica» (contrassegnata con ** nell'elenco degli ingredienti)."
   bio_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
-  bio_check_failed: "La ricetta inserita è incompleta o non soddisfa i requisiti Bio. Si prega di verificare i dati inseriti."
+  bio_check_failed: "La ricetta non soddisfa i requisiti Bio. I motivi sono indicati a sinistra sotto la verifica della ricetta."
   alternative_marking: "Nota: Oltre alla marcatura *, sono ammesse anche le seguenti varianti: «Tutti gli ingredienti agricoli provengono dall'agricoltura biologica» oppure il prefisso «Bio-» davanti ai singoli ingredienti."
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Gli ingredienti non biologici ammessi (p. es. la pectina) non possono superare il 5% degli ingredienti agricoli. Questo limite è superato – il logo Gemma non può essere utilizzato e il prodotto non può essere commercializzato con la Gemma."
 
   knospe_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
   knospe_check_ok: "La ricetta inserita soddisfa i requisiti della Gemma e il prodotto può essere commercializzato con la Gemma."
-  knospe_check_failed: "La ricetta inserita è incompleta o non soddisfa i requisiti della Gemma. Si prega di verificare i dati inseriti."
+  knospe_check_failed: "La ricetta non soddisfa i requisiti della Gemma. I motivi sono indicati a sinistra sotto la verifica della ricetta."
 umstellbetrieb:
 
 weight_units:
@@ -762,3 +764,9 @@ impressum: |
   ## Diritti d'autore
   
   I diritti d'autore e tutti gli altri diritti su contenuti, immagini, foto o altri file su questo sito web appartengono all'ente promotore. Per la riproduzione di qualsiasi elemento è necessario ottenere in anticipo il consenso scritto dei titolari dei diritti d'autore. Basilea,
+
+bio_name:
+  may_add: "Questa ricetta può essere commercializzata come bio. «Bio» nella denominazione è consentito, ma non obbligatorio."
+  add_button: "Aggiungere «bio»"
+  not_allowed_warning: "La denominazione contiene «bio», ma la ricetta non soddisfa i requisiti Bio. Rimuovere «bio» o verificare la ricetta."
+  not_allowed_warning_knospe: "La denominazione contiene «bio», ma la ricetta non soddisfa i requisiti della Gemma. Rimuovere «bio» o verificare la ricetta."

@@ -369,10 +369,11 @@ async fn biov_quality_options_keep_their_order_on_every_selection() {
     let _ = c.close().await;
 }
 
-// DEC-10: a Knospe-eligible recipe must show « Bio» after the Sachbezeichnung,
-// as Bio-V already does.
+// DEC-10 → DEC-23/24: a Knospe-eligible recipe no longer gets « Bio» appended
+// automatically. Instead a button under the Sachbezeichnung writes «Bio» into
+// the field (German: in front).
 #[tokio::test]
-async fn knospe_recipe_appends_bio_to_the_sachbezeichnung() {
+async fn knospe_recipe_offers_bio_button_for_the_sachbezeichnung() {
     let c = connect().await;
     goto_config(&c, Config::Knospe).await;
     set_sachbezeichnung(&c, "Konfitüre").await;
@@ -399,7 +400,19 @@ async fn knospe_recipe_appends_bio_to_the_sachbezeichnung() {
     .await;
     tokio::time::sleep(std::time::Duration::from_millis(700)).await;
 
-    assert_label_contains(&c, "Konfitüre Bio", "knospe / bio suffix").await;
+    // Not appended on its own any more.
+    let label = label_html(&c).await;
+    assert!(
+        !label.contains("Konfitüre Bio"),
+        "no automatic « Bio» suffix expected. Label:\n{}",
+        label
+    );
+    assert!(
+        click_button_by_text(&c, "«Bio» ergänzen").await,
+        "the «Bio» ergänzen button must be offered for a Knospe-eligible recipe"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+    assert_label_contains(&c, "Bio Konfitüre", "knospe / bio via button").await;
 
     let _ = c.close().await;
 }

@@ -1,3 +1,4 @@
+pub mod bio_name;
 pub mod label_text;
 pub mod qr_code;
 pub mod unified_ingredient_service;

@@ -6,6 +6,8 @@ use crate::rules::{RuleDef, RuleRegistry};
 use crate::shared::{
     restore_params_from_session_storage, Configuration, Validations, VerdictsContext,
 };
+use crate::services::bio_name;
+use crate::verdicts::{BioVerdict, KnospeVerdict};
 use dioxus::prelude::*;
 use rust_i18n::t;
 use serde::{Deserialize, Serialize};
@@ -487,6 +489,49 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                                 placeholder: t!("placeholder.sachbezeichnung").to_string(),
                                 bound_value: product_subtitle,
                                 required: true
+                            }
+                        }
+                        // DEC-23/24: «Bio» is no longer appended to the label
+                        // automatically. When the recipe may be marketed as Bio
+                        // (Bio-V verdict, or Knospe logo with bio_suffix), offer a
+                        // button that writes it into the field itself; when it may
+                        // not, warn if the text claims «Bio» anyway.
+                        {
+                            let v = verdicts();
+                            let bio_allowed = matches!(v.bio, Some(BioVerdict::Allowed { .. }))
+                                || matches!(v.knospe, Some(KnospeVerdict::Logo { bio_suffix: true, .. }));
+                            let bio_regime = v.bio.is_some() || v.knospe.is_some();
+                            let subtitle = product_subtitle();
+                            let has_bio = bio_name::contains_bio_word(&subtitle);
+                            if bio_allowed && !has_bio && !subtitle.trim().is_empty() {
+                                rsx! {
+                                    div { class: "-mt-4 flex flex-wrap items-center gap-2 p-2 bg-info/30 rounded text-sm",
+                                        span { {t!("bio_name.may_add").to_string()} }
+                                        button {
+                                            class: "btn btn-xs btn-outline",
+                                            r#type: "button",
+                                            onclick: move |_| {
+                                                let locale = rust_i18n::locale().to_string();
+                                                let new = bio_name::add_bio(&product_subtitle(), &locale);
+                                                product_subtitle.set(new);
+                                            },
+                                            {t!("bio_name.add_button").to_string()}
+                                        }
+                                    }
+                                }
+                            } else if bio_regime && !bio_allowed && has_bio {
+                                let warning = if v.knospe.is_some() {
+                                    t!("bio_name.not_allowed_warning_knospe")
+                                } else {
+                                    t!("bio_name.not_allowed_warning")
+                                };
+                                rsx! {
+                                    div { class: "-mt-4 p-2 bg-warning/40 rounded text-sm",
+                                        {warning.to_string()}
+                                    }
+                                }
+                            } else {
+                                rsx! {}
                             }
                         }
                         SeparatorLine {}
