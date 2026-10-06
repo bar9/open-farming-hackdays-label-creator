@@ -993,22 +993,16 @@ impl Ingredient {
     }
 
     pub fn composites(&self) -> String {
-        self.composites_with_rules(&[], 0.0, 0)
+        self.composites_with_rules(&[], 0.0)
     }
 
-    pub fn composites_with_rules(
-        &self,
-        rules: &[RuleDef],
-        total_amount: f64,
-        agricultural_ingredient_count: usize,
-    ) -> String {
+    pub fn composites_with_rules(&self, rules: &[RuleDef], total_amount: f64) -> String {
         // A quality claimed on this composite itself (bought certified unit) is
         // pushed DOWN onto the children's markers (Testing 25.06.2026) — the
         // parent name never carries `*`/`**`.
         self.composites_with_inherited(
             rules,
             total_amount,
-            agricultural_ingredient_count,
             InheritedQuality::from_parent(self),
             false,
         )
@@ -1022,13 +1016,11 @@ impl Ingredient {
         &self,
         rules: &[RuleDef],
         total_amount: f64,
-        agricultural_ingredient_count: usize,
         force_origin: bool,
     ) -> String {
         self.composites_with_inherited(
             rules,
             total_amount,
-            agricultural_ingredient_count,
             InheritedQuality::from_parent(self),
             force_origin,
         )
@@ -1038,7 +1030,6 @@ impl Ingredient {
         &self,
         rules: &[RuleDef],
         total_amount: f64,
-        agricultural_ingredient_count: usize,
         inherited: InheritedQuality,
         force_origin: bool,
     ) -> String {
@@ -1110,7 +1101,6 @@ impl Ingredient {
                             base_name.push_str(&child.composites_with_inherited(
                                 rules,
                                 total_amount,
-                                agricultural_ingredient_count,
                                 child_inherited,
                                 force_origin && !has_declared_origin(child),
                             ));
@@ -1131,12 +1121,9 @@ impl Ingredient {
                                 if let Some(origin_str) = format_valid_origins(&child.origins) {
                                     base_name = format!("{} {}", base_name, origin_str);
                                 }
-                            } else if let Some(origin_str) = format_origin_for_knospe_rules(
-                                child,
-                                rules,
-                                total_amount,
-                                agricultural_ingredient_count,
-                            ) {
+                            } else if let Some(origin_str) =
+                                format_origin_for_knospe_rules(child, rules, total_amount)
+                            {
                                 base_name = format!("{} {}", base_name, origin_str);
                             }
                             base_name
@@ -1456,7 +1443,6 @@ struct OutputFormatter {
     ingredient: Ingredient,
     RuleDefs: Vec<RuleDef>,
     total_amount: f64,
-    agricultural_ingredient_count: usize,
 }
 
 impl PartialEq for RuleDef {
@@ -1466,17 +1452,11 @@ impl PartialEq for RuleDef {
 }
 
 impl OutputFormatter {
-    pub fn from(
-        ingredient: Ingredient,
-        total_amount: f64,
-        RuleDefs: Vec<RuleDef>,
-        agricultural_ingredient_count: usize,
-    ) -> Self {
+    pub fn from(ingredient: Ingredient, total_amount: f64, RuleDefs: Vec<RuleDef>) -> Self {
         Self {
             ingredient,
             total_amount,
             RuleDefs,
-            agricultural_ingredient_count,
         }
     }
 
@@ -1565,7 +1545,7 @@ impl OutputFormatter {
                     &self.RuleDefs,
                     self.total_amount,
                 );
-            output = format!("{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin));
+            output = format!("{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, force_child_origin));
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps
@@ -1609,7 +1589,6 @@ impl OutputFormatter {
                     &self.ingredient,
                     &self.RuleDefs,
                     self.total_amount,
-                    self.agricultural_ingredient_count,
                 ) {
                     output = format!("{} {}", output, origin_str);
                 }
@@ -1619,12 +1598,9 @@ impl OutputFormatter {
 
         if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
             // Knospe origin rules — shared with composite children
-            if let Some(origin_str) = format_origin_for_knospe_rules(
-                &self.ingredient,
-                &self.RuleDefs,
-                self.total_amount,
-                self.agricultural_ingredient_count,
-            ) {
+            if let Some(origin_str) =
+                format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount)
+            {
                 output = format!("{} {}", output, origin_str);
             }
         } else {
@@ -1683,7 +1659,6 @@ impl OutputFormatter {
                     &self.ingredient,
                     &self.RuleDefs,
                     self.total_amount,
-                    self.agricultural_ingredient_count,
                 ) {
                     output = format!("{} {}", output, origin_str);
                 }
@@ -2319,13 +2294,6 @@ impl Calculator {
         let has_bio_ingredients = has_bio_rules && tree_has_star;
         let has_umstellbetrieb = has_bio_rules && tree_has_double_star;
 
-        // Count agricultural ingredients for Monoprodukt detection in OutputFormatter
-        let agricultural_ingredient_count = sorted_ingredients
-            .iter()
-            .flat_map(|i| i.leaves())
-            .filter(|i| i.is_agricultural())
-            .count();
-
         // Check for Wildsammlung legend (before sorted_ingredients is consumed)
         let has_wildsammlung_marker = output_rules.contains(&RuleDef::Wildsammlung_Ueber10Prozent)
             && sorted_ingredients.iter().any(|ing| {
@@ -2341,12 +2309,7 @@ impl Calculator {
         let ingredients_label = sorted_ingredients
             .into_iter()
             .map(|item| {
-                OutputFormatter::from(
-                    item,
-                    total_amount,
-                    output_rules.clone(),
-                    agricultural_ingredient_count,
-                )
+                OutputFormatter::from(item, total_amount, output_rules.clone())
             })
             .map(|fmt| fmt.format())
             .collect::<Vec<_>>()
@@ -2452,31 +2415,22 @@ fn format_origin_for_knospe_rules(
     ingredient: &Ingredient,
     rules: &[RuleDef],
     total_amount: f64,
-    agricultural_ingredient_count: usize,
 ) -> Option<String> {
     let has_knospe_100_rule = rules.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
     let has_knospe_90_99_rule = rules.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
     let has_knospe_under90_rule =
         rules.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
-    if has_knospe_100_rule {
-        // Rule A: 100% Swiss agricultural ingredients — no origin display
-        None
-    } else if has_knospe_90_99_rule {
-        // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
-        if ingredient.is_agricultural() && ingredient.has_swiss_origin() {
-            Some("(CH)".to_string())
-        } else {
-            None
-        }
-    } else if has_knospe_under90_rule {
-        // Rule C: <90% Swiss — show origin based on specific ingredient criteria
-        let percentage =
-            calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
-        let is_mono_product = agricultural_ingredient_count == 1;
-
-        if should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product)
-        {
+    if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
+        // DEC-25 (Variante A): on a Knospe label every agricultural ingredient
+        // shows the countries it was declared with. Bio Suisse makes the user
+        // enter all origins anyway, and the former tiered display (none at 100%
+        // CH, only «(CH)» at 90-99%, category thresholds below 90%) dropped the
+        // countries of every ingredient after the first non-Swiss one, which
+        // testers read as a bug. The Swiss share now only picks the logo
+        // variant (cross at >= 90%); `validate_knospe_under90_origin` still
+        // decides which ingredients *must* carry an origin.
+        if ingredient.is_agricultural() {
             format_valid_origins(&ingredient.computed_origins())
         } else {
             None

@@ -131,7 +131,7 @@ fn recipe_schoggi_cookie_bk() {
         "Should NOT have bio_suisse_regular logo"
     );
 
-    // Origin display per Excel "Herkunft muss angegeben werden":
+    // Origin display (DEC-25): every agricultural ingredient shows its declared origin:
     // Butter: Ja → show (CH)
     assert!(
         output.label.contains("Butter* (CH)"),
@@ -144,10 +144,10 @@ fn recipe_schoggi_cookie_bk() {
         "Eier should show origin (CH). Label: {}",
         output.label
     );
-    // Zucker: Nein
+    // Zucker: shows its declared origin (DEC-25; formerly hidden by the tier rules)
     assert!(
-        !output.label.contains("Zucker* (PE)"),
-        "Zucker should NOT show origin. Label: {}",
+        output.label.contains("Zucker* (PE)"),
+        "Zucker shows its declared origin (DEC-25). Label: {}",
         output.label
     );
     assert!(
@@ -161,16 +161,17 @@ fn recipe_schoggi_cookie_bk() {
         "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}",
         output.label
     );
-    // Schokoladewürfel: Nein
+    // Schokoladewürfel: composite, so the origin sits on its children
+    // (lowest level), each now printed (DEC-25); the parent carries none.
     assert!(
-        !output.label.contains("Schokoladewürfel* (EU)"),
-        "Schokoladewürfel should NOT show origin. Label: {}",
+        output.label.contains("Schokoladewürfel (Zucker* (EU)"),
+        "Schokoladewürfel children show their origin (DEC-25). Label: {}",
         output.label
     );
-    // Orangenschale: Nein
+    // Orangenschale: shows its declared origin (DEC-25; formerly hidden by the tier rules)
     assert!(
-        !output.label.contains("Orangenschale* (EU)"),
-        "Orangenschale should NOT show origin. Label: {}",
+        output.label.contains("Orangenschale* (EU)"),
+        "Orangenschale shows its declared origin (DEC-25). Label: {}",
         output.label
     );
     // Salz: Nein (non-agricultural, no bio asterisk)
@@ -267,17 +268,17 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         "Should NOT have bio_suisse_regular logo"
     );
 
-    // Origin display per Excel:
+    // Origin display (DEC-25): every agricultural ingredient shows its declared origin:
     // Butter: Ja → show (CH)
     assert!(
         output.label.contains("Butter* (CH)"),
         "Butter should show origin (CH). Label: {}",
         output.label
     );
-    // Sub-ingredient Vollmilchpulver: Nein (4.6% < 10% Swiss threshold, Knospe Under90% rules apply to composites too)
+    // Sub-ingredient Vollmilchpulver: shows its declared origin (DEC-25; formerly hidden by the tier rules)
     assert!(
-        !output.label.contains("Vollmilchpulver* (CH)"),
-        "Vollmilchpulver should NOT show origin (4.6%% < 10%% threshold). Label: {}",
+        output.label.contains("Vollmilchpulver* (CH)"),
+        "Vollmilchpulver shows its declared origin (DEC-25). Label: {}",
         output.label
     );
     // Zucker: Ja (18% Swiss agricultural, >10%)
@@ -292,16 +293,17 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}",
         output.label
     );
-    // Eier: Nein (9% < 10%)
+    // Eier: shows its declared origin (DEC-25; formerly hidden by the tier rules)
     assert!(
-        !output.label.contains("Eier* (CH)"),
-        "Eier should NOT show origin (9%% < 10%%). Label: {}",
+        output.label.contains("Eier* (CH)"),
+        "Eier shows its declared origin (DEC-25). Label: {}",
         output.label
     );
-    // Schokoladewürfel: Nein
+    // Milchschokoladewürfel: composite, so the origin sits on its children
+    // (lowest level), each now printed (DEC-25); the parent carries none.
     assert!(
-        !output.label.contains("Milchschokoladewürfel* (EU)"),
-        "Milchschokoladewürfel should NOT show origin. Label: {}",
+        output.label.contains("Milchschokoladewürfel (Zucker* (EU)"),
+        "Milchschokoladewürfel children show their origin (DEC-25). Label: {}",
         output.label
     );
     // Salz: Nein
@@ -393,7 +395,7 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
         "Should NOT have bio_suisse_no_cross logo"
     );
 
-    // Origin display per Excel (90-99% rule: show origin for Swiss agricultural ingredients):
+    // Origin display (DEC-25): every agricultural ingredient shows its declared origin:
     // Weizenmehl: Ja* → show (CH)
     assert!(
         output.label.contains("Weizenmehl* (CH)"),
@@ -418,10 +420,11 @@ fn recipe_schoggi_cookie_bsk_mit_milch() {
         "Eier should show origin (CH). Label: {}",
         output.label
     );
-    // Schokoladewürfel: Nein (EU, not Swiss)
+    // Milchschokoladewürfel: composite, so the origin sits on its children
+    // (lowest level), each now printed (DEC-25); the parent carries none.
     assert!(
-        !output.label.contains("Milchschokoladewürfel* (EU)"),
-        "Milchschokoladewürfel should NOT show origin. Label: {}",
+        output.label.contains("Milchschokoladewürfel (Zucker* (EU)"),
+        "Milchschokoladewürfel children show their origin (DEC-25). Label: {}",
         output.label
     );
     // Sub-ingredient Vollmilchpulver: Ja* (shown inside composite)
@@ -514,7 +517,7 @@ fn recipe_baerlauch_pesto_bk() {
         "Should NOT have bio_suisse_regular logo"
     );
 
-    // Origin display per Excel:
+    // Origin display (DEC-25): every agricultural ingredient shows its declared origin:
     // Bärlauch: Ja → show (CH) — namensgebende Zutat (name-giving ingredient of "Bärlauch Pesto")
     // Note: namensgebend also triggers percentage display
     assert!(
@@ -534,10 +537,10 @@ fn recipe_baerlauch_pesto_bk() {
         "Parmesan should show origin (IT) as dairy. Label: {}",
         output.label
     );
-    // Mandeln: Nein — not Swiss, no special category
+    // Mandeln: shows its declared origin (DEC-25; formerly hidden by the tier rules)
     assert!(
-        !output.label.contains("Mandeln* (TR)"),
-        "Mandeln should NOT show origin. Label: {}",
+        output.label.contains("Mandeln* (TR)"),
+        "Mandeln shows its declared origin (DEC-25). Label: {}",
         output.label
     );
     assert!(
@@ -629,7 +632,7 @@ fn recipe_baerlauch_pesto_bsk() {
         "Should NOT have bio_suisse_no_cross logo"
     );
 
-    // Origin display per Excel (90-99% rule: show origin for Swiss agricultural ingredients only):
+    // Origin display (DEC-25): every agricultural ingredient shows its declared origin:
     // Rapsöl: Ja* → show (CH)
     assert!(
         output.label.contains("Rapsöl* (CH)"),
@@ -648,10 +651,10 @@ fn recipe_baerlauch_pesto_bsk() {
         "Baumnüsse should show origin (CH). Label: {}",
         output.label
     );
-    // Parmesan: Nein — not Swiss, 90-99% rule only shows Swiss origins
+    // Parmesan: shows its declared origin (DEC-25; formerly hidden by the tier rules)
     assert!(
-        !output.label.contains("Parmesan* (IT)"),
-        "Parmesan should NOT show origin (not Swiss, 90-99% rule). Label: {}",
+        output.label.contains("Parmesan* (IT)"),
+        "Parmesan shows its declared origin (DEC-25). Label: {}",
         output.label
     );
     assert!(

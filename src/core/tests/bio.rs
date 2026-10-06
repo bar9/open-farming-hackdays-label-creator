@@ -285,10 +285,17 @@ fn knospe_bio_branching_uses_bio_swiss_percentage() {
         .build();
     let output = calculator.execute(input);
 
-    // Only bio ingredients counted: Hafer (500g CH) / Hafer (500g total bio) = 100% Swiss
-    // So Knospe 100% rule should apply (no origin display)
+    // Only bio ingredients counted: Hafer (500g CH) / Hafer (500g total bio) = 100% Swiss.
+    // Since DEC-25 the origins are always printed, so the Swiss share is visible
+    // only in the swiss-percentage tier itself (checked directly here).
     assert!(!output.label.contains("(Schweiz)"));
-    assert!(!output.label.contains("(CH)"));
+    assert_eq!(
+        calculator.swiss_agricultural_percentage(&InputBuilder::new()
+            .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio().origin(Country::CH).build())
+            .ingredient(IngredientBuilder::new_agri("Olivenöl", 500.0).origin(Country::EU).build())
+            .build().ingredients),
+        100.0
+    );
 }
 
 #[test]
@@ -348,10 +355,18 @@ fn knospe_without_bio_rule_uses_all_ingredients() {
         .build();
     let output = calculator.execute(input);
 
-    // Without bio rule: all agricultural counted → 500 CH / 1000 total = 50% → <90% → no special rule
-    // Neither 100% nor 90-99% rule applies
+    // Without bio rule: all agricultural counted → 500 CH / 1000 total = 50%.
+    // Since DEC-25 the declared origins are printed regardless of the tier.
     assert!(!output.label.contains("(Schweiz)"));
-    assert!(!output.label.contains("(CH)"));
+    assert!(output.label.contains("Hafer (CH)"), "{}", output.label);
+    assert!(output.label.contains("Olivenöl (EU)"), "{}", output.label);
+    assert_eq!(
+        calculator.swiss_agricultural_percentage(&InputBuilder::new()
+            .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).bio().origin(Country::CH).build())
+            .ingredient(IngredientBuilder::new_agri("Olivenöl", 500.0).origin(Country::EU).build())
+            .build().ingredients),
+        50.0
+    );
 }
 
 // =============================================================================
