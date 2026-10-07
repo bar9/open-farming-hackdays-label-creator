@@ -29,7 +29,7 @@ label:
   zutaten: Zutaten
   datumseingabe: Haltbarkeit
   zusatzinformationen: Zusatzinformationen
-  aufbewahrungshinweis: Aufbewahrungshinweis
+  aufbewahrungshinweis: "Aufbewahrungshinweise"
   nettogewicht: Nettogewicht
   saved_ingredients: Gespeicherte Zutaten
   abtropfgewicht: Abtropfgewicht
@@ -97,23 +97,27 @@ help:
     Den Phantasienamen mit einer Sachbezeichnung ergänzen (Art. 6 LIV.)
     Sind Produktname und Sachbezeichnung identisch, dieses Feld leer lassen.
   sachbezeichnung: |
-    Rechtlich vorgeschriebene Sachbezeichnung verwenden (Bsp. Fruchtaufstrich, Konfitüre, Sirup, Butterzopf).
-    Wenn nicht vorhanden verkehrsübliche (Bsp. Berliner, Tomatenketchup) oder beschreibende (Bsp. Fladenbrot mit Weizenmehl) Bezeichnung wählen.
+    Rechtlich vorgeschriebene Sachbezeichnung verwenden, wenn zutreffend aufs Produkt (Bsp. Fruchtaufstrich, Konfitüre, Sirup, Butterzopf).
+    Achtung, die rechtlichen Vorgaben müssen erfüllt sein (s. insbesondere die Vorgaben in der [VLpH](https://www.fedlex.admin.ch/eli/cc/2017/181/de)).
+    Wenn es keine rechtlich vorgeschriebene Sachbezeichnung gibt, dann eine verkehrsübliche (Bsp. Berliner, Tomatenketchup) oder beschreibende (Bsp. Fladenbrot mit Weizenmehl) Bezeichnung wählen.
   zutaten: |
-    Zutat aus dem Dropdown auswählen. Wenn nicht vorhanden manuell im Textfeld eingeben. Zusammengesetzte Zutaten (Bsp. Geliermittel) als solches erfassen. Dazu Symbol hinter Zutat anklicken und die einzelnen Zutaten im Untermenü erfassen.
+    Zutat aus dem Dropdown auswählen. Wenn nicht vorhanden manuell im Textfeld eingeben. Zusammengesetzte Zutaten (Bsp. Geliermittel) als solche erfassen. Dazu Symbol hinter Zutat anklicken und die einzelnen Zutaten im Untermenü erfassen.
     Allergene werden optisch hervorgehoben, wenn aus dem Dropdown ausgewählt.
     Die Ausgabe der Zutatenliste erfolgt automatisch in absteigender Reihenfolge.
   datumseingabe: |
-    Lebensmittel, die kühl gehalten werden müssen: zu verbrauchen bis ..
+    Lebensmittel, die leicht verderblich sind: Zu verbrauchen bis ..
 
     * * * * *
 
-    Übrige Lebensmittel: mindestens haltbar bis ...
+    Übrige Lebensmittel: Mindestens haltbar bis ...
 
     * * * * *
 
-    Keine Datumsangabe erforderlich (Bsp. reiner Essig)
+    Ausnahme für gewisse Lebensmittelgruppen (Bsp. reiner Essig, Wein): Keine Datumsangabe erforderlich
 
+    * * * * *
+
+    Das Haltbarkeitsdatum wird vom Hersteller festgelegt. Mehr Infos unter:
     [Merkblatt Haltbarkeit (PDF)](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/gesundheit/lebensmittelkontrollen/MD-00112.pdf)
   zusatzinformationen: |
     * Alkoholgehalt in Getränken ab 1.2 Vol % (LIV Art. 18)
@@ -121,10 +125,11 @@ help:
     * Säuregehalt von Essig
     * Gewichtsklasse der Eier
     * Verwendungstipps / Zubereitung
-    * Marketing
-    * Chargennummer
+    * Marketingtext (Informationen zum Hof, etc.)
+    * Chargennummer (falls nicht vom Haltbarkeitsdatum ableitbar)
+    * weitere
     ---
-    * Nährwertdeklartion ist obligatorisch (Energiewert, Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker, Eiweiss und Salz je 100 g) ausgenommen sind Lebensmittel nach LIV Anhang 9 (handwerklich hergestellt und lokal im Radius von weniger als 50 km oder direkt verkauft werden).
+    * Nährwertdeklaration ist grundsätzlich obligatorisch (Energiewert, Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker, Eiweiss und Salz je 100 g). Ausgenommen sind Lebensmittel nach LIV Anhang 9 (handwerklich hergestellt und lokal im Radius von weniger als 50 km oder direkt verkauft).
 
 
   aufbewahrungshinweis: |
@@ -140,13 +145,13 @@ help:
     Achtung: Rückzug bei eingekochten Produkten berücksichtigen Bsp. Sirup
 
   zusammengesetzteZutaten: |
-    Zusammengesetzte Zutaten sind Rezeptzutaten, die aus verschiedenen Zutaten bestehen (Bsp. Bouillon, Geliermittel, Schokolade). Die einzelnen Zutaten gemäss Zutatenliste hier erfassen.
-    Zusatzstoffe mit Funktion angeben Bsp. Säuerungsmittel (Zitronensäure oder E330).
+    Zusammengesetzte Zutaten sind Rezeptzutaten, die aus verschiedenen Zutaten bestehen (Bsp. Bouillon, Geliermittel, Schokolade). Alle einzelnen Zutaten gemäss Zutatenliste hier erfassen.
+    Zusatzstoffe mit Funktionsklasse angeben, Beispiele: Säuerungsmittel (E330) oder Geliermittel (Pektin). Zitronensäure oder Pektin als Zutat allein reichen nicht.
   allergenManual: |
     Zutat ist nicht in der Datenbank, deshalb ist eine manuelle Angabe nötig.
 
   namensgebendeZutaten: |
-    Werden Zutaten in der Sach- oder Phantasiebezeichnung mit Worten hervorgehoben oder auf der Etikette abgebildet muss das Symbol hinter der Zutat angewählt werden. Dadurch erfolgt in der Zutatenliste bei diesem Rohstoff automatisch die Massenprozentangabe.
+    Werden Zutaten in der Sach- oder Phantasiebezeichnung mit Worten hervorgehoben oder auf der Etikette abgebildet, muss diese Box angewählt werden. Dadurch erfolgt in der Zutatenliste bei diesem Rohstoff automatisch die Massenprozentangabe.
 
   verarbeitungsschritte: |
     Wählen Sie die Verarbeitungsschritte, die auf dieses Produkt zutreffen.
@@ -204,7 +209,7 @@ help:
     Preis der Verkaufseinheit
     Der Preis muss in unmittelbarer Nähe des Produkts angeschrieben sein. Auf der Etikette oder dem Regal.
 
-  bio_knospe: Gibt an, ob diese Zutat nach Bio Suisse Knospe-Standards zertifiziert ist (Schweizer Herkunft, fix auf CH)
+  bio_knospe: "Gibt an, ob diese Zutat nach den Bio Suisse Richtlinien zertifiziert ist. Die Herkunft (CH oder Import) im nächsten Schritt auswählen."
   bio_ch: Gibt an, ob diese Zutat nach Schweizer Bio-Verordnung (aber nicht Knospe) zertifiziert ist
   aus_umstellbetrieb: Zutat stammt aus einem Betrieb, der auf biologische Landwirtschaft umstellt. Wird auf dem Etikett mit ** gekennzeichnet.
   wildsammlung: Zutat stammt aus zertifizierter Wildsammlung. Wird auf dem Etikett mit ° gekennzeichnet wenn >10% Anteil.

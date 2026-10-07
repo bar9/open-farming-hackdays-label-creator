@@ -156,14 +156,15 @@ help:
     Completare il nome fantasioso con una denominazione specifica (Art. 6 ODerr.)
     Se il nome del prodotto e la denominazione specifica sono identici, lasciare vuoto questo campo.
   sachbezeichnung: |
-    Utilizzare la denominazione specifica prescritta dalla legge (es. spalmabile di frutta, confettura, sciroppo, treccia al burro).
-    Se non esiste, utilizzare una denominazione d'uso (es. bombolone, ketchup) o descrittiva (es. pane piatto al frumento).
+    Utilizzare la denominazione specifica prescritta dalla legge, se si applica al prodotto (es. spalmabile di frutta, confettura, sciroppo, treccia al burro).
+    Attenzione: i requisiti legali devono essere soddisfatti (vedi in particolare l'[ordinanza del DFI sulle derrate alimentari di origine vegetale](https://www.fedlex.admin.ch/eli/cc/2017/181/it)).
+    Se non esiste una denominazione prescritta dalla legge, scegliere una denominazione d'uso (es. bombolone, ketchup) o descrittiva (es. pane piatto con farina di frumento).
   zutaten: |
     Selezionare l'ingrediente dal menu a tendina. Se non disponibile, inserire manualmente nel campo di testo. Registrare gli ingredienti composti (es. gelificante) come tali. Per fare ciò, cliccare sul simbolo dietro l'ingrediente e inserire i singoli ingredienti nel sottomenu. 
     Gli allergeni sono evidenziati visivamente se selezionati dal menu a tendina. 
     L'elenco degli ingredienti viene visualizzato automaticamente in ordine decrescente.
   datumseingabe: |
-    Alimenti che devono essere conservati al fresco: da consumare entro ..
+    Alimenti facilmente deperibili: da consumare entro ..
 
     * * * * *
 
@@ -171,17 +172,23 @@ help:
 
     * * * * *
 
-    Nessuna indicazione di data richiesta (es. aceto puro)
+    Eccezione per determinati gruppi di alimenti (es. aceto puro, vino): nessuna indicazione di data richiesta
 
+    * * * * *
+
+    Il termine di conservazione è stabilito dal produttore. Maggiori informazioni:
     [Scheda informativa sulla conservazione (PDF)](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/gesundheit/lebensmittelkontrollen/MD-00112.pdf)
   zusatzinformationen: |
-    * La dichiarazione nutrizionale è obbligatoria (valore energetico, grassi, acidi grassi saturi, carboidrati, zuccheri, proteine e sale per 100 g) ad eccezione delle derrate alimentari secondo l'allegato 9 ODerr (prodotte artigianalmente e vendute localmente in un raggio inferiore a 50 km o in vendita diretta).
     * Tenore alcolico a partire da 1,2 % vol (ODerr Art. 18)
     * Contenuto di caffeina
     * Acidità dell'aceto
     * Classe di peso delle uova
     * Consigli d'uso / Preparazione
-    * Marketing
+    * Testo di marketing (informazioni sull'azienda, ecc.)
+    * Numero di lotto (se non deducibile dal termine di conservazione)
+    * altro
+    ---
+    * La dichiarazione nutrizionale è di principio obbligatoria (valore energetico, grassi, acidi grassi saturi, carboidrati, zuccheri, proteine e sale per 100 g). Sono escluse le derrate alimentari secondo l'allegato 9 ODerr (prodotte artigianalmente e vendute localmente in un raggio inferiore a 50 km o in vendita diretta).
   
   aufbewahrungshinweis: |
     | Tipi di conservazione | Condizioni |
@@ -196,13 +203,13 @@ help:
     Attenzione: considerare la riduzione durante la cottura dei prodotti es. sciroppo
 
   zusammengesetzteZutaten: |
-    Gli ingredienti composti sono ingredienti di ricetta composti da diversi ingredienti (es. brodo, gelificante, cioccolato). Inserire qui i singoli ingredienti secondo l'elenco degli ingredienti.
-    Indicare gli additivi con la loro funzione es. acidificante (acido citrico o E330).
+    Gli ingredienti composti sono ingredienti di ricetta composti da diversi ingredienti (es. brodo, gelificante, cioccolato). Inserire qui tutti i singoli ingredienti secondo l'elenco degli ingredienti.
+    Indicare gli additivi con la loro categoria funzionale, esempi: acidificante (E330) o gelificante (pectina). Acido citrico o pectina da soli come ingrediente non bastano.
   allergenManual: |
     L'ingrediente non è nel database, pertanto è necessaria un'indicazione manuale.
 
   namensgebendeZutaten: |
-    Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, deve essere selezionato il simbolo dietro l'ingrediente. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
+    Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, questa casella deve essere selezionata. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
 
   mengen_als_prozent: |
     Inserisci gli ingredienti secondari come **percentuale della quantità totale** dell'ingrediente
@@ -268,7 +275,7 @@ help:
     Secondo le direttive Bio Suisse parte III, sono ammesse eccezioni specifiche per alcuni
     ingredienti non Gemma (ad es. pectina, alcuni additivi). Gli ingredienti semplici come
     farina, pepe ecc. devono essere certificati Gemma.
-  bio_knospe: Indica se questo ingrediente è certificato secondo gli standard Gemma di Bio Suisse (origine svizzera, fissa su CH)
+  bio_knospe: "Indica se questo ingrediente è certificato secondo le direttive di Bio Suisse. Scegliere l'origine (CH o importazione) nel passo successivo."
   bio_ch: Indica se questo ingrediente è certificato secondo l'ordinanza bio svizzera (ma non Gemma)
   verarbeitungsschritte: |
     Selezionate le fasi di lavorazione che si applicano a questo prodotto.

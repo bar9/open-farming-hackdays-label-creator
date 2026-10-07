@@ -156,32 +156,39 @@ help:
     Compléter le nom fantaisiste avec une dénomination spécifique (Art. 6 ODAl.)
     Si le nom du produit et la dénomination spécifique sont identiques, laisser ce champ vide.
   sachbezeichnung: |
-    Utiliser la dénomination spécifique prescrite par la loi (ex. tartinade de fruits, confiture, sirop, tresse au beurre).
-    Si elle n'existe pas, utiliser une dénomination usuelle (ex. beignet, ketchup) ou descriptive (ex. pain plat au blé).
+    Utiliser la dénomination spécifique prescrite par la loi, si elle s'applique au produit (ex. tartinade de fruits, confiture, sirop, tresse au beurre).
+    Attention : les exigences légales doivent être remplies (voir en particulier l'[ordonnance du DFI sur les denrées alimentaires d'origine végétale](https://www.fedlex.admin.ch/eli/cc/2017/181/fr)).
+    S'il n'existe pas de dénomination prescrite par la loi, choisir une dénomination usuelle (ex. beignet, ketchup) ou descriptive (ex. pain plat à la farine de blé).
   zutaten: |
     Sélectionner l'ingrédient dans le menu déroulant. Si non disponible, saisir manuellement dans le champ de texte. Enregistrer les ingrédients composés (ex. gélifiant) en tant que tels. Pour cela, cliquer sur le symbole derrière l'ingrédient et saisir les ingrédients individuels dans le sous-menu. 
     Les allergènes sont mis en évidence visuellement s'ils sont sélectionnés dans le menu déroulant. 
     La liste des ingrédients est automatiquement affichée par ordre décroissant.
   datumseingabe: |
-    Aliments devant être conservés au frais: à consommer jusqu'au ..
+    Denrées alimentaires facilement périssables : à consommer jusqu'au ..
 
     * * * * *
 
-    Autres aliments: à consommer de préférence avant ...
+    Autres denrées alimentaires : à consommer de préférence avant ...
 
     * * * * *
 
-    Aucune indication de date requise (ex. vinaigre pur)
+    Exception pour certains groupes de denrées (ex. vinaigre pur, vin) : aucune indication de date requise
 
+    * * * * *
+
+    La date de durabilité est fixée par le fabricant. Plus d'informations :
     [Fiche d'information sur la conservation (PDF)](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/gesundheit/lebensmittelkontrollen/MD-00112.pdf)
   zusatzinformationen: |
-    * La déclaration nutritionnelle est obligatoire (valeur énergétique, matières grasses, acides gras saturés, glucides, sucres, protéines et sel pour 100 g) sauf pour les denrées alimentaires selon l'annexe 9 ODAl (fabriquées artisanalement et vendues localement dans un rayon de moins de 50 km ou en vente directe).
     * Teneur en alcool à partir de 1,2 % vol (ODAl Art. 18)
     * Teneur en caféine
     * Acidité du vinaigre
     * Classe de poids des œufs
     * Conseils d'utilisation / Préparation
-    * Marketing
+    * Texte marketing (informations sur la ferme, etc.)
+    * Numéro de lot (s'il ne peut pas être déduit de la date de durabilité)
+    * autres
+    ---
+    * La déclaration nutritionnelle est en principe obligatoire (valeur énergétique, matières grasses, acides gras saturés, glucides, sucres, protéines et sel pour 100 g). En sont exemptées les denrées alimentaires selon l'annexe 9 ODAl (fabriquées artisanalement et vendues localement dans un rayon de moins de 50 km ou en vente directe).
   
   aufbewahrungshinweis: |
     | Types de conservation | Conditions |
@@ -196,13 +203,13 @@ help:
     Attention: tenir compte de la réduction lors de la cuisson des produits ex. sirop
 
   zusammengesetzteZutaten: |
-    Les ingrédients composés sont des ingrédients de recette composés de différents ingrédients (ex. bouillon, gélifiant, chocolat). Saisir ici les ingrédients individuels selon la liste des ingrédients.
-    Indiquer les additifs avec leur fonction ex. acidifiant (acide citrique ou E330).
+    Les ingrédients composés sont des ingrédients de recette composés de différents ingrédients (ex. bouillon, gélifiant, chocolat). Saisir ici tous les ingrédients individuels selon la liste des ingrédients.
+    Indiquer les additifs avec leur catégorie fonctionnelle, exemples : acidifiant (E330) ou gélifiant (pectine). Acide citrique ou pectine seuls comme ingrédient ne suffisent pas.
   allergenManual: |
     L'ingrédient n'est pas dans la base de données, une indication manuelle est donc nécessaire.
 
   namensgebendeZutaten: |
-    Si des ingrédients sont mis en évidence dans la dénomination spécifique ou fantaisiste avec des mots ou représentés sur l'étiquette, le symbole derrière l'ingrédient doit être sélectionné. Ainsi, le pourcentage massique est automatiquement indiqué pour cette matière première dans la liste des ingrédients.
+    Si des ingrédients sont mis en évidence dans la dénomination spécifique ou fantaisiste avec des mots ou représentés sur l'étiquette, cette case doit être cochée. Ainsi, le pourcentage massique est automatiquement indiqué pour cette matière première dans la liste des ingrédients.
 
   verarbeitungsschritte: |
     Sélectionnez les procédés de transformation applicables à ce produit.
@@ -257,7 +264,7 @@ help:
     Prix de l'unité de vente
     Le prix doit être inscrit à proximité immédiate du produit. Sur l'étiquette ou sur le rayon.
 
-  bio_knospe: Indique si cet ingrédient est certifié selon les normes Bio Suisse Bourgeon (origine suisse, fixée à CH)
+  bio_knospe: "Indique si cet ingrédient est certifié selon le cahier des charges de Bio Suisse. Choisir l'origine (CH ou importation) à l'étape suivante."
   bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
   aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
   wildsammlung: Ingrédient issu de cueillette sauvage certifiée. Marqué ° sur l'étiquette si >10% du total.
