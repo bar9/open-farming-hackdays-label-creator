@@ -671,6 +671,7 @@ bio_labels:
   umstellung_ch: Origine Svizzera
   umstellung_import: Origine Import
   inherited_quality: Qualità ripresa dall'ingrediente composto
+  derived_quality: Dedotto dai sotto-ingredienti (non certificato nel suo insieme)
   bio_ch: BioCH
   erlaubte_ausnahme_bio: Ingrediente non biologico consentito
   erlaubte_ausnahme_knospe: Ingrediente non Gemma consentito

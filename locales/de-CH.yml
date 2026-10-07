@@ -655,6 +655,7 @@ bio_labels:
   umstellung_ch: Herkunft Schweiz
   umstellung_import: Herkunft Import
   inherited_quality: Qualität von der zusammengesetzten Zutat übernommen
+  derived_quality: Aus den Unterzutaten abgeleitet (nicht als Ganzes zertifiziert)
   bio_ch: Bio
   erlaubte_ausnahme_bio: Erlaubte nicht-biologische Zutat
   erlaubte_ausnahme_knospe: Erlaubte nicht-Knospe Zutat

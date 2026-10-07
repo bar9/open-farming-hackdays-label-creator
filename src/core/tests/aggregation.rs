@@ -399,3 +399,58 @@ fn dec21_swiss_variant_uses_90_percent_threshold() {
         .build();
     assert_eq!(mixed_unweighed.derived_knospe_swiss(), None);
 }
+
+// --- DEC-20: Knospe icon of a composite in the ingredient overview ---
+
+#[test]
+fn dec20_milchschokolade_with_30_percent_ch_gets_no_cross() {
+    // Screenshot case: Schokolade NA 50 g, Milch CH 30 g, Zucker DE 20 g.
+    let ms = IngredientBuilder::new_agri("Milchschokolade", 100.0)
+        .children(vec![
+            IngredientBuilder::new_agri("Schokolade", 50.0).bio().origin(Country::NA).build(),
+            IngredientBuilder::new_agri("Milch", 30.0).bio().origin(Country::CH).build(),
+            IngredientBuilder::new_agri("Zucker", 20.0).bio().origin(Country::DE).build(),
+        ])
+        .build();
+    assert_eq!(ms.knospe_icon(), Some((false, true)), "no cross, shown as derived");
+}
+
+#[test]
+fn dec20_derived_composite_gets_cross_from_90_percent() {
+    let c = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![
+            IngredientBuilder::new_agri("A", 95.0).bio().origin(Country::CH).build(),
+            IngredientBuilder::new_agri("B", 5.0).bio().origin(Country::EU).build(),
+        ])
+        .build();
+    assert_eq!(c.knospe_icon(), Some((true, true)));
+}
+
+#[test]
+fn dec20_mixed_origins_without_weights_get_no_cross() {
+    let c = IngredientBuilder::new_agri("Mix", 10.0)
+        .children(vec![
+            IngredientBuilder::new_agri("A", 0.0).bio().origin(Country::CH).build(),
+            IngredientBuilder::new_agri("B", 0.0).bio().origin(Country::EU).build(),
+        ])
+        .build();
+    assert_eq!(c.knospe_icon(), Some((false, true)));
+}
+
+#[test]
+fn dec20_own_claim_and_leaves_are_not_derived() {
+    // Bought certified as a whole: own claim, own origin, full-colour icon.
+    let bought = IngredientBuilder::new_agri("Schoggi", 100.0)
+        .bio()
+        .origin(Country::CH)
+        .children(vec![
+            IngredientBuilder::new_agri("Kakao", 60.0).origin(Country::EU).build(),
+            IngredientBuilder::new_agri("Zucker", 40.0).origin(Country::EU).build(),
+        ])
+        .build();
+    assert_eq!(bought.knospe_icon(), Some((true, false)));
+    let leaf = IngredientBuilder::new_agri("Milch", 30.0).bio().origin(Country::CH).build();
+    assert_eq!(leaf.knospe_icon(), Some((true, false)));
+    let not_bio = IngredientBuilder::new_agri("Zucker", 30.0).origin(Country::CH).build();
+    assert_eq!(not_bio.knospe_icon(), None);
+}

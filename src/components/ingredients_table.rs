@@ -249,8 +249,6 @@ fn render_ingredient_tree(
     // the inherited Knospe desaturated ("Pastellfarben", Testing 25.06.2026).
     inherited_knospe: Option<bool>,
 ) -> Element {
-    use crate::model::Country;
-
     let elements: Vec<Element> = ingredients.iter().enumerate()
         .map(|(i, ingr)| {
             let full_path: IngredientPath = {
@@ -272,13 +270,18 @@ fn render_ingredient_tree(
             let children_for_recurse = children.clone();
             let full_path_for_children = full_path.clone();
 
-            let knospe_variant: Option<bool> = if show_knospe_icon && ingr.computed_bio_status().unwrap_or(false) {
-                computed_origins.as_ref()
-                    .filter(|o| !o.is_empty())
-                    .map(|o| o.contains(&Country::CH))
+            // DEC-20: variant and «derived» flag come from the core, so a
+            // composite gets the Swiss cross only with >= 90% Swiss sub-ingredients.
+            let knospe_icon: Option<(bool, bool)> = if show_knospe_icon {
+                ingr.knospe_icon()
             } else {
                 None
             };
+            // Only an OWN quality claim is pushed down to the children's display;
+            // a derived one came from the children in the first place (DEC-20).
+            let knospe_variant: Option<bool> = knospe_icon
+                .filter(|(_, derived)| !derived)
+                .map(|(swiss, _)| swiss);
 
             rsx! {
                 div {
@@ -296,9 +299,19 @@ fn render_ingredient_tree(
                                     span { class: "text-lg", "{origin.flag_emoji()}" }
                                 }
                             }
-                            match knospe_variant {
-                                Some(true) => rsx! { icons::KnospeCompactCh {} },
-                                Some(false) => rsx! { icons::KnospeCompactNoCross {} },
+                            match knospe_icon {
+                                // Own quality (leaf, or composite bought certified).
+                                Some((true, false)) => rsx! { icons::KnospeCompactCh {} },
+                                Some((false, false)) => rsx! { icons::KnospeCompactNoCross {} },
+                                // Derived from the sub-ingredients only (DEC-20): muted,
+                                // like the inherited icon, with an explaining tooltip.
+                                Some((ch, true)) => rsx! {
+                                    span {
+                                        class: "opacity-40 saturate-50",
+                                        title: t!("bio_labels.derived_quality").to_string(),
+                                        if ch { icons::KnospeCompactCh {} } else { icons::KnospeCompactNoCross {} }
+                                    }
+                                },
                                 // Inherited from a parent-level claim: desaturated icon
                                 // (agricultural sub-ingredients only).
                                 None => match inherited_knospe.filter(|_| show_knospe_icon && is_agricultural) {

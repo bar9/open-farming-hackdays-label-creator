@@ -953,6 +953,26 @@ impl Ingredient {
         self.aggregates_from_children() && !self.claims_own_quality()
     }
 
+    /// Knospe icon for the ingredient overview (DEC-20). `None` = no icon.
+    /// `Some((swiss, derived))`: `swiss` picks the artwork with the Swiss cross,
+    /// `derived` says the quality is only inferred from the sub-ingredients
+    /// (the composite was not bought certified as a whole) and should be shown
+    /// muted. A derived composite gets the cross only when >= 90% of its
+    /// agricultural sub-ingredients are Swiss, the same rule as the product
+    /// logo; before, any single Swiss sub-ingredient gave it the cross.
+    pub fn knospe_icon(&self) -> Option<(bool, bool)> {
+        if !self.computed_bio_status().unwrap_or(false) {
+            return None;
+        }
+        if self.aggregates_quality_from_children() {
+            // Mixed origins without weights: the Swiss share cannot be told,
+            // so no cross (the cross is a claim; better to under-claim).
+            return Some((self.derived_knospe_swiss().unwrap_or(false), true));
+        }
+        let origins = self.computed_origins().filter(|o| !o.is_empty())?;
+        Some((origins.contains(&Country::CH), false))
+    }
+
     /// The children that carry a quality at all. Non-agricultural sub-ingredients
     /// (Wasser, Salz, additives) are never bio and never need to be: they are
     /// neutral for Bio-V and Knospe alike, exactly as the product-level shares
