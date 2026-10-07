@@ -967,12 +967,9 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
     // is active — exactly one call renders per pass.
     let wildsammlung_field = move || {
         let wildsammlung_step = "aus zertifizierter Wildsammlung";
-        // The stored step is the same; only the label differs by regime.
-        let wildsammlung_label = if is_knospe_config() {
-            t!("bio_labels.wildsammlung").to_string()
-        } else {
-            t!("bio_labels.wildsammlung_bio").to_string()
-        };
+        // The stored step is the same in both regimes; the label carries the
+        // «biologisch» wording everywhere since DEC-12.
+        let wildsammlung_label = t!("bio_labels.wildsammlung_bio").to_string();
         let is_wildsammlung_checked = edit_processing_steps()
             .as_ref()
             .is_some_and(|s| s.contains(&wildsammlung_step.to_string()));

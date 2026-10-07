@@ -550,16 +550,13 @@ fn is_wild_collected(ingredient: &Ingredient) -> bool {
         .is_some_and(|s| s.iter().any(|step| step == WILDSAMMLUNG_STEP))
 }
 
-/// Wording for wild collection, which differs by regime: Bio Suisse says «aus
-/// zertifizierter Wildsammlung», the Bio-Verordnung requires «aus biologisch
-/// zertifizierter Wildsammlung» (Abklärung BLW, DEC-11). Both the ° legend and
-/// the inline text below 10% must use the same wording.
-fn wildsammlung_wording(rules: &[RuleDef]) -> String {
-    if rules.contains(&RuleDef::Knospe_ShowBioSuisseLogo) {
-        t!("bio_legend.aus_wildsammlung").to_string()
-    } else {
-        t!("bio_legend.aus_biologisch_zertifizierter_wildsammlung").to_string()
-    }
+/// Wording for wild collection on the label: «aus biologisch zertifizierter
+/// Wildsammlung», for the Bio-Verordnung (Abklärung BLW, DEC-11) and since
+/// DEC-12 for Bio Suisse / Knospe too. Both the ° legend and the inline text
+/// below 10% use it. The stored processing step stays
+/// `WILDSAMMLUNG_STEP`; only the printed text differs from it.
+fn wildsammlung_wording() -> String {
+    t!("bio_legend.aus_biologisch_zertifizierter_wildsammlung").to_string()
 }
 
 /// Whether the recipe contains any agricultural ingredient at all.
@@ -1679,7 +1676,7 @@ impl OutputFormatter {
                 // carry the regime's wording just like the legend does (DEC-11).
                 .map(|s| {
                     if s.as_str() == wildsammlung_step {
-                        html_escape(&wildsammlung_wording(&self.RuleDefs))
+                        html_escape(&wildsammlung_wording())
                     } else {
                         html_escape(s)
                     }
@@ -2474,7 +2471,7 @@ impl Calculator {
 
         // Append Wildsammlung legend if any ingredient got the ° marker
         if has_wildsammlung_marker {
-            label = format!("{}<br>° {}", label, wildsammlung_wording(&output_rules));
+            label = format!("{}<br>° {}", label, wildsammlung_wording());
         }
 
         // Einzelzutat/Monoprodukt («Keine Zutatenliste»): the declared quality is

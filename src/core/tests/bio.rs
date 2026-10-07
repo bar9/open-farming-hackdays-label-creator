@@ -2248,11 +2248,11 @@ fn bio_check_texts_are_unchanged_by_the_badge_decoupling() {
     assert_eq!(c.get(keys::BIO_MARKETING_ALLOWED), Some(&true));
 }
 
-// --- DEC-11: wild collection under the Bio-Verordnung ----------------------
+// --- DEC-11 / DEC-12: wild collection wording --------------------------------
 //
-// The step is stored identically in both regimes; only the printed wording
-// differs. Bio Suisse says «aus zertifizierter Wildsammlung», the Bio-V
-// requires «aus biologisch zertifizierter Wildsammlung» (Abklärung BLW).
+// The step is stored identically in both regimes. On the label both now print
+// «aus biologisch zertifizierter Wildsammlung»: the Bio-V since DEC-11
+// (Abklärung BLW), Knospe since DEC-12 (Nina's proposal, Oct 2026).
 
 // DEC-16 narrowed this: the 10% °-marking is a Bio-Suisse rule, so the Bio-V
 // prints wild collection inline next to the ingredient at any share — with its
@@ -2316,7 +2316,7 @@ fn knospe_wildsammlung_still_marks_above_10_percent() {
 }
 
 #[test]
-fn knospe_wildsammlung_legend_wording_is_unchanged() {
+fn knospe_wildsammlung_legend_uses_the_biologisch_wording() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let input = InputBuilder::new()
         .ingredient(
@@ -2337,13 +2337,8 @@ fn knospe_wildsammlung_legend_wording_is_unchanged() {
 
     assert!(label.contains('°'), "label: {}", label);
     assert!(
-        label.contains("aus zertifizierter Wildsammlung"),
-        "Knospe wording must stay as-is; label: {}",
-        label
-    );
-    assert!(
-        !label.contains("biologisch zertifizierter Wildsammlung"),
-        "Knospe must not adopt the Bio-V wording; label: {}",
+        label.contains("° aus biologisch zertifizierter Wildsammlung"),
+        "Knospe uses the «biologisch» wording since DEC-12; label: {}",
         label
     );
 }
@@ -2381,7 +2376,7 @@ fn biov_wildsammlung_under_10_percent_prints_the_bio_wording_inline() {
 }
 
 #[test]
-fn knospe_wildsammlung_under_10_percent_keeps_its_wording_inline() {
+fn knospe_wildsammlung_under_10_percent_prints_the_biologisch_wording_inline() {
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
     let input = InputBuilder::new()
         .ingredient(
@@ -2402,12 +2397,7 @@ fn knospe_wildsammlung_under_10_percent_keeps_its_wording_inline() {
 
     assert!(!label.contains('°'), "label: {}", label);
     assert!(
-        label.contains("aus zertifizierter Wildsammlung"),
-        "label: {}",
-        label
-    );
-    assert!(
-        !label.contains("biologisch zertifizierter Wildsammlung"),
+        label.contains("aus biologisch zertifizierter Wildsammlung"),
         "label: {}",
         label
     );

@@ -261,7 +261,7 @@ help:
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
   aus_umstellbetrieb: Ingrediente da un'azienda in conversione all'agricoltura biologica. Contrassegnato con ** sull'etichetta.
-  wildsammlung: Ingrediente da raccolta selvatica certificata. Contrassegnato con ° sull'etichetta se >10% del totale.
+  wildsammlung: Ingrediente da raccolta selvatica biologica certificata. Per la Gemma, contrassegnato con ° sull'etichetta se la sua quota supera il 10 %.
   nicht_landwirtschaftlich: "Ingrediente non agricolo (es. acqua, sale, colture, certi additivi). Non considerato nei calcoli bio."
   andere: Ingrediente agricolo non certificato bio.
   aufzucht_location: Luogo in cui ha trascorso la maggior parte della vita
@@ -665,7 +665,6 @@ bio_legend:
   alle_landwirtschaftlichen: Tutti gli ingredienti agricoli provengono da agricoltura biologica
   x_prozent_bio: "%{percentage}% degli ingredienti agricoli provengono da produzione biologica"
   aus_umstellung: in conversione all'agricoltura biologica
-  aus_wildsammlung: da raccolta selvatica certificata
   aus_biologisch_zertifizierter_wildsammlung: da raccolta selvatica biologica certificata
 
 bio_labels:
@@ -685,7 +684,6 @@ bio_labels:
   erlaubte_ausnahme_details_placeholder: Inserire motivazione / riferimento...
   erlaubte_ausnahme_details_note: Solo nota interna – non appare sull'etichetta.
   aus_umstellbetrieb: Da azienda in conversione
-  wildsammlung: Da raccolta selvatica certificata
   wildsammlung_bio: Da raccolta selvatica biologica certificata
   nicht_landwirtschaftlich: Non agricolo
   andere: Non biologico

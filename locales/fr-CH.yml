@@ -267,7 +267,7 @@ help:
   bio_knospe: "Indique si cet ingrédient est certifié selon le cahier des charges de Bio Suisse. Choisir l'origine (CH ou importation) à l'étape suivante."
   bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
   aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
-  wildsammlung: Ingrédient issu de cueillette sauvage certifiée. Marqué ° sur l'étiquette si >10% du total.
+  wildsammlung: Ingrédient issu de cueillette sauvage certifiée biologique. Pour le Bourgeon, marqué ° sur l'étiquette si sa part dépasse 10 %.
   nicht_landwirtschaftlich: "Ingrédient non agricole (p.ex. eau, sel, cultures, certains additifs). Non pris en compte dans les calculs bio."
   andere: Ingrédient agricole non certifié bio.
   aufzucht_location: Lieu où l'animal a vécu la majeure partie de sa vie
@@ -666,7 +666,6 @@ bio_legend:
   alle_landwirtschaftlichen: Tous les ingrédients agricoles sont issus de l'agriculture biologique
   x_prozent_bio: "%{percentage}% des ingrédients agricoles sont issus de la production biologique"
   aus_umstellung: en conversion vers l'agriculture biologique
-  aus_wildsammlung: issu de cueillette sauvage certifiée
   aus_biologisch_zertifizierter_wildsammlung: issu de cueillette sauvage certifiée biologique
 
 bio_labels:
@@ -686,7 +685,6 @@ bio_labels:
   erlaubte_ausnahme_details_placeholder: Saisir la justification / référence...
   erlaubte_ausnahme_details_note: Note interne uniquement – n'apparaît pas sur l'étiquette.
   aus_umstellbetrieb: En conversion
-  wildsammlung: Issu de cueillette sauvage certifiée
   wildsammlung_bio: Issu de cueillette sauvage certifiée biologique
   nicht_landwirtschaftlich: Non agricole
   andere: Non biologique
