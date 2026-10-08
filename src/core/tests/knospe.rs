@@ -237,7 +237,7 @@ fn bio_knospe_no_validation_errors_when_all_have_origin() {
 }
 
 #[test]
-fn knospe_100_percent_ch_shows_declared_origins() {
+fn knospe_100_percent_ch_no_origin_display() {
     let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
@@ -257,14 +257,14 @@ fn knospe_100_percent_ch_shows_declared_origins() {
     let output = calculator.execute(input);
     let label = output.label;
 
-    // DEC-25: the Knospe label prints every declared origin, also at 100% CH
-    // (formerly tier A hid all countries).
+    // With 100% Swiss agricultural ingredients, no origin should be displayed
     assert!(!label.contains("(Schweiz)"));
-    assert!(label.contains("Hafer (CH), Weizenmehl (CH)"), "{}", label);
+    assert!(!label.contains("(CH)"));
+    assert!(label.contains("Hafer, Weizenmehl"));
 }
 
 #[test]
-fn knospe_90_99_percent_ch_shows_all_declared_origins() {
+fn knospe_90_99_percent_ch_show_origin_for_swiss() {
     let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
@@ -290,14 +290,15 @@ fn knospe_90_99_percent_ch_shows_all_declared_origins() {
     let output = calculator.execute(input);
     let label = output.label;
 
-    // DEC-25: non-Swiss origins are printed too (formerly tier B showed only CH).
+    // With 90% Swiss agricultural ingredients, only Swiss ingredients should show origin
     assert!(label.contains("Hafer (CH)"));
     assert!(label.contains("Weizenmehl (CH)"));
-    assert!(label.contains("Olivenöl (EU)"), "{}", label);
+    assert!(!label.contains("Olivenöl (EU)"));
+    assert!(label.contains("Olivenöl"));
 }
 
 #[test]
-fn knospe_under_90_percent_ch_shows_all_declared_origins() {
+fn knospe_under_90_percent_ch_no_special_rules() {
     let calculator = calculator_with(vec![
         RuleDef::Knospe_100_Percent_CH_NoOrigin,
         RuleDef::Knospe_90_99_Percent_CH_ShowOrigin,
@@ -318,8 +319,10 @@ fn knospe_under_90_percent_ch_shows_all_declared_origins() {
     let output = calculator.execute(input);
     let label = output.label;
 
-    // DEC-25: below 90% CH every declared origin is printed as well.
-    assert!(label.contains("Olivenöl (EU), Hafer (CH)"), "{}", label);
+    // With less than 90% Swiss agricultural ingredients, no special Knospe rules apply
+    assert!(!label.contains("(CH)"));
+    assert!(!label.contains("(EU)"));
+    assert!(label.contains("Olivenöl, Hafer"));
 }
 
 #[test]
@@ -684,11 +687,12 @@ fn knospe_composite_parent_origin_only_on_lowest_level() {
         "child Weizen must show bold + (CH), got: {}",
         label
     );
-    // Child Mais: bio asterisk + its declared origin (DEC-25: every declared
-    // origin of an agricultural ingredient is printed on the Knospe label).
+    // Child Mais: 342 of 675 g = 50.7% of the product. Mirjam's rule i
+    // (02.10.2026): any agricultural ingredient >= 50% declares its origin,
+    // with or without a known category, so (IT) is printed.
     assert!(
         label.contains("Mais* (IT)"),
-        "child Mais must show (IT), got: {}",
+        "child Mais (>= 50%) must show (IT), got: {}",
         label
     );
     // Bio legend should appear (children are bio)
@@ -1103,45 +1107,112 @@ fn knospe_empty_recipe_gets_no_bio_sachbezeichnung() {
     assert_eq!(c.get(keys::BIO_SACHBEZEICHNUNG_SUFFIX), None);
 }
 
-/// DEC-25 (Testing Sept 2026, Regula Züger): on the Knospe label the
-/// countries disappeared for every ingredient after the first non-Swiss one
-/// (Rohrohrzucker from PY pushed the recipe below 90% CH, and the old tier C
-/// only printed countries for a few categories). Every declared origin of an
-/// agricultural ingredient is printed now, as on the Bio-V label; the Swiss
-/// share still picks the logo variant.
+// --- Mirjam 02.10.2026 / Nina 07.10.2026: Knospe origin display ------------
+// BIO SUISSE Knospe (>= 90% CH): 100% → no countries, 90–99.99% → only (CH).
+// BIO Knospe (< 90% CH): agri >= 50%, eggs/honey >= 10% (by name), CH >= 10%,
+// dairy/meat/insects always. Entered origins of other ingredients stay off the
+// label (voluntary origins are added by hand).
+
+fn knospe_ing(n: &str, g: f64, c: Country) -> Ingredient {
+    IngredientBuilder::new_agri(n, g).bio().origin(c).build()
+}
+
 #[test]
-fn dec25_knospe_label_shows_all_declared_origins() {
+fn mirjam_muesli_from_testing_is_correct_as_is() {
+    // Regula's recipe: Rohrohrzucker PY pushes the Swiss share below 90%
+    // (BIO Knospe). Haferflocken 50.5% and Buchweizen 22% are CH >= 10% → (CH);
+    // Rohrohrzucker 12.6% PY, Leinsamen 6.3% CH, small ones → no country.
     let calculator = calculator_for(crate::shared::Configuration::Knospe);
-    let knospe = |n: &str, g: f64, c: Country| {
-        IngredientBuilder::new_agri(n, g).bio().origin(c).build()
-    };
     let input = InputBuilder::new()
-        .ingredient(knospe("Haferflocken", 80.0, Country::CH))
-        .ingredient(knospe("Buchweizen", 35.0, Country::CH))
-        .ingredient(knospe("Rohrohrzucker", 20.0, Country::PY))
-        .ingredient(knospe("Leinsamen", 10.0, Country::CH))
-        .ingredient(knospe("Himbeeren", 2.0, Country::CH))
-        .ingredient(knospe("Zimt", 0.5, Country::MG))
+        .ingredient(knospe_ing("Haferflocken", 80.0, Country::CH))
+        .ingredient(knospe_ing("Buchweizen", 35.0, Country::CH))
+        .ingredient(knospe_ing("Rohrohrzucker", 20.0, Country::PY))
+        .ingredient(knospe_ing("Leinsamen", 10.0, Country::CH))
+        .ingredient(knospe_ing("Himbeeren", 2.0, Country::CH))
+        .ingredient(knospe_ing("Zimt", 0.5, Country::MG))
         .ingredient(IngredientBuilder::new("Salz", 0.5).agricultural(false).build())
         .build();
-    let output = calculator.execute(input);
-    let label = &output.label;
+    let label = calculator.execute(input).label;
+    assert!(label.starts_with("Haferflocken* (CH), Buchweizen* (CH), Rohrohrzucker*, Leinsamen*, Himbeeren*, Zimt*, Salz"), "{label}");
+}
 
-    for expected in [
-        "Haferflocken* (CH)",
-        "Buchweizen* (CH)",
-        "Rohrohrzucker* (PY)",
-        "Leinsamen* (CH)",
-        "Himbeeren* (CH)",
-        "Zimt* (MG)",
-    ] {
-        assert!(label.contains(expected), "missing {expected}: {label}");
+#[test]
+fn mirjam_bio_suisse_knospe_100_percent_ch_shows_no_countries() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(knospe_ing("Hafer", 600.0, Country::CH))
+        .ingredient(knospe_ing("Weizenmehl", 400.0, Country::CH))
+        .build();
+    let label = calculator.execute(input).label;
+    assert!(label.starts_with("Hafer*, Weizenmehl*"), "{label}");
+    assert!(!label.contains("(CH)"), "{label}");
+}
+
+#[test]
+fn mirjam_bio_suisse_knospe_90_99_percent_shows_only_ch() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(knospe_ing("Hafer", 920.0, Country::CH))
+        .ingredient(knospe_ing("Zimt", 80.0, Country::MG))
+        .build();
+    let label = calculator.execute(input).label;
+    assert!(label.contains("Hafer* (CH)"), "{label}");
+    assert!(label.contains("Zimt*") && !label.contains("(MG)"), "import origin stays off: {label}");
+}
+
+#[test]
+fn mirjam_bio_knospe_any_agri_ingredient_from_50_percent_shows_origin() {
+    // Exactly 50%, no category (custom name): rule i, plant or animal.
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(knospe_ing("Spezialzutat", 500.0, Country::IT))
+        .ingredient(knospe_ing("Andere Zutat", 300.0, Country::DE))
+        .ingredient(knospe_ing("Dritte Zutat", 200.0, Country::FR))
+        .build();
+    let label = calculator.execute(input).label;
+    assert!(label.contains("Spezialzutat* (IT)"), "{label}");
+    assert!(label.contains("Andere Zutat*") && !label.contains("(DE)"), "30% import stays off: {label}");
+}
+
+#[test]
+fn mirjam_bio_knospe_eggs_by_name_from_10_percent_show_origin() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    for name in ["Eier", "Hühnerei ganz", "Eigelb", "Eiweiss", "Honig"] {
+        let input = InputBuilder::new()
+            .ingredient(knospe_ing("Mehl", 700.0, Country::DE))
+            .ingredient(knospe_ing("Zucker", 200.0, Country::DE))
+            .ingredient(knospe_ing(name, 100.0, Country::DE))
+            .build();
+        let label = calculator.execute(input).label;
+        assert!(label.contains(&format!("{name}* (DE)")), "{name} at exactly 10%: {label}");
     }
-    // Non-agricultural: no origin, no bio marker.
-    assert!(label.contains(", Salz"), "{label}");
-    assert!(!label.contains("Salz ("), "{label}");
-    // 85% CH (125.5 of 147.5 g... below 90%): logo without the Swiss cross.
-    let c = output.conditionals();
-    assert_eq!(c.get(keys::BIO_SUISSE_NO_CROSS), Some(&true));
-    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), None);
+}
+
+#[test]
+fn mirjam_bio_knospe_egg_rule_does_not_catch_other_words() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .ingredient(knospe_ing("Mehl", 700.0, Country::DE))
+        .ingredient(knospe_ing("Zucker", 150.0, Country::DE))
+        .ingredient(knospe_ing("Eierlikör", 150.0, Country::DE))
+        .build();
+    let label = calculator.execute(input).label;
+    assert!(label.contains("Eierlikör*") && !label.contains("Eierlikör* (DE)"), "{label}");
+}
+
+#[test]
+fn mirjam_bio_knospe_validation_requires_egg_origin_from_10_percent() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(knospe_ing("Mehl", 700.0, Country::DE))
+        .ingredient(knospe_ing("Zucker", 200.0, Country::DE))
+        .ingredient(IngredientBuilder::new_agri("Eier", 100.0).bio().build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(
+        output.validation_messages.contains_key("ingredients[2][origin]"),
+        "Eier >= 10% without origin must be flagged: {:?}",
+        output.validation_messages
+    );
 }

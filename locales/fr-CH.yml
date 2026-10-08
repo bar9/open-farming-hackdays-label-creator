@@ -105,6 +105,7 @@ preview:
   copy_label: Copier l'étiquette
   copy_label_done: Le texte de l'étiquette a été copié dans le presse-papiers !
   copy_label_hint: Copie le texte de l'étiquette, pour le coller dans un programme d'impression ou de traitement de texte.
+  voluntary_origin_hint: "Les pays d'origine n'apparaissent sur l'étiquette que lorsqu'ils sont obligatoires. D'autres indications d'origine facultatives peuvent être ajoutées manuellement après avoir copié l'étiquette."
 
 units:
   g: g

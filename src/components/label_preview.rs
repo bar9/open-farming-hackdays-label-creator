@@ -663,6 +663,13 @@ pub fn LabelPreview(
             // deliberately outside the white card so users see they are not part
             // of the physical label (Testing 25.06.2026).
             div { class: "mx-4",
+                // Voluntary origins (Mirjam 02.10.2026, all configurations): the
+                // label prints only origins a rule demands. Anything entered
+                // beyond that stays off on purpose; tell users they may still add
+                // it by hand. Only meaningful when there is an ingredient list.
+                if !ignore_ingredients() {
+                    Hint { text: t!("preview.voluntary_origin_hint").to_string() }
+                }
                 // TD-1 Stufe 3: the whole hint section is one function of the
                 // typed verdicts. Which hints show, and why, is now readable as
                 // a pair of matches instead of eleven independent flag checks.

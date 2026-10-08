@@ -282,6 +282,7 @@ preview:
   copy_label: Etikette kopieren
   copy_label_done: Etikettentext wurde in die Zwischenablage kopiert!
   copy_label_hint: Kopiert den Text der Etikette, zum Einfügen in ein Druck- oder Schreibprogramm.
+  voluntary_origin_hint: "Herkunftsländer erscheinen auf der Etikette nur, wenn sie vorgeschrieben sind. Weitere, freiwillige Herkunftsangaben von Zutaten können nach dem Kopieren der Etikette bei Bedarf manuell hinzugefügt werden."
 
 units:
   g: g

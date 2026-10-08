@@ -63,9 +63,11 @@ async fn bio_label_erdbeer_fruchtaufstrich() {
 // Note: MT §3.1's full recipe puts the product in the **90–99% Swiss
 // bucket** by including a composite Milchschokoladewürfel with non-CH
 // children. The simplified leaf-only fixture here has all 4 agricultural
-// leaves at CH+BioKnospe → 100% Swiss → logo with Swiss cross. Since DEC-25
-// the Knospe label prints every declared origin regardless of the Swiss
-// share, so the leaves show (CH) here too.
+// leaves at CH+BioKnospe → 100% Swiss → Tier A (`Knospe_100_Percent_CH_NoOrigin`)
+// activates → origins are correctly hidden. This test therefore covers
+// Tier A behavior; Tier B 90-99% origin display is exercised by
+// `knospe_logo_flips_under_90_to_no_cross` (FR butter drops below 90%)
+// and at the Calculator tier in `src/core/tests/recipes.rs`.
 
 #[tokio::test]
 async fn knospe_label_schoggi_cookie_bsk() {
@@ -87,8 +89,8 @@ async fn knospe_label_schoggi_cookie_bsk() {
         "schoggi / bio legend",
     )
     .await;
-    // DEC-25: declared origins are printed, also at 100% Swiss.
-    assert_label_contains(&c, "Weizenmehl* (CH)", "schoggi / origin displayed").await;
+    // Tier A rule: 100% Swiss → no per-ingredient origin display.
+    assert_label_not_contains(&c, "(CH)", "schoggi / no origin display in Tier A").await;
     // Knospe marketing banner allowed.
     let body: String = c
         .execute("return document.body.innerText;", vec![])
@@ -330,15 +332,15 @@ async fn knospe_label_baerlauch_pesto_bsk() {
         has_bio_suisse_cross(&c).await,
         "expected bio_suisse_regular logo (with Swiss cross) for ~90.5% Swiss recipe"
     );
-    // DEC-25: every agricultural ingredient shows its declared origin.
+    // Tier B (Knospe_90_99_Percent_CH_ShowOrigin): every CH bio agri shows (CH).
     assert_label_contains(&c, "Rapsöl* (CH)", "baerlauch BSK / oil with CH").await;
     assert_label_contains(&c, "Bärlauch", "baerlauch BSK / namensgebend present").await;
     assert_label_contains(&c, "Baumnüsse* (CH)", "baerlauch BSK / walnuts with CH").await;
-    // Non-Swiss origins are printed too (formerly hidden by tier B). The UI
-    // seeding enters the country BEFORE picking «Bio (Knospe)»/«Herkunft
-    // Import»; that order used to drop the country (DEC-25 follow-up) and must
-    // keep IT now.
-    assert_label_contains(&c, "Parmesan* (IT)", "baerlauch BSK / IT origin").await;
+    // Parmesan is IT — Tier B (BIO SUISSE Knospe, 90–99.99% CH) shows only
+    // the Swiss origins (Mirjam, 02.10.2026: «keine Herkunftsangabe für die
+    // Import-Zutaten»).
+    assert_label_not_contains(&c, "Parmesan* (IT)", "baerlauch BSK / no IT origin").await;
+    assert_label_contains(&c, "Parmesan*", "baerlauch BSK / cheese bio star").await;
     assert_label_contains(
         &c,
         "aus biologischer Landwirtschaft",

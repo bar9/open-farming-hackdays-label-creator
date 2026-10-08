@@ -1,6 +1,7 @@
 use crate::category_service::{
-    is_beef_category, is_dairy_category, is_egg_category, is_fish_category, is_honey_category,
-    is_insect_category, is_meat_category, is_plant_category,
+    is_beef_category, is_dairy_category, is_egg_category, is_egg_ingredient_name,
+    is_fish_category, is_honey_category, is_honey_ingredient_name, is_insect_category,
+    is_meat_category, is_plant_category,
 };
 use crate::model::{lookup_agricultural, lookup_allergen, Country};
 use crate::rules::RuleDef;
@@ -1068,16 +1069,22 @@ impl Ingredient {
     }
 
     pub fn composites(&self) -> String {
-        self.composites_with_rules(&[], 0.0)
+        self.composites_with_rules(&[], 0.0, 0)
     }
 
-    pub fn composites_with_rules(&self, rules: &[RuleDef], total_amount: f64) -> String {
+    pub fn composites_with_rules(
+        &self,
+        rules: &[RuleDef],
+        total_amount: f64,
+        agricultural_ingredient_count: usize,
+    ) -> String {
         // A quality claimed on this composite itself (bought certified unit) is
         // pushed DOWN onto the children's markers (Testing 25.06.2026) — the
         // parent name never carries `*`/`**`.
         self.composites_with_inherited(
             rules,
             total_amount,
+            agricultural_ingredient_count,
             InheritedQuality::from_parent(self),
             false,
         )
@@ -1091,11 +1098,13 @@ impl Ingredient {
         &self,
         rules: &[RuleDef],
         total_amount: f64,
+        agricultural_ingredient_count: usize,
         force_origin: bool,
     ) -> String {
         self.composites_with_inherited(
             rules,
             total_amount,
+            agricultural_ingredient_count,
             InheritedQuality::from_parent(self),
             force_origin,
         )
@@ -1105,6 +1114,7 @@ impl Ingredient {
         &self,
         rules: &[RuleDef],
         total_amount: f64,
+        agricultural_ingredient_count: usize,
         inherited: InheritedQuality,
         force_origin: bool,
     ) -> String {
@@ -1176,6 +1186,7 @@ impl Ingredient {
                             base_name.push_str(&child.composites_with_inherited(
                                 rules,
                                 total_amount,
+                                agricultural_ingredient_count,
                                 child_inherited,
                                 force_origin && !has_declared_origin(child),
                             ));
@@ -1196,9 +1207,12 @@ impl Ingredient {
                                 if let Some(origin_str) = format_valid_origins(&child.origins) {
                                     base_name = format!("{} {}", base_name, origin_str);
                                 }
-                            } else if let Some(origin_str) =
-                                format_origin_for_knospe_rules(child, rules, total_amount)
-                            {
+                            } else if let Some(origin_str) = format_origin_for_knospe_rules(
+                                child,
+                                rules,
+                                total_amount,
+                                agricultural_ingredient_count,
+                            ) {
                                 base_name = format!("{} {}", base_name, origin_str);
                             }
                             base_name
@@ -1562,6 +1576,7 @@ struct OutputFormatter {
     ingredient: Ingredient,
     RuleDefs: Vec<RuleDef>,
     total_amount: f64,
+    agricultural_ingredient_count: usize,
 }
 
 impl PartialEq for RuleDef {
@@ -1571,11 +1586,17 @@ impl PartialEq for RuleDef {
 }
 
 impl OutputFormatter {
-    pub fn from(ingredient: Ingredient, total_amount: f64, RuleDefs: Vec<RuleDef>) -> Self {
+    pub fn from(
+        ingredient: Ingredient,
+        total_amount: f64,
+        RuleDefs: Vec<RuleDef>,
+        agricultural_ingredient_count: usize,
+    ) -> Self {
         Self {
             ingredient,
             total_amount,
             RuleDefs,
+            agricultural_ingredient_count,
         }
     }
 
@@ -1664,7 +1685,7 @@ impl OutputFormatter {
                     &self.RuleDefs,
                     self.total_amount,
                 );
-            output = format!("{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, force_child_origin));
+            output = format!("{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin));
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps
@@ -1708,6 +1729,7 @@ impl OutputFormatter {
                     &self.ingredient,
                     &self.RuleDefs,
                     self.total_amount,
+                    self.agricultural_ingredient_count,
                 ) {
                     output = format!("{} {}", output, origin_str);
                 }
@@ -1717,9 +1739,12 @@ impl OutputFormatter {
 
         if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
             // Knospe origin rules — shared with composite children
-            if let Some(origin_str) =
-                format_origin_for_knospe_rules(&self.ingredient, &self.RuleDefs, self.total_amount)
-            {
+            if let Some(origin_str) = format_origin_for_knospe_rules(
+                &self.ingredient,
+                &self.RuleDefs,
+                self.total_amount,
+                self.agricultural_ingredient_count,
+            ) {
                 output = format!("{} {}", output, origin_str);
             }
         } else {
@@ -1778,6 +1803,7 @@ impl OutputFormatter {
                     &self.ingredient,
                     &self.RuleDefs,
                     self.total_amount,
+                    self.agricultural_ingredient_count,
                 ) {
                     output = format!("{} {}", output, origin_str);
                 }
@@ -2415,6 +2441,13 @@ impl Calculator {
         let has_bio_ingredients = has_bio_rules && tree_has_star;
         let has_umstellbetrieb = has_bio_rules && tree_has_double_star;
 
+        // Count agricultural ingredients for Monoprodukt detection in OutputFormatter
+        let agricultural_ingredient_count = sorted_ingredients
+            .iter()
+            .flat_map(|i| i.leaves())
+            .filter(|i| i.is_agricultural())
+            .count();
+
         // Check for Wildsammlung legend (before sorted_ingredients is consumed)
         let has_wildsammlung_marker = output_rules.contains(&RuleDef::Wildsammlung_Ueber10Prozent)
             && sorted_ingredients.iter().any(|ing| {
@@ -2430,7 +2463,12 @@ impl Calculator {
         let ingredients_label = sorted_ingredients
             .into_iter()
             .map(|item| {
-                OutputFormatter::from(item, total_amount, output_rules.clone())
+                OutputFormatter::from(
+                    item,
+                    total_amount,
+                    output_rules.clone(),
+                    agricultural_ingredient_count,
+                )
             })
             .map(|fmt| fmt.format())
             .collect::<Vec<_>>()
@@ -2536,22 +2574,31 @@ fn format_origin_for_knospe_rules(
     ingredient: &Ingredient,
     rules: &[RuleDef],
     total_amount: f64,
+    agricultural_ingredient_count: usize,
 ) -> Option<String> {
     let has_knospe_100_rule = rules.contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin);
     let has_knospe_90_99_rule = rules.contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin);
     let has_knospe_under90_rule =
         rules.contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules);
 
-    if has_knospe_100_rule || has_knospe_90_99_rule || has_knospe_under90_rule {
-        // DEC-25 (Variante A): on a Knospe label every agricultural ingredient
-        // shows the countries it was declared with. Bio Suisse makes the user
-        // enter all origins anyway, and the former tiered display (none at 100%
-        // CH, only «(CH)» at 90-99%, category thresholds below 90%) dropped the
-        // countries of every ingredient after the first non-Swiss one, which
-        // testers read as a bug. The Swiss share now only picks the logo
-        // variant (cross at >= 90%); `validate_knospe_under90_origin` still
-        // decides which ingredients *must* carry an origin.
-        if ingredient.is_agricultural() {
+    if has_knospe_100_rule {
+        // Rule A: 100% Swiss agricultural ingredients — no origin display
+        None
+    } else if has_knospe_90_99_rule {
+        // Rule B: 90-99.99% Swiss — show origin for Swiss agricultural ingredients only
+        if ingredient.is_agricultural() && ingredient.has_swiss_origin() {
+            Some("(CH)".to_string())
+        } else {
+            None
+        }
+    } else if has_knospe_under90_rule {
+        // Rule C: <90% Swiss — show origin based on specific ingredient criteria
+        let percentage =
+            calculate_ingredient_percentage(ingredient.computed_amount(), total_amount);
+        let is_mono_product = agricultural_ingredient_count == 1;
+
+        if should_show_origin_knospe_under90(ingredient, percentage, total_amount, is_mono_product)
+        {
             format_valid_origins(&ingredient.computed_origins())
         } else {
             None
@@ -2634,8 +2681,21 @@ fn format_valid_origins(origins: &Option<Vec<Country>>) -> Option<String> {
     })
 }
 
-/// Determines if an ingredient should show origin for Knospe <90% CH rules
-/// Based on specific Knospe criteria for ingredient types and percentages
+/// Which ingredients must declare (and print) their origin on a BIO KNOSPE
+/// label, i.e. below 90% Swiss share. Implements Mirjam's pragmatic reading of
+/// the Bio Suisse rules (mail 02.10.2026, agreed by Nina 07.10.2026):
+///
+/// - i. every agricultural ingredient with >= 50% share, plant or animal
+///   (the rule says «pflanzlich», but without a reliable category for manual
+///   entries the share alone decides; covers Monoprodukte too)
+/// - ii. eggs and honey with >= 10% share, recognised by name (Ei, Eier,
+///   Hühnerei, Eigelb, Eiweiss, Honig …) or by category
+/// - iii. fish/aquaculture >= 10% stays as before (category only)
+/// - iv. milk/dairy, meat, insects: always, as before (category only)
+/// - v. Swiss agricultural ingredients with >= 10% share
+///
+/// Origins entered for other ingredients are NOT printed (voluntary origins
+/// are added by hand; a hint under the label says so).
 fn should_show_origin_knospe_under90(
     ingredient: &Ingredient,
     percentage: f64,
@@ -2659,29 +2719,39 @@ fn should_show_origin_knospe_under90(
         return true;
     }
 
-    // Category-based rules (only apply when ingredient has a recognized category)
-    if let Some(category) = &ingredient.effective_category() {
-        // Plant ingredients with more than 50% share
-        if is_plant_category(category) && percentage > 50.0 {
+    // i. Any agricultural ingredient with >= 50% (Mirjam: plant or animal).
+    if percentage >= 50.0 {
+        return true;
+    }
+
+    // ii. Eggs and honey >= 10%, by name or by category.
+    let name = ingredient.canonical.as_deref().unwrap_or(&ingredient.name);
+    let category = ingredient.effective_category();
+    let is_egg = is_egg_ingredient_name(name)
+        || is_egg_ingredient_name(&ingredient.name)
+        || category.as_deref().is_some_and(is_egg_category);
+    let is_honey = is_honey_ingredient_name(name)
+        || is_honey_ingredient_name(&ingredient.name)
+        || category.as_deref().is_some_and(is_honey_category);
+    if (is_egg || is_honey) && percentage >= 10.0 {
+        return true;
+    }
+
+    if let Some(category) = &category {
+        // iii. Fish / other aquaculture >= 10% (category only).
+        if is_fish_category(category) && percentage >= 10.0 {
             return true;
         }
 
-        // Eggs/Honey/Fish/Other aquacultures with more than 10% share
-        if (is_egg_category(category) || is_honey_category(category) || is_fish_category(category))
-            && percentage > 10.0
-        {
-            return true;
-        }
-
-        // Milk/Dairy/Meat/Insects always show origin
+        // iv. Milk/Dairy/Meat/Insects always show origin
         if is_dairy_category(category) || is_meat_category(category) || is_insect_category(category)
         {
             return true;
         }
     }
 
-    // Swiss agricultural ingredients with >=10% share (regardless of category)
-    if ingredient.is_agricultural() && ingredient.has_swiss_origin() && percentage >= 10.0 {
+    // v. Swiss agricultural ingredients with >=10% share (regardless of category)
+    if ingredient.has_swiss_origin() && percentage >= 10.0 {
         return true;
     }
 
