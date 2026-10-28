@@ -1,4 +1,5 @@
 use super::*;
+use crate::conditional_keys as keys;
 
 #[test]
 fn amount_lt_zero_invalid() {
@@ -139,4 +140,69 @@ fn stacked_validation_messages_demo() {
         .any(|m| m == "Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%."));
 
     println!("✅ Successfully demonstrated stacked validation messages!");
+}
+
+// --- LMR (LIV Art. 16 / AP7) boundaries --------------------------------------
+// AP7.1 requires the origin of an ingredient with MORE than 50 %, AP7.3 of meat
+// with MORE than 20 %. Exactly at the threshold nothing is required; this pins
+// the strict comparison so it cannot silently flip to ">=" (which the Knospe
+// rules use on purpose).
+
+#[test]
+fn lmr_origin_not_required_at_exactly_50_percent() {
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 500.0).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 500.0).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(
+        output.validation_messages.is_empty(),
+        "50% is not >50%: {:?}",
+        output.validation_messages
+    );
+    assert!(!output.conditionals().contains_key(&keys::herkunft_benoetigt(0)));
+}
+
+#[test]
+fn lmr_origin_required_just_over_50_percent() {
+    let calculator = calculator_with(vec![RuleDef::AP7_1_HerkunftBenoetigtUeber50Prozent]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new_agri("Hafer", 501.0).build())
+        .ingredient(IngredientBuilder::new_agri("Zucker", 499.0).build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(output.validation_messages.contains_key("ingredients[0][origin]"));
+    assert!(!output.validation_messages.contains_key("ingredients[1][origin]"));
+    assert!(output.conditionals().contains_key(&keys::herkunft_benoetigt(0)));
+}
+
+#[test]
+fn lmr_meat_origin_not_required_at_exactly_20_percent() {
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new("Nudeln", 800.0).build())
+        .ingredient(IngredientBuilder::new("Hackfleisch", 200.0).category("Fleisch").build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(
+        !output.validation_messages.contains_key("ingredients[1][origin]"),
+        "20% is not >20%: {:?}",
+        output.validation_messages
+    );
+}
+
+#[test]
+fn lmr_meat_origin_required_just_over_20_percent() {
+    let calculator = calculator_with(vec![RuleDef::AP7_3_HerkunftFleischUeber20Prozent]);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(IngredientBuilder::new("Nudeln", 799.0).build())
+        .ingredient(IngredientBuilder::new("Hackfleisch", 201.0).category("Fleisch").build())
+        .build();
+    let output = calculator.execute(input);
+    assert!(output.validation_messages.contains_key("ingredients[1][origin]"));
 }

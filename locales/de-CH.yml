@@ -212,7 +212,7 @@ help:
   bio_knospe: "Gibt an, ob diese Zutat nach den Bio Suisse Richtlinien zertifiziert ist. Die Herkunft (CH oder Import) im nächsten Schritt auswählen."
   bio_ch: Gibt an, ob diese Zutat nach Schweizer Bio-Verordnung (aber nicht Knospe) zertifiziert ist
   aus_umstellbetrieb: Zutat stammt aus einem Betrieb, der auf biologische Landwirtschaft umstellt. Wird auf dem Etikett mit ** gekennzeichnet.
-  wildsammlung: Zutat stammt aus biologisch zertifizierter Wildsammlung. Bei Knospe wird sie auf dem Etikett mit ° gekennzeichnet, wenn ihr Anteil über 10 % liegt.
+  wildsammlung: Zutat stammt aus biologisch zertifizierter Wildsammlung. Bei Knospe wird sie auf dem Etikett mit ° gekennzeichnet, wenn ihr Anteil mindestens 10 % beträgt.
   nicht_landwirtschaftlich: "Nicht-landwirtschaftliche Zutat (z.B. Wasser, Salz, Kulturen, gewisse Zusatzstoffe). Wird bei Bio-Berechnungen nicht berücksichtigt."
   andere: Landwirtschaftliche Zutat, die nicht bio-zertifiziert ist.
   aufzucht_location: Ort, wo es die meiste Zeit gelebt hat
@@ -345,8 +345,8 @@ validation:
   fish_catch_location_required: Fangort ist erforderlich für Fisch-Zutaten.
   knospe_mono_origin_required: Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel).
   knospe_name_giving_origin_required: Herkunftsland ist erforderlich für namensgebende Zutaten (Knospe <90% CH Regel).
-  knospe_plants_over_50_origin_required: Herkunftsland ist erforderlich für pflanzliche Zutaten >50% (Knospe <90% CH Regel).
-  knospe_egg_honey_fish_origin_required: Herkunftsland ist erforderlich für Eier/Honig/Fisch >10% (Knospe <90% CH Regel).
+  knospe_plants_over_50_origin_required: Herkunftsland ist erforderlich für landwirtschaftliche Zutaten ≥50% (Knospe <90% CH Regel).
+  knospe_egg_honey_fish_origin_required: Herkunftsland ist erforderlich für Eier/Honig/Fisch ≥10% (Knospe <90% CH Regel).
   knospe_dairy_meat_insects_origin_required: Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel).
   knospe_over_10_percent_origin_required: Herkunftsland ist erforderlich für Zutaten ≥10% (Knospe <90% CH Regel).
   knospe_general_origin_required: Herkunftsland ist erforderlich (Knospe <90% CH Regel).

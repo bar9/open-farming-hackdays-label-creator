@@ -55,7 +55,8 @@ The `hidebio` feature flag controls Bio/Knospe page visibility. Production deplo
 make check       # Run all: cargo check → clippy → dx build
 make check-rust  # Type checking only
 make lint        # Clippy with -D warnings
-make test        # Unit tests
+make test        # Unit tests (incl. golden labels and locale parity)
+make e2e         # WebDriver suite (needs `make dev` + chromedriver on :4444)
 ```
 
 ## Project Structure
@@ -63,23 +64,29 @@ make test        # Unit tests
 ```
 src/
   main.rs              # Entry point, locale init
-  core.rs              # Calculator, OutputFormatter, percentage logic, tests
+  core.rs              # Calculator, OutputFormatter, percentage logic
+  core/tests/          # Rule engine unit + golden tests, by domain
   rules.rs             # RuleDef enum, Rule trait, RuleRegistry
-  model.rs             # Country, Allergen, data enums
-  routes.rs            # Router (4 routes, cfg-gated Bio/Knospe)
+  verdicts.rs          # Typed rule decisions (Bio/Knospe verdicts, check state)
+  conditional_keys.rs  # Key constants for the test-only conditionals view
+  model.rs             # Country, food DB, aliases
+  routes.rs            # Router (cfg-gated Bio/Knospe, FAQ, support)
   layout.rs            # SplitLayout (label editor) + FullLayout
-  shared.rs            # Configuration enum, Validations/Conditionals contexts
+  shared.rs            # Configuration enum, Validations context
   category_service.rs  # Ingredient category detection
+  api.rs               # BLV food API (with retry)
   pages/
     swiss.rs           # Swiss food law page
     bio.rs             # Bio certification page
     knospe.rs          # Knospe (Bio Suisse) page
+    label_page.rs      # Shared label editor page
     splash_screen.rs   # Landing page
+    faq.rs, support.rs # FAQ, support (TWINT)
     impressum.rs       # Legal info
-  components/          # 29 reusable UI components
-  services/            # Business logic services
+  components/          # Reusable UI components
+  services/            # Suggestions, label text, QR, short links, «Bio» suffix
+tests/                 # WebDriver e2e suite + locale parity
 locales/               # i18n YAML files (de-CH, fr-CH, it-CH)
-requirements/          # Architecture documentation
 ```
 
 ## Tech Stack

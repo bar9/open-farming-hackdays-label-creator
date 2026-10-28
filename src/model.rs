@@ -1551,6 +1551,29 @@ mod food_db_tests {
         );
     }
 
+    // Terms the testers could not find and asked for explicitly:
+    // Bio_Testing B10 («Ei»/«Eier»), Besprechung 25.06.2026 («Mandeln» = Mandel,
+    // «Vollmilch» = Vollmilch pasteurisiert). Removing one of these rows would
+    // bring the original complaint back without any other test noticing.
+    #[test]
+    fn aliases_requested_in_testing_are_present() {
+        let aliases = ingredient_aliases();
+        for (term, canonical) in [
+            ("Ei", "Hühnerei ganz"),
+            ("Eier", "Hühnerei ganz"),
+            ("Mandeln", "Mandel"),
+            ("Vollmilch", "Vollmilch pasteurisiert"),
+        ] {
+            assert!(
+                aliases.iter().any(|(a, c, _)| a == term && c == canonical),
+                "alias {term} -> {canonical} missing"
+            );
+            assert!(is_curated_alias(term), "{term} must bypass the search minimum");
+        }
+        // The egg must keep its allergen flag through the alias.
+        assert!(lookup_allergen("Hühnerei ganz"));
+    }
+
     // Every alias must point at a real food_db entry, otherwise allergen /
     // agricultural / category lookups silently fall back to defaults.
     #[test]

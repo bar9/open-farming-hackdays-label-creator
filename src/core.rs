@@ -1,7 +1,7 @@
 use crate::category_service::{
     is_beef_category, is_dairy_category, is_egg_category, is_egg_ingredient_name,
     is_fish_category, is_honey_category, is_honey_ingredient_name, is_insect_category,
-    is_meat_category, is_plant_category,
+    is_meat_category,
 };
 use crate::model::{lookup_agricultural, lookup_allergen, Country};
 use crate::rules::RuleDef;
@@ -2973,32 +2973,33 @@ fn validate_knospe_under90_origin(
         let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
 
         if requires_origin && !has_origin {
+            // The reason mirrors the branches of `should_show_origin_knospe_under90`
+            // in the same order and with the same (inclusive) thresholds, so the
+            // message always names the rule that actually fired.
+            let name = ingredient.canonical.as_deref().unwrap_or(&ingredient.name);
+            let category = ingredient.effective_category();
+            let cat = category.as_deref();
+            let is_egg_or_honey = is_egg_ingredient_name(name)
+                || is_egg_ingredient_name(&ingredient.name)
+                || is_honey_ingredient_name(name)
+                || is_honey_ingredient_name(&ingredient.name)
+                || cat.is_some_and(|c| is_egg_category(c) || is_honey_category(c));
             let reason = if is_mono_product {
                 t!("validation.knospe_mono_origin_required").to_string()
             } else if ingredient.is_namensgebend == Some(true) {
                 t!("validation.knospe_name_giving_origin_required").to_string()
-            } else if let Some(category) = &ingredient.effective_category() {
-                if is_plant_category(category) && percentage > 50.0 {
-                    t!("validation.knospe_plants_over_50_origin_required").to_string()
-                } else if (is_egg_category(category)
-                    || is_honey_category(category)
-                    || is_fish_category(category))
-                    && percentage > 10.0
-                {
-                    t!("validation.knospe_egg_honey_fish_origin_required").to_string()
-                } else if is_dairy_category(category)
-                    || is_meat_category(category)
-                    || is_insect_category(category)
-                {
-                    t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
-                } else if ingredient.is_agricultural()
-                    && ingredient.has_swiss_origin()
-                    && percentage >= 10.0
-                {
-                    t!("validation.knospe_over_10_percent_origin_required").to_string()
-                } else {
-                    t!("validation.knospe_general_origin_required").to_string()
-                }
+            } else if percentage >= 50.0 {
+                t!("validation.knospe_plants_over_50_origin_required").to_string()
+            } else if percentage >= 10.0
+                && (is_egg_or_honey || cat.is_some_and(is_fish_category))
+            {
+                t!("validation.knospe_egg_honey_fish_origin_required").to_string()
+            } else if cat.is_some_and(|c| {
+                is_dairy_category(c) || is_meat_category(c) || is_insect_category(c)
+            }) {
+                t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
+            } else if ingredient.has_swiss_origin() && percentage >= 10.0 {
+                t!("validation.knospe_over_10_percent_origin_required").to_string()
             } else {
                 t!("validation.knospe_general_origin_required").to_string()
             };

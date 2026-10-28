@@ -47,6 +47,16 @@ fn calculate_similarity(s1: &str, s2: &str) -> f32 {
     }
 }
 
+/// Delays before each BLV attempt: one immediate try plus two retries (FB-1).
+const BLV_BACKOFF_MS: [u32; 3] = [0, 300, 900];
+
+/// Whether a BLV HTTP status is worth retrying. Only server errors are
+/// transient (the API answers 500 about once in 1000 requests); a 4xx means
+/// the request itself is wrong and retrying would only delay the error.
+fn is_transient_blv_status(status: u16) -> bool {
+    status >= 500
+}
+
 pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String> {
     let url = format!(
         "https://api.webapp.prod.blv.foodcase-services.com/BLV_WebApp_WS/webresources/BLV-api/foods?search={}&lang={}&limit=100",
@@ -60,10 +70,9 @@ pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String
     // in bursts) or drops the connection. A single miss used to leave the
     // dropdown without any BLV suggestion, so retry transient failures with a
     // short backoff. 4xx and parse errors are not transient and fail at once.
-    const BACKOFF_MS: [u32; 3] = [0, 300, 900];
     let mut last_err = String::new();
     let mut foods: Option<Vec<FoodItem>> = None;
-    for (attempt, delay) in BACKOFF_MS.iter().enumerate() {
+    for (attempt, delay) in BLV_BACKOFF_MS.iter().enumerate() {
         if *delay > 0 {
             gloo::timers::future::TimeoutFuture::new(*delay).await;
         }
@@ -80,7 +89,7 @@ pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String
             Ok(response) => {
                 let status = response.status();
                 last_err = format!("BLV API returned status {} for '{}'", status, name);
-                if status < 500 {
+                if !is_transient_blv_status(status) {
                     return Err(last_err);
                 }
             }
@@ -122,4 +131,30 @@ pub async fn search_food(name: &str, lang: &str) -> Result<Vec<FoodItem>, String
         name
     );
     Ok(sorted_foods)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // FB-1 (Oktober 2026): the BLV API sporadically answers 500 and the app
+    // used to give up at once, leaving the user without suggestions.
+    #[test]
+    fn blv_server_errors_are_retried_client_errors_are_not() {
+        for s in [500, 502, 503, 504] {
+            assert!(is_transient_blv_status(s), "{s} must be retried");
+        }
+        for s in [400, 404, 429, 200] {
+            assert!(!is_transient_blv_status(s), "{s} must not be retried");
+        }
+    }
+
+    #[test]
+    fn blv_gets_up_to_two_retries_and_the_first_try_is_immediate() {
+        assert_eq!(BLV_BACKOFF_MS.len(), 3, "one try plus two retries");
+        assert_eq!(BLV_BACKOFF_MS[0], 0);
+        assert!(BLV_BACKOFF_MS.windows(2).all(|w| w[0] < w[1]), "backoff grows");
+        // Suggestions appear while typing, so the worst case must stay short.
+        assert!(BLV_BACKOFF_MS.iter().sum::<u32>() <= 1500);
+    }
 }

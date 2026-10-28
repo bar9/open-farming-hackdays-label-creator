@@ -262,7 +262,7 @@ help:
     Il prezzo deve essere indicato nelle immediate vicinanze del prodotto. Sull'etichetta o sullo scaffale.
 
   aus_umstellbetrieb: Ingrediente da un'azienda in conversione all'agricoltura biologica. Contrassegnato con ** sull'etichetta.
-  wildsammlung: Ingrediente da raccolta selvatica biologica certificata. Per la Gemma, contrassegnato con ° sull'etichetta se la sua quota supera il 10 %.
+  wildsammlung: Ingrediente da raccolta selvatica biologica certificata. Per la Gemma, contrassegnato con ° sull'etichetta se la sua quota è almeno del 10 %.
   nicht_landwirtschaftlich: "Ingrediente non agricolo (es. acqua, sale, colture, certi additivi). Non considerato nei calcoli bio."
   andere: Ingrediente agricolo non certificato bio.
   aufzucht_location: Luogo in cui ha trascorso la maggior parte della vita
@@ -340,8 +340,8 @@ validation:
   fish_catch_location_required: Il luogo di cattura è richiesto per gli ingredienti di pesce.
   knospe_mono_origin_required: Il paese di origine è richiesto per i monoprodotti (regola Gemma <90% CH).
   knospe_name_giving_origin_required: Il paese di origine è richiesto per gli ingredienti caratterizzanti (regola Gemma <90% CH).
-  knospe_plants_over_50_origin_required: Il paese di origine è richiesto per gli ingredienti vegetali >50% (regola Gemma <90% CH).
-  knospe_egg_honey_fish_origin_required: Il paese di origine è richiesto per uova/miele/pesce >10% (regola Gemma <90% CH).
+  knospe_plants_over_50_origin_required: Il paese di origine è richiesto per gli ingredienti agricoli ≥50% (regola Gemma <90% CH).
+  knospe_egg_honey_fish_origin_required: Il paese di origine è richiesto per uova/miele/pesce ≥10% (regola Gemma <90% CH).
   knospe_dairy_meat_insects_origin_required: Il paese di origine è richiesto per latte/carne/insetti (regola Gemma <90% CH).
   knospe_over_10_percent_origin_required: Il paese di origine è richiesto per gli ingredienti ≥10% (regola Gemma <90% CH).
   knospe_general_origin_required: Il paese di origine è richiesto (regola Gemma <90% CH).

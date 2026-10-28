@@ -268,7 +268,7 @@ help:
   bio_knospe: "Indique si cet ingrédient est certifié selon le cahier des charges de Bio Suisse. Choisir l'origine (CH ou importation) à l'étape suivante."
   bio_ch: Indique si cet ingrédient est certifié selon l'ordonnance bio suisse (mais pas Bourgeon)
   aus_umstellbetrieb: Ingrédient provenant d'une exploitation en conversion vers l'agriculture biologique. Marqué ** sur l'étiquette.
-  wildsammlung: Ingrédient issu de cueillette sauvage certifiée biologique. Pour le Bourgeon, marqué ° sur l'étiquette si sa part dépasse 10 %.
+  wildsammlung: Ingrédient issu de cueillette sauvage certifiée biologique. Pour le Bourgeon, marqué ° sur l'étiquette si sa part atteint au moins 10 %.
   nicht_landwirtschaftlich: "Ingrédient non agricole (p.ex. eau, sel, cultures, certains additifs). Non pris en compte dans les calculs bio."
   andere: Ingrédient agricole non certifié bio.
   aufzucht_location: Lieu où l'animal a vécu la majeure partie de sa vie
@@ -341,8 +341,8 @@ validation:
   fish_catch_location_required: Le lieu de capture est requis pour les ingrédients de poisson.
   knospe_mono_origin_required: Le pays d'origine est requis pour les monoproduits (règle Bourgeon <90% CH).
   knospe_name_giving_origin_required: Le pays d'origine est requis pour les ingrédients caractéristiques (règle Bourgeon <90% CH).
-  knospe_plants_over_50_origin_required: Le pays d'origine est requis pour les ingrédients végétaux >50% (règle Bourgeon <90% CH).
-  knospe_egg_honey_fish_origin_required: Le pays d'origine est requis pour oeufs/miel/poisson >10% (règle Bourgeon <90% CH).
+  knospe_plants_over_50_origin_required: Le pays d'origine est requis pour les ingrédients agricoles ≥50% (règle Bourgeon <90% CH).
+  knospe_egg_honey_fish_origin_required: Le pays d'origine est requis pour oeufs/miel/poisson ≥10% (règle Bourgeon <90% CH).
   knospe_dairy_meat_insects_origin_required: Le pays d'origine est requis pour lait/viande/insectes (règle Bourgeon <90% CH).
   knospe_over_10_percent_origin_required: Le pays d'origine est requis pour les ingrédients ≥10% (règle Bourgeon <90% CH).
   knospe_general_origin_required: Le pays d'origine est requis (règle Bourgeon <90% CH).

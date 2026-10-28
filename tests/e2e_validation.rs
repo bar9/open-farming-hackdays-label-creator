@@ -16,7 +16,7 @@ use common::*;
 //
 // Seed Rindshackbraten with Rindfleisch missing its origin. Press
 // "Rezeptur vollständig" (which gates the validation rules per
-// `core.rs:795`). Verify the AP7_1 origin-required banner appears.
+// `Input::rezeptur_vollstaendig` in core.rs). Verify the AP7_1 origin-required banner appears.
 // Then open the edit card, set the origin to CH, and verify the banner
 // disappears.
 
@@ -237,10 +237,10 @@ async fn summary_surfaces_invisible_beef_error() {
     let _ = c.close().await;
 }
 
-// ---------- §2.2 — Bio cert body required ----------
+// ---------- §2.2 — Bio cert body: placeholder, not a recipe error ----------
 
 #[tokio::test]
-async fn bio_cert_body_required() {
+async fn bio_missing_cert_body_is_a_placeholder_not_a_recipe_error() {
     let c = connect().await;
 
     // Seed a Bio recipe but skip the certification body.
@@ -257,10 +257,13 @@ async fn bio_cert_body_required() {
         }],
     };
     goto_config(&c, recipe.config).await;
-    seed_recipe_via_ui(&c, &recipe).await;
+    seed_recipe_via_ui(&c, &recipe).await; // also presses "Rezeptur vollständig"
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
-    // The form-level validation flag `Bio_Knospe_ZertifizierungsstellePflicht`
-    // surfaces a validation message somewhere in the body.
+    // Testing 25.06.2026: a missing certification body is NOT a recipe problem.
+    // The yellow placeholder on the label is enough; the red panel under
+    // «Rezeptur vollständig – überprüfen» only concerns the recipe.
+    assert_label_contains(&c, "Bio-Zertifizierungsstelle", "bio_missing_cert_body_is_a_placeholder_not_a_recipe_error").await;
     let body: String = c
         .execute("return document.body.innerText;", vec![])
         .await
@@ -268,12 +271,17 @@ async fn bio_cert_body_required() {
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_default();
     assert!(
-        body.contains("Zertifizierung") || body.contains("zertifizierung"),
-        "expected certification body validation message. body:\n{}",
+        !body.contains("Pflichtfeld für Bio und Knospe"),
+        "missing certification body must not show as a red recipe error. body:\n{}",
+        body
+    );
+    assert!(
+        body.contains("Keine Fehler gefunden"),
+        "missing certification body must not block the recipe check. body:\n{}",
         body
     );
 
-    assert_no_errors(&c, "bio_cert_body_required").await;
+    assert_no_errors(&c, "bio_missing_cert_body_is_a_placeholder_not_a_recipe_error").await;
     let _ = c.close().await;
 }
 
