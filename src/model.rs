@@ -1574,6 +1574,26 @@ mod food_db_tests {
         assert!(lookup_allergen("Hühnerei ganz"));
     }
 
+    // Bio_Testing_Declarino.xlsx row 34: «Salz jodiert» was not recognised as
+    // non-agricultural, so the recipe was flagged «darf nicht Bio deklariert
+    // werden». Salt variants resolve to the canonical «Salz» and lock the
+    // quality to «Nicht-landwirtschaftlich».
+    #[test]
+    fn salt_variants_are_non_agricultural() {
+        let aliases = ingredient_aliases();
+        for term in ["Salz jodiert", "Jodsalz", "Meersalz"] {
+            let canonical = aliases
+                .iter()
+                .find(|(a, _, _)| a == term)
+                .map(|(_, c, _)| c.clone())
+                .unwrap_or_else(|| panic!("{term} has no alias"));
+            assert!(
+                db_knows_non_agricultural(term, Some(&canonical)),
+                "{term} must be non-agricultural"
+            );
+        }
+    }
+
     // Every alias must point at a real food_db entry, otherwise allergen /
     // agricultural / category lookups silently fall back to defaults.
     #[test]

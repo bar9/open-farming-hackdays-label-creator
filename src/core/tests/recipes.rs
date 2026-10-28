@@ -267,26 +267,32 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         "Should NOT have bio_suisse_regular logo"
     );
 
-    // Origin display per Excel:
-    // Butter: Ja → show (CH)
+    // Origin display. The Excel sheet «Schoggi Cookie BK mit Milch» predates
+    // DEC-25 (Mirjam 02.10.2026); where they differ, the test follows DEC-25 and
+    // says so below.
+    // Butter: Excel Ja → show (CH)
     assert!(
         output.label.contains("Butter* (CH)"),
         "Butter should show origin (CH). Label: {}",
         output.label
     );
-    // Sub-ingredient Vollmilchpulver: Nein (4.6% < 10% Swiss threshold, Knospe Under90% rules apply to composites too)
+    // Sub-ingredient Vollmilchpulver (4.6% of the product): Excel says **Ja**,
+    // the app shows none. Milk powders are deliberately not curated as dairy
+    // (Roland 03.07.2026) and 4.6% < 10% Swiss threshold. OPEN with Mirjam:
+    // does «Milch und Milchprodukte immer» cover milk powder? See
+    // requirements/herkunft_problemanalyse.md §1.2.
     assert!(
         !output.label.contains("Vollmilchpulver* (CH)"),
         "Vollmilchpulver should NOT show origin (4.6%% < 10%% threshold). Label: {}",
         output.label
     );
-    // Zucker: Ja (18% Swiss agricultural, >10%)
+    // Zucker: Excel Nein, DEC-25 rule v: Swiss agricultural ≥ 10% (18%) → (CH)
     assert!(
         output.label.contains("Zucker* (CH)"),
         "Zucker should show origin (CH) because >10%% Swiss. Label: {}",
         output.label
     );
-    // Weizenmehl: Ja (33.5% Swiss agricultural, >10%)
+    // Weizenmehl: Excel Nein, DEC-25 rule v: Swiss agricultural ≥ 10% (33.5%) → (CH)
     assert!(
         output.label.contains("Weizenmehl* (CH)"),
         "Weizenmehl should show origin (CH) because >10%% Swiss. Label: {}",

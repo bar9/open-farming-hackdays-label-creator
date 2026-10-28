@@ -154,6 +154,18 @@ async fn biov_offers_wildsammlung_with_the_bio_wording() {
 // The quality must be preselected AND locked, like the allergen checkbox.
 #[tokio::test]
 async fn db_non_agricultural_ingredient_locks_the_quality() {
+    assert_quality_locked_non_agricultural("Dicarbonat").await;
+}
+
+// Bio_Testing_Declarino.xlsx row 34: «Salz jodiert» used to count as an
+// agricultural, non-bio ingredient and blocked the Bio claim. It is now an
+// alias of «Salz» and must lock exactly like the canonical entry.
+#[tokio::test]
+async fn salt_alias_locks_the_quality_like_salt() {
+    assert_quality_locked_non_agricultural("Salz jodiert").await;
+}
+
+async fn assert_quality_locked_non_agricultural(name: &str) {
     let c = connect().await;
     goto_config(&c, Config::Knospe).await;
 
@@ -166,7 +178,7 @@ async fn db_non_agricultural_ingredient_locks_the_quality() {
     // Type a DB ingredient that is flagged non-agricultural.
     if let Some(input) = first_accent_input(&c).await {
         let _ = input.click().await;
-        let _ = input.send_keys("Dicarbonat").await;
+        let _ = input.send_keys(name).await;
         tokio::time::sleep(std::time::Duration::from_millis(600)).await;
         let _ = input.send_keys("\u{E007}").await; // Enter
     }
@@ -563,6 +575,76 @@ async fn mono_quality_selector_hidden_in_lebensmittelrecht() {
     assert!(
         !has_selector,
         "mono-product quality selector must not appear in CH-Lebensmittelrecht"
+    );
+
+    let _ = c.close().await;
+}
+
+// Bio_Testing L6 (Konventionell, Bio, Bio Suisse): when a new ingredient is
+// added, the origin of the previous one must not be prefilled. The field
+// starts empty. `clear_edit_state` resets the origins signal on
+// «Speichern und nächste Zutat»; this pins that through the real dialog.
+#[tokio::test]
+async fn save_and_next_starts_the_next_ingredient_without_an_origin() {
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+
+    assert!(
+        open_add_ingredient(&c).await,
+        "could not open the ingredient dialog"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+    if let Some(input) = first_accent_input(&c).await {
+        let _ = input.click().await;
+        let _ = input.send_keys("Hafer").await;
+        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+        let _ = input.send_keys("\u{E007}").await;
+    }
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    if let Ok(num) = c
+        .find(Locator::Css("dialog[open] input[type='number']"))
+        .await
+    {
+        let _ = num.click().await;
+        let _ = num.send_keys("500").await;
+    }
+    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+
+    let selected_origins = r##"
+        const dlg = document.querySelector('dialog[open]');
+        if (!dlg) return -1;
+        return dlg.querySelectorAll('span.badge.badge-lg').length;
+    "##;
+
+    assert!(
+        set_origin_in_open_dialog(&c, "AT").await,
+        "setup failed: no origin select in the dialog"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+    let before = c
+        .execute(selected_origins, vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_i64())
+        .unwrap_or(-1);
+    assert!(before >= 1, "setup failed: origin AT was not selected ({before})");
+
+    assert!(
+        click_button_by_text(&c, "Speichern und nächste Zutat").await,
+        "genesis save button not found"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    let after = c
+        .execute(selected_origins, vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_i64())
+        .unwrap_or(-1);
+    assert_eq!(
+        after, 0,
+        "the next ingredient must start without the previous ingredient's origin"
     );
 
     let _ = c.close().await;
