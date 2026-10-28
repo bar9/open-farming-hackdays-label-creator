@@ -1,14 +1,10 @@
 {
-  "name": "open-farming-hackdays-labal-creator",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "open-farming-hackdays-label-creator",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "check:routes": "node api/routecheck.cjs vercel.json api/routecases.json"
   },
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@tailwindcss/cli": "^4.3.3",
     "daisyui": "^5.7.50",
