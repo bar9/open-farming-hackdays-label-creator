@@ -9,8 +9,13 @@ use std::str::FromStr;
 
 #[derive(PartialEq, Clone, Serialize, Deserialize, Debug, Default)]
 pub enum AmountType {
+    // The app writes `Weight`/`Volume`; `api_konzept.md` documents the
+    // lowercase form for prefilled iFrame URLs. Accept both, otherwise the
+    // whole form fails to parse and the page opens empty.
     #[default]
+    #[serde(alias = "weight")]
     Weight,
+    #[serde(alias = "volume")]
     Volume,
 }
 

@@ -707,3 +707,30 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `api_konzept.md` documents prefilled iFrame URLs as the integration
+    // contract for external sites (Biomondo, Markoni). The documented example
+    // must keep loading; a renamed field or enum would silently empty the form.
+    #[test]
+    fn documented_iframe_example_url_parses() {
+        let qs = "product_title=Bio%20Bergk%C3%A4se&product_subtitle=W%C3%BCrzig-kr%C3%A4ftig\
+&producer_name=Alpk%C3%A4serei%20Grindelwald&producer_address=Bergweg%2012&producer_zip=3818\
+&producer_city=Grindelwald&producer_email=info%40alpkaeserei.ch&producer_phone=%2B41%2033%20853%2012%2034\
+&production_country=CH&amount_type=weight&weight_unit=g\
+&ingredients[0][name]=Rohmilch&ingredients[0][amount]=950&ingredients[0][is_allergen]=true\
+&ingredients[1][name]=Salz&ingredients[1][amount]=20&ingredients[1][is_allergen]=false\
+&ingredients[2][name]=Lab&ingredients[2][amount]=5&ingredients[2][is_allergen]=false";
+        let decoded = urlencoding::decode(qs).unwrap();
+        let form: Form = from_query_string(&decoded)
+            .unwrap_or_else(|e| panic!("documented iFrame URL no longer parses: {e}"));
+        assert_eq!(form.product_title, "Bio Bergkäse");
+        assert_eq!(form.producer_city, "Grindelwald");
+        assert_eq!(form.ingredients.len(), 3);
+        assert_eq!(form.ingredients[0].name, "Rohmilch");
+        assert!(form.ingredients[0].is_allergen);
+    }
+}

@@ -118,6 +118,18 @@ async fn knospe_logo_flips_under_90_to_no_cross() {
 
     // With Butter sourced from FR, Swiss percentage falls below 90% → the
     // logo switches to bio_suisse_no_cross (no Swiss cross path).
+    // Premise: a Knospe logo is rendered at all. Without this, a recipe that
+    // shows no logo (e.g. not 100 % Knospe) would pass the cross check below.
+    let logo_present: bool = c
+        .execute(
+            "return document.querySelectorAll('div.absolute.top-2.right-2 svg').length > 0;",
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(logo_present, "expected a Knospe logo on the label");
     assert!(
         !has_bio_suisse_cross(&c).await,
         "expected bio_suisse_no_cross variant for <90% Swiss recipe (Butter from FR)"
@@ -134,15 +146,35 @@ async fn knospe_wildsammlung_legend_above_10pct() {
     let c = connect().await;
     goto_config(&c, WILDKRAEUTER_25G.config).await;
     seed_recipe_via_ui(&c, &WILDKRAEUTER_25G).await;
-    // Wildsammlung is set per-ingredient via a checkbox inside the
-    // ingredient pane. The seeder doesn't currently toggle that; this
-    // test will fail until the checkbox is asserted manually or the
-    // helper is extended. For now we still assert that the seeded recipe
-    // renders without errors and that the legend's translation key exists.
-    let html = label_html(&c).await;
+    // The seeder has no Knospe-Wildsammlung option, so tick the checkbox on
+    // the Wildkräuter card afterwards (same path a user takes).
     assert!(
-        !html.is_empty(),
-        "label preview empty after seeding Wildkräuter recipe"
+        open_ingredient_edit_by_name(&c, "Wildkräuter").await,
+        "could not reopen the Wildkräuter card"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    let ticked = match c
+        .find(fantoccini::Locator::XPath(
+            "//dialog[@open]//label[contains(normalize-space(.), 'Wildsammlung')]//input[@type='checkbox']",
+        ))
+        .await
+    {
+        Ok(el) => el.click().await.is_ok(),
+        Err(_) => false,
+    };
+    assert!(ticked, "Wildsammlung checkbox not found on the Knospe card");
+    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    let _ = click_button_by_text(&c, "Speichern").await;
+    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+
+    // MT §3.3 / Bio_Testing B15: 25 % wild collection (≥ 10 %) → ° marker and
+    // the legend line (wording since DEC-12).
+    let html = label_html(&c).await;
+    assert!(html.contains("Wildkräuter*°") || html.contains("Wildkräuter°"),
+        "expected ° marker on Wildkräuter. Label:\n{html}");
+    assert!(
+        html.contains("° aus biologisch zertifizierter Wildsammlung"),
+        "expected the Wildsammlung legend. Label:\n{html}"
     );
 
     assert_no_errors(&c, "knospe_wildsammlung_legend_above_10pct").await;
@@ -166,8 +198,10 @@ async fn bio_kein_bio_warning_when_no_bio() {
         .ok()
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_default();
+    // Bio_Testing B8: the «not marketable as Bio» hint (bio_hints.
+    // marketing_not_allowed). A bare "nicht" matched the disclaimer too.
     assert!(
-        body_text.contains("nicht") || body_text.contains("NICHT"),
+        body_text.contains("darf NICHT als Bio-Produkt vermarktet werden"),
         "expected kein-bio warning banner; full body:\n{}",
         body_text
     );

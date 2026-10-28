@@ -77,15 +77,37 @@ async fn manual_total_scales_proportionally() {
         let _ = num.send_keys("200").await;
         tokio::time::sleep(std::time::Duration::from_millis(150)).await;
     }
-    // Click the proportional save button — text fragment "anteilsmässig"
-    // is unique to this button per MT §1.4.
-    if !click_button_by_text(&c, "anteilsmässig").await {
-        click_button_by_text(&c, "Speichern").await;
-    }
-    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    // Click the proportional save button («Alle Mengen anpassen», key
+    // buttons.save_and_transfer). It used to be called «anteilsmässig
+    // übertragen»; the old text silently fell back to plain «Speichern», so
+    // the test never exercised scaling.
+    assert!(
+        click_button_by_text(&c, "Alle Mengen anpassen").await,
+        "«Alle Mengen anpassen» button not found"
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(600)).await;
 
-    // We don't strictly assert Birne's new amount (UI scraping is
-    // brittle); the regression-relevant signal is no panic / no error.
+    // MT §1.4: the sibling scales by the same factor (×2): Birne 50 → 100 g.
+    let birne = c
+        .execute(
+            r#"
+            const rows = document.querySelectorAll('div.grid.grid-cols-3');
+            for (const r of rows) {
+                if (r.closest('dialog[open]')) continue;
+                if (r.innerText && r.innerText.includes('Birne')) return r.innerText;
+            }
+            return '';
+            "#,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    assert!(
+        birne.contains("100"),
+        "Birne should scale ×2 to 100 g, row: {birne:?}"
+    );
     assert_no_errors(&c, "manual_total_scales_proportionally").await;
     let _ = c.close().await;
 }
