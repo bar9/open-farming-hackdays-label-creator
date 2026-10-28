@@ -472,3 +472,66 @@ async fn knospe_origin_locks_to_ch_and_import_unlocks() {
     assert_no_errors(&c, "knospe_origin_locks_to_ch_and_import_unlocks").await;
     let _ = c.close().await;
 }
+
+// ---------- DEC-25: reason text names the rule that fired (FB-2) ----------
+//
+// Knospe below 90 % CH: an egg at exactly 10 % needs an origin. The red recipe
+// panel must say why («Eier/Honig/Fisch ≥10%»), not the generic «Herkunftsland
+// ist erforderlich (Knospe <90% CH Regel).». Before FB-2 the reason used ">10%"
+// and categories only, so this case fell through to the generic text.
+#[tokio::test]
+async fn knospe_egg_at_10_percent_names_the_egg_rule() {
+    let c = connect().await;
+    let recipe = Recipe {
+        config: Config::Knospe,
+        product_name: "Eiernudeln",
+        sachbezeichnung: "Eierteigwaren",
+        certification_body: Some("CH-BIO-006"),
+        ingredients: &[
+            RecipeIngredient {
+                name: "Hartweizengriess",
+                grams: 70.0,
+                origin: Some("IT"),
+                bio: BioStatus::BioKnospeImport,
+            },
+            RecipeIngredient {
+                name: "Zucker",
+                grams: 20.0,
+                origin: Some("DE"),
+                bio: BioStatus::BioKnospeImport,
+            },
+            RecipeIngredient {
+                name: "Eier",
+                grams: 10.0,
+                origin: None,
+                // Not a Knospe pick: «Herkunft Schweiz» would set CH itself.
+                bio: BioStatus::Conventional,
+            },
+        ],
+    };
+    goto_config(&c, recipe.config).await;
+    seed_recipe_via_ui(&c, &recipe).await; // also presses «Rezeptur vollständig»
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    let body: String = c
+        .execute("return document.body.innerText;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    // Premise: the egg really has no origin (otherwise nothing is flagged and
+    // the assertion below would fail for the wrong reason).
+    assert!(
+        !body.contains("Eier* (") && !body.contains("Eier ("),
+        "setup failed: the egg got an origin. body:\n{}",
+        body.chars().take(3000).collect::<String>()
+    );
+    assert!(
+        body.contains("Eier/Honig/Fisch ≥10%"),
+        "egg at exactly 10% must be flagged with the egg/honey/fish reason. body:\n{}",
+        body.chars().take(3000).collect::<String>()
+    );
+
+    assert_no_errors(&c, "knospe_egg_at_10_percent_names_the_egg_rule").await;
+    let _ = c.close().await;
+}
