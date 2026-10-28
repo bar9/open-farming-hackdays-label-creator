@@ -66,3 +66,26 @@ async fn egg_count_round_trips_through_a_shared_link() {
     assert_no_errors(&c, "egg link round trip").await;
     let _ = c.close().await;
 }
+
+// api_konzept.md documents prefilled iFrame URLs with `amount_type=weight`
+// (lowercase). Before 28.10.2026 serde rejected that variant, the whole form
+// failed to parse and the page opened empty.
+#[tokio::test]
+async fn documented_iframe_url_prefills_the_form() {
+    let c = connect().await;
+    goto_config(&c, common::recipes::Config::Lebensmittelrecht).await;
+    let query = "product_title=Bio%20Bergk%C3%A4se&product_subtitle=W%C3%BCrzig-kr%C3%A4ftig\
+&producer_name=Alpk%C3%A4serei%20Grindelwald&producer_zip=3818&producer_city=Grindelwald\
+&production_country=CH&amount_type=weight&weight_unit=g\
+&ingredients[0][name]=Rohmilch&ingredients[0][amount]=950&ingredients[0][is_allergen]=true\
+&ingredients[1][name]=Salz&ingredients[1][amount]=20&ingredients[1][is_allergen]=false";
+    goto(&c, &format!("lebensmittelrecht?{}", query)).await;
+    tokio::time::sleep(mount_delay()).await;
+    tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+
+    let label = label_html(&c).await;
+    assert!(label.contains("Bio Bergkäse"), "title missing. Label:\n{label}");
+    assert!(label.contains("Rohmilch"), "ingredient missing. Label:\n{label}");
+    assert_no_errors(&c, "documented_iframe_url_prefills_the_form").await;
+    let _ = c.close().await;
+}
