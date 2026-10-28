@@ -156,3 +156,62 @@ async fn a_manual_non_agricultural_choice_is_kept() {
 
     let _ = c.close().await;
 }
+
+/// Whether the allergen checkbox in the open dialog is ticked.
+async fn allergen_checked(c: &fantoccini::Client) -> Option<bool> {
+    c.execute(
+        r#"
+        const field = [...document.querySelectorAll("dialog[open] label, dialog[open] .form-control, dialog[open] fieldset, dialog[open] div")]
+          .find(el => el.childElementCount < 6 && /^\s*Allergen\b/.test(el.innerText || '')
+                      && el.querySelector("input[type=checkbox]"));
+        if (!field) return null;
+        return field.querySelector("input[type=checkbox]").checked;
+        "#,
+        vec![],
+    )
+    .await
+    .ok()
+    .and_then(|v| v.as_bool())
+}
+
+// Bio_Testing_Declarino.xlsx row 43: information about an ingredient must not
+// survive once that ingredient is gone (example given: Allergen). Weizenmehl is
+// an allergen in the food DB; the next ingredient, typed as free text, must not
+// start with the allergen box ticked.
+#[tokio::test]
+async fn allergen_flag_does_not_leak_into_the_next_ingredient() {
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+
+    assert!(open_add_ingredient(&c).await, "ingredient dialog");
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    enter_name(&c, "Weizenmehl").await;
+    assert_eq!(
+        allergen_checked(&c).await,
+        Some(true),
+        "premise: Weizenmehl is an allergen in the food DB"
+    );
+    if let Ok(num) = c
+        .find(fantoccini::Locator::Css("dialog[open] input[type='number']"))
+        .await
+    {
+        let _ = num.click().await;
+        let _ = num.send_keys("300").await;
+    }
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert!(
+        click_button_by_text(&c, "Speichern und nächste Zutat").await,
+        "genesis save button not found"
+    );
+    tokio::time::sleep(Duration::from_millis(700)).await;
+
+    enter_name(&c, "Grossmutters Geheimzutat").await;
+    assert_eq!(
+        allergen_checked(&c).await,
+        Some(false),
+        "the allergen flag of the previous ingredient leaked into the next one"
+    );
+
+    let _ = c.close().await;
+}
