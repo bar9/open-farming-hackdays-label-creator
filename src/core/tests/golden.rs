@@ -3,9 +3,11 @@ use crate::shared::Configuration;
 
 /// Golden-file test for Erdbeer-Fruchtaufstrich (strawberry jam).
 ///
-/// Expected label (from requirement docs):
-/// Erdbeere vom Hof 66% (CH), Zucker, Geliermittel: Pektin, Säuerungsmittel: Zitronensäure
-/// (Zucker is 28% — below the 50% threshold, so its declared CH origin is NOT printed.)
+/// Source: `requirements/2026_01_27 Erdbeer-Fruchtaufstrich.docx`, which shows
+/// «Erdbeere vom Hof 66% (CH), Zucker (CH), …». Deliberate deviation since
+/// `fc654ad` (26.08.2026): a declared origin is printed only when a rule requires
+/// it, so Zucker (28%, below the AP7.1 50% threshold) loses its voluntary «(CH)».
+/// Voluntary origins are added by hand after copying (hint under the label).
 ///
 /// 250g final product (manual total — water loss during cooking).
 #[test]
@@ -45,10 +47,13 @@ fn golden_erdbeer_fruchtaufstrich() {
 
 /// Golden-file test for Joghurt Salatsauce (yogurt salad dressing).
 ///
-/// Expected label (from requirement docs):
-/// Joghurt nature 63% (CH), Rapsöl, Wasser, Blütenhonig, Senf, Zitronensaft,
-/// Bouillonpaste (Salz, Sojasauce, Maltodextrin auf Weizenbasis, Karotte,
-/// Knollensellerie, Lauch, Rapsöl, Gewürz, Petersilie), Salz, Gewürze
+/// Source: `requirements/2026_01_27 Joghurt Salatsauce Testing.docx`. Two
+/// deliberate deviations from that January document:
+/// - Rapsöl and the Salz inside Bouillonpaste lose their voluntary «(CH)»
+///   (`fc654ad`, origin only when a rule requires it).
+/// - The document lists «…, Salz, Gewürze» at the end; ingredients are now
+///   sorted strictly by weight, so Gewürze (9.5 g) precede Bouillonpaste (9 g)
+///   and Salz (8 g).
 ///
 /// 450g product. Bouillonpaste is a composite ingredient with 9 children.
 #[test]

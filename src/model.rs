@@ -1594,6 +1594,35 @@ mod food_db_tests {
         }
     }
 
+    // Inhaltsverzeichnis_Bio_Zusatz.xlsx, sheet «Allergene»: the 14 groups that
+    // must be declared. One representative per group must be bold out of the
+    // food DB. Schwefeldioxid/Sulfite is an additive without a DB entry and is
+    // ticked by hand, so it is not listed here.
+    #[test]
+    fn every_mandatory_allergen_group_has_a_db_representative() {
+        for (group, name) in [
+            ("glutenhaltiges Getreide", "Weizenmehl"),
+            ("Krebstiere", "Garnele"),
+            ("Eier", "Hühnerei ganz"),
+            ("Fisch", "Lachs geräuchert"),
+            ("Erdnüsse", "Erdnuss"),
+            ("Sojabohnen", "Tofu"),
+            ("Milch und Laktose", "Vollmilch pasteurisiert"),
+            ("Nüsse", "Haselnuss"),
+            ("Sellerie", "Knollensellerie"),
+            ("Senf", "Senf"),
+            ("Sesam", "Sesamsamen"),
+            ("Lupinen", "Lupinen"),
+            ("Weichtiere", "Miesmuschel"),
+        ] {
+            assert!(
+                food_db().iter().any(|(n, _)| n == name),
+                "{group}: {name} missing from food_db"
+            );
+            assert!(lookup_allergen(name), "{group}: {name} must be an allergen");
+        }
+    }
+
     // Every alias must point at a real food_db entry, otherwise allergen /
     // agricultural / category lookups silently fall back to defaults.
     #[test]
