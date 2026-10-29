@@ -207,6 +207,13 @@ async fn bio_kein_bio_warning_when_no_bio() {
     );
     // Sachbezeichnung suffix " Bio" must NOT be present.
     let label = label_html(&c).await;
+    // Testing 25.06.2026 («Abgrenzung Etikette vs Infotext»): the hints are
+    // not part of the printed label, so they must sit outside the label card.
+    assert!(
+        !label.contains("vermarktet werden"),
+        "the Bio hint must not be inside the label card. Label:\n{}",
+        label
+    );
     assert!(
         !label.contains("Konfitüre extra mit weniger Zucker Bio"),
         "Sachbezeichnung should not carry the Bio suffix when no ingredient is bio. Label:\n{}",

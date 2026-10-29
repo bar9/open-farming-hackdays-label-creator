@@ -140,3 +140,55 @@ async fn namensgebend_renders_exactly_once_per_mode() {
 
     let _ = c.close().await;
 }
+
+// Testing 25.06.2026: choosing a quality on the composite level pushes the *
+// down to all agricultural sub-ingredients, so the user is warned to make sure
+// they really all are bio. The warning appears only for a bio quality.
+#[tokio::test]
+async fn composite_bio_quality_shows_the_push_down_warning() {
+    let c = connect().await;
+    goto_config(&c, Config::Bio).await;
+    open_named_ingredient(&c, "Rosinenmischung").await;
+    enable_composite(&c).await;
+
+    let warning_visible = |c: fantoccini::Client| async move {
+        c.execute(
+            "return !!document.querySelector('dialog[open]') && \
+             document.querySelector('dialog[open]').innerText.includes('Vergewissere dich');",
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    };
+    assert!(
+        !warning_visible(c.clone()).await,
+        "no warning before a bio quality is chosen"
+    );
+
+    let picked = c
+        .execute(
+            r#"
+            const dlg = document.querySelector("dialog[open]");
+            const hit = [...dlg.querySelectorAll("label")]
+              .find(l => l.querySelector("input[name=comp_quality]") && /^\s*Bio\b/.test(l.innerText));
+            if (!hit) return false;
+            hit.querySelector("input").click();
+            return true;
+            "#,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(picked, "composite quality radio «Bio» not found");
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    assert!(
+        warning_visible(c.clone()).await,
+        "the push-down warning must appear for a composite with bio quality"
+    );
+    let _ = c.close().await;
+}
