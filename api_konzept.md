@@ -114,7 +114,7 @@ document.getElementById('labelCreator').src = fullUrl;
 | `producer_email` | String | E-Mail | `info%40hofmolkerei.ch` |
 | `producer_website` | String | Webseite | `www.hofmolkerei.ch` |
 | `manual_total` | Number | Gesamtgewicht (optional) | `1000` |
-| `amount_type` | Enum | `weight` oder `volume` | `weight` |
+| `amount_type` | Enum | `Weight` oder `Volume` (Kleinschreibung wird ebenfalls akzeptiert) | `Weight` |
 | `weight_unit` | String | Gewichtseinheit | `g` |
 | `volume_unit` | String | Volumeneinheit | `ml` |
 | `ingredients[n][name]` | String | Name der Zutat | `Milch` |
@@ -568,7 +568,7 @@ fn generate_qr_code(form_data: &FormData) -> String {
 ## Vorteile der Frontend-Only Architektur
 
 - **Keine Server-Kosten**: Läuft komplett im Browser
-- **Datenschutz**: Keine Daten verlassen den Browser des Nutzers
+- **Datenschutz**: Keine Daten verlassen den Browser des Nutzers — *Stand 2025, so nicht mehr zutreffend: der «Teilen»-Dialog sendet die vollständige Link-Adresse (inkl. Rezeptur und Herstellerangaben) an einen Kurz-Link-Dienst, seit 27.08.2026 an den eigenen auf declarino.ch (Rückfall auf Drittanbieter), siehe `api/README.md`.*
 - **Offline-fähig**: Funktioniert auch ohne Internetverbindung
 - **Einfaches Deployment**: Statische Files via GitHub Pages, einbetten auf beliebigen websites
 - **Skalierbar**: Keine Server-Last, unbegrenzte Nutzer
