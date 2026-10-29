@@ -144,3 +144,38 @@ async fn egg_containing_products_keep_the_normal_fields() {
 
     let _ = c.close().await;
 }
+
+// Bio_Testing_Declarino.xlsx rows 12a, 49, 50: button «Zutat hinzufügen»;
+// address field named «Strasse / Hausnummer» and not mandatory; «Firma / Name»
+// takes line breaks (textarea).
+#[tokio::test]
+async fn address_fields_follow_the_testing_feedback() {
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+
+    let v = c
+        .execute(
+            r#"
+            const labelText = t => [...document.querySelectorAll('label, .label')]
+              .find(l => l.textContent.trim().startsWith(t));
+            const strasse = labelText('Strasse / Hausnummer');
+            const name = labelText('Firma / Name');
+            // FormField: div.flex-col > div (label row) > label; the input is a sibling of the label row.
+            const field = l => l && l.parentElement && l.parentElement.parentElement;
+            return {
+              add: [...document.querySelectorAll('button')].some(b => b.textContent.trim() === 'Zutat hinzufügen'),
+              strasse: !!strasse,
+              strasseRequired: !!strasse && /\*/.test(strasse.textContent),
+              nameTextarea: !!name && !!field(name).querySelector('textarea'),
+            };
+            "#,
+            vec![],
+        )
+        .await
+        .unwrap();
+    assert_eq!(v["add"], true, "button «Zutat hinzufügen» (row 12a): {v}");
+    assert_eq!(v["strasse"], true, "field «Strasse / Hausnummer» (row 49): {v}");
+    assert_eq!(v["strasseRequired"], false, "street is optional, no * (row 49): {v}");
+    assert_eq!(v["nameTextarea"], true, "«Firma / Name» is a textarea (row 50): {v}");
+    let _ = c.close().await;
+}
