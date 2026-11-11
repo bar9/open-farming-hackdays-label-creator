@@ -568,7 +568,7 @@ fn generate_qr_code(form_data: &FormData) -> String {
 ## Vorteile der Frontend-Only Architektur
 
 - **Keine Server-Kosten**: Läuft komplett im Browser
-- **Datenschutz**: Keine Daten verlassen den Browser des Nutzers — *Stand 2025, so nicht mehr zutreffend: der «Teilen»-Dialog sendet die vollständige Link-Adresse (inkl. Rezeptur und Herstellerangaben) an einen Kurz-Link-Dienst, seit 27.08.2026 an den eigenen auf declarino.ch (Rückfall auf Drittanbieter), siehe `api/README.md`.*
+- **Datenschutz**: Keine Daten verlassen den Browser des Nutzers — *Stand 2025, so nicht mehr zutreffend: der «Teilen»-Dialog sendet die vollständige Link-Adresse (inkl. Rezeptur und Herstellerangaben) an einen Kurz-Link-Dienst, wenn die Nutzerin «Kurz-Link» wählt (seit 0.8.24 nur noch auf ausdrückliche Wahl, Vorgabe ist der vollständige Link), seit 27.08.2026 an den eigenen auf declarino.ch (Rückfall auf Drittanbieter), siehe `api/README.md`.*
 - **Offline-fähig**: Funktioniert auch ohne Internetverbindung
 - **Einfaches Deployment**: Statische Files via GitHub Pages, einbetten auf beliebigen websites
 - **Skalierbar**: Keine Server-Last, unbegrenzte Nutzer

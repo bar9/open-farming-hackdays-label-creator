@@ -122,10 +122,10 @@ Umami. Filling the form is unaffected: the query string only feeds the copy-link
 button and never reaches the address bar. The CI step *Check analytics privacy
 flags* enforces this, because losing the flag would otherwise be invisible.
 
-**Short links store the recipe.** Opening the «Teilen» dialog immediately
-sends the full share URL to `/api/shorten` (`link_share_modal.rs`), which stores
-it without expiry (see `api/README.md`). That URL contains the recipe and the
-producer details. Only the copy-label-as-text action stays fully client-side.
+**Short links store the recipe.** The «Teilen» dialog shows the full link by
+default and sends nothing. Only when the user picks «Kurz-Link» is the full share
+URL sent to `/api/shorten` (`link_share_modal.rs`), which stores it without expiry
+(see `api/README.md`). That URL contains the recipe and the producer details.
 Keep this in mind for the privacy declaration.
 
 The privacy declaration is a [PrivacyBee](https://privacybee.io) document embedded
