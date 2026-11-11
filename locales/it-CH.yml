@@ -335,6 +335,7 @@ validation:
   origin_required_import_knospe: Il paese di origine è richiesto per gli ingredienti con Gemma Import quando la Gemma Import appare sull'etichetta.
   namensgebend_amount_required: Per l'ingrediente che dà il nome al prodotto occorre indicare la quantità affinché la percentuale appaia sull'etichetta.
   origin_single_level: L'origine è definita su più livelli di questo ingrediente. Indicarla su un solo livello e rimuovere l'altra.
+  child_weights_incomplete: "«%{name}»: le quantità degli ingredienti secondari (%{children} g) non coprono la quantità dell'ingrediente (%{parent} g). Inserisci una quantità per tutti gli ingredienti secondari o per nessuno – altrimenti l'etichetta conta solo i %{children} g inseriti."
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
   certification_body_format: "L'ente di certificazione deve avere il formato CH-BIO-xxx."
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
@@ -677,6 +678,7 @@ bio_labels:
   umstellungsknospe: Gemma di riconversione
   knospe_ch: Origine Svizzera
   knospe_import: Origine Import
+  knospe_origin_unknown: Origine sconosciuta
   umstellung_ch: Origine Svizzera
   umstellung_import: Origine Import
   inherited_quality: Qualità ripresa dall'ingrediente composto

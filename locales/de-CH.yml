@@ -340,6 +340,7 @@ validation:
   origin_required_import_knospe: Herkunftsland ist erforderlich für Zutaten mit Import-Knospe, wenn die Import-Knospe auf der Etikette erscheint.
   namensgebend_amount_required: Für die namensgebende Unterzutat muss eine Menge erfasst werden, damit der Prozentwert auf der Etikette erscheint.
   origin_single_level: Herkunft ist auf mehreren Ebenen dieser Zutat definiert. Bitte nur auf einer Ebene angeben und die andere entfernen.
+  child_weights_incomplete: "«%{name}»: Die Mengen der Unterzutaten (%{children} g) decken die Menge der Zutat (%{parent} g) nicht. Bitte alle Unterzutaten mit Menge erfassen oder alle Mengen weglassen – sonst rechnet die Etikette nur mit den erfassten %{children} g."
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
   certification_body_format: "Die Zertifizierungsstelle muss das Format CH-BIO-xxx haben."
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
@@ -659,6 +660,7 @@ bio_labels:
   umstellungsknospe: Umstellungsknospe
   knospe_ch: Herkunft Schweiz
   knospe_import: Herkunft Import
+  knospe_origin_unknown: Herkunft unbekannt
   umstellung_ch: Herkunft Schweiz
   umstellung_import: Herkunft Import
   inherited_quality: Qualität von der zusammengesetzten Zutat übernommen

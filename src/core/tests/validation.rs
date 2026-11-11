@@ -226,3 +226,66 @@ fn lmr_meat_origin_required_just_over_20_percent() {
         .validation_messages
         .contains_key("ingredients[1][origin]"));
 }
+
+// B1/K3 (11.11.2026): a composite whose entered amount exceeds the sum of its
+// (partially) weighted children silently shrinks the total — warn instead.
+#[test]
+fn partially_weighted_composite_warns_about_uncovered_parent_amount() {
+    let calculator = setup_simple_calculator();
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new("Guetzlimischung", 525.0)
+                    .children(vec![
+                        IngredientBuilder::new("Mailänderli", 100.0).build(),
+                        IngredientBuilder::new("Kokosmakronen", 0.0).build(),
+                    ])
+                    .build(),
+            )
+            .vollstaendig()
+            .build(),
+    );
+    let msgs = output
+        .validation_messages
+        .get("ingredients[0][amount]")
+        .expect("a warning on the composite's amount");
+    assert!(
+        msgs.iter().any(|m| m.contains("525") && m.contains("100")),
+        "the warning names parent and child sums: {msgs:?}"
+    );
+}
+
+// No warning when all children are weighted (normal bottom-up composite) or
+// none are (top-down weight from the parent, the supported pattern).
+#[test]
+fn fully_weighted_or_fully_weightless_composites_do_not_warn() {
+    let calculator = setup_simple_calculator();
+    for children in [
+        vec![
+            IngredientBuilder::new("A", 300.0).build(),
+            IngredientBuilder::new("B", 225.0).build(),
+        ],
+        vec![
+            IngredientBuilder::new("A", 0.0).build(),
+            IngredientBuilder::new("B", 0.0).build(),
+        ],
+    ] {
+        let output = calculator.execute(
+            InputBuilder::new()
+                .ingredient(
+                    IngredientBuilder::new("Mix", 525.0)
+                        .children(children)
+                        .build(),
+                )
+                .vollstaendig()
+                .build(),
+        );
+        assert!(
+            !output
+                .validation_messages
+                .contains_key("ingredients[0][amount]"),
+            "no warning expected: {:?}",
+            output.validation_messages
+        );
+    }
+}

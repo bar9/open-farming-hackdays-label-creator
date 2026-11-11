@@ -1238,15 +1238,22 @@ pub fn IngredientPane(props: IngredientPaneProps) -> Element {
                     let synth = vec![Ingredient { children: edit_children(), ..Default::default() }];
                     let locked = cross_level_locked(&synth, &claims_quality);
                     let derived = Ingredient { children: edit_children(), ..Default::default() };
-                    // DEC-21: same derivation as the ingredient list (non-agricultural
-                    // sub-ingredients like Wasser are neutral), plus the Knospe variant
-                    // so «Bio (Knospe)» no longer hides whether it is Swiss or Import.
-                    let derived_label = if is_knospe_config() && derived.is_knospe_compliant() {
-                        let base = t!("bio_labels.bio_knospe").to_string();
-                        match derived.derived_knospe_swiss() {
-                            Some(true) => format!("{base} · {}", t!("bio_labels.knospe_ch")),
-                            Some(false) => format!("{base} · {}", t!("bio_labels.knospe_import")),
-                            None => base,
+                    // DEC-21/K2: same single source as the ingredient list
+                    // (`derived_knospe_quality`), so modal and overview can
+                    // never disagree. «Herkunft unbekannt» instead of a false
+                    // «Import» when the origins are mixed or missing.
+                    let derived_label = if is_knospe_config() {
+                        match derived.derived_knospe_quality() {
+                            Some(swiss) => {
+                                let base = t!("bio_labels.bio_knospe").to_string();
+                                match swiss {
+                                    Some(true) => format!("{base} · {}", t!("bio_labels.knospe_ch")),
+                                    Some(false) => format!("{base} · {}", t!("bio_labels.knospe_import")),
+                                    None => format!("{base} · {}", t!("bio_labels.knospe_origin_unknown")),
+                                }
+                            }
+                            None if derived.computed_bio_ch_status() == Some(true) => t!("bio_labels.bio_ch").to_string(),
+                            None => t!("bio_labels.andere").to_string(),
                         }
                     }
                         else if derived.computed_bio_ch_status() == Some(true) { t!("bio_labels.bio_ch").to_string() }

@@ -1355,3 +1355,70 @@ fn under90_non_swiss_egg_just_under_10_percent_stays_off_the_label() {
         "egg at 9.9% shows no origin: {label}"
     );
 }
+
+// B4/K4 (11.11.2026): a composite must not repeat the origin it merely rolled
+// up from its children — «Teig (Mehl (DE)) (DE)» printed the DE twice.
+#[test]
+fn composite_does_not_repeat_the_inherited_origin() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new_agri("Guetzli", 0.0)
+                    .children(vec![
+                        IngredientBuilder::new_agri("Teig", 0.0)
+                            .children(vec![IngredientBuilder::new_agri("Mehl", 100.0)
+                                .bio()
+                                .origin(Country::DE)
+                                .build()])
+                            .build(),
+                        IngredientBuilder::new_agri("Zucker", 50.0)
+                            .bio()
+                            .origin(Country::CH)
+                            .build(),
+                    ])
+                    .build(),
+            )
+            .vollstaendig()
+            .build(),
+    );
+    assert_eq!(
+        output.label.matches("(DE)").count(),
+        1,
+        "DE printed once, on the Mehl. Label: {}",
+        output.label
+    );
+}
+
+// The counterpart stays: an origin declared top-down ON the composite itself
+// must still reach the label (Testing 25.06.2026).
+#[test]
+fn composite_still_prints_its_own_declared_origin() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new_agri("Schoggi", 600.0)
+                    .bio()
+                    .origin(Country::IT)
+                    .children(vec![
+                        IngredientBuilder::new_agri("Kakao", 0.0).build(),
+                        IngredientBuilder::new_agri("Zucker", 0.0).build(),
+                    ])
+                    .build(),
+            )
+            .ingredient(
+                IngredientBuilder::new_agri("Mehl", 400.0)
+                    .bio()
+                    .origin(Country::CH)
+                    .build(),
+            )
+            .vollstaendig()
+            .build(),
+    );
+    assert!(
+        output.label.contains("(IT)"),
+        "the top-down origin must reach the label: {}",
+        output.label
+    );
+}

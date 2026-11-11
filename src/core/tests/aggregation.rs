@@ -2,6 +2,7 @@
 //! weight top-down, quality + origin bottom-up (origin single-level).
 
 use super::*;
+use crate::conditional_keys as keys;
 
 /// Use case 1: a composite carries the total weight; its sub-ingredients are
 /// weightless (qualitative) but each carry a quality + origin. Weight is read
@@ -498,4 +499,173 @@ fn dec20_own_claim_and_leaves_are_not_derived() {
         .origin(Country::CH)
         .build();
     assert_eq!(not_bio.knospe_icon(), None);
+}
+
+// --- B2/K1 (11.11.2026): conservative logo assignment with missing weights ---
+
+// A weightless non-CH leaf must never leave the Swiss share at >= 90%: logos
+// are claims, uncertainty denies them.
+#[test]
+fn k1_weightless_foreign_child_denies_the_swiss_cross() {
+    let c = calculator_for(crate::shared::Configuration::Knospe);
+    let output = c.execute(
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new_agri("Füllung", 500.0)
+                    .children(vec![
+                        knospe_ch("CH-Frucht", 0.0),
+                        knospe_import("DE-Frucht", 0.0),
+                    ])
+                    .build(),
+            )
+            .ingredient(knospe_ch("Zucker", 500.0))
+            .vollstaendig()
+            .build(),
+    );
+    let c = output.conditionals();
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_REGULAR),
+        None,
+        "no Swiss cross while a weightless ingredient is not certainly Swiss"
+    );
+    assert_eq!(
+        c.get(keys::BIO_SUISSE_NO_CROSS),
+        Some(&true),
+        "the recipe is fully Knospe, so the Import-Knospe shows"
+    );
+}
+
+// Fully weighted recipes keep the weight rule (>= 90% CH earns the cross).
+#[test]
+fn k1_fully_weighted_swiss_share_still_earns_the_cross() {
+    let c = calculator_for(crate::shared::Configuration::Knospe);
+    let output = c.execute(
+        InputBuilder::new()
+            .ingredient(knospe_ch("Mehl", 95.0))
+            .ingredient(knospe_import("Kakao", 5.0))
+            .vollstaendig()
+            .build(),
+    );
+    let c = output.conditionals();
+    assert_eq!(c.get(keys::BIO_SUISSE_REGULAR), Some(&true));
+}
+
+// derived_knospe_swiss: a weighted CH child next to a weightless DE child used
+// to read as 100% Swiss. Mixed weights now fall back to the weightless logic.
+#[test]
+fn k1_partial_weights_fall_back_to_the_weightless_logic() {
+    let mixed = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![knospe_ch("CH", 10.0), knospe_import("DE", 0.0)])
+        .build();
+    assert_eq!(mixed.derived_knospe_swiss(), None, "cannot tell → no cross");
+    assert_eq!(mixed.knospe_icon(), Some((false, true)));
+
+    let all_ch = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![knospe_ch("A", 10.0), knospe_ch("B", 0.0)])
+        .build();
+    assert_eq!(
+        all_ch.derived_knospe_swiss(),
+        Some(true),
+        "all CH stays Swiss"
+    );
+}
+
+// A leaf whose effective origins mix CH with another country counts as not
+// Swiss in the shares (its weight is partly foreign).
+#[test]
+fn k1_mixed_origin_leaf_does_not_count_as_swiss() {
+    let c = calculator_for(crate::shared::Configuration::Knospe);
+    let mixed_leaf = IngredientBuilder::new_agri("Beerenmix", 200.0)
+        .bio()
+        .origins(vec![Country::CH, Country::DE])
+        .build();
+    let output = c.execute(
+        InputBuilder::new()
+            .ingredient(mixed_leaf)
+            .ingredient(knospe_ch("Zucker", 800.0))
+            .vollstaendig()
+            .build(),
+    );
+    let conds = output.conditionals();
+    assert_eq!(
+        conds.get(keys::BIO_SUISSE_REGULAR),
+        None,
+        "80% CH weight only — the CH+DE leaf must not count fully as Swiss"
+    );
+}
+
+// --- K2 (11.11.2026): modal and ingredient list share one source ---
+
+// A composite of Knospe children plus a permitted exception within budget is
+// Knospe in both the modal (`derived_knospe_quality`) and the list (icon).
+#[test]
+fn k2_permitted_exception_within_budget_shows_in_modal_and_list() {
+    let c = IngredientBuilder::new_agri("Mix", 0.0)
+        .children(vec![
+            knospe_ch("Mehl", 96.0),
+            IngredientBuilder::new_agri("Pektin", 4.0)
+                .erlaubte_ausnahme_knospe()
+                .build(),
+        ])
+        .build();
+    assert_eq!(
+        c.derived_knospe_quality(),
+        Some(Some(true)),
+        "Knospe; 96% CH weight, the unknown-origin Pektin already counts as non-Swiss"
+    );
+    assert_eq!(
+        c.knospe_icon(),
+        Some((true, true)),
+        "list shows the derived icon too"
+    );
+}
+
+// Over the 5% budget neither the modal nor the list may claim Knospe.
+#[test]
+fn k2_exception_over_budget_denies_knospe_in_both_views() {
+    let c = IngredientBuilder::new_agri("Mix", 0.0)
+        .children(vec![
+            knospe_ch("Mehl", 90.0),
+            IngredientBuilder::new_agri("Pektin", 10.0)
+                .erlaubte_ausnahme_knospe()
+                .build(),
+        ])
+        .build();
+    assert_eq!(c.derived_knospe_quality(), None);
+    assert_eq!(c.knospe_icon(), None);
+}
+
+// A weightless permitted exception has an unknowable share: conservatively
+// over budget, no Knospe claim anywhere.
+#[test]
+fn k2_weightless_exception_is_conservatively_over_budget() {
+    let c = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![
+            knospe_ch("Mehl", 96.0),
+            IngredientBuilder::new_agri("Pektin", 0.0)
+                .erlaubte_ausnahme_knospe()
+                .build(),
+        ])
+        .build();
+    assert_eq!(c.derived_knospe_quality(), None);
+    assert_eq!(c.knospe_icon(), None);
+}
+
+// Knospe children without any origin: quality yes, Swiss unknown — the modal
+// says «Herkunft unbekannt» (not «Import») and the list shows no cross.
+#[test]
+fn k2_no_origin_information_reads_as_unknown_not_import() {
+    let c = IngredientBuilder::new_agri("Mix", 0.0)
+        .children(vec![IngredientBuilder::new_agri("A", 50.0).bio().build()])
+        .build();
+    assert_eq!(
+        c.derived_knospe_quality(),
+        Some(None),
+        "Knospe, origin unknown"
+    );
+    assert_eq!(
+        c.knospe_icon(),
+        Some((false, true)),
+        "no cross without origin info"
+    );
 }

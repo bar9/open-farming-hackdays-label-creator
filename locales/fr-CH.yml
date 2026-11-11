@@ -336,6 +336,7 @@ validation:
   origin_required_import_knospe: Le pays d'origine est requis pour les ingrédients avec Bourgeon Import lorsque le Bourgeon Import figure sur l'étiquette.
   namensgebend_amount_required: La quantité de l'ingrédient qui donne son nom au produit doit être saisie afin que le pourcentage figure sur l'étiquette.
   origin_single_level: L'origine est définie à plusieurs niveaux de cet ingrédient. Veuillez ne l'indiquer qu'à un seul niveau et supprimer l'autre.
+  child_weights_incomplete: "« %{name} » : les quantités des sous-ingrédients (%{children} g) ne couvrent pas la quantité de l'ingrédient (%{parent} g). Saisis une quantité pour tous les sous-ingrédients ou n'en saisis aucune – sinon l'étiquette ne compte que les %{children} g saisis."
   certification_body_required: L'organisme de certification bio est obligatoire pour les produits Bio et Bourgeon.
   certification_body_format: "L'organisme de certification doit avoir le format CH-BIO-xxx."
   beef_breeding_location_required: Le lieu d'élevage est requis pour les ingrédients de boeuf.
@@ -678,6 +679,7 @@ bio_labels:
   umstellungsknospe: Bourgeon de reconversion
   knospe_ch: Origine Suisse
   knospe_import: Origine Import
+  knospe_origin_unknown: Origine inconnue
   umstellung_ch: Origine Suisse
   umstellung_import: Origine Import
   inherited_quality: Qualité reprise de l'ingrédient composé

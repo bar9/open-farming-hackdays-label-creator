@@ -418,13 +418,30 @@ pub struct Calculator {
 /// once keeps the six rules below to their actual difference — the predicates —
 /// and makes the `empty` fallback an explicit, per-rule decision rather than a
 /// detail buried in copied code.
+/// `adverse` / `adverse_result`: conservative handling of weightless leaves.
+/// A leaf with weight 0 would otherwise silently drop out of the ratio — with
+/// partial weights inside a composite this could grant a logo the recipe has
+/// not earned (B2, 11.11.2026: a weightless DE ingredient must not leave the
+/// Swiss share at 100%). Logos are claims, so uncertainty must deny them: if
+/// any weightless leaf in the denominator is `adverse` to the claim, the share
+/// is `adverse_result` (0% for a positive claim, 100% for an exception budget)
+/// instead of the weighted ratio of the weighted leaves.
 fn agricultural_share(
     ingredients: &[Ingredient],
     denominator: impl Fn(&Ingredient) -> bool,
     numerator: impl Fn(&Ingredient) -> bool,
     empty: f64,
+    adverse: impl Fn(&Ingredient) -> bool,
+    adverse_result: f64,
 ) -> f64 {
     let leaves: Vec<&Ingredient> = ingredients.iter().flat_map(|i| i.leaves()).collect();
+
+    if leaves
+        .iter()
+        .any(|i| i.amount == 0.0 && i.is_agricultural() && denominator(i) && adverse(i))
+    {
+        return adverse_result;
+    }
 
     let total: f64 = leaves
         .iter()
@@ -445,9 +462,19 @@ fn agricultural_share(
     (matching / total) * 100.0
 }
 
-/// Swiss share of the agricultural weight.
+/// Swiss share of the agricultural weight. A leaf counts as Swiss only when
+/// ALL its effective origins are CH: a rolled-up composite whose children are
+/// CH and DE is partly foreign and must not count its full weight as Swiss.
+/// Any weightless leaf that is not certainly Swiss denies the >= 90% claim.
 fn calculate_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f64 {
-    agricultural_share(ingredients, |_| true, |i| i.has_swiss_origin(), 0.0)
+    agricultural_share(
+        ingredients,
+        |_| true,
+        |i| i.counts_as_swiss(),
+        0.0,
+        |i| !i.counts_as_swiss(),
+        0.0,
+    )
 }
 
 /// Swiss share of the *bio* agricultural weight — the Knospe logo variant is
@@ -456,7 +483,9 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f6
     agricultural_share(
         ingredients,
         |i| i.computed_bio_status().unwrap_or(false),
-        |i| i.has_swiss_origin(),
+        |i| i.counts_as_swiss(),
+        0.0,
+        |i| !i.counts_as_swiss(),
         0.0,
     )
 }
@@ -466,24 +495,41 @@ fn calculate_bio_swiss_agricultural_percentage(ingredients: &[Ingredient]) -> f6
 /// Callers must additionally check `has_agricultural_ingredient` before turning
 /// this into a claim (DEC-2).
 fn calculate_knospe_certified_percentage(ingredients: &[Ingredient]) -> f64 {
-    agricultural_share(ingredients, |_| true, |i| i.is_knospe_compliant(), 100.0)
+    agricultural_share(
+        ingredients,
+        |_| true,
+        |i| i.is_knospe_compliant(),
+        100.0,
+        |i| !i.is_knospe_compliant(),
+        0.0,
+    )
 }
 
 /// Bio-CH-certified share of the agricultural weight. Same empty-case caveat as
 /// `calculate_knospe_certified_percentage`.
 fn calculate_bio_ch_certified_percentage(ingredients: &[Ingredient]) -> f64 {
-    agricultural_share(ingredients, |_| true, |i| i.is_bio_ch_compliant(), 100.0)
+    agricultural_share(
+        ingredients,
+        |_| true,
+        |i| i.is_bio_ch_compliant(),
+        100.0,
+        |i| !i.is_bio_ch_compliant(),
+        0.0,
+    )
 }
 
 /// Percentage (of total agricultural weight) made up of permitted non-organic
 /// exceptions (Annex 3 WBF, e.g. Pektin) that are not bio-certified. The Bio-V
 /// "Bio" Sachbezeichnung tolerates these only up to 5% of the agricultural weight.
 fn calculate_erlaubte_ausnahme_bio_percentage(ingredients: &[Ingredient]) -> f64 {
+    // A weightless exception's share is unknown: conservatively over budget.
     agricultural_share(
         ingredients,
         |_| true,
         |i| i.erlaubte_ausnahme_bio.unwrap_or(false) && !i.is_bio_ch_compliant(),
         0.0,
+        |i| i.erlaubte_ausnahme_bio.unwrap_or(false) && !i.is_bio_ch_compliant(),
+        100.0,
     )
 }
 
@@ -505,6 +551,13 @@ fn calculate_erlaubte_ausnahme_knospe_percentage(ingredients: &[Ingredient]) -> 
                 && !i.is_bio.unwrap_or(false)
         },
         0.0,
+        // A weightless exception's share is unknown: conservatively over budget.
+        |i| {
+            (i.erlaubte_ausnahme_bio.unwrap_or(false)
+                || i.erlaubte_ausnahme_knospe.unwrap_or(false))
+                && !i.is_bio.unwrap_or(false)
+        },
+        100.0,
     )
 }
 
@@ -954,20 +1007,38 @@ impl Ingredient {
     /// `Some((swiss, derived))`: `swiss` picks the artwork with the Swiss cross,
     /// `derived` says the quality is only inferred from the sub-ingredients
     /// (the composite was not bought certified as a whole) and should be shown
-    /// muted. A derived composite gets the cross only when >= 90% of its
-    /// agricultural sub-ingredients are Swiss, the same rule as the product
-    /// logo; before, any single Swiss sub-ingredient gave it the cross.
+    /// muted. Delegates to `derived_knospe_quality` so the overview and the
+    /// editor modal always answer identically (K2, 11.11.2026); an uncertain
+    /// Swiss share never earns the cross.
     pub fn knospe_icon(&self) -> Option<(bool, bool)> {
+        if self.aggregates_quality_from_children() {
+            return self
+                .derived_knospe_quality()
+                .map(|swiss| (swiss.unwrap_or(false), true));
+        }
         if !self.computed_bio_status().unwrap_or(false) {
             return None;
         }
-        if self.aggregates_quality_from_children() {
-            // Mixed origins without weights: the Swiss share cannot be told,
-            // so no cross (the cross is a claim; better to under-claim).
-            return Some((self.derived_knospe_swiss().unwrap_or(false), true));
-        }
         let origins = self.computed_origins().filter(|o| !o.is_empty())?;
-        Some((origins.contains(&Country::CH), false))
+        // The cross is a claim: only when every origin is CH.
+        Some((origins.iter().all(|c| *c == Country::CH), false))
+    }
+
+    /// Knospe quality of a composite as derived from its sub-ingredients, the
+    /// single source for both the editor modal and the ingredient overview
+    /// (K2): `None` = not Knospe (not all children certified, or the permitted
+    /// non-organic exceptions exceed their 5% budget — with a weightless
+    /// exception the budget is unknowable and conservatively counts as
+    /// exceeded). `Some(swiss)`: Knospe, with `swiss` as in
+    /// `derived_knospe_swiss` (`None` = cannot tell, no cross).
+    pub fn derived_knospe_quality(&self) -> Option<Option<bool>> {
+        if !self.aggregates_quality_from_children() || !self.is_knospe_compliant() {
+            return None;
+        }
+        if calculate_erlaubte_ausnahme_knospe_percentage(std::slice::from_ref(self)) > 5.0 {
+            return None;
+        }
+        Some(self.derived_knospe_swiss())
     }
 
     /// The children that carry a quality at all. Non-agricultural sub-ingredients
@@ -1202,17 +1273,28 @@ impl Ingredient {
                             }
                             // Append origin: when rules are active, respect Knospe rules;
                             // when no rules (basic composites display), always show origins.
+                            // A composite child prints an origin at its own level only
+                            // when it was declared there (top-down). The inherited,
+                            // rolled-up origin already appears on the grandchildren
+                            // inside the parentheses — printing it again here doubled
+                            // it: «Teig (Mehl (DE)) (DE)» (B4, 11.11.2026).
+                            let child_is_composite =
+                                child.children.as_ref().is_some_and(|c| !c.is_empty());
+                            let child_may_print_origin =
+                                !child_is_composite || has_declared_origin(child);
                             if rules.is_empty() || force_origin {
                                 if let Some(origin_str) = format_valid_origins(&child.origins) {
                                     base_name = format!("{} {}", base_name, origin_str);
                                 }
-                            } else if let Some(origin_str) = format_origin_for_knospe_rules(
-                                child,
-                                rules,
-                                total_amount,
-                                agricultural_ingredient_count,
-                            ) {
-                                base_name = format!("{} {}", base_name, origin_str);
+                            } else if child_may_print_origin {
+                                if let Some(origin_str) = format_origin_for_knospe_rules(
+                                    child,
+                                    rules,
+                                    total_amount,
+                                    agricultural_ingredient_count,
+                                ) {
+                                    base_name = format!("{} {}", base_name, origin_str);
+                                }
                             }
                             base_name
                         })
@@ -1428,19 +1510,35 @@ impl Ingredient {
         if leaves.is_empty() {
             return None;
         }
+        // Conservative with partial weights (B2, 11.11.2026): a weightless leaf
+        // has an unknown share, so it cannot be outvoted by the weighted ones.
+        // Only a fully weighted composite may use the 90% weight rule; as soon
+        // as one leaf lacks a weight, fall back to the weightless logic below
+        // (all CH → Swiss, none CH → Import, mixed → cannot tell, no cross).
+        let fully_weighted = leaves.iter().all(|l| l.amount > 0.0);
         let total: f64 = leaves.iter().map(|l| l.amount).sum();
-        if total > 0.0 {
+        // «Import» is itself a claim: it may only be reported when the leaves
+        // actually carry origin information. Without it the honest answer is
+        // «cannot tell» (no cross either way).
+        let any_origin_unknown = leaves
+            .iter()
+            .any(|l| l.computed_origins().filter(|o| !o.is_empty()).is_none());
+        if fully_weighted && total > 0.0 {
             let swiss: f64 = leaves
                 .iter()
-                .filter(|l| l.has_swiss_origin())
+                .filter(|l| l.counts_as_swiss())
                 .map(|l| l.amount)
                 .sum();
-            return Some(swiss / total * 100.0 >= 90.0);
+            let is_swiss = swiss / total * 100.0 >= 90.0;
+            if !is_swiss && any_origin_unknown {
+                return None;
+            }
+            return Some(is_swiss);
         }
-        let swiss_count = leaves.iter().filter(|l| l.has_swiss_origin()).count();
+        let swiss_count = leaves.iter().filter(|l| l.counts_as_swiss()).count();
         if swiss_count == leaves.len() {
             Some(true)
-        } else if swiss_count == 0 {
+        } else if swiss_count == 0 && !any_origin_unknown {
             Some(false)
         } else {
             None
@@ -1483,6 +1581,16 @@ impl Ingredient {
     pub fn has_swiss_origin(&self) -> bool {
         self.computed_origins()
             .is_some_and(|o| o.contains(&Country::CH))
+    }
+
+    /// Counts fully as Swiss in the share calculations: every effective origin
+    /// is CH. `has_swiss_origin` answers «is CH among them», which is right for
+    /// the display rules («(CH)» suffix) but wrong for weighting: a composite
+    /// leaf rolled up from CH + DE children would bring its whole weight into
+    /// the Swiss side. No origin information means not Swiss (conservative).
+    fn counts_as_swiss(&self) -> bool {
+        self.computed_origins()
+            .is_some_and(|o| !o.is_empty() && o.iter().all(|c| *c == Country::CH))
     }
 
     /// Any node in this subtree marked with the Import-(Umstellungs-)Knospe —
@@ -2172,6 +2280,8 @@ impl Calculator {
         // once (outside the per-rule loop) whenever the recipe is complete.
         if input.rezeptur_vollstaendig {
             validate_origin_single_level(&input.ingredients, &mut validation_messages);
+            // B1: partially weighted composites silently shrink the total.
+            validate_child_weights_cover_parent(&input.ingredients, &mut validation_messages);
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -2573,6 +2683,52 @@ fn validate_amount(
                 .or_default()
                 .push(t!("validation.amount_greater_than_zero").to_string());
         }
+    }
+}
+
+/// B1 (11.11.2026): with partially weighted children the composite's own amount
+/// is discarded (`is_leaf` treats the node as bottom-up as soon as one child
+/// carries a weight) and the total silently shrinks to the weighted children's
+/// sum. Warn whenever a composite's entered amount exceeds that sum, naming the
+/// gap, so the shrunken total and the QUID percentages are not silently wrong.
+fn validate_child_weights_cover_parent(
+    ingredients: &[Ingredient],
+    validation_messages: &mut HashMap<String, Vec<String>>,
+) {
+    fn walk(ing: &Ingredient, top_index: usize, messages: &mut HashMap<String, Vec<String>>) {
+        if let Some(children) = ing.children.as_ref().filter(|c| !c.is_empty()) {
+            let any_weighted = children.iter().any(|c| c.computed_amount() > 0.0);
+            let any_weightless = children.iter().any(|c| c.computed_amount() == 0.0);
+            let child_sum: f64 = children.iter().map(|c| c.computed_amount()).sum();
+            if ing.amount > 0.0 && any_weighted && any_weightless && child_sum < ing.amount {
+                messages
+                    .entry(format!("ingredients[{}][amount]", top_index))
+                    .or_default()
+                    .push(
+                        t!(
+                            "validation.child_weights_incomplete",
+                            name = ing.name,
+                            parent = format_amount(ing.amount),
+                            children = format_amount(child_sum)
+                        )
+                        .to_string(),
+                    );
+            }
+            for child in children {
+                walk(child, top_index, messages);
+            }
+        }
+    }
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        walk(ingredient, i, validation_messages);
+    }
+}
+
+fn format_amount(v: f64) -> String {
+    if (v - v.round()).abs() < 1e-9 {
+        format!("{}", v.round() as i64)
+    } else {
+        format!("{v:.1}")
     }
 }
 
