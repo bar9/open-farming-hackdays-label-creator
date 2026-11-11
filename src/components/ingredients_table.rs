@@ -70,7 +70,11 @@ pub fn IngredientsTable(mut props: IngredientsTableProps) -> Element {
         let check_failed = matches!(v.bio_check, Some(CheckState::Failed))
             || matches!(v.knospe_check, Some(CheckState::Failed));
         if check_failed && out.is_empty() {
-            out.push((usize::MAX, String::new(), t!("validation.blocking_generic").to_string()));
+            out.push((
+                usize::MAX,
+                String::new(),
+                t!("validation.blocking_generic").to_string(),
+            ));
         }
         // Deterministic order: HashMap iteration is unordered.
         out.sort_by(|a, b| a.0.cmp(&b.0).then(a.2.cmp(&b.2)));

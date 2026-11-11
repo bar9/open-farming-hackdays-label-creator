@@ -3,10 +3,10 @@ use crate::core::{Calculator, Ingredient, Input, Output};
 use crate::layout::{CopyLinkContext, ThemeContext};
 use crate::model::Country;
 use crate::rules::{RuleDef, RuleRegistry};
+use crate::services::bio_name;
 use crate::shared::{
     restore_params_from_session_storage, Configuration, Validations, VerdictsContext,
 };
-use crate::services::bio_name;
 use crate::verdicts::{BioVerdict, KnospeVerdict};
 use dioxus::prelude::*;
 use rust_i18n::t;
@@ -382,9 +382,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
         rezeptur_vollstaendig: rezeptur_vollstaendig(),
     });
 
-    let query_string = use_memo(move || {
-        format!("?{}", to_query_string(&current_state()).unwrap())
-    });
+    let query_string = use_memo(move || format!("?{}", to_query_string(&current_state()).unwrap()));
 
     let mut copy_link_context = use_context::<Signal<CopyLinkContext>>();
     let mut theme_context = use_context::<Signal<ThemeContext>>();

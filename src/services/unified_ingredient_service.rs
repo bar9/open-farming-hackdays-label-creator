@@ -183,7 +183,11 @@ pub async fn search_unified(query: &str, lang: &str) -> Result<Vec<UnifiedIngred
     let blv_results = match search_food(query, lang).await {
         Ok(results) => results,
         Err(e) => {
-            tracing::warn!("BLV search failed for '{}', showing local suggestions only: {}", query, e);
+            tracing::warn!(
+                "BLV search failed for '{}', showing local suggestions only: {}",
+                query,
+                e
+            );
             Vec::new()
         }
     };
@@ -235,9 +239,20 @@ fn merge_results(query: &str, blv_results: Vec<FoodItem>) -> Vec<UnifiedIngredie
         }
     }
 
-    // Add unmatched BLV results
+    // Add unmatched BLV results. A BLV entry whose exact name is a curated alias
+    // term (e.g. «Mehl (Durchschnitt)» → Weizenmehl) is already offered as that
+    // alias, with the canonical's allergen flag. Offering the raw BLV entry as
+    // well would let the user pick the variant without allergen (Livetesting
+    // 09.11.2026: «Mehl (Durchschnitt)» was not bold on the label).
+    let alias_terms: Vec<String> = unified
+        .iter()
+        .filter(|u| u.canonical.is_some())
+        .map(|u| u.name.to_lowercase())
+        .collect();
     for (index, blv_item) in blv_results.into_iter().enumerate() {
-        if !used_blv_indices.contains(&index) {
+        if !used_blv_indices.contains(&index)
+            && !alias_terms.contains(&blv_item.food_name.to_lowercase())
+        {
             unified.push(UnifiedIngredient::from_blv(blv_item));
         }
     }
@@ -506,6 +521,68 @@ mod tests {
             let unified = UnifiedIngredient::from_local(name.to_string());
             assert_eq!(unified.category, None, "{name} must have no category hint");
             assert_eq!(unified.is_agricultural, Some(false));
+        }
+    }
+
+    #[test]
+    fn blv_average_flour_is_offered_as_weizenmehl_only() {
+        // Livetesting 09.11.2026: «Mehl (Durchschnitt)» from the BLV carried no
+        // allergen. It must resolve to Weizenmehl, and the raw BLV variant
+        // without allergen must not be offered next to it.
+        let blv = vec![
+            food("Mehl (Durchschnitt)", "Mehle und Stärke"),
+            food("Mehl, hell (Durchschnitt)", "Mehle und Stärke"),
+        ];
+        let results = merge_results("Mehl", blv);
+        for term in ["Mehl (Durchschnitt)", "Mehl, hell (Durchschnitt)"] {
+            let hits: Vec<_> = results.iter().filter(|r| r.name == term).collect();
+            assert_eq!(hits.len(), 1, "{term} offered once: {hits:?}");
+            assert_eq!(hits[0].canonical.as_deref(), Some("Weizenmehl"));
+            assert_eq!(
+                hits[0].is_allergen,
+                Some(true),
+                "{term} must be an allergen"
+            );
+            assert_eq!(
+                crate::model::declaration_name(term, hits[0].canonical.as_deref()),
+                "Weizenmehl",
+                "{term} is declared as Weizenmehl"
+            );
+        }
+    }
+
+    // Every BLV flour that names a gluten cereal (or plain «Mehl») must reach
+    // the label as an allergen, either via food_db or via an alias.
+    #[test]
+    fn blv_cereal_flours_resolve_to_allergens() {
+        let blv_flours = [
+            "Mehl (Durchschnitt)",
+            "Mehl, hell (Durchschnitt)",
+            "Knöpflimehl",
+            "Paniermehl",
+            "Weizenstärke",
+        ];
+        for name in blv_flours {
+            let results = merge_results(name, vec![food(name, "Mehle und Stärke")]);
+            let hit = results
+                .iter()
+                .find(|r| r.name == name)
+                .unwrap_or_else(|| panic!("{name} not suggested"));
+            assert_eq!(hit.is_allergen, Some(true), "{name} must be an allergen");
+        }
+    }
+
+    #[test]
+    fn vanilla_and_vanilla_sugar_are_local_suggestions() {
+        // Livetesting 09.11.2026: both had to be typed by hand.
+        for name in ["Vanille", "Vanillezucker"] {
+            let results = merge_results(name, Vec::new());
+            let hit = results
+                .iter()
+                .find(|r| r.name == name)
+                .unwrap_or_else(|| panic!("{name} not suggested"));
+            assert_eq!(hit.is_allergen, Some(false));
+            assert_eq!(hit.is_agricultural, Some(true));
         }
     }
 

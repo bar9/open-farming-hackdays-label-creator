@@ -1,7 +1,6 @@
 use crate::category_service::{
-    is_beef_category, is_dairy_category, is_egg_category, is_egg_ingredient_name,
-    is_fish_category, is_honey_category, is_honey_ingredient_name, is_insect_category,
-    is_meat_category,
+    is_beef_category, is_dairy_category, is_egg_category, is_egg_ingredient_name, is_fish_category,
+    is_honey_category, is_honey_ingredient_name, is_insect_category, is_meat_category,
 };
 use crate::model::{lookup_agricultural, lookup_allergen, Country};
 use crate::rules::RuleDef;
@@ -1050,7 +1049,7 @@ impl Ingredient {
 
     pub fn composite_name(&self) -> String {
         let mut name = String::new();
-        name.push_str(&self.name);
+        name.push_str(&label_name(&self.name));
         if let Some(children) = &self.children {
             if !children.is_empty() {
                 let children = sort_children_by_weight(children);
@@ -1131,7 +1130,7 @@ impl Ingredient {
                     &children
                         .iter()
                         .map(|child| {
-                            let escaped_name = html_escape(&child.name);
+                            let escaped_name = html_escape(&label_name(&child.name));
                             let mut base_name = if child.is_allergen {
                                 format!("<b>{}</b>", escaped_name)
                             } else {
@@ -1563,6 +1562,31 @@ pub struct SubIngredient {
     pub origin: Option<Country>,
 }
 
+/// Ingredient name as printed in the ingredient list.
+///
+/// The ingredient list separates ingredients with commas, so a comma inside a
+/// name makes the list ambiguous: the BLV entry «Kakaopulver, entölt, ohne
+/// Zucker» reads as three ingredients (Testing Guetzlimischung, 29.10.2026).
+/// Commas inside a name therefore become spaces («Kakaopulver entölt ohne
+/// Zucker», decision 11.11.2026). A decimal comma between two digits
+/// («1,5 % Fett») is a number, not a separator, and stays.
+pub fn label_name(name: &str) -> String {
+    let chars: Vec<char> = name.chars().collect();
+    let mut out = String::with_capacity(name.len());
+    for (i, &c) in chars.iter().enumerate() {
+        if c == ',' {
+            let digit_before = i > 0 && chars[i - 1].is_ascii_digit();
+            let digit_after = chars.get(i + 1).is_some_and(|n| n.is_ascii_digit());
+            if !(digit_before && digit_after) {
+                out.push(' ');
+                continue;
+            }
+        }
+        out.push(c);
+    }
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 /// HTML-escape a string to prevent XSS when rendered via dangerous_inner_html.
 fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
@@ -1601,7 +1625,7 @@ impl OutputFormatter {
     }
 
     pub fn format(&self) -> String {
-        let escaped_name = html_escape(&self.ingredient.name);
+        let escaped_name = html_escape(&label_name(&self.ingredient.name));
         // Composite parents delegate allergen bolding to their children
         // (lowest-level-only). The bold wrap and any origin display are
         // skipped on the parent when it has non-empty children.
@@ -1685,7 +1709,16 @@ impl OutputFormatter {
                     &self.RuleDefs,
                     self.total_amount,
                 );
-            output = format!("{}{}", output, self.ingredient.composites_with_forced_origin(&self.RuleDefs, self.total_amount, self.agricultural_ingredient_count, force_child_origin));
+            output = format!(
+                "{}{}",
+                output,
+                self.ingredient.composites_with_forced_origin(
+                    &self.RuleDefs,
+                    self.total_amount,
+                    self.agricultural_ingredient_count,
+                    force_child_origin
+                )
+            );
         }
         // Verarbeitungsschritte ausgeben (nach Zutatname/Subkomponenten, vor Herkunft)
         // When Wildsammlung °-marker is active, exclude it from the regular processing steps
@@ -2990,9 +3023,7 @@ fn validate_knospe_under90_origin(
                 t!("validation.knospe_name_giving_origin_required").to_string()
             } else if percentage >= 50.0 {
                 t!("validation.knospe_plants_over_50_origin_required").to_string()
-            } else if percentage >= 10.0
-                && (is_egg_or_honey || cat.is_some_and(is_fish_category))
-            {
+            } else if percentage >= 10.0 && (is_egg_or_honey || cat.is_some_and(is_fish_category)) {
                 t!("validation.knospe_egg_honey_fish_origin_required").to_string()
             } else if cat.is_some_and(|c| {
                 is_dairy_category(c) || is_meat_category(c) || is_insect_category(c)

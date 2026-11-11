@@ -153,7 +153,10 @@ mod tests {
     fn blv_gets_up_to_two_retries_and_the_first_try_is_immediate() {
         assert_eq!(BLV_BACKOFF_MS.len(), 3, "one try plus two retries");
         assert_eq!(BLV_BACKOFF_MS[0], 0);
-        assert!(BLV_BACKOFF_MS.windows(2).all(|w| w[0] < w[1]), "backoff grows");
+        assert!(
+            BLV_BACKOFF_MS.windows(2).all(|w| w[0] < w[1]),
+            "backoff grows"
+        );
         // Suggestions appear while typing, so the worst case must stay short.
         assert!(BLV_BACKOFF_MS.iter().sum::<u32>() <= 1500);
     }

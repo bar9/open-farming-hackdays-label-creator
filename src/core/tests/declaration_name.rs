@@ -130,3 +130,49 @@ fn other_aliases_still_print_the_typed_term() {
         output.label
     );
 }
+
+// R-19 (Testing Guetzlimischung, 29.10.2026; decision 11.11.2026): commas
+// inside a BLV name would read as separate ingredients. They are printed as
+// spaces: «Kakaopulver, entölt, ohne Zucker» → «Kakaopulver entölt ohne Zucker».
+#[test]
+fn commas_in_ingredient_names_become_spaces_on_the_label() {
+    let calculator = setup_simple_calculator();
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(IngredientBuilder::new("Mailänderli, hausgemacht", 525.0).build())
+            .build(),
+    );
+    assert!(
+        output.label.contains("Mailänderli hausgemacht"),
+        "top-level name comma-free. Label: {}",
+        output.label
+    );
+
+    let sables = IngredientBuilder::new("Schokoladensablés", 420.0)
+        .children(vec![
+            IngredientBuilder::new("Weizenmehl", 200.0)
+                .allergen()
+                .build(),
+            IngredientBuilder::new("Kakaopulver, entölt, ohne Zucker", 10.0).build(),
+        ])
+        .build();
+    let composites = sables.composites();
+    assert_eq!(
+        composites,
+        " (<b>Weizenmehl</b>, Kakaopulver entölt ohne Zucker)"
+    );
+}
+
+#[test]
+fn label_name_keeps_decimal_commas() {
+    assert_eq!(label_name("Vollmilch, 3,5 % Fett"), "Vollmilch 3,5 % Fett");
+    assert_eq!(
+        label_name("Kakaopulver, entölt, ohne Zucker"),
+        "Kakaopulver entölt ohne Zucker"
+    );
+    assert_eq!(
+        label_name("Mehl, hell (Durchschnitt)"),
+        "Mehl hell (Durchschnitt)"
+    );
+    assert_eq!(label_name("Zucker"), "Zucker");
+}

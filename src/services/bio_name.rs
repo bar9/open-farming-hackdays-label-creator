@@ -77,11 +77,17 @@ mod tests {
 
     #[test]
     fn add_bio_is_language_aware_and_idempotent() {
-        assert_eq!(add_bio("Frühstücksflocken", "de-CH"), "Bio Frühstücksflocken");
+        assert_eq!(
+            add_bio("Frühstücksflocken", "de-CH"),
+            "Bio Frühstücksflocken"
+        );
         assert_eq!(add_bio("Flocons d'avoine", "fr-CH"), "Flocons d'avoine bio");
         assert_eq!(add_bio("Fiocchi d'avena", "it-CH"), "Fiocchi d'avena bio");
         // Already there: unchanged, no «Bio Bio …».
-        assert_eq!(add_bio("Bio Frühstücksflocken", "de-CH"), "Bio Frühstücksflocken");
+        assert_eq!(
+            add_bio("Bio Frühstücksflocken", "de-CH"),
+            "Bio Frühstücksflocken"
+        );
         // Nothing to prefix.
         assert_eq!(add_bio("  ", "de-CH"), "  ");
     }

@@ -146,25 +146,49 @@ pub fn is_egg_sachbezeichnung(sachbezeichnung: &str) -> bool {
 /// UI languages.
 pub fn is_egg_ingredient_name(name: &str) -> bool {
     let n = name.trim().to_lowercase();
-    let first = n.split([' ', ',', '(', '-', '/']).find(|w| !w.is_empty()).unwrap_or("");
+    let first = n
+        .split([' ', ',', '(', '-', '/'])
+        .find(|w| !w.is_empty())
+        .unwrap_or("");
     let egg_word = matches!(
         first,
-        "ei" | "eier" | "hühnerei" | "hühnereier" | "eigelb" | "eiweiss" | "eiweiß"
-            | "vollei" | "frischei" | "frischeier"
-            | "oeuf" | "oeufs" | "œuf" | "œufs"
-            | "uovo" | "uova" | "tuorlo" | "albume"
-            | "egg" | "eggs"
+        "ei" | "eier"
+            | "hühnerei"
+            | "hühnereier"
+            | "eigelb"
+            | "eiweiss"
+            | "eiweiß"
+            | "vollei"
+            | "frischei"
+            | "frischeier"
+            | "oeuf"
+            | "oeufs"
+            | "œuf"
+            | "œufs"
+            | "uovo"
+            | "uova"
+            | "tuorlo"
+            | "albume"
+            | "egg"
+            | "eggs"
     );
     // «jaune d'œuf», «blanc d'œuf»: egg parts only together with «œuf/oeuf».
-    let fr_egg_part = matches!(first, "jaune" | "blanc") && (n.contains("œuf") || n.contains("oeuf"));
+    let fr_egg_part =
+        matches!(first, "jaune" | "blanc") && (n.contains("œuf") || n.contains("oeuf"));
     egg_word || fr_egg_part
 }
 
 /// Is this ingredient, by its name, honey (Knospe origin rule «ab 10 %»)?
 pub fn is_honey_ingredient_name(name: &str) -> bool {
     let n = name.trim().to_lowercase();
-    let first = n.split([' ', ',', '(', '-', '/']).find(|w| !w.is_empty()).unwrap_or("");
-    matches!(first, "honig" | "blütenhonig" | "waldhonig" | "miel" | "miele" | "honey")
+    let first = n
+        .split([' ', ',', '(', '-', '/'])
+        .find(|w| !w.is_empty())
+        .unwrap_or("");
+    matches!(
+        first,
+        "honig" | "blütenhonig" | "waldhonig" | "miel" | "miele" | "honey"
+    )
 }
 
 /// Check if a category represents honey
@@ -365,14 +389,32 @@ mod origin_name_tests {
 
     #[test]
     fn egg_names_from_mirjams_list_match() {
-        for n in ["Ei", "Eier", "Hühnerei", "Hühnerei ganz", "Eigelb", "Eiweiss", "Œufs", "jaune d'œuf", "Uova", "Tuorlo"] {
+        for n in [
+            "Ei",
+            "Eier",
+            "Hühnerei",
+            "Hühnerei ganz",
+            "Eigelb",
+            "Eiweiss",
+            "Œufs",
+            "jaune d'œuf",
+            "Uova",
+            "Tuorlo",
+        ] {
             assert!(is_egg_ingredient_name(n), "{n}");
         }
     }
 
     #[test]
     fn egg_compounds_and_lookalikes_do_not_match() {
-        for n in ["Eierlikör", "Eiernudeln", "Eisbergsalat", "Weizenmehl", "blanc de poulet", "Eis"] {
+        for n in [
+            "Eierlikör",
+            "Eiernudeln",
+            "Eisbergsalat",
+            "Weizenmehl",
+            "blanc de poulet",
+            "Eis",
+        ] {
             assert!(!is_egg_ingredient_name(n), "{n}");
         }
     }

@@ -1568,7 +1568,10 @@ mod food_db_tests {
                 aliases.iter().any(|(a, c, _)| a == term && c == canonical),
                 "alias {term} -> {canonical} missing"
             );
-            assert!(is_curated_alias(term), "{term} must bypass the search minimum");
+            assert!(
+                is_curated_alias(term),
+                "{term} must bypass the search minimum"
+            );
         }
         // The egg must keep its allergen flag through the alias.
         assert!(lookup_allergen("Hühnerei ganz"));

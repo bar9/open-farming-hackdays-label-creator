@@ -162,7 +162,9 @@ fn lmr_origin_not_required_at_exactly_50_percent() {
         "50% is not >50%: {:?}",
         output.validation_messages
     );
-    assert!(!output.conditionals().contains_key(&keys::herkunft_benoetigt(0)));
+    assert!(!output
+        .conditionals()
+        .contains_key(&keys::herkunft_benoetigt(0)));
 }
 
 #[test]
@@ -174,9 +176,15 @@ fn lmr_origin_required_just_over_50_percent() {
         .ingredient(IngredientBuilder::new_agri("Zucker", 499.0).build())
         .build();
     let output = calculator.execute(input);
-    assert!(output.validation_messages.contains_key("ingredients[0][origin]"));
-    assert!(!output.validation_messages.contains_key("ingredients[1][origin]"));
-    assert!(output.conditionals().contains_key(&keys::herkunft_benoetigt(0)));
+    assert!(output
+        .validation_messages
+        .contains_key("ingredients[0][origin]"));
+    assert!(!output
+        .validation_messages
+        .contains_key("ingredients[1][origin]"));
+    assert!(output
+        .conditionals()
+        .contains_key(&keys::herkunft_benoetigt(0)));
 }
 
 #[test]
@@ -185,11 +193,17 @@ fn lmr_meat_origin_not_required_at_exactly_20_percent() {
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Nudeln", 800.0).build())
-        .ingredient(IngredientBuilder::new("Hackfleisch", 200.0).category("Fleisch").build())
+        .ingredient(
+            IngredientBuilder::new("Hackfleisch", 200.0)
+                .category("Fleisch")
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
     assert!(
-        !output.validation_messages.contains_key("ingredients[1][origin]"),
+        !output
+            .validation_messages
+            .contains_key("ingredients[1][origin]"),
         "20% is not >20%: {:?}",
         output.validation_messages
     );
@@ -201,8 +215,14 @@ fn lmr_meat_origin_required_just_over_20_percent() {
     let input = InputBuilder::new()
         .vollstaendig()
         .ingredient(IngredientBuilder::new("Nudeln", 799.0).build())
-        .ingredient(IngredientBuilder::new("Hackfleisch", 201.0).category("Fleisch").build())
+        .ingredient(
+            IngredientBuilder::new("Hackfleisch", 201.0)
+                .category("Fleisch")
+                .build(),
+        )
         .build();
     let output = calculator.execute(input);
-    assert!(output.validation_messages.contains_key("ingredients[1][origin]"));
+    assert!(output
+        .validation_messages
+        .contains_key("ingredients[1][origin]"));
 }

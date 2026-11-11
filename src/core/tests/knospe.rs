@@ -1130,7 +1130,11 @@ fn mirjam_muesli_from_testing_is_correct_as_is() {
         .ingredient(knospe_ing("Leinsamen", 10.0, Country::CH))
         .ingredient(knospe_ing("Himbeeren", 2.0, Country::CH))
         .ingredient(knospe_ing("Zimt", 0.5, Country::MG))
-        .ingredient(IngredientBuilder::new("Salz", 0.5).agricultural(false).build())
+        .ingredient(
+            IngredientBuilder::new("Salz", 0.5)
+                .agricultural(false)
+                .build(),
+        )
         .build();
     let label = calculator.execute(input).label;
     assert!(label.starts_with("Haferflocken* (CH), Buchweizen* (CH), Rohrohrzucker*, Leinsamen*, Himbeeren*, Zimt*, Salz"), "{label}");
@@ -1157,7 +1161,10 @@ fn mirjam_bio_suisse_knospe_90_99_percent_shows_only_ch() {
         .build();
     let label = calculator.execute(input).label;
     assert!(label.contains("Hafer* (CH)"), "{label}");
-    assert!(label.contains("Zimt*") && !label.contains("(MG)"), "import origin stays off: {label}");
+    assert!(
+        label.contains("Zimt*") && !label.contains("(MG)"),
+        "import origin stays off: {label}"
+    );
 }
 
 #[test]
@@ -1171,7 +1178,10 @@ fn mirjam_bio_knospe_any_agri_ingredient_from_50_percent_shows_origin() {
         .build();
     let label = calculator.execute(input).label;
     assert!(label.contains("Spezialzutat* (IT)"), "{label}");
-    assert!(label.contains("Andere Zutat*") && !label.contains("(DE)"), "30% import stays off: {label}");
+    assert!(
+        label.contains("Andere Zutat*") && !label.contains("(DE)"),
+        "30% import stays off: {label}"
+    );
 }
 
 #[test]
@@ -1184,7 +1194,10 @@ fn mirjam_bio_knospe_eggs_by_name_from_10_percent_show_origin() {
             .ingredient(knospe_ing(name, 100.0, Country::DE))
             .build();
         let label = calculator.execute(input).label;
-        assert!(label.contains(&format!("{name}* (DE)")), "{name} at exactly 10%: {label}");
+        assert!(
+            label.contains(&format!("{name}* (DE)")),
+            "{name} at exactly 10%: {label}"
+        );
     }
 }
 
@@ -1197,7 +1210,10 @@ fn mirjam_bio_knospe_egg_rule_does_not_catch_other_words() {
         .ingredient(knospe_ing("Eierlikör", 150.0, Country::DE))
         .build();
     let label = calculator.execute(input).label;
-    assert!(label.contains("Eierlikör*") && !label.contains("Eierlikör* (DE)"), "{label}");
+    assert!(
+        label.contains("Eierlikör*") && !label.contains("Eierlikör* (DE)"),
+        "{label}"
+    );
 }
 
 #[test]
@@ -1211,7 +1227,9 @@ fn mirjam_bio_knospe_validation_requires_egg_origin_from_10_percent() {
         .build();
     let output = calculator.execute(input);
     assert!(
-        output.validation_messages.contains_key("ingredients[2][origin]"),
+        output
+            .validation_messages
+            .contains_key("ingredients[2][origin]"),
         "Eier >= 10% without origin must be flagged: {:?}",
         output.validation_messages
     );
@@ -1293,7 +1311,11 @@ fn under90_uncategorised_agri_at_50_percent_still_names_the_50_percent_rule() {
     // Rule i applies to every agricultural ingredient (no category needed).
     let input = InputBuilder::new()
         .vollstaendig()
-        .ingredient(IngredientBuilder::new_agri("Spezialzutat", 600.0).bio().build())
+        .ingredient(
+            IngredientBuilder::new_agri("Spezialzutat", 600.0)
+                .bio()
+                .build(),
+        )
         .ingredient(knospe_ing("Zucker", 400.0, Country::DE))
         .build();
     let msgs = under90_reason(input, "ingredients[0][origin]");

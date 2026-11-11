@@ -144,7 +144,10 @@ mod tests {
     #[test]
     fn knospe_pick_defaults_to_ch_without_a_real_foreign_country() {
         assert_eq!(knospe_default_origins(None), Some(vec![Country::CH]));
-        assert_eq!(knospe_default_origins(Some(vec![])), Some(vec![Country::CH]));
+        assert_eq!(
+            knospe_default_origins(Some(vec![])),
+            Some(vec![Country::CH])
+        );
         // Placeholders are not a country.
         assert_eq!(
             knospe_default_origins(Some(vec![Country::Import])),

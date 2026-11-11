@@ -43,7 +43,10 @@ mod tests {
     fn all_swiss_certification_bodies_from_the_requirements_are_offered() {
         let codes: Vec<&str> = CERTIFICATION_BODIES.iter().map(|(c, _)| *c).collect();
         for expected in ["CH-BIO-004", "CH-BIO-006", "CH-BIO-038", "CH-BIO-086"] {
-            assert!(codes.contains(&expected), "{expected} missing from the dropdown");
+            assert!(
+                codes.contains(&expected),
+                "{expected} missing from the dropdown"
+            );
         }
         for locale in ["de-CH", "fr-CH", "it-CH"] {
             for (code, key) in CERTIFICATION_BODIES {
