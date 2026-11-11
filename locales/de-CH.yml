@@ -341,6 +341,7 @@ validation:
   namensgebend_amount_required: Für die namensgebende Unterzutat muss eine Menge erfasst werden, damit der Prozentwert auf der Etikette erscheint.
   origin_single_level: Herkunft ist auf mehreren Ebenen dieser Zutat definiert. Bitte nur auf einer Ebene angeben und die andere entfernen.
   child_weights_incomplete: "«%{name}»: Die Mengen der Unterzutaten (%{children} g) decken die Menge der Zutat (%{parent} g) nicht. Bitte alle Unterzutaten mit Menge erfassen oder alle Mengen weglassen – sonst rechnet die Etikette nur mit den erfassten %{children} g."
+  origin_composite_level_hint: "«%{name}» ist zusammengesetzt: Die Herkunft kann entweder bei «%{name}» selbst (z. B. gekaufte Mischung) oder bei den Unterzutaten erfasst werden, aber nur auf einer Ebene."
   certification_body_required: Bio-Zertifizierungsstelle ist ein Pflichtfeld für Bio und Knospe Produkte.
   certification_body_format: "Die Zertifizierungsstelle muss das Format CH-BIO-xxx haben."
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.

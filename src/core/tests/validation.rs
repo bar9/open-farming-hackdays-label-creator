@@ -289,3 +289,50 @@ fn fully_weighted_or_fully_weightless_composites_do_not_warn() {
         );
     }
 }
+
+// B3 (11.11.2026): an origin message on a composite also says that the
+// origin can go on the composite OR on its sub-ingredients (single level).
+#[test]
+fn origin_message_on_composite_names_both_levels() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new_agri("Teig", 100.0)
+                    .bio()
+                    .children(vec![
+                        IngredientBuilder::new_agri("Mehl", 80.0).build(),
+                        IngredientBuilder::new_agri("Zucker", 20.0).build(),
+                    ])
+                    .build(),
+            )
+            .vollstaendig()
+            .build(),
+    );
+    let msgs = output
+        .validation_messages
+        .get("ingredients[0][origin]")
+        .expect("origin required on the composite");
+    assert!(
+        msgs.iter()
+            .any(|m| m.contains("Unterzutaten") && m.contains("Teig")),
+        "level hint expected: {msgs:?}"
+    );
+}
+
+// Leaves keep the plain message, no composite hint.
+#[test]
+fn origin_message_on_leaf_has_no_level_hint() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(IngredientBuilder::new_agri("Mehl", 100.0).bio().build())
+            .vollstaendig()
+            .build(),
+    );
+    let msgs = output
+        .validation_messages
+        .get("ingredients[0][origin]")
+        .expect("origin required");
+    assert!(!msgs.iter().any(|m| m.contains("Unterzutaten")), "{msgs:?}");
+}

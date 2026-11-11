@@ -1555,13 +1555,17 @@ impl Ingredient {
         if self.aggregates_from_children() {
             // Non-agricultural children (e.g. salt, water) carry no country-of-origin
             // declaration, so their origin must not be taken over into the parent's
-            // aggregated origin.
+            // aggregated origin. Same criterion as the quality aggregation
+            // (`subtree_has_agricultural`): a composite child counts when any of
+            // its descendants is agricultural (B5, 11.11.2026), otherwise a
+            // child flagged non-agricultural would swallow its grandchildren's
+            // origin while still passing on their quality.
             let all: HashSet<Country> = self
                 .children
                 .as_ref()
                 .unwrap()
                 .iter()
-                .filter(|c| c.is_agricultural)
+                .filter(|c| c.subtree_has_agricultural())
                 .filter_map(|c| c.computed_origins())
                 .flatten()
                 .collect();
@@ -2282,6 +2286,29 @@ impl Calculator {
             validate_origin_single_level(&input.ingredients, &mut validation_messages);
             // B1: partially weighted composites silently shrink the total.
             validate_child_weights_cover_parent(&input.ingredients, &mut validation_messages);
+        }
+
+        // B3 (11.11.2026): an origin message on a composite does not tell the
+        // user where to fix it. Origin is single-level, so it may go on the
+        // composite itself or on its sub-ingredients; say so once.
+        for (i, ingredient) in input.ingredients.iter().enumerate() {
+            let is_composite = ingredient.children.as_ref().is_some_and(|c| !c.is_empty());
+            if !is_composite {
+                continue;
+            }
+            let key = format!("ingredients[{}][origin]", i);
+            if let Some(msgs) = validation_messages.get_mut(&key) {
+                let hint = t!(
+                    "validation.origin_composite_level_hint",
+                    name = ingredient.name
+                )
+                .to_string();
+                let single_level = t!("validation.origin_single_level");
+                let has_required = msgs.iter().any(|m| m.as_str() != single_level.as_ref());
+                if has_required && !msgs.contains(&hint) {
+                    msgs.push(hint);
+                }
+            }
         }
 
         #[cfg(target_arch = "wasm32")]

@@ -669,3 +669,18 @@ fn k2_no_origin_information_reads_as_unknown_not_import() {
         "no cross without origin info"
     );
 }
+
+// B5 (11.11.2026): origin aggregation uses the same agricultural criterion as
+// quality. A composite child flagged non-agricultural but with agricultural
+// grandchildren passes on both their quality and their origin.
+#[test]
+fn b5_origin_and_quality_use_the_same_agricultural_criterion() {
+    let parent = IngredientBuilder::new_agri("Mix", 100.0)
+        .children(vec![IngredientBuilder::new("Sub", 100.0)
+            .agricultural(false)
+            .children(vec![knospe_ch("Weizen", 100.0)])
+            .build()])
+        .build();
+    assert_eq!(parent.computed_bio_status(), Some(true));
+    assert_eq!(parent.computed_origins(), Some(vec![Country::CH]));
+}

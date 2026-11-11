@@ -336,6 +336,7 @@ validation:
   namensgebend_amount_required: Per l'ingrediente che dà il nome al prodotto occorre indicare la quantità affinché la percentuale appaia sull'etichetta.
   origin_single_level: L'origine è definita su più livelli di questo ingrediente. Indicarla su un solo livello e rimuovere l'altra.
   child_weights_incomplete: "«%{name}»: le quantità degli ingredienti secondari (%{children} g) non coprono la quantità dell'ingrediente (%{parent} g). Inserisci una quantità per tutti gli ingredienti secondari o per nessuno – altrimenti l'etichetta conta solo i %{children} g inseriti."
+  origin_composite_level_hint: "«%{name}» è composto: l'origine può essere inserita su «%{name}» stesso (p. es. miscela acquistata) oppure sui suoi ingredienti secondari, ma su un solo livello."
   certification_body_required: L'ente di certificazione bio è obbligatorio per i prodotti Bio e Gemma.
   certification_body_format: "L'ente di certificazione deve avere il formato CH-BIO-xxx."
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
