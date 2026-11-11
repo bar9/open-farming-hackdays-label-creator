@@ -151,7 +151,7 @@ async fn modal_and_overview_agree_on_the_composite_quality() {
     assert!(
         modal.contains("Herkunft unbekannt"),
         "mixed CH/DE without weights: the modal must say unknown, not Schweiz/Import: {}",
-        &modal.chars().take(600).collect::<String>()
+        modal.chars().take(600).collect::<String>()
     );
     assert!(!modal.contains("Herkunft Schweiz ·") && !modal.contains("· Herkunft Schweiz"));
 
