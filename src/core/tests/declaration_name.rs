@@ -176,3 +176,51 @@ fn label_name_keeps_decimal_commas() {
     );
     assert_eq!(label_name("Zucker"), "Zucker");
 }
+
+// R-17: the FAQ recommends Manuela's Variante 1 (Testing Guetzlimischung
+// 29.10.2026): each variety is a composite with its own ingredients in grams.
+// Same ingredients in different varieties are not merged, so allergen sufferers
+// see which biscuit contains what. Recipe from her shared link.
+#[test]
+fn guetzli_mix_variante_1_keeps_each_variety_with_its_own_ingredients() {
+    let calculator = calculator_for(Configuration::Conventional);
+    let output = calculator.execute(
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new("Mailänderli, hausgemacht", 525.0)
+                    .children(vec![
+                        IngredientBuilder::new("Weizenmehl", 250.0)
+                            .allergen()
+                            .build(),
+                        IngredientBuilder::new("Butter", 120.0).allergen().build(),
+                        IngredientBuilder::new("Eier", 120.0).allergen().build(),
+                        IngredientBuilder::new("Milch", 20.0).allergen().build(),
+                        IngredientBuilder::new("Zitrone", 10.0).build(),
+                        IngredientBuilder::new("Salz", 5.0).build(),
+                    ])
+                    .build(),
+            )
+            .ingredient(
+                IngredientBuilder::new("Kokosmakrone", 315.0)
+                    .children(vec![
+                        IngredientBuilder::new("Kokosnuss", 130.0).build(),
+                        IngredientBuilder::new("Zucker", 100.0).build(),
+                        IngredientBuilder::new("Eiweiss", 80.0).allergen().build(),
+                        IngredientBuilder::new("Salz", 5.0).build(),
+                    ])
+                    .build(),
+            )
+            .build(),
+    );
+    let label = &output.label;
+    assert!(
+        label.contains("Mailänderli hausgemacht (<b>Weizenmehl</b>, <b>Butter</b>, <b>Eier</b>, <b>Milch</b>, Zitrone, Salz)"),
+        "Label: {label}"
+    );
+    assert!(
+        label.contains("Kokosmakrone (Kokosnuss, Zucker, <b>Eiweiss</b>, Salz)"),
+        "Label: {label}"
+    );
+    // Salz appears in both varieties, not merged into one top-level entry.
+    assert_eq!(label.matches("Salz").count(), 2, "Label: {label}");
+}

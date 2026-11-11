@@ -146,4 +146,54 @@ mod tests {
             "unknown locales must reuse the de-CH content"
         );
     }
+
+    // R-17 (Testing Guetzlimischung 29.10.2026): the mixture question must be
+    // answered by the mixture answer in every language (not shifted by one),
+    // recommend per-variety composites and mention the allergen reason. The
+    // short-link FAQ answer (R-18) must keep its exception sentence.
+    #[test]
+    fn mixture_entry_is_paired_and_recommends_per_variety_composites() {
+        let cases = [
+            (
+                "de-CH",
+                "Mischung",
+                "zusammengesetzte Zutat",
+                "Allergen",
+                "Kurz-Link",
+            ),
+            (
+                "fr-CH",
+                "mélange",
+                "ingrédient composé",
+                "allerg",
+                "lien court",
+            ),
+            (
+                "it-CH",
+                "miscela",
+                "ingrediente composto",
+                "allerg",
+                "link breve",
+            ),
+        ];
+        for (locale, q_word, a_word, allergen_word, short_word) in cases {
+            let entries = entries_for_locale(locale);
+            let mix = entries
+                .iter()
+                .find(|e| e.question.contains(q_word))
+                .unwrap_or_else(|| panic!("{locale}: no mixture question"));
+            assert!(mix.answer.contains(a_word), "{locale}: {:?}", mix.answer);
+            assert!(
+                mix.answer.contains(allergen_word),
+                "{locale}: {:?}",
+                mix.answer
+            );
+            let server = &entries[1];
+            assert!(
+                server.answer.contains(short_word),
+                "{locale}: server answer must name the short-link exception: {:?}",
+                server.answer
+            );
+        }
+    }
 }

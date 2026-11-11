@@ -188,6 +188,49 @@ async fn faq_page_renders_from_the_locales_in_every_language() {
     let _ = c.close().await;
 }
 
+/// R-17 (Testing Guetzlimischung 29.10.2026): the FAQ answers how to declare a
+/// mixture, in every language, with the question directly followed by its
+/// answer (per-variety composites, allergen reason).
+#[tokio::test]
+async fn faq_explains_how_to_declare_a_mixture_in_every_language() {
+    let c = connect().await;
+    let expected = [
+        (
+            "de-CH",
+            "Wie deklariere ich eine Mischung",
+            "zusammengesetzte Zutat",
+        ),
+        ("fr-CH", "Comment déclarer un mélange", "ingrédient composé"),
+        ("it-CH", "Come dichiaro una miscela", "ingrediente composto"),
+    ];
+    for (locale, question, answer_fragment) in expected {
+        goto_with_locale(&c, locale, "faq").await;
+        let body = c
+            .find(Locator::Css("body"))
+            .await
+            .expect("body")
+            .text()
+            .await
+            .expect("body text");
+        let q = body
+            .find(question)
+            .unwrap_or_else(|| panic!("{locale}: mixture question missing"));
+        let a = body[q..]
+            .find(answer_fragment)
+            .unwrap_or_else(|| panic!("{locale}: answer must follow the question"));
+        // The answer belongs to this question: no other question in between.
+        // Skip past the question's own «?» first.
+        let q_end = q + body[q..].find('?').expect("question mark") + 1;
+        assert!(
+            q_end <= q + a && !body[q_end..q + a].contains('?'),
+            "{locale}: another question sits between the mixture question and its answer"
+        );
+    }
+    assert_no_errors(&c, "faq mixture").await;
+    goto_with_locale(&c, "de-CH", "faq").await;
+    let _ = c.close().await;
+}
+
 /// The footer link must exist on both footers (splash screen and the app
 /// layout) and point at the FAQ route.
 #[tokio::test]
