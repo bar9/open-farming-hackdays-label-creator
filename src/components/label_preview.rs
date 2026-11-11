@@ -6,7 +6,7 @@ use crate::components::{base_factor, display_unit, Amount, AmountType, Price};
 use crate::layout::DisclaimerContext;
 use crate::nl2br::Nl2Br;
 use crate::services::label_text;
-use crate::services::label_text::copy_to_clipboard;
+use crate::services::label_text::copy_rich_to_clipboard;
 use crate::shared::VerdictsContext;
 use crate::verdicts::{BioBlockReason, BioVerdict, CheckState, KnospeBlockReason, KnospeVerdict};
 use dioxus::prelude::*;
@@ -148,8 +148,13 @@ pub fn LabelPreview(
     // darunter, damit beide nicht auseinanderlaufen können. Aufgenommen wird
     // nur der Inhalt der weissen Karte: die Bio-Hinweise darunter gehören
     // nicht auf die gedruckte Etikette.
-    let label_plain_text: Memo<String> = use_memo(move || {
+    //
+    // Zurück kommt (Klartext, HTML): das HTML trägt den Fettdruck der Allergene
+    // aus der Zutatenliste mit (R-12), alle anderen Abschnitte sind in beiden
+    // Fassungen gleich.
+    let label_copy_text: Memo<(String, String)> = use_memo(move || {
         let mut sections: Vec<String> = Vec::new();
+        let mut ingredients_html: Option<(usize, String)> = None;
 
         // Produktname und Sachbezeichnung, so wie eingegeben. «Bio» hängt die
         // Etikette nicht mehr selbst an (DEC-23/24); die Eingabemaske bietet
@@ -171,6 +176,10 @@ pub fn LabelPreview(
         if !ignore_ingredients() {
             let list = label_text::html_to_plain(&label.read());
             if !list.is_empty() {
+                ingredients_html = Some((
+                    sections.len(),
+                    format!("{} {}", t!("preview.zutaten"), label.read()),
+                ));
                 sections.push(format!("{} {}", t!("preview.zutaten"), list));
             }
         }
@@ -311,7 +320,21 @@ pub fn LabelPreview(
             }
         }
 
-        label_text::join_sections(&sections)
+        let html_sections: Vec<(String, Option<String>)> = sections
+            .iter()
+            .enumerate()
+            .map(|(i, plain)| {
+                let html = match &ingredients_html {
+                    Some((idx, h)) if *idx == i => Some(h.clone()),
+                    _ => None,
+                };
+                (plain.clone(), html)
+            })
+            .collect();
+        (
+            label_text::join_sections(&sections),
+            label_text::join_sections_html(&html_sections),
+        )
     });
 
     let mut label_copied = use_signal(|| false);
@@ -327,9 +350,9 @@ pub fn LabelPreview(
     });
 
     let copy_label_text = move |_| {
-        let text = label_plain_text();
+        let (text, html) = label_copy_text();
         spawn(async move {
-            if copy_to_clipboard(&text) {
+            if copy_rich_to_clipboard(&text, &html) {
                 label_copied.set(true);
                 gloo::timers::future::TimeoutFuture::new(2000).await;
                 label_copied.set(false);

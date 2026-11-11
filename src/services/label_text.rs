@@ -134,9 +134,101 @@ pub fn copy_to_clipboard(text: &str) -> bool {
     copied
 }
 
+/// Baut die Etikette als HTML für die Zwischenablage (R-12).
+///
+/// Livetesting 09.11.2026: Beim Einfügen in Word oder ein Mailprogramm waren
+/// die Allergene nicht mehr fett. Darum geht neben dem reinen Text auch HTML
+/// in die Zwischenablage. Jeder Abschnitt ist `(Klartext, HTML)`: wo es ein
+/// HTML gibt (die Zutatenliste mit `<b>` für Allergene), wird es übernommen,
+/// sonst wird der Klartext escaped. Zeilenumbrüche werden zu `<br>`, Abschnitte
+/// zu Absätzen, damit die Gliederung der Etikette erhalten bleibt.
+pub fn join_sections_html(sections: &[(String, Option<String>)]) -> String {
+    sections
+        .iter()
+        .filter(|(plain, _)| !plain.trim().is_empty())
+        .map(|(plain, html)| {
+            let body = match html {
+                Some(h) => h.clone(),
+                None => escape_html(plain.trim_matches('\n')).replace('\n', "<br>"),
+            };
+            format!("<p>{body}</p>")
+        })
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn escape_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
+}
+
+/// Legt Text und HTML gleichzeitig in die Zwischenablage. `true` bei Erfolg.
+///
+/// Gleicher Weg wie `copy_to_clipboard` (verstecktes `<textarea>` und
+/// `execCommand('copy')`, funktioniert auch ohne sicheren Kontext). Für die
+/// Dauer des Kopierens hängt ein `copy`-Listener beide Formate an: Programme,
+/// die HTML verstehen (Word, LibreOffice, Mail), übernehmen den Fettdruck,
+/// einfache Editoren erhalten den reinen Text.
+pub fn copy_rich_to_clipboard(plain: &str, html: &str) -> bool {
+    use wasm_bindgen::JsValue;
+    use web_sys::js_sys::Function;
+
+    let install = Function::new_with_args(
+        "plain, html",
+        r#"
+        const onCopy = (e) => {
+            if (!e.clipboardData) return;
+            e.clipboardData.setData('text/plain', plain);
+            e.clipboardData.setData('text/html', html);
+            e.preventDefault();
+        };
+        document.addEventListener('copy', onCopy, true);
+        return onCopy;
+        "#,
+    );
+    let listener = install
+        .call2(
+            &JsValue::NULL,
+            &JsValue::from_str(plain),
+            &JsValue::from_str(html),
+        )
+        .ok();
+
+    let copied = copy_to_clipboard(plain);
+
+    if let Some(listener) = listener {
+        let remove = Function::new_with_args(
+            "onCopy",
+            "document.removeEventListener('copy', onCopy, true);",
+        );
+        let _ = remove.call1(&JsValue::NULL, &listener);
+    }
+    copied
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn html_sections_keep_bold_and_line_breaks() {
+        let sections = vec![
+            ("Sommertraum\nHimbeerkonfitüre".to_string(), None),
+            (
+                "Zutaten: Weizenmehl, Zucker".to_string(),
+                Some("Zutaten: <b>Weizenmehl</b>, Zucker".to_string()),
+            ),
+            (String::new(), None),
+            ("Hof & Co".to_string(), None),
+        ];
+        assert_eq!(
+            join_sections_html(&sections),
+            "<p>Sommertraum<br>Himbeerkonfitüre</p><p>Zutaten: <b>Weizenmehl</b>, Zucker</p><p>Hof &amp; Co</p>"
+        );
+    }
 
     #[test]
     fn bold_allergens_become_plain_words() {

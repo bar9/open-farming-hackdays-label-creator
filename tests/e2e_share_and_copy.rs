@@ -599,3 +599,85 @@ async fn the_label_itself_acknowledges_a_successful_copy() {
     assert_no_errors(&c, "label copy effect").await;
     c.close().await.ok();
 }
+
+// R-12 (Livetesting 09.11.2026): Beim Einfügen in Word gingen die fett
+// gesetzten Allergene verloren. Neben dem Klartext muss deshalb HTML mit <b>
+// in der Zwischenablage liegen. Abgegriffen wird, was die App beim
+// `copy`-Ereignis in `clipboardData` legt.
+#[tokio::test]
+async fn the_copied_label_keeps_allergens_bold_as_html() {
+    let c = connect().await;
+    goto_config(&c, Config::Lebensmittelrecht).await;
+    set_sachbezeichnung(&c, "Zopf").await;
+    add_simple_ingredient(&c, "Weizenmehl", 500).await;
+    add_simple_ingredient(&c, "Salz", 10).await;
+    tokio::time::sleep(Duration::from_millis(700)).await;
+
+    c.execute(
+        r#"
+        window.__html = null; window.__plain = null; window.__events = 0;
+        // Synchron lesen: nach dem Ereignis ist clipboardData gesperrt.
+        window.addEventListener('copy', (e) => {
+            window.__events += 1;
+            window.__html = e.clipboardData ? e.clipboardData.getData('text/html') : null;
+            window.__plain = e.clipboardData ? e.clipboardData.getData('text/plain') : null;
+        }, false);
+        return null;
+        "#,
+        vec![],
+    )
+    .await
+    .expect("install copy listener");
+
+    // Der Knopf erscheint erst, wenn die Etikette Inhalt hat.
+    for _ in 0..20 {
+        if click_button_by_text(&c, "Etikette kopieren").await {
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            let fired = c
+                .execute("return window.__events;", vec![])
+                .await
+                .ok()
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            if fired > 0 {
+                break;
+            }
+        }
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+
+    let html = c
+        .execute("return window.__html;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+    let plain = c
+        .execute("return window.__plain;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+
+    let events = c
+        .execute("return window.__events;", vec![])
+        .await
+        .ok()
+        .and_then(|v| v.as_i64())
+        .unwrap_or(-1);
+    assert!(
+        html.contains("<b>Weizenmehl</b>"),
+        "events={events}; the HTML flavour must bold the allergen: {html:?}"
+    );
+    assert!(
+        html.contains("Zopf"),
+        "HTML carries the whole label: {html:?}"
+    );
+    assert!(
+        plain.contains("Weizenmehl") && !plain.contains("<b>"),
+        "the plain flavour stays plain: {plain:?}"
+    );
+
+    assert_no_errors(&c, "rich label copy").await;
+    c.close().await.ok();
+}
