@@ -299,6 +299,11 @@ link_copy_button: Kopieren
 link_qr_title: QR-Code zum Abscannen
 link_qr_hint: Mit der Handy-Kamera abscannen, um die Rezeptur dort zu öffnen.
 link_qr_alt: QR-Code des Links zu dieser Rezeptur
+link_qr_copy: QR-Code kopieren
+link_qr_download: QR-Code herunterladen
+link_qr_copied: QR-Code als Bild kopiert. Jetzt z. B. in Word einfügen.
+link_qr_downloaded: QR-Code als Bild heruntergeladen.
+link_qr_failed: Der QR-Code konnte nicht kopiert werden.
 shortening: Wird gekürzt...
 link_shorten_error: "Der Kurz-Link konnte nicht erstellt werden. Der vollständige Link unten funktioniert und enthält alle Angaben."
 close: Schliessen

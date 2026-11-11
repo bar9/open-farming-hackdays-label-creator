@@ -295,6 +295,11 @@ link_copy_button: Copier
 link_qr_title: Code QR à scanner
 link_qr_hint: Scannez avec l'appareil photo du téléphone pour y ouvrir la recette.
 link_qr_alt: Code QR du lien vers cette recette
+link_qr_copy: Copier le code QR
+link_qr_download: Télécharger le code QR
+link_qr_copied: Code QR copié comme image. Colle-le maintenant p. ex. dans Word.
+link_qr_downloaded: Code QR téléchargé comme image.
+link_qr_failed: Le code QR n'a pas pu être copié.
 shortening: Raccourcissement...
 link_shorten_error: "Le lien court n'a pas pu être créé. Le lien complet ci-dessous fonctionne et contient toutes les données."
 close: Fermer

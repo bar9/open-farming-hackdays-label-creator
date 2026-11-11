@@ -294,6 +294,11 @@ link_copy_button: Copia
 link_qr_title: Codice QR da scansionare
 link_qr_hint: Scansiona con la fotocamera del telefono per aprire lì la ricetta.
 link_qr_alt: Codice QR del link a questa ricetta
+link_qr_copy: Copia codice QR
+link_qr_download: Scarica codice QR
+link_qr_copied: Codice QR copiato come immagine. Ora incollalo p. es. in Word.
+link_qr_downloaded: Codice QR scaricato come immagine.
+link_qr_failed: Non è stato possibile copiare il codice QR.
 shortening: Accorciamento...
 link_shorten_error: "Non è stato possibile creare il link breve. Il link completo qui sotto funziona e contiene tutti i dati."
 close: Chiudi

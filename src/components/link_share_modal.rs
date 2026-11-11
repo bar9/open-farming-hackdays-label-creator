@@ -30,6 +30,8 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
     // Fremddienst ein — dann muss der Hinweis das auch sagen, statt weiter
     // declarino.ch zu versprechen.
     let mut short_provider = use_signal(|| None::<Provider>);
+    // Rückmeldung zum QR-Knopf (R-13): kopiert, heruntergeladen oder Fehler.
+    let mut qr_feedback = use_signal(|| None::<qr_code::QrCopyOutcome>);
 
     // Der volle Link als Signal, damit die Closures unten kopierbar bleiben
     // (ein `String` liesse sich nur einmal in eine `move`-Closure ziehen).
@@ -321,6 +323,57 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                 div {
                                     class: "text-xs text-base-content/70 text-center",
                                     {t!("link_qr_hint").to_string()}
+                                }
+                                // R-13: Bild kopieren oder herunterladen, ohne
+                                // Snipping Tool (Livetesting 09.11.2026).
+                                div {
+                                    class: "flex gap-2 mt-1",
+                                    button {
+                                        r#type: "button",
+                                        class: "btn btn-sm btn-outline",
+                                        onclick: {
+                                            let svg = qr.standalone_svg(8);
+                                            move |_| {
+                                                let svg = svg.clone();
+                                                spawn(async move {
+                                                    let outcome = qr_code::copy_png(&svg, "declarino-qr-code.png").await;
+                                                    qr_feedback.set(Some(outcome));
+                                                    gloo::timers::future::TimeoutFuture::new(3000).await;
+                                                    qr_feedback.set(None);
+                                                });
+                                            }
+                                        },
+                                        {t!("link_qr_copy").to_string()}
+                                    }
+                                    button {
+                                        r#type: "button",
+                                        class: "btn btn-sm btn-outline",
+                                        onclick: {
+                                            let svg = qr.standalone_svg(8);
+                                            move |_| {
+                                                let svg = svg.clone();
+                                                spawn(async move {
+                                                    let outcome = qr_code::download_png(&svg, "declarino-qr-code.png").await;
+                                                    qr_feedback.set(Some(outcome));
+                                                    gloo::timers::future::TimeoutFuture::new(3000).await;
+                                                    qr_feedback.set(None);
+                                                });
+                                            }
+                                        },
+                                        {t!("link_qr_download").to_string()}
+                                    }
+                                }
+                                match qr_feedback() {
+                                    Some(qr_code::QrCopyOutcome::Copied) => rsx! {
+                                        div { class: "text-success text-sm", {t!("link_qr_copied").to_string()} }
+                                    },
+                                    Some(qr_code::QrCopyOutcome::Downloaded) => rsx! {
+                                        div { class: "text-success text-sm", {t!("link_qr_downloaded").to_string()} }
+                                    },
+                                    Some(qr_code::QrCopyOutcome::Failed) => rsx! {
+                                        div { class: "text-warning text-sm", {t!("link_qr_failed").to_string()} }
+                                    },
+                                    None => rsx! {},
                                 }
                             }
                         }

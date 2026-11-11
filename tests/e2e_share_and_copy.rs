@@ -681,3 +681,127 @@ async fn the_copied_label_keeps_allergens_bold_as_html() {
     assert_no_errors(&c, "rich label copy").await;
     c.close().await.ok();
 }
+
+// R-13 (Livetesting 09.11.2026): der QR-Code lässt sich als Bild herausholen.
+// Abgegriffen wird das PNG, das «QR-Code herunterladen» erzeugt; es muss sich
+// wieder zum Link im Textfeld dekodieren lassen.
+#[tokio::test]
+async fn the_qr_code_can_be_downloaded_as_a_scannable_png() {
+    let c = connect().await;
+    seed_small_recipe(&c).await;
+    assert!(open_share_dialog(&c).await, "the dialog must open");
+
+    // Für den QR-Code den Kurz-Link wählen (der volle Link ist oft zu lang).
+    c.execute(
+        r#"
+        const d = document.querySelector('dialog[open]');
+        const radios = [...d.querySelectorAll('input[type=radio]')];
+        if (radios.length > 1) radios[1].click();
+        return null;
+        "#,
+        vec![],
+    )
+    .await
+    .ok();
+    tokio::time::sleep(Duration::from_millis(2500)).await;
+
+    c.execute(
+        r#"
+        window.__qrPng = null;
+        const orig = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function() {
+            if (this.download && this.href.startsWith('blob:')) {
+                fetch(this.href).then(r => r.blob()).then(b => {
+                    const fr = new FileReader();
+                    fr.onload = () => { window.__qrPng = fr.result; };
+                    fr.readAsDataURL(b);
+                });
+                return;
+            }
+            return orig.call(this);
+        };
+        return null;
+        "#,
+        vec![],
+    )
+    .await
+    .expect("hook download");
+
+    assert!(
+        click_button_by_text(&c, "QR-Code herunterladen").await,
+        "the dialog must offer «QR-Code herunterladen»"
+    );
+    assert!(
+        button_by_text(&c, "QR-Code kopieren").await.is_some(),
+        "the dialog must offer «QR-Code kopieren»"
+    );
+
+    let mut data_url = String::new();
+    for _ in 0..20 {
+        tokio::time::sleep(Duration::from_millis(250)).await;
+        if let Some(s) = c
+            .execute("return window.__qrPng;", vec![])
+            .await
+            .ok()
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+        {
+            data_url = s;
+            break;
+        }
+    }
+    assert!(
+        data_url.starts_with("data:image/png;base64,"),
+        "a PNG must be produced"
+    );
+
+    let link = c
+        .execute(
+            "return document.querySelector('dialog[open] input[type=text]').value;",
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+
+    let b64 = data_url.trim_start_matches("data:image/png;base64,");
+    let bytes = base64_decode(b64);
+    let img = image::load_from_memory(&bytes)
+        .expect("valid PNG")
+        .to_luma8();
+    let mut prepared = rqrr::PreparedImage::prepare(img);
+    let grids = prepared.detect_grids();
+    assert_eq!(grids.len(), 1, "exactly one QR code in the PNG");
+    let (_, content) = grids[0].decode().expect("decodable QR code");
+    assert_eq!(
+        content, link,
+        "the PNG must carry the link from the text field"
+    );
+
+    assert_no_errors(&c, "qr download").await;
+    c.close().await.ok();
+}
+
+/// Minimaler Base64-Dekoder, damit der Test keine weitere Abhängigkeit braucht.
+fn base64_decode(s: &str) -> Vec<u8> {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = Vec::new();
+    let mut buf = 0u32;
+    let mut bits = 0;
+    for ch in s.bytes() {
+        if ch == b'=' {
+            break;
+        }
+        let Some(v) = T.iter().position(|&t| t == ch) else {
+            continue;
+        };
+        buf = (buf << 6) | v as u32;
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((buf >> bits) as u8);
+            buf &= (1 << bits) - 1;
+        }
+    }
+    out
+}

@@ -58,6 +58,102 @@ pub fn svg_path(text: &str) -> Option<QrSvg> {
     Some(QrSvg { size, path })
 }
 
+impl QrSvg {
+    /// Vollständiges SVG-Dokument mit weissem Hintergrund, für Kopieren und
+    /// Herunterladen (R-13). `scale` Pixel pro Modul.
+    pub fn standalone_svg(&self, scale: i32) -> String {
+        let px = self.size * scale;
+        format!(
+            r##"<svg xmlns="http://www.w3.org/2000/svg" width="{px}" height="{px}" viewBox="0 0 {s} {s}" shape-rendering="crispEdges"><path fill="#ffffff" d="M0,0h{s}v{s}h-{s}z"/><path fill="#000000" d="{p}"/></svg>"##,
+            s = self.size,
+            p = self.path
+        )
+    }
+}
+
+/// Was beim Kopieren des QR-Codes passiert ist.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum QrCopyOutcome {
+    /// Als Bild in der Zwischenablage.
+    Copied,
+    /// Der Browser kann keine Bilder kopieren: stattdessen heruntergeladen.
+    Downloaded,
+    Failed,
+}
+
+/// Rendert das SVG als PNG und legt es in die Zwischenablage (R-13,
+/// Livetesting 09.11.2026: «Nicht alle Nutzenden sind versiert mit Snipping
+/// Tool»). Kann der Browser keine Bilder kopieren (Firefox ohne
+/// `ClipboardItem`, kein sicherer Kontext), wird das PNG heruntergeladen.
+pub async fn copy_png(svg: &str, filename: &str) -> QrCopyOutcome {
+    run_png_action(svg, filename, true).await
+}
+
+/// Lädt den QR-Code als PNG herunter.
+pub async fn download_png(svg: &str, filename: &str) -> QrCopyOutcome {
+    run_png_action(svg, filename, false).await
+}
+
+async fn run_png_action(svg: &str, filename: &str, copy: bool) -> QrCopyOutcome {
+    use wasm_bindgen::JsValue;
+    use web_sys::js_sys::{Function, Promise};
+
+    // Die Arbeit liegt in JS: Bild laden, auf ein Canvas zeichnen, als PNG
+    // ausgeben. In Rust bräuchte das ein halbes Dutzend web-sys-Features für
+    // einen einzigen Knopf.
+    let f = Function::new_with_args(
+        "svg, filename, copy",
+        r#"
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width; canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                canvas.toBlob(async (blob) => {
+                    if (!blob) { resolve('failed'); return; }
+                    const download = () => {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = filename;
+                        document.body.appendChild(a); a.click(); a.remove();
+                        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                        resolve('downloaded');
+                    };
+                    if (copy && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+                        try {
+                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                            resolve('copied');
+                            return;
+                        } catch (e) { /* fällt auf Herunterladen zurück */ }
+                    }
+                    download();
+                }, 'image/png');
+            };
+            img.onerror = () => resolve('failed');
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        });
+        "#,
+    );
+    let Ok(promise) = f.call3(
+        &JsValue::NULL,
+        &JsValue::from_str(svg),
+        &JsValue::from_str(filename),
+        &JsValue::from_bool(copy),
+    ) else {
+        return QrCopyOutcome::Failed;
+    };
+    let promise: Promise = promise.into();
+    match wasm_bindgen_futures::JsFuture::from(promise).await {
+        Ok(v) => match v.as_string().as_deref() {
+            Some("copied") => QrCopyOutcome::Copied,
+            Some("downloaded") => QrCopyOutcome::Downloaded,
+            _ => QrCopyOutcome::Failed,
+        },
+        Err(_) => QrCopyOutcome::Failed,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
