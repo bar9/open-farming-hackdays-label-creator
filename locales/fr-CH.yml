@@ -43,7 +43,8 @@ label:
   email: E-mail
   website: Site web
   preis: Prix
-  gewichtUndPreis: Quantité / Prix
+  gewichtUndPreis: Unité d'emballage (contenu / prix)
+  gewichtUndPreis_intro: "Indications pour un seul emballage tel qu'il est vendu (p. ex. un bocal de 250 g), pas pour toute la recette."
   preisProX: Prix de base (optionnel)
   preisTotal: Prix de détail (optionnel)
   mindestensHaltbar: À consommer de préférence avant
@@ -211,9 +212,9 @@ help:
     Ils seront affichés sur l'étiquette dans la liste des ingrédients.
 
   mengen_als_prozent: |
-    Saisissez les sous-ingrédients en **pourcentage de la quantité totale** de l'ingrédient composé.
-    La quantité totale (en g/ml) reste modifiable ci-dessus; le poids de chaque sous-ingrédient en
-    est déduit. Les pourcentages ne doivent pas obligatoirement totaliser 100 %.
+    Utile seulement si tu connais la composition **en pourcentage**, p. ex. sur l'emballage d'un fournisseur (chocolat : sucre 45 %, beurre de cacao 30 %, …).
+    En haut, saisis la quantité de l'ingrédient composé dans ta recette (p. ex. 200 g), en bas recopie les pourcentages. Le poids de chaque sous-ingrédient en est calculé et affiché à côté du champ (45 % de 200 g = 90 g).
+    Si tu as la recette en grammes (p. ex. ta propre pâte), ne coche pas la case et saisis directement les grammes.
 
   menge: |
     La quantité se réfère aux **ingrédients préparés** (épluchés, préparés).
@@ -230,9 +231,9 @@ help:
   abtropfgewicht: |
     Pour les aliments en conserve: poids pesé des ingrédients conservés sans le liquide d'égouttage.
 
-  gewicht: Contenu total pesé ou mesuré de l'unité d'emballage.
+  gewicht: "Contenu d'un seul emballage (p. ex. 250 g par bocal), pas la quantité de toute la recette."
 
-  volumen: Contenu total pesé ou mesuré de l'unité d'emballage.
+  volumen: "Contenu d'un seul emballage (p. ex. 5 dl par bouteille), pas la quantité de toute la recette."
 
   preisProEinheit: Prix par unité de mesure comme p.ex. 500g, 1l, ...
 
@@ -739,9 +740,11 @@ faq:
   questions:
     - Declarino remplace-t-il un conseil juridique ?
     - Mes recettes sont-elles enregistrées sur un serveur ?
+    - Comment déclarer un mélange, p. ex. un assortiment de biscuits ?
   answers:
     - Non. Declarino t'aide à créer une étiquette, mais ne prétend pas être exhaustif et ne remplace pas un examen juridique. La responsabilité de l'exactitude de la déclaration incombe à la personne qui met la denrée alimentaire sur le marché.
     - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Partager ». Toute personne disposant de ce lien voit la recette qu'il contient. Seule exception, le lien court, que tu peux choisir expressément dans la fenêtre de partage. Il enregistre la recette, adresse comprise, sur declarino.ch pour que le lien court fonctionne.
+    - "Il est recommandé de saisir chaque sorte comme ingrédient composé avec ses propres ingrédients en grammes, p. ex. « Milanais (farine de blé, beurre, œufs, …), Rochers à la noix de coco (noix de coco, sucre, blanc d'œuf, …) ». On voit ainsi quel biscuit contient quels allergènes. Cela demande un peu plus de place sur l'étiquette. Si tous les ingrédients sont additionnés, les recettes doivent d'abord être adaptées aux proportions dans l'emballage, et les personnes allergiques ne savent plus quelle sorte contient quoi."
 
 impressum: |
   # Mentions légales, Protection des données

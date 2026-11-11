@@ -42,7 +42,8 @@ label:
   email: E-Mail
   website: Website
   preis: Preis
-  gewichtUndPreis: Menge / Preis
+  gewichtUndPreis: Verpackungseinheit (Inhalt / Preis)
+  gewichtUndPreis_intro: "Angaben für eine einzelne Packung, wie sie verkauft wird (z. B. ein Glas mit 250 g), nicht für die ganze Rezeptur."
   preisProX: Grundpreis (optional)
   preisTotal: Detailpreis (optional)
   mindestensHaltbar: Mindestens haltbar bis
@@ -152,9 +153,9 @@ help:
     Diese werden auf der Etikette im Zutatenverzeichnis angezeigt.
 
   mengen_als_prozent: |
-    Erfasse die Unterzutaten als **Prozent der Gesamtmenge** der zusammengesetzten Zutat.
-    Die Gesamtmenge (in g/ml) bleibt oben eingebbar; das Gewicht jeder Unterzutat wird daraus
-    berechnet. Die Prozente müssen nicht zwingend 100 % ergeben.
+    Nur nötig, wenn du die Zusammensetzung **in Prozent** kennst, z. B. von der Packung eines Lieferanten (Schokolade: Zucker 45 %, Kakaobutter 30 %, …).
+    Oben die Menge der zusammengesetzten Zutat in deinem Rezept eingeben (z. B. 200 g), unten die Prozente abschreiben. Das Gewicht jeder Unterzutat wird daraus berechnet und neben dem Feld angezeigt (45 % von 200 g = 90 g).
+    Hast du das Rezept in Gramm (z. B. ein eigener Teig), das Häkchen weglassen und die Gramm direkt eingeben.
 
   menge: |
     Die Menge bezieht sich auf die **gerüsteten Zutaten** (geschält, gerüstet, vorbereitet).
@@ -171,9 +172,9 @@ help:
   abtropfgewicht: |
     Bei eingelegten Lebensmitteln: Gewogenes Gewicht der eingelegten Zutaten ohne Abtropfflüssigkeit.
 
-  gewicht: Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit.
+  gewicht: "Inhalt einer einzelnen Packung (z. B. 250 g pro Glas), nicht die Menge der ganzen Rezeptur."
 
-  volumen: Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit.
+  volumen: "Inhalt einer einzelnen Packung (z. B. 5 dl pro Flasche), nicht die Menge der ganzen Rezeptur."
 
   preisProEinheit: Preis pro Einheitsmenge wie z.B. 500g, 1l, ...
 
@@ -743,9 +744,11 @@ faq:
   questions:
     - Ersetzt Declarino eine rechtliche Beratung?
     - Werden meine Rezepturen auf einem Server gespeichert?
+    - Wie deklariere ich eine Mischung, z. B. eine Guetzlimischung?
   answers:
     - Nein. Declarino unterstützt dich beim Erstellen einer Etikette, erhebt aber keinen Anspruch auf Vollständigkeit und ersetzt keine rechtliche Prüfung. Die Verantwortung für die Richtigkeit der Deklaration liegt bei der Person, die das Lebensmittel in Verkehr bringt.
     - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Teilen» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur. Einzige Ausnahme ist der Kurz-Link, den du im Teilen-Fenster ausdrücklich wählen kannst. Er speichert die Rezeptur samt Adresse auf declarino.ch, damit der kurze Link funktioniert.
+    - "Empfohlen ist, jede Sorte als zusammengesetzte Zutat mit ihren eigenen Zutaten in Gramm zu erfassen, z. B. «Mailänderli (Weizenmehl, Butter, Eier, …), Kokosmakronen (Kokosnuss, Zucker, Eiweiss, …)». So sieht man, welches Guetzli welche Allergene enthält. Das braucht etwas mehr Platz auf der Etikette. Werden alle Zutaten zusammengerechnet, müssen die Rezepte vorher auf das Mischverhältnis in der Packung angepasst werden, und Allergiker erkennen nicht mehr, welche Sorte was enthält."
 
 impressum: |
   # Impressum, Datenschutz

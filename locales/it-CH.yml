@@ -42,7 +42,8 @@ label:
   email: E-mail
   website: Sito web
   preis: Prezzo
-  gewichtUndPreis: Quantità / Prezzo
+  gewichtUndPreis: Unità d'imballaggio (contenuto / prezzo)
+  gewichtUndPreis_intro: "Indicazioni per una singola confezione così come viene venduta (p. es. un vasetto da 250 g), non per tutta la ricetta."
   preisProX: Prezzo di base (opzionale)
   preisTotal: Prezzo al dettaglio (opzionale)
   mindestensHaltbar: Da consumarsi preferibilmente entro
@@ -207,9 +208,9 @@ help:
     Se gli ingredienti sono evidenziati nella denominazione specifica o fantasiosa con parole o rappresentati sull'etichetta, questa casella deve essere selezionata. In questo modo, la percentuale di massa viene automaticamente indicata per questa materia prima nell'elenco degli ingredienti.
 
   mengen_als_prozent: |
-    Inserisci gli ingredienti secondari come **percentuale della quantità totale** dell'ingrediente
-    composto. La quantità totale (in g/ml) resta modificabile sopra; il peso di ogni ingrediente
-    secondario viene calcolato di conseguenza. Le percentuali non devono necessariamente sommare a 100 %.
+    Serve solo se conosci la composizione **in percentuale**, p. es. dalla confezione di un fornitore (cioccolato: zucchero 45 %, burro di cacao 30 %, …).
+    In alto inserisci la quantità dell'ingrediente composto nella tua ricetta (p. es. 200 g), in basso ricopia le percentuali. Il peso di ogni ingrediente secondario viene calcolato e mostrato accanto al campo (45 % di 200 g = 90 g).
+    Se hai la ricetta in grammi (p. es. un tuo impasto), non spuntare la casella e inserisci direttamente i grammi.
 
   menge: |
     La quantità si riferisce agli **ingredienti preparati** (sbucciati, preparati).
@@ -226,9 +227,9 @@ help:
   abtropfgewicht: |
     Per alimenti in conserva: peso pesato degli ingredienti conservati senza il liquido di governo.
 
-  gewicht: Contenuto totale pesato o misurato dell'unità di imballaggio.
+  gewicht: "Contenuto di una singola confezione (p. es. 250 g per vasetto), non la quantità di tutta la ricetta."
 
-  volumen: Contenuto totale pesato o misurato dell'unità di imballaggio.
+  volumen: "Contenuto di una singola confezione (p. es. 5 dl per bottiglia), non la quantità di tutta la ricetta."
 
   preisProEinheit: Prezzo per unità di misura come es. 500g, 1l, ...
 
@@ -738,9 +739,11 @@ faq:
   questions:
     - Declarino sostituisce una consulenza legale?
     - Le mie ricette vengono salvate su un server?
+    - Come dichiaro una miscela, p. es. un assortimento di biscotti?
   answers:
     - No. Declarino ti aiuta a creare un'etichetta, ma non pretende di essere completo e non sostituisce una verifica legale. La responsabilità della correttezza della dichiarazione spetta a chi immette la derrata alimentare sul mercato.
     - No. Declarino funziona interamente nel tuo browser. I tuoi dati vengono salvati solo localmente e nel link che generi con «Condividi». Chi dispone di questo link vede la ricetta in esso contenuta. Unica eccezione è il link breve, che puoi scegliere espressamente nella finestra di condivisione. Salva la ricetta, indirizzo compreso, su declarino.ch affinché il link breve funzioni.
+    - "Si consiglia di registrare ogni varietà come ingrediente composto con i propri ingredienti in grammi, p. es. «Milanesini (farina di frumento, burro, uova, …), Amaretti al cocco (cocco, zucchero, albume, …)». Così si vede quale biscotto contiene quali allergeni. Serve un po' più di spazio sull'etichetta. Se tutti gli ingredienti vengono sommati, le ricette devono prima essere adattate alle proporzioni nella confezione, e chi soffre di allergie non riconosce più quale varietà contiene cosa."
 
 impressum: |
   # Impronta, Protezione dei dati

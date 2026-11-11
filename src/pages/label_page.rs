@@ -610,6 +610,13 @@ pub fn LabelPage(configuration: Configuration) -> Element {
 
                         FieldGroup1 {
                             label: t!("label.gewichtUndPreis").to_string(),
+                            // R-15 (Livetesting 09.11.2026): Menge und Preis
+                            // wurden als Gesamtmenge der Rezeptur gelesen.
+                            p {
+                                class: "text-sm text-base-content/70 -mt-2",
+                                "data-testid": "amount-price-intro",
+                                {t!("label.gewichtUndPreis_intro").to_string()}
+                            }
                             AmountPrice {
                                 amount_type: amount_type,
                                 weight_unit: weight_unit,
