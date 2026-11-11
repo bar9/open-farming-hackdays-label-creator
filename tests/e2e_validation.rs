@@ -263,7 +263,12 @@ async fn bio_missing_cert_body_is_a_placeholder_not_a_recipe_error() {
     // Testing 25.06.2026: a missing certification body is NOT a recipe problem.
     // The yellow placeholder on the label is enough; the red panel under
     // «Rezeptur vollständig – überprüfen» only concerns the recipe.
-    assert_label_contains(&c, "Bio-Zertifizierungsstelle", "bio_missing_cert_body_is_a_placeholder_not_a_recipe_error").await;
+    assert_label_contains(
+        &c,
+        "Bio-Zertifizierungsstelle",
+        "bio_missing_cert_body_is_a_placeholder_not_a_recipe_error",
+    )
+    .await;
     let body: String = c
         .execute("return document.body.innerText;", vec![])
         .await
@@ -281,7 +286,11 @@ async fn bio_missing_cert_body_is_a_placeholder_not_a_recipe_error() {
         body
     );
 
-    assert_no_errors(&c, "bio_missing_cert_body_is_a_placeholder_not_a_recipe_error").await;
+    assert_no_errors(
+        &c,
+        "bio_missing_cert_body_is_a_placeholder_not_a_recipe_error",
+    )
+    .await;
     let _ = c.close().await;
 }
 

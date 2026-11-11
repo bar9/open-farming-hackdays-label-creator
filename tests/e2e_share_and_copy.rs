@@ -130,7 +130,28 @@ async fn the_dialog_offers_copying_by_name_and_a_qr_code() {
         open_share_dialog(&c).await,
         "the «‹Teilen›» button must open the dialog"
     );
-    // Der Kurz-Link wird beim Öffnen geholt; kurz warten.
+    // Der Kurz-Link wird erst auf ausdrückliche Wahl geholt (R-18); für den
+    // QR-Code also auf «Kurz-Link» umschalten und kurz warten.
+    let switched = c
+        .execute(
+            r#"
+            const d = document.querySelector('dialog[open]');
+            if (!d) return false;
+            const radios = [...d.querySelectorAll('input[type=radio]')];
+            if (radios.length < 2) return false;
+            radios[1].click();
+            return true;
+            "#,
+            vec![],
+        )
+        .await
+        .ok()
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    assert!(
+        switched,
+        "the dialog must offer the short link as an option"
+    );
     tokio::time::sleep(Duration::from_millis(2500)).await;
 
     // Erst hier, im Dialog, heisst es «Kopieren».
@@ -470,18 +491,16 @@ async fn the_full_link_keeps_the_dialog_usable() {
         open_share_dialog(&c).await,
         "the «Teilen» button must open the dialog"
     );
-    tokio::time::sleep(Duration::from_millis(2500)).await;
+    tokio::time::sleep(Duration::from_millis(1200)).await;
 
-    // Auf «Vollständiger Link» umschalten.
-    let switched = c
+    // Der vollständige Link ist die Vorgabe (R-18): erste Option, gewählt.
+    let full_is_default = c
         .execute(
             r#"
             const d = document.querySelector('dialog[open]');
             if (!d) return false;
             const radios = [...d.querySelectorAll('input[type=radio]')];
-            if (radios.length < 2) return false;
-            radios[1].click();
-            return true;
+            return radios.length >= 2 && radios[0].checked && !radios[1].checked;
             "#,
             vec![],
         )
@@ -489,8 +508,7 @@ async fn the_full_link_keeps_the_dialog_usable() {
         .ok()
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
-    assert!(switched, "the dialog must offer the full link as an option");
-    tokio::time::sleep(Duration::from_millis(1200)).await;
+    assert!(full_is_default, "the full link must be preselected");
 
     let state = c
         .execute(

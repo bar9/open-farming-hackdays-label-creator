@@ -193,7 +193,9 @@ async fn allergen_flag_does_not_leak_into_the_next_ingredient() {
         "premise: Weizenmehl is an allergen in the food DB"
     );
     if let Ok(num) = c
-        .find(fantoccini::Locator::Css("dialog[open] input[type='number']"))
+        .find(fantoccini::Locator::Css(
+            "dialog[open] input[type='number']",
+        ))
         .await
     {
         let _ = num.click().await;

@@ -603,6 +603,7 @@ pub fn LabelPage(configuration: Configuration) -> Element {
                                     placeholder: t!("placeholder.aufbewahrungshinweis").to_string(),
                                     bound_value: storage_info
                                 }
+                                StorageHintPicker { bound_value: storage_info }
                             }
                         }
                         SeparatorLine {}

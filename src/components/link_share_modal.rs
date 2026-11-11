@@ -13,11 +13,13 @@ pub enum LinkType {
 
 #[component]
 pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
-    // Kurz-Link ist die Vorgabe: Seit der Dienst unter declarino.ch läuft, ist
-    // er schnell, zuverlässig und speichert nichts bei Dritten. Der volle Link
-    // bleibt einen Klick entfernt, für Fälle wie Archivierung oder wenn jemand
-    // den Inhalt im Link selbst behalten will.
-    let mut link_type = use_signal(|| LinkType::Short);
+    // Der vollständige Link ist die Vorgabe (R-18, Entscheid 11.11.2026). Er
+    // entsteht im Browser und schickt nichts an einen Server. Der Kurz-Link
+    // speichert die ganze Rezeptur samt Adresse auf declarino.ch; das passiert
+    // erst, wenn die Nutzerin ihn ausdrücklich wählt. Vorher (0.8.20) wurde
+    // schon beim Öffnen gekürzt, was der Aussage «keine Speicherung in einer
+    // Cloud» widersprach, die Testerinnen gerade gelobt hatten.
+    let mut link_type = use_signal(|| LinkType::Full);
     let mut is_copying = use_signal(|| false);
     let mut copy_success = use_signal(|| false);
     let mut short_url = use_signal(|| None::<String>);
@@ -90,11 +92,15 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
         });
     };
 
-    // Beim Öffnen sofort kürzen. Der frühere Ablauf verlangte einen
-    // zusätzlichen Klick auf "Link kürzen"; da der Dienst nun zur Anwendung
-    // gehört, ist dieser Zwischenschritt nur noch Reibung.
+    // Gekürzt wird nur, wenn der Kurz-Link gewählt ist, nie schon beim Öffnen.
+    // Ändert sich die Rezeptur bei gewähltem Kurz-Link, wird neu gekürzt.
     use_effect(move || {
-        if show() && short_url().is_none() && !is_shortening() && shorten_error().is_none() {
+        if show()
+            && link_type() == LinkType::Short
+            && short_url().is_none()
+            && !is_shortening()
+            && shorten_error().is_none()
+        {
             start_shortening();
         }
     });
@@ -149,12 +155,12 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                 r#type: "radio",
                                 name: "link-type",
                                 class: "radio radio-primary",
-                                checked: link_type() == LinkType::Short,
+                                checked: link_type() == LinkType::Full,
                                 onchange: move |_| {
-                                    link_type.set(LinkType::Short);
+                                    link_type.set(LinkType::Full);
                                 }
                             }
-                            span { class: "label-text", {t!("link_type_short").to_string()} }
+                            span { class: "label-text", {t!("link_type_full").to_string()} }
                         }
                         label {
                             class: "label cursor-pointer flex items-center gap-2",
@@ -162,12 +168,22 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                                 r#type: "radio",
                                 name: "link-type",
                                 class: "radio radio-primary",
-                                checked: link_type() == LinkType::Full,
+                                checked: link_type() == LinkType::Short,
                                 onchange: move |_| {
-                                    link_type.set(LinkType::Full);
+                                    // Ausdrückliche Wahl: ein früherer Fehlschlag
+                                    // soll einen neuen Versuch nicht blockieren.
+                                    shorten_error.set(None);
+                                    link_type.set(LinkType::Short);
                                 }
                             }
-                            span { class: "label-text", {t!("link_type_full").to_string()} }
+                            span { class: "label-text", {t!("link_type_short").to_string()} }
+                        }
+                    }
+
+                    if link_type() == LinkType::Full {
+                        div {
+                            class: "text-sm text-base-content/70 mb-4",
+                            {t!("link_full_disclaimer").to_string()}
                         }
                     }
 
@@ -277,7 +293,16 @@ pub fn LinkShareModal(show: Signal<bool>, url: String) -> Element {
                         // abzutippen. Fuer einen vollstaendigen Link mit ganzer
                         // Rezeptur kann er zu lang werden, dann bleibt das Feld
                         // oben der Weg (siehe services::qr_code).
-                        if let Some(qr) = qr_code::svg_path(&current_url) {
+                        if link_type() == LinkType::Full && qr_code::svg_path(&current_url).is_none() {
+                            // Der vollständige Link trägt die ganze Rezeptur
+                            // und passt oft nicht in einen QR-Code. Dann sagen,
+                            // wie man doch zu einem kommt, statt still keinen
+                            // zu zeigen.
+                            div {
+                                class: "mt-6 text-sm text-base-content/70 text-center",
+                                {t!("link_qr_needs_short").to_string()}
+                            }
+                        } else if let Some(qr) = qr_code::svg_path(&current_url) {
                             div {
                                 class: "mt-6 flex flex-col items-center gap-2",
                                 div {

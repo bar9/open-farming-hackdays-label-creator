@@ -192,13 +192,7 @@ help:
     * La dichiarazione nutrizionale è di principio obbligatoria (valore energetico, grassi, acidi grassi saturi, carboidrati, zuccheri, proteine e sale per 100 g). Sono escluse le derrate alimentari secondo l'allegato 9 ODerr (prodotte artigianalmente e vendute localmente in un raggio inferiore a 50 km o in vendita diretta).
   
   aufbewahrungshinweis: |
-    | Tipi di conservazione | Condizioni |
-    | --- | --- |
-    | Conservare nel congelatore a -18°C. Non ricongelare dopo lo scongelamento. |
-    | conservare a max. 4°C (ovoprodotti) | conservare a max. 5°C (prodotti lattiero-caseari, uova refrigerate, pasta precotta, pasticceria) |
-    | conservare al fresco e all'asciutto | dopo l'apertura conservare in frigorifero |
-    | conservare a temperatura ambiente | conservare al riparo dalla luce |
-    | le uova una volta refrigerate devono essere conservate permanentemente a 5°C | testo personalizzato |
+    Indicazioni per una corretta conservazione, p. es. temperatura o conservazione dopo l'apertura. Riprendi un'indicazione frequente con i pulsanti sotto il campo o scrivi un testo tuo.
   nettogewicht: |
     Contenuto totale pesato o misurato dell'unità di imballaggio. 
     Attenzione: considerare la riduzione durante la cottura dei prodotti es. sciroppo
@@ -291,7 +285,9 @@ help:
 link_share_title: Condividi link
 link_type_full: Link completo
 link_type_short: Link breve
-link_short_disclaimer: "Il link breve rimanda a declarino.ch e resta valido nel tempo."
+link_short_disclaimer: "Il link breve salva in modo permanente la ricetta (indirizzo compreso) su declarino.ch e vi rimanda."
+link_full_disclaimer: "Il link completo contiene tutta la ricetta. Viene creato nel tuo browser, nulla viene salvato su un server."
+link_qr_needs_short: "Il link completo è troppo lungo per un codice QR. Per un codice QR scegli «Link breve» qui sopra."
 link_short_disclaimer_provider: "Nota: declarino.ch non era raggiungibile. Il link breve è ospitato dal servizio di terze parti %{provider}."
 link_copied_success: Il link è stato copiato negli appunti!
 link_copy_button: Copia
@@ -739,7 +735,7 @@ faq:
     - Le mie ricette vengono salvate su un server?
   answers:
     - No. Declarino ti aiuta a creare un'etichetta, ma non pretende di essere completo e non sostituisce una verifica legale. La responsabilità della correttezza della dichiarazione spetta a chi immette la derrata alimentare sul mercato.
-    - No. Declarino funziona interamente nel tuo browser. I tuoi dati vengono salvati solo localmente e nel link che generi con «Condividi». Chi dispone di questo link vede la ricetta in esso contenuta.
+    - No. Declarino funziona interamente nel tuo browser. I tuoi dati vengono salvati solo localmente e nel link che generi con «Condividi». Chi dispone di questo link vede la ricetta in esso contenuta. Unica eccezione è il link breve, che puoi scegliere espressamente nella finestra di condivisione. Salva la ricetta, indirizzo compreso, su declarino.ch affinché il link breve funzioni.
 
 impressum: |
   # Impronta, Protezione dei dati
@@ -777,3 +773,16 @@ bio_name:
   add_button: "Aggiungere «bio»"
   not_allowed_warning: "La denominazione contiene «bio», ma la ricetta non soddisfa i requisiti Bio. Rimuovere «bio» o verificare la ricetta."
   not_allowed_warning_knospe: "La denominazione contiene «bio», ma la ricetta non soddisfa i requisiti della Gemma. Rimuovere «bio» o verificare la ricetta."
+
+# Indicazioni di conservazione da selezionare (R-14), import POEditor del 28.10.2026.
+storage_options:
+  freezer: "Conservare nel congelatore a -18 °C. Non ricongelare dopo lo scongelamento."
+  max_4: "conservare a max. 4 °C"
+  max_4_hint: "ovoprodotti"
+  max_5: "conservare a max. 5 °C"
+  max_5_hint: "prodotti lattiero-caseari, uova refrigerate, pasta precotta, pasticceria"
+  cool_dry: "conservare al fresco e all'asciutto"
+  fridge_after_opening: "dopo l'apertura conservare in frigorifero"
+  room_temperature: "conservare a temperatura ambiente"
+  dark: "conservare al riparo dalla luce"
+  chilled_eggs: "le uova una volta refrigerate devono essere conservate permanentemente a 5 °C"

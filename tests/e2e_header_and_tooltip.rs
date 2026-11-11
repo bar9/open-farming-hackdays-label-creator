@@ -38,7 +38,10 @@ async fn knospe_header_shows_the_full_bio_suisse_logo() {
         .ok()
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
-    assert!(found, "expected the BIO SUISSE logo in the header on /knospe");
+    assert!(
+        found,
+        "expected the BIO SUISSE logo in the header on /knospe"
+    );
 
     assert_no_errors(&c, "knospe_header_shows_the_full_bio_suisse_logo").await;
     let _ = c.close().await;
@@ -61,9 +64,11 @@ async fn disabled_save_hint_stays_inside_the_dialog() {
 
     // daisyUI renders the tooltip from `data-tip` as a ::before box whose size
     // is computed even while hidden; compare that box with the dialog box.
-    c.find(fantoccini::Locator::Css("dialog[open] span.tooltip[data-tip]"))
-        .await
-        .expect("disabled save button with a tooltip");
+    c.find(fantoccini::Locator::Css(
+        "dialog[open] span.tooltip[data-tip]",
+    ))
+    .await
+    .expect("disabled save button with a tooltip");
 
     let geometry: serde_json::Value = c
         .execute(
@@ -95,7 +100,9 @@ async fn disabled_save_hint_stays_inside_the_dialog() {
         "the disabled save button must explain what is missing: {geometry}"
     );
     assert!(
-        geometry["cls"].as_str().is_some_and(|s| s.contains("tooltip-end")),
+        geometry["cls"]
+            .as_str()
+            .is_some_and(|s| s.contains("tooltip-end")),
         "the hint must grow to the left (tooltip-end): {geometry}"
     );
     assert!(

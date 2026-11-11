@@ -170,8 +170,10 @@ async fn knospe_wildsammlung_legend_above_10pct() {
     // MT §3.3 / Bio_Testing B15: 25 % wild collection (≥ 10 %) → ° marker and
     // the legend line (wording since DEC-12).
     let html = label_html(&c).await;
-    assert!(html.contains("Wildkräuter*°") || html.contains("Wildkräuter°"),
-        "expected ° marker on Wildkräuter. Label:\n{html}");
+    assert!(
+        html.contains("Wildkräuter*°") || html.contains("Wildkräuter°"),
+        "expected ° marker on Wildkräuter. Label:\n{html}"
+    );
     assert!(
         html.contains("° aus biologisch zertifizierter Wildsammlung"),
         "expected the Wildsammlung legend. Label:\n{html}"

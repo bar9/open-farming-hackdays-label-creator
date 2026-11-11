@@ -628,7 +628,10 @@ async fn save_and_next_starts_the_next_ingredient_without_an_origin() {
         .ok()
         .and_then(|v| v.as_i64())
         .unwrap_or(-1);
-    assert!(before >= 1, "setup failed: origin AT was not selected ({before})");
+    assert!(
+        before >= 1,
+        "setup failed: origin AT was not selected ({before})"
+    );
 
     assert!(
         click_button_by_text(&c, "Speichern und nächste Zutat").await,

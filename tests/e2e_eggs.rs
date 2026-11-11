@@ -174,8 +174,17 @@ async fn address_fields_follow_the_testing_feedback() {
         .await
         .unwrap();
     assert_eq!(v["add"], true, "button «Zutat hinzufügen» (row 12a): {v}");
-    assert_eq!(v["strasse"], true, "field «Strasse / Hausnummer» (row 49): {v}");
-    assert_eq!(v["strasseRequired"], false, "street is optional, no * (row 49): {v}");
-    assert_eq!(v["nameTextarea"], true, "«Firma / Name» is a textarea (row 50): {v}");
+    assert_eq!(
+        v["strasse"], true,
+        "field «Strasse / Hausnummer» (row 49): {v}"
+    );
+    assert_eq!(
+        v["strasseRequired"], false,
+        "street is optional, no * (row 49): {v}"
+    );
+    assert_eq!(
+        v["nameTextarea"], true,
+        "«Firma / Name» is a textarea (row 50): {v}"
+    );
     let _ = c.close().await;
 }

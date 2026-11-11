@@ -133,13 +133,7 @@ help:
 
 
   aufbewahrungshinweis: |
-    | Aufbewahrungsarten | Bedingungen |
-    | --- | --- |
-    | Im Tiefkühler bei -18°C lagern. Nach dem Auftauen nicht wieder einfrieren. |
-    | bei max. 4 °C lagern (Eiprodukte) | bei max. 5 °C lagern  (Milchprodukte, gekühlte Eier, vorgekochte Teigwaren, Patisserie) |
-    | kühl und trocken lagern | nach dem Öffnen im Kühlschrank lagern |
-    | bei Zimmertemperatur lagern | lichtgeschützt lagern |
-    | einmal gekühlte Eier dauerhaft bei 5 °C aufbewahren | eigener Text |
+    Hinweise zur richtigen Lagerung, z. B. Temperatur oder Lagerung nach dem Öffnen. Mit den Knöpfen unter dem Feld einen häufigen Hinweis übernehmen oder eigenen Text schreiben.
   nettogewicht: |
     Gewogener oder gemessener Gesamtinhalt der Verpackungseinheit.
     Achtung: Rückzug bei eingekochten Produkten berücksichtigen Bsp. Sirup
@@ -296,7 +290,9 @@ units:
 link_share_title: Link teilen
 link_type_full: Vollständiger Link
 link_type_short: Kurz-Link  
-link_short_disclaimer: "Der Kurz-Link verweist auf declarino.ch und bleibt dauerhaft gültig."
+link_short_disclaimer: "Der Kurz-Link speichert die Rezeptur (inkl. Adresse) dauerhaft auf declarino.ch und verweist darauf."
+link_full_disclaimer: "Der vollständige Link enthält die ganze Rezeptur. Er wird in deinem Browser erzeugt, es wird nichts auf einem Server gespeichert."
+link_qr_needs_short: "Der vollständige Link ist zu lang für einen QR-Code. Für einen QR-Code oben «Kurz-Link» wählen."
 link_short_disclaimer_provider: "Hinweis: declarino.ch war nicht erreichbar. Der Kurz-Link liegt beim Drittanbieter %{provider}."
 link_copied_success: Link wurde in die Zwischenablage kopiert!
 link_copy_button: Kopieren
@@ -744,7 +740,7 @@ faq:
     - Werden meine Rezepturen auf einem Server gespeichert?
   answers:
     - Nein. Declarino unterstützt dich beim Erstellen einer Etikette, erhebt aber keinen Anspruch auf Vollständigkeit und ersetzt keine rechtliche Prüfung. Die Verantwortung für die Richtigkeit der Deklaration liegt bei der Person, die das Lebensmittel in Verkehr bringt.
-    - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Teilen» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur.
+    - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Teilen» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur. Einzige Ausnahme ist der Kurz-Link, den du im Teilen-Fenster ausdrücklich wählen kannst. Er speichert die Rezeptur samt Adresse auf declarino.ch, damit der kurze Link funktioniert.
 
 impressum: |
   # Impressum, Datenschutz
@@ -782,3 +778,17 @@ bio_name:
   add_button: "«Bio» ergänzen"
   not_allowed_warning: "Die Sachbezeichnung enthält «Bio», die Rezeptur erfüllt die Bio-Anforderungen aber nicht. Bitte «Bio» entfernen oder die Rezeptur prüfen."
   not_allowed_warning_knospe: "Die Sachbezeichnung enthält «Bio», die Rezeptur erfüllt die Knospe-Anforderungen aber nicht. Bitte «Bio» entfernen oder die Rezeptur prüfen."
+
+# Aufbewahrungshinweise zum Anwählen (R-14). Texte aus dem POEditor-Import
+# vom 28.10.2026 (help.aufbewahrungshinweis). *_hint steht nur am Knopf.
+storage_options:
+  freezer: "Im Tiefkühler bei -18 °C lagern. Nach dem Auftauen nicht wieder einfrieren."
+  max_4: "bei max. 4 °C lagern"
+  max_4_hint: "Eiprodukte"
+  max_5: "bei max. 5 °C lagern"
+  max_5_hint: "Milchprodukte, gekühlte Eier, vorgekochte Teigwaren, Patisserie"
+  cool_dry: "kühl und trocken lagern"
+  fridge_after_opening: "nach dem Öffnen im Kühlschrank lagern"
+  room_temperature: "bei Zimmertemperatur lagern"
+  dark: "lichtgeschützt lagern"
+  chilled_eggs: "einmal gekühlte Eier dauerhaft bei 5 °C aufbewahren"

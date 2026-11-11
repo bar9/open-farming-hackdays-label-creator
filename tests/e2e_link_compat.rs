@@ -84,8 +84,14 @@ async fn documented_iframe_url_prefills_the_form() {
     tokio::time::sleep(std::time::Duration::from_millis(700)).await;
 
     let label = label_html(&c).await;
-    assert!(label.contains("Bio Bergkäse"), "title missing. Label:\n{label}");
-    assert!(label.contains("Rohmilch"), "ingredient missing. Label:\n{label}");
+    assert!(
+        label.contains("Bio Bergkäse"),
+        "title missing. Label:\n{label}"
+    );
+    assert!(
+        label.contains("Rohmilch"),
+        "ingredient missing. Label:\n{label}"
+    );
     assert_no_errors(&c, "documented_iframe_url_prefills_the_form").await;
     let _ = c.close().await;
 }

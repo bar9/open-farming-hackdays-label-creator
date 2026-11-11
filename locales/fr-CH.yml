@@ -192,13 +192,7 @@ help:
     * La déclaration nutritionnelle est en principe obligatoire (valeur énergétique, matières grasses, acides gras saturés, glucides, sucres, protéines et sel pour 100 g). En sont exemptées les denrées alimentaires selon l'annexe 9 ODAl (fabriquées artisanalement et vendues localement dans un rayon de moins de 50 km ou en vente directe).
   
   aufbewahrungshinweis: |
-    | Types de conservation | Conditions |
-    | --- | --- |
-    | Conserver au congélateur à -18°C. Ne pas recongeler après décongélation. |
-    | conserver à max. 4°C (ovoproduits) | conserver à max. 5°C (produits laitiers, œufs réfrigérés, pâtes précuites, pâtisserie) |
-    | conserver au frais et au sec | après ouverture, conserver au réfrigérateur |
-    | conserver à température ambiante | conserver à l'abri de la lumière |
-    | les œufs une fois réfrigérés doivent être conservés en permanence à 5°C | texte personnalisé |
+    Indications pour une bonne conservation, p. ex. température ou conservation après ouverture. Reprends une indication fréquente avec les boutons sous le champ ou écris ton propre texte.
   nettogewicht: |
     Contenu total pesé ou mesuré de l'unité d'emballage. 
     Attention: tenir compte de la réduction lors de la cuisson des produits ex. sirop
@@ -292,7 +286,9 @@ help:
 link_share_title: Partager le lien
 link_type_full: Lien complet
 link_type_short: Lien court
-link_short_disclaimer: "Le lien court renvoie à declarino.ch et reste valable durablement."
+link_short_disclaimer: "Le lien court enregistre durablement la recette (adresse comprise) sur declarino.ch et y renvoie."
+link_full_disclaimer: "Le lien complet contient toute la recette. Il est créé dans ton navigateur, rien n'est enregistré sur un serveur."
+link_qr_needs_short: "Le lien complet est trop long pour un code QR. Pour obtenir un code QR, choisis « Lien court » ci-dessus."
 link_short_disclaimer_provider: "Remarque : declarino.ch n'était pas joignable. Le lien court est hébergé par le service tiers %{provider}."
 link_copied_success: Le lien a été copié dans le presse-papiers !
 link_copy_button: Copier
@@ -740,7 +736,7 @@ faq:
     - Mes recettes sont-elles enregistrées sur un serveur ?
   answers:
     - Non. Declarino t'aide à créer une étiquette, mais ne prétend pas être exhaustif et ne remplace pas un examen juridique. La responsabilité de l'exactitude de la déclaration incombe à la personne qui met la denrée alimentaire sur le marché.
-    - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Partager ». Toute personne disposant de ce lien voit la recette qu'il contient.
+    - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Partager ». Toute personne disposant de ce lien voit la recette qu'il contient. Seule exception, le lien court, que tu peux choisir expressément dans la fenêtre de partage. Il enregistre la recette, adresse comprise, sur declarino.ch pour que le lien court fonctionne.
 
 impressum: |
   # Mentions légales, Protection des données
@@ -778,3 +774,16 @@ bio_name:
   add_button: "Ajouter «bio»"
   not_allowed_warning: "La dénomination contient «bio», mais la recette ne satisfait pas aux exigences Bio. Veuillez retirer «bio» ou vérifier la recette."
   not_allowed_warning_knospe: "La dénomination contient «bio», mais la recette ne satisfait pas aux exigences du Bourgeon. Veuillez retirer «bio» ou vérifier la recette."
+
+# Indications de conservation à sélectionner (R-14), import POEditor du 28.10.2026.
+storage_options:
+  freezer: "Conserver au congélateur à -18 °C. Ne pas recongeler après décongélation."
+  max_4: "conserver à max. 4 °C"
+  max_4_hint: "ovoproduits"
+  max_5: "conserver à max. 5 °C"
+  max_5_hint: "produits laitiers, œufs réfrigérés, pâtes précuites, pâtisserie"
+  cool_dry: "conserver au frais et au sec"
+  fridge_after_opening: "après ouverture, conserver au réfrigérateur"
+  room_temperature: "conserver à température ambiante"
+  dark: "conserver à l'abri de la lumière"
+  chilled_eggs: "les œufs une fois réfrigérés doivent être conservés en permanence à 5 °C"
