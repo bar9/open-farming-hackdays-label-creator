@@ -1,6 +1,7 @@
 use crate::category_service::{
-    is_beef_category, is_dairy_category, is_egg_category, is_egg_ingredient_name, is_fish_category,
-    is_honey_category, is_honey_ingredient_name, is_insect_category, is_meat_category,
+    is_beef_category, is_dairy_category, is_dairy_ingredient_name, is_egg_category,
+    is_egg_ingredient_name, is_fish_category, is_honey_category, is_honey_ingredient_name,
+    is_insect_category, is_meat_category,
 };
 use crate::model::{lookup_agricultural, lookup_allergen, Country};
 use crate::rules::RuleDef;
@@ -2930,10 +2931,8 @@ fn should_show_origin_knospe_under90(
         return true;
     }
 
-    // Name-giving ingredients (namensgebende Zutat) always show origin for Knospe
-    if ingredient.is_namensgebend == Some(true) {
-        return true;
-    }
+    // NOTE: «Namensgebend» deliberately has NO effect on the origin rules.
+    // Mirjam (12.11.2026): it only drives the percentage output.
 
     // i. Any agricultural ingredient with >= 50% (Mirjam: plant or animal).
     if percentage >= 50.0 {
@@ -2964,6 +2963,16 @@ fn should_show_origin_knospe_under90(
         {
             return true;
         }
+    }
+
+    // iv. (cont.) Dairy by NAME: «alles aus Milch» needs an origin even when
+    // neither the BLV API nor the food_db supplied a category (Mirjam,
+    // 12.11.2026: Butter, «Greyerzer, vollfett»). Only when no category
+    // contradicts it — a category match was already handled above.
+    if category.is_none()
+        && (is_dairy_ingredient_name(name) || is_dairy_ingredient_name(&ingredient.name))
+    {
+        return true;
     }
 
     // v. Swiss agricultural ingredients with >=10% share (regardless of category)
@@ -3200,17 +3209,18 @@ fn validate_knospe_under90_origin(
                 || is_honey_ingredient_name(name)
                 || is_honey_ingredient_name(&ingredient.name)
                 || cat.is_some_and(|c| is_egg_category(c) || is_honey_category(c));
+            let is_dairy_by_name =
+                is_dairy_ingredient_name(name) || is_dairy_ingredient_name(&ingredient.name);
             let reason = if is_mono_product {
                 t!("validation.knospe_mono_origin_required").to_string()
-            } else if ingredient.is_namensgebend == Some(true) {
-                t!("validation.knospe_name_giving_origin_required").to_string()
             } else if percentage >= 50.0 {
                 t!("validation.knospe_plants_over_50_origin_required").to_string()
             } else if percentage >= 10.0 && (is_egg_or_honey || cat.is_some_and(is_fish_category)) {
                 t!("validation.knospe_egg_honey_fish_origin_required").to_string()
             } else if cat.is_some_and(|c| {
                 is_dairy_category(c) || is_meat_category(c) || is_insect_category(c)
-            }) {
+            }) || (cat.is_none() && is_dairy_by_name)
+            {
                 t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
             } else if ingredient.has_swiss_origin() && percentage >= 10.0 {
                 t!("validation.knospe_over_10_percent_origin_required").to_string()

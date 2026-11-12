@@ -1321,10 +1321,26 @@ impl Country {
     }
 }
 
+/// Normalise an ingredient name for food_db matching: case-insensitive,
+/// commas dropped, whitespace collapsed. The BLV API often writes
+/// «Greyerzer, vollfett» where the curated food_db has «Greyerzer vollfett» —
+/// the two must hit the same row (allergen flag, category, agricultural flag).
+fn normalize_food_name(name: &str) -> String {
+    name.to_lowercase()
+        .replace(',', " ")
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn food_names_match(a: &str, b: &str) -> bool {
+    a == b || normalize_food_name(a) == normalize_food_name(b)
+}
+
 pub fn lookup_allergen(name: &str) -> bool {
     let mut is_allergen = false;
     for entry in food_db() {
-        if entry.0.as_str() == name && entry.1 {
+        if food_names_match(entry.0.as_str(), name) && entry.1 {
             is_allergen = true;
         }
     }
@@ -1378,7 +1394,7 @@ pub fn lookup_category(name: &str) -> Option<String> {
 
     for record in rdr.records() {
         let record = record.unwrap();
-        if record.get(0).unwrap() == name {
+        if food_names_match(record.get(0).unwrap(), name) {
             return record.get(3).filter(|c| !c.is_empty()).map(String::from);
         }
     }
@@ -1387,7 +1403,7 @@ pub fn lookup_category(name: &str) -> Option<String> {
 
 pub fn lookup_agricultural(name: &str) -> bool {
     for entry in food_db_full() {
-        if entry.0.as_str() == name {
+        if food_names_match(entry.0.as_str(), name) {
             return entry.2; // Return agricultural status
         }
     }

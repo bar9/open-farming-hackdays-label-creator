@@ -352,8 +352,10 @@ fn knospe_under_90_percent_ch_namensgebende_always_shows_origin() {
 }
 
 #[test]
-fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_origin() {
-    // This test demonstrates that name-giving ingredients show origin even with low percentage
+fn knospe_under_90_percent_ch_namensgebende_ingredient_does_not_show_origin() {
+    // Mirjam (12.11.2026): «Namensgebend» only drives the percentage output,
+    // it must NOT trigger an origin on the label. Vanilla (EU, 10%,
+    // namensgebend) therefore stays without a country.
     let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
     let input = InputBuilder::new()
         .ingredient(
@@ -371,11 +373,100 @@ fn knospe_under_90_percent_ch_namensgebende_ingredient_low_percentage_shows_orig
     let output = calculator.execute(input);
     let label = output.label;
 
-    // Vanilla should show origin (name-giving ingredient) even at only 10%
-    assert!(label.contains("(EU)")); // Vanilla shows origin (name-giving)
-                                     // Hafer (Swiss, 90% ≥10%) shows origin under Swiss agricultural ≥10% rule
-    assert!(label.contains("(CH)")); // Hafer shows origin (Swiss ≥10%)
-    assert!(label.contains("Hafer (CH), Vanilla (EU)")); // Ordered by weight
+    // Vanilla: namensgebend alone must not print the origin
+    assert!(!label.contains("(EU)"), "label was: {}", label);
+    // Hafer (Swiss, 90% ≥10%) shows origin under Swiss agricultural ≥10% rule
+    assert!(label.contains("Hafer (CH), Vanilla")); // Ordered by weight
+}
+
+// Regression (Mirjam 12.11.2026, declarino.ch/s/HClTnpf): every dairy
+// ingredient shows its origin on a BIO KNOSPE label — Butter (alias, no
+// category) and «Greyerzer, vollfett» (BLV comma spelling, no curated
+// category) used to be skipped while Milch/Joghurt (categorised) worked.
+#[test]
+fn knospe_under_90_mirjam_dairy_recipe_all_dairy_shows_origin() {
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let input = InputBuilder::new()
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 500.0)
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Milch", 150.0)
+                .category("Milch und Milchprodukte")
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Joghurt nature", 100.0)
+                .category("Milch und Milchprodukte")
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Butter", 80.0)
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Greyerzer, vollfett", 50.0)
+                .origin(Country::CH)
+                .build(),
+        )
+        // Import share pushes the recipe below 90% CH
+        .ingredient(
+            IngredientBuilder::new_agri("Rohrzucker", 120.0)
+                .origin(Country::BR)
+                .build(),
+        )
+        .build();
+    let output = calculator.execute(input);
+    let label = &output.label;
+
+    assert!(label.contains("Milch (CH)"), "label was: {}", label);
+    assert!(label.contains("Joghurt nature (CH)"), "label: {}", label);
+    // Butter: no API category, no explicit canonical — dairy by name.
+    assert!(label.contains("Butter (CH)"), "label was: {}", label);
+    // Greyerzer: BLV comma spelling resolves via normalised food_db lookup;
+    // label_name drops the comma on the printed label.
+    assert!(
+        label.contains("Greyerzer vollfett (CH)"),
+        "label was: {}",
+        label
+    );
+}
+
+// Companion to the recipe above: «Namensgebend» must not change which
+// origins print (Mirjam 12.11.2026 — it only affects the % output).
+#[test]
+fn knospe_under_90_namensgebend_does_not_change_printed_origins() {
+    let build = |namensgebend: bool| {
+        let mut butter = IngredientBuilder::new_agri("Butter", 80.0).origin(Country::CH);
+        if namensgebend {
+            butter = butter.namensgebend();
+        }
+        InputBuilder::new()
+            .ingredient(
+                IngredientBuilder::new_agri("Weizenmehl", 700.0)
+                    .origin(Country::CH)
+                    .build(),
+            )
+            .ingredient(butter.build())
+            .ingredient(
+                IngredientBuilder::new_agri("Rohrzucker", 220.0)
+                    .origin(Country::BR)
+                    .build(),
+            )
+            .build()
+    };
+    let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
+    let without = calculator.execute(build(false)).label;
+    let with = calculator.execute(build(true)).label;
+
+    // Butter is dairy → origin prints in both; the flag changes only the %.
+    assert!(without.contains("Butter (CH)"), "label: {}", without);
+    assert!(with.contains("(CH)") && with.contains("Butter"), "label: {}", with);
 }
 
 #[test]

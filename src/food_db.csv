@@ -10,8 +10,8 @@ Apfel,0,1,
 Apfelmus ungezuckert,0,1,
 Apfelsaft,0,1,
 Apfelessig,0,1,
-Appenzeller viertelfett,1,1,
-Appenzeller vollfett,1,1,
+Appenzeller viertelfett,1,1,Milch und Milchprodukte
+Appenzeller vollfett,1,1,Milch und Milchprodukte
 Aprikose,0,1,
 Aubergine,0,1,
 Avocado,0,1,
@@ -22,7 +22,7 @@ Baumnuss,1,1,
 Baumnussöl,1,1,
 Birne,0,1,
 Birnensaft,0,1,
-Blanc battu nature,1,1,
+Blanc battu nature,1,1,Milch und Milchprodukte
 Blumenkohl,0,1,
 Bohne getrocknet,0,1,
 Bohne grün,0,1,
@@ -47,13 +47,13 @@ Dinkelmehl,1,1,
 Dinkelmehl Vollkorn,1,1,
 Distelöl,0,1,
 Doppelrahm pasteurisiert,1,1,Milch und Milchprodukte
-Dorsch,1,1,
+Dorsch,1,1,Fisch
 Edelkastanie,0,1,
-Egli,1,1,
-Ei,1,1,
+Egli,1,1,Fisch
+Ei,1,1,Eier
 Eierschwamm,0,1,
 Eisbergsalat,0,1,
-Emmentaler,1,1,
+Emmentaler,1,1,Milch und Milchprodukte
 Endivie,0,1,
 Erbse,0,1,
 Erbse grün,0,1,
@@ -66,19 +66,19 @@ Essig,0,1,
 Federkohl,0,1,
 Feige,0,1,
 Feige getrocknet,0,1,
-Felche,1,1,
+Felche,1,1,Fisch
 Fenchel,0,1,
-Flunder,1,1,
-Forelle,1,1,
-Freiburger Vacherin,1,1,
+Flunder,1,1,Fisch
+Forelle,1,1,Fisch
+Freiburger Vacherin,1,1,Milch und Milchprodukte
 Frischkäse Doppelrahm,1,1,Milch und Milchprodukte
-Garnele,1,1,
+Garnele,1,1,"Meeresfrüchte, Krusten- und Schalentiere"
 Gerstenflocken,1,1,
-Glarner Schabziger,1,1,
-Gorgonzola,1,1,
+Glarner Schabziger,1,1,Milch und Milchprodukte
+Gorgonzola,1,1,Milch und Milchprodukte
 Granatapfel,0,1,
 Grapefruit,0,1,
-Greyerzer vollfett,1,1,
+Greyerzer vollfett,1,1,Milch und Milchprodukte
 Gurke,0,1,
 Haferflocken,1,1,
 Haferkleie,1,1,
@@ -94,20 +94,20 @@ Hartkäse vollfett,1,1,Milch und Milchprodukte
 Hartweizengriess,1,1,
 Haselnuss,1,1,
 Haselnussöl,1,1,
-Hecht,1,1,
+Hecht,1,1,Fisch
 Hefe,0,1,
 Heidelbeere,0,1,
-Heilbutt,1,1,
+Heilbutt,1,1,Fisch
 Himbeere,0,1,
-Hinterschinken,0,1,
-Hirschfleisch,0,1,
+Hinterschinken,0,1,Fleisch und Innereien
+Hirschfleisch,0,1,Fleisch und Innereien
 Hirse,0,1,
 Hirseflocken Vollkorn,0,1,
 Holunderbeere schwarz,0,1,
 Honigmelone,0,1,
-Hühnerei ganz,1,1,
-Hühnereigelb,1,1,
-Eiweiss,1,1,
+Hühnerei ganz,1,1,Eier
+Hühnereigelb,1,1,Eier
+Eiweiss,1,1,Eier
 Joghurt nature,1,1,Milch und Milchprodukte
 Johannisbeere rot,0,1,
 Johannisbeere schwarz,0,1,
@@ -115,10 +115,10 @@ Kaffee löslich Pulver,0,1,
 Kaffeerahm,1,1,Milch und Milchprodukte
 Kakaobutter,0,1,
 Kaki,0,1,
-Kalbfleisch,0,1,
-Kalmar,1,1,
-Kaninchen Filet roh,0,1,
-Kaninchenfleisch,0,1,
+Kalbfleisch,0,1,Fleisch und Innereien
+Kalmar,1,1,"Meeresfrüchte, Krusten- und Schalentiere"
+Kaninchen Filet roh,0,1,Fleisch und Innereien
+Kaninchenfleisch,0,1,Fleisch und Innereien
 Karotte,0,1,
 Kartoffel,0,1,
 Kartoffelstärke,0,1,
@@ -141,10 +141,10 @@ Käsereibutter,1,1,Milch und Milchprodukte
 Kürbis,0,1,
 Kürbiskerne,0,1,
 Kürbiskernöl,0,1,
-Lachs geräuchert,1,1,
-Lachs Wildfang,1,1,
-Lachs Zucht,1,1,
-Lammfleisch,0,1,
+Lachs geräuchert,1,1,Fisch
+Lachs Wildfang,1,1,Fisch
+Lachs Zucht,1,1,Fisch
+Lammfleisch,0,1,Fleisch und Innereien
 Lattich,0,1,
 Lauch,0,1,
 Leinsamen,0,1,
@@ -152,7 +152,7 @@ Leinöl,0,1,
 Linse,0,1,
 Lupinen,1,1,
 Magermilch UHT,1,1,Milch und Milchprodukte
-Magermilchpulver,1,1,
+Magermilchpulver,1,1,Milch und Milchprodukte
 Magerquark,1,1,Milch und Milchprodukte
 Mais,0,1,
 Maisgriess,0,1,
@@ -168,14 +168,14 @@ Mango,0,1,
 Mango getrocknet,0,1,
 Mangold,0,1,
 Maniok,0,1,
-Mascarpone,1,1,
-Miesmuschel,1,1,
+Mascarpone,1,1,Milch und Milchprodukte
+Miesmuschel,1,1,"Meeresfrüchte, Krusten- und Schalentiere"
 Milch,1,1,Milch und Milchprodukte
 Mirabelle,0,1,
-Molke,1,1,
+Molke,1,1,Milch und Milchprodukte
 Morchel,0,1,
-Mozzarella,1,1,
-Mutschli,1,1,
+Mozzarella,1,1,Milch und Milchprodukte
+Mutschli,1,1,Milch und Milchprodukte
 Nektarine,0,1,
 Nüsslisalat,0,1,
 Olive,0,1,
@@ -194,13 +194,13 @@ Peperoni rot,0,1,
 Petersilie,0,1,
 Pfeffer,0,1,
 Pfefferminze,0,1,
-Pferdfleisch,0,1,
+Pferdfleisch,0,1,Fleisch und Innereien
 Pfirsich,0,1,
 Pflaume,0,1,
 Pflaume getrocknet,0,1,
 Pinienkerne,1,1,
 Pistazie,1,1,
-Pouletfleisch,0,1,
+Pouletfleisch,0,1,Fleisch und Innereien
 Preiselbeere,0,1,
 Quinoa,0,1,
 Quitte,0,1,
@@ -209,43 +209,43 @@ Radieschen,0,1,
 Rahmquark,1,1,Milch und Milchprodukte
 Rande,0,1,
 Rapsöl,0,1,
-Rehfleisch,0,1,
+Rehfleisch,0,1,Fleisch und Innereien
 Reis,0,1,
 Rettich,0,1,
 Rhabarber,0,1,
-Rindfleisch,0,1,
+Rindfleisch,0,1,Fleisch und Innereien
 Roggenmehl,1,1,
-Rohesspeck,0,1,
-Rohschinken,0,1,
+Rohesspeck,0,1,Fleisch und Innereien
+Rohschinken,0,1,Fleisch und Innereien
 Rohzucker,0,1,
 Rollgerste,1,1,
-Rollmops,1,1,
+Rollmops,1,1,Fisch
 Rosenkohl,0,1,
 Rosine getrocknet,0,1,
 Rosmarin,0,1,
 Rotkohl,0,1,
 Rotwein,0,1,
 Rucola,0,1,
-Salami,0,1,
+Salami,0,1,Fleisch und Innereien
 Salbei,0,1,
 Salz,0,0,
-Sardelle im Öl abgetropft,1,1,
-Sardine,1,1,
-Sardine im Öl abgetropft,1,1,
+Sardelle im Öl abgetropft,1,1,Fisch
+Sardine,1,1,Fisch
+Sardine im Öl abgetropft,1,1,Fisch
 Sauerrahm,1,1,Milch und Milchprodukte
 Saurer Halbrahm,1,1,Milch und Milchprodukte
-Scampi (Kaisergranat),1,1,
+Scampi (Kaisergranat),1,1,"Meeresfrüchte, Krusten- und Schalentiere"
 Schafmilch,1,1,Milch und Milchprodukte
 Schaumwein,0,1,
 Schnittlauch,0,1,
 Schokoladenpulver,0,1,
-Scholle,1,1,
+Scholle,1,1,Fisch
 Schwarzwurzel,0,1,
-Schweinefleisch,0,1,
-Schweineschmalz,0,1,
-Seehecht,1,1,
-Seelachs,1,1,
-Seezunge,1,1,
+Schweinefleisch,0,1,Fleisch und Innereien
+Schweineschmalz,0,1,Fleisch und Innereien
+Seehecht,1,1,Fisch
+Seelachs,1,1,Fisch
+Seezunge,1,1,Fisch
 Seitan,1,1,
 Senf,1,1,
 Senfsamen,1,1,
@@ -261,17 +261,17 @@ Sonnenblumenkerne,0,1,
 Sonnenblumenöl,0,1,
 Spargel,0,1,
 Spinat,0,1,
-Sprinz,1,1,
+Sprinz,1,1,Milch und Milchprodukte
 Stachelbeere,0,1,
 Stangensellerie,1,1,
 Steinpilz,0,1,
-Surimi,1,1,
+Surimi,1,1,Fisch
 Süsskartoffel,0,1,
 Teilentrahmte Milch pasteurisiert,1,1,Milch und Milchprodukte
 Teilentrahmte Milch UHT,1,1,Milch und Milchprodukte
-Thon im Wasser abgetropft,1,1,
-Thon im Öl abgetropft,1,1,
-Thunfisch,1,1,
+Thon im Wasser abgetropft,1,1,Fisch
+Thon im Öl abgetropft,1,1,Fisch
+Thunfisch,1,1,Fisch
 Thymian,0,1,
 Tofu,1,1,
 Tomate,0,1,
@@ -283,17 +283,17 @@ Traubensaft,0,1,
 Traubenzucker,0,1,
 Vanille,0,1,
 Vanillezucker,0,1,
-Trockenfleisch,0,1,
-Truthahnfleisch,0,1,
-Tête de Moine,1,1,
+Trockenfleisch,0,1,Fleisch und Innereien
+Truthahnfleisch,0,1,Fleisch und Innereien
+Tête de Moine,1,1,Milch und Milchprodukte
 Vollkornreiswaffel,0,1,
 Vollmilch pasteurisiert,1,1,Milch und Milchprodukte
 Vollmilch UHT,1,1,Milch und Milchprodukte
-Vollmilchpulver,1,1,
+Vollmilchpulver,1,1,Milch und Milchprodukte
 Vollrahm,1,1,Milch und Milchprodukte
 Vollrahm pasteurisiert,1,1,Milch und Milchprodukte
 Vollrahm UHT,1,1,Milch und Milchprodukte
-Vorderschinken,0,1,
+Vorderschinken,0,1,Fleisch und Innereien
 Vorzugsbutter,1,1,Milch und Milchprodukte
 Wasser,0,0,
 Wassermelone,0,1,

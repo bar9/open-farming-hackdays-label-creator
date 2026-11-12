@@ -276,14 +276,14 @@ fn recipe_schoggi_cookie_bk_mit_milch() {
         "Butter should show origin (CH). Label: {}",
         output.label
     );
-    // Sub-ingredient Vollmilchpulver (4.6% of the product): Excel says **Ja**,
-    // the app shows none. Milk powders are deliberately not curated as dairy
-    // (Roland 03.07.2026) and 4.6% < 10% Swiss threshold. OPEN with Mirjam:
-    // does «Milch und Milchprodukte immer» cover milk powder? See
-    // requirements/herkunft_problemanalyse.md §1.2.
+    // Sub-ingredient Vollmilchpulver (4.6% of the product): Excel says **Ja**.
+    // Resolved by Mirjam (12.11.2026): «alles aus Milch» always carries its
+    // origin, with or without a BLV category — milk powder included. The
+    // former OPEN point in requirements/herkunft_problemanalyse.md §1.2 is
+    // thereby closed: dairy wins over the 10% Swiss threshold.
     assert!(
-        !output.label.contains("Vollmilchpulver* (CH)"),
-        "Vollmilchpulver should NOT show origin (4.6%% < 10%% threshold). Label: {}",
+        output.label.contains("Vollmilchpulver* (CH)"),
+        "Vollmilchpulver is dairy and must show origin (CH). Label: {}",
         output.label
     );
     // Zucker: Excel Nein, DEC-25 rule v: Swiss agricultural ≥ 10% (18%) → (CH)

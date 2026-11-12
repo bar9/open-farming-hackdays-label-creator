@@ -204,6 +204,126 @@ pub fn is_honey_category(category: &str) -> bool {
     category_lower.contains("honey")
 }
 
+/// Is this ingredient, by its name, milk or a milk product? Mirjam
+/// (12.11.2026): «alles aus Milch» must always carry its origin on a BIO
+/// KNOSPE label, with or without a BLV category match. The category check
+/// (`is_dairy_category`) stays authoritative when a category exists; this
+/// name fallback catches manual entries and food_db/BLV spelling variants
+/// («Butter», «Greyerzer, vollfett»). Plant-based lookalikes (Kokosmilch,
+/// Kakaobutter, Erdnussbutter) and Leberkäse must never match.
+pub fn is_dairy_ingredient_name(name: &str) -> bool {
+    let n = name.trim().to_lowercase();
+    let first = n
+        .split([' ', ',', '(', '-', '/'])
+        .find(|w| !w.is_empty())
+        .unwrap_or("");
+
+    // Non-dairy compounds that end in a dairy word.
+    let not_dairy = matches!(
+        first,
+        "kokosmilch"
+            | "kokosnussmilch"
+            | "mandelmilch"
+            | "hafermilch"
+            | "sojamilch"
+            | "reismilch"
+            | "dinkelmilch"
+            | "kakaobutter"
+            | "erdnussbutter"
+            | "sheabutter"
+            | "mandelbutter"
+            | "nussbutter"
+            | "leberkäse"
+            | "fleischkäse"
+    );
+    if not_dairy {
+        return false;
+    }
+    // fr/it plant "milks" and cocoa butter: «lait de coco», «burro di cacao» …
+    if matches!(first, "lait" | "latte")
+        && ["coco", "amande", "avoine", "soja", "riz", "mandorla", "avena", "soia", "riso"]
+            .iter()
+            .any(|p| n.contains(p))
+    {
+        return false;
+    }
+    if matches!(first, "beurre" | "burro") && (n.contains("cacao") || n.contains("cacahuète")) {
+        return false;
+    }
+
+    // Exact dairy words on the first word (de/fr/it/en + common cheeses).
+    let exact = matches!(
+        first,
+        "milch"
+            | "butter"
+            | "rahm"
+            | "sahne"
+            | "joghurt"
+            | "jogurt"
+            | "quark"
+            | "käse"
+            | "molke"
+            | "kefir"
+            | "crème"
+            | "mozzarella"
+            | "mascarpone"
+            | "ricotta"
+            | "parmesan"
+            | "parmigiano"
+            | "sbrinz"
+            | "sprinz"
+            | "emmentaler"
+            | "greyerzer"
+            | "gruyère"
+            | "appenzeller"
+            | "tilsiter"
+            | "raclette"
+            | "feta"
+            | "camembert"
+            | "brie"
+            | "gorgonzola"
+            | "mutschli"
+            | "vacherin"
+            | "schabziger"
+            | "lait"
+            | "beurre"
+            | "fromage"
+            | "yogourt"
+            | "yaourt"
+            | "séré"
+            | "sérac"
+            | "latte"
+            | "burro"
+            | "panna"
+            | "formaggio"
+            | "yogurt"
+            | "milk"
+            | "cream"
+            | "cheese"
+            | "yoghurt"
+            | "curd"
+            | "whey"
+    );
+    if exact {
+        return true;
+    }
+
+    // German compounds: Vollmilch, Buttermilch, Magerquark, Hartkäse,
+    // Sauerrahm, Vollmilchpulver … (exclusions already handled above).
+    [
+        "milch",
+        "milchpulver",
+        "butter",
+        "rahm",
+        "quark",
+        "käse",
+        "joghurt",
+        "jogurt",
+    ]
+    .iter()
+    .any(|s| first.ends_with(s))
+}
+
 /// Check if a category represents milk or dairy products
 pub fn is_dairy_category(category: &str) -> bool {
     let category_lower = category.to_lowercase();
@@ -308,6 +428,41 @@ pub fn is_plant_category(category: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_dairy_ingredient_name_detection() {
+        // Mirjam's recipe (12.11.2026): these must count as dairy by name.
+        assert!(is_dairy_ingredient_name("Butter"));
+        assert!(is_dairy_ingredient_name("Greyerzer, vollfett"));
+        assert!(is_dairy_ingredient_name("Greyerzer vollfett"));
+        assert!(is_dairy_ingredient_name("Milch"));
+        assert!(is_dairy_ingredient_name("Joghurt nature"));
+        assert!(is_dairy_ingredient_name("Magerquark"));
+        assert!(is_dairy_ingredient_name("Quark"));
+        // Compounds
+        assert!(is_dairy_ingredient_name("Vollmilchpulver"));
+        assert!(is_dairy_ingredient_name("Buttermilch"));
+        assert!(is_dairy_ingredient_name("Sauerrahm"));
+        assert!(is_dairy_ingredient_name("Hartkäse vollfett"));
+        assert!(is_dairy_ingredient_name("Kochbutter"));
+        // fr/it
+        assert!(is_dairy_ingredient_name("Beurre"));
+        assert!(is_dairy_ingredient_name("Lait entier"));
+        assert!(is_dairy_ingredient_name("Burro"));
+        assert!(is_dairy_ingredient_name("Formaggio"));
+
+        // Plant lookalikes and traps must NOT match.
+        assert!(!is_dairy_ingredient_name("Kakaobutter"));
+        assert!(!is_dairy_ingredient_name("Erdnussbutter"));
+        assert!(!is_dairy_ingredient_name("Kokosnussmilch"));
+        assert!(!is_dairy_ingredient_name("Kokosmilch"));
+        assert!(!is_dairy_ingredient_name("Hafermilch"));
+        assert!(!is_dairy_ingredient_name("Lait de coco"));
+        assert!(!is_dairy_ingredient_name("Burro di cacao"));
+        assert!(!is_dairy_ingredient_name("Leberkäse"));
+        assert!(!is_dairy_ingredient_name("Weizenmehl"));
+        assert!(!is_dairy_ingredient_name("Zucker"));
+    }
 
     #[test]
     fn test_meat_category_detection() {
