@@ -1593,6 +1593,24 @@ mod food_db_tests {
         assert!(lookup_allergen("Hühnerei ganz"));
     }
 
+    // Mirjam (12.11.2026): «Greyerzer, vollfett» (BLV comma spelling) lost both
+    // its allergen bolding and the dairy origin rule because the food_db
+    // lookups matched the exact string only. The lookups normalise commas and
+    // whitespace now; all three must hit the curated row.
+    #[test]
+    fn blv_comma_spelling_hits_the_food_db_row() {
+        assert!(lookup_allergen("Greyerzer, vollfett"));
+        assert!(lookup_allergen("Greyerzer vollfett"));
+        assert_eq!(
+            lookup_category("Greyerzer, vollfett").as_deref(),
+            Some("Milch und Milchprodukte")
+        );
+        assert!(lookup_agricultural("Greyerzer, vollfett"));
+        // Unknown names still behave as before.
+        assert!(!lookup_allergen("Fantasiezutat"));
+        assert_eq!(lookup_category("Fantasiezutat"), None);
+    }
+
     // Bio_Testing_Declarino.xlsx row 34: «Salz jodiert» was not recognised as
     // non-agricultural, so the recipe was flagged «darf nicht Bio deklariert
     // werden». Salt variants resolve to the canonical «Salz» and lock the
