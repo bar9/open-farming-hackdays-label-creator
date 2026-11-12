@@ -338,13 +338,15 @@ async fn knospe_origin_required_for_all() {
         .ok()
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_default();
+    // Since 12.11.2026 (Mirjam) the message is simply
+    // «<Zutat>: Herkunftsland ist erforderlich.» — no rule wording.
     assert!(
-        body.contains("Import-Knospe"),
+        body.contains("Rohrzucker:\nHerkunftsland ist erforderlich."),
         "expected origin-required validation for the Import-Knospe ingredient without country. body:\n{}",
         body
     );
     assert!(
-        !body.contains("Salz: Herkunft"),
+        !body.contains("Salz:\nHerkunftsland"),
         "non-agricultural Salz must not be flagged for origin. body:\n{}",
         body
     );
@@ -535,9 +537,11 @@ async fn knospe_egg_at_10_percent_names_the_egg_rule() {
         "setup failed: the egg got an origin. body:\n{}",
         body.chars().take(3000).collect::<String>()
     );
+    // Since 12.11.2026 (Mirjam) all origin messages read
+    // «<Zutat>: Herkunftsland ist erforderlich.» — assert it targets the egg.
     assert!(
-        body.contains("Eier/Honig/Fisch ≥10%"),
-        "egg at exactly 10% must be flagged with the egg/honey/fish reason. body:\n{}",
+        body.contains("Eier:\nHerkunftsland ist erforderlich."),
+        "egg at exactly 10% must be flagged for origin. body:\n{}",
         body.chars().take(3000).collect::<String>()
     );
 
