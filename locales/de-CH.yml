@@ -337,7 +337,7 @@ validation:
   amount_greater_than_zero: Die Menge muss grösser als 0 sein.
   origin_required_over_50_percent: Herkunftsland ist erforderlich für Zutaten über 50%.
   origin_required_meat_over_20: Herkunftsland ist erforderlich für Fleisch-Zutaten über 20%.
-  origin_required_import_knospe: Herkunftsland ist erforderlich für Zutaten mit Import-Knospe, wenn die Import-Knospe auf der Etikette erscheint.
+  origin_required_import_knospe: Herkunftsland ist erforderlich.
   namensgebend_amount_required: Für die namensgebende Unterzutat muss eine Menge erfasst werden, damit der Prozentwert auf der Etikette erscheint.
   origin_single_level: Herkunft ist auf mehreren Ebenen dieser Zutat definiert. Bitte nur auf einer Ebene angeben und die andere entfernen.
   child_weights_incomplete: "«%{name}»: Die Mengen der Unterzutaten (%{children} g) decken die Menge der Zutat (%{parent} g) nicht. Bitte alle Unterzutaten mit Menge erfassen oder alle Mengen weglassen – sonst rechnet die Etikette nur mit den erfassten %{children} g."
@@ -347,13 +347,7 @@ validation:
   beef_breeding_location_required: Aufzuchtort ist erforderlich für Rindfleisch-Zutaten.
   beef_slaughter_location_required: Schlachtungsort ist erforderlich für Rindfleisch-Zutaten.
   fish_catch_location_required: Fangort ist erforderlich für Fisch-Zutaten.
-  knospe_mono_origin_required: Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel).
-  knospe_name_giving_origin_required: Herkunftsland ist erforderlich für namensgebende Zutaten (Knospe <90% CH Regel).
-  knospe_plants_over_50_origin_required: Herkunftsland ist erforderlich für landwirtschaftliche Zutaten ≥50% (Knospe <90% CH Regel).
-  knospe_egg_honey_fish_origin_required: Herkunftsland ist erforderlich für Eier/Honig/Fisch ≥10% (Knospe <90% CH Regel).
-  knospe_dairy_meat_insects_origin_required: Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel).
-  knospe_over_10_percent_origin_required: Herkunftsland ist erforderlich für Zutaten ≥10% (Knospe <90% CH Regel).
-  knospe_general_origin_required: Herkunftsland ist erforderlich (Knospe <90% CH Regel).
+  knospe_general_origin_required: Herkunftsland ist erforderlich.
 
 themes:
   swiss: swiss

@@ -332,7 +332,7 @@ validation:
   amount_greater_than_zero: La quantità deve essere maggiore di 0.
   origin_required_over_50_percent: Il paese di origine è richiesto per gli ingredienti superiori al 50%.
   origin_required_meat_over_20: Il paese di origine è richiesto per gli ingredienti di carne superiori al 20%.
-  origin_required_import_knospe: Il paese di origine è richiesto per gli ingredienti con Gemma Import quando la Gemma Import appare sull'etichetta.
+  origin_required_import_knospe: Il paese di origine è richiesto.
   namensgebend_amount_required: Per l'ingrediente che dà il nome al prodotto occorre indicare la quantità affinché la percentuale appaia sull'etichetta.
   origin_single_level: L'origine è definita su più livelli di questo ingrediente. Indicarla su un solo livello e rimuovere l'altra.
   child_weights_incomplete: "«%{name}»: le quantità degli ingredienti secondari (%{children} g) non coprono la quantità dell'ingrediente (%{parent} g). Inserisci una quantità per tutti gli ingredienti secondari o per nessuno – altrimenti l'etichetta conta solo i %{children} g inseriti."
@@ -342,13 +342,7 @@ validation:
   beef_breeding_location_required: Il luogo di allevamento è richiesto per gli ingredienti di manzo.
   beef_slaughter_location_required: Il luogo di macellazione è richiesto per gli ingredienti di manzo.
   fish_catch_location_required: Il luogo di cattura è richiesto per gli ingredienti di pesce.
-  knospe_mono_origin_required: Il paese di origine è richiesto per i monoprodotti (regola Gemma <90% CH).
-  knospe_name_giving_origin_required: Il paese di origine è richiesto per gli ingredienti caratterizzanti (regola Gemma <90% CH).
-  knospe_plants_over_50_origin_required: Il paese di origine è richiesto per gli ingredienti agricoli ≥50% (regola Gemma <90% CH).
-  knospe_egg_honey_fish_origin_required: Il paese di origine è richiesto per uova/miele/pesce ≥10% (regola Gemma <90% CH).
-  knospe_dairy_meat_insects_origin_required: Il paese di origine è richiesto per latte/carne/insetti (regola Gemma <90% CH).
-  knospe_over_10_percent_origin_required: Il paese di origine è richiesto per gli ingredienti ≥10% (regola Gemma <90% CH).
-  knospe_general_origin_required: Il paese di origine è richiesto (regola Gemma <90% CH).
+  knospe_general_origin_required: Il paese di origine è richiesto.
 
 themes:
   swiss: swiss

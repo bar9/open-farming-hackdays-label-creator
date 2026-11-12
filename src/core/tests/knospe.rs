@@ -60,7 +60,7 @@ fn bio_knospe_validation_missing_origin_for_import_knospe() {
     // The Import-Knospe ingredient without a real country is flagged
     let ingredient_1_messages = output.validation_messages.get("ingredients[1][origin]");
     assert!(ingredient_1_messages
-               .is_some_and(|v| v.iter().any(|m| m == "Herkunftsland ist erforderlich für Zutaten mit Import-Knospe, wenn die Import-Knospe auf der Etikette erscheint.")));
+               .is_some_and(|v| v.iter().any(|m| m == "Herkunftsland ist erforderlich.")));
     // The CH-Knospe ingredient is not
     assert!(output
         .validation_messages
@@ -469,6 +469,176 @@ fn knospe_under_90_namensgebend_does_not_change_printed_origins() {
     assert!(with.contains("(CH)") && with.contains("Butter"), "label: {}", with);
 }
 
+// Regression (Mirjam 12.11.2026, declarino.ch/s/t5icw1o): Pflicht ⇔ Ausgabe.
+// An import ingredient below every display threshold (Zucker <50%) must not
+// raise a red origin error — even without a declared country — because the
+// label would never print it. Full Knospe configuration, so the interplay of
+// Knospe_AlleZutatenHerkunft and the <90% display regime is covered.
+#[test]
+fn knospe_sugar_under_50_without_origin_raises_no_error() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 600.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        // Import sugar, 40% — below the 50% rule, not Swiss, no category:
+        // the label would not print its origin, so no error may appear.
+        .ingredient(
+            IngredientBuilder::new_agri("Zucker", 400.0)
+                .bio()
+                .origin(Country::Import)
+                .build(),
+        )
+        .total(1000.0)
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(
+        !output
+            .validation_messages
+            .contains_key("ingredients[1][origin]"),
+        "sugar <50% must not require an origin (Pflicht ⇔ Ausgabe), got: {:?}",
+        output.validation_messages
+    );
+    // And the UI field marker agrees with the validator.
+    assert_eq!(
+        output.conditionals().get(&keys::herkunft_benoetigt(1)),
+        None,
+        "UI origin marker must not flag sugar <50%"
+    );
+}
+
+// Companion (Mirjam 12.11.2026): a voluntarily declared country on that same
+// sugar stays in the recipe but is NOT printed on the label.
+#[test]
+fn knospe_sugar_under_50_with_origin_not_printed_and_no_error() {
+    let calculator = calculator_for(crate::shared::Configuration::Knospe);
+    let input = InputBuilder::new()
+        .vollstaendig()
+        .ingredient(
+            IngredientBuilder::new_agri("Weizenmehl", 600.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        )
+        .ingredient(
+            IngredientBuilder::new_agri("Zucker", 400.0)
+                .bio()
+                .origin(Country::DE)
+                .build(),
+        )
+        .total(1000.0)
+        .build();
+    let output = calculator.execute(input);
+
+    assert!(
+        !output
+            .validation_messages
+            .contains_key("ingredients[1][origin]"),
+        "declared origin must not raise an error, got: {:?}",
+        output.validation_messages
+    );
+    assert!(
+        !output.label.contains("Zucker* (DE)") && !output.label.contains("(DE)"),
+        "voluntary origin below the thresholds must not print, label: {}",
+        output.label
+    );
+}
+
+// Pflicht ⇔ Ausgabe invariant (Mirjam 12.11.2026), checked across a matrix of
+// recipes under the full Knospe configuration: an origin validation error for
+// ingredient i exists ⟹ the label would print i's origin once declared; and a
+// printed origin never belongs to an ingredient the validator ignores. This is
+// the structural guarantee that «Rezeptur überprüfen» and the label preview
+// stay in sync.
+#[test]
+fn knospe_origin_validation_iff_label_would_print() {
+    let recipes: Vec<Vec<Ingredient>> = vec![
+        // Mirjam's sugar case: import <50%
+        vec![
+            IngredientBuilder::new_agri("Weizenmehl", 600.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+            IngredientBuilder::new_agri("Zucker", 400.0).bio().build(),
+        ],
+        // Import >=50%: origin required and printed
+        vec![
+            IngredientBuilder::new_agri("Rohrzucker", 700.0).bio().build(),
+            IngredientBuilder::new_agri("Hafer", 300.0)
+                .bio()
+                .origin(Country::CH)
+                .build(),
+        ],
+        // Dairy at low percentage: always required
+        vec![
+            IngredientBuilder::new_agri("Hafer", 950.0)
+                .bio()
+                .origin(Country::EU)
+                .build(),
+            IngredientBuilder::new_agri("Butter", 50.0).bio().build(),
+        ],
+        // Egg at >=10%
+        vec![
+            IngredientBuilder::new_agri("Mehl", 850.0)
+                .bio()
+                .origin(Country::DE)
+                .build(),
+            IngredientBuilder::new_agri("Eier", 150.0).bio().build(),
+        ],
+    ];
+
+    for (r, ingredients) in recipes.into_iter().enumerate() {
+        let n = ingredients.len();
+        // Pass 1: find which ingredients the validator flags.
+        let calculator = calculator_for(crate::shared::Configuration::Knospe);
+        let mut builder = InputBuilder::new().vollstaendig();
+        for ing in &ingredients {
+            builder = builder.ingredient(ing.clone());
+        }
+        let output = calculator.execute(builder.build());
+        let flagged: Vec<usize> = (0..n)
+            .filter(|i| {
+                output
+                    .validation_messages
+                    .contains_key(&format!("ingredients[{}][origin]", i))
+            })
+            .collect();
+
+        // Pass 2: declare an origin everywhere, render, and check that every
+        // flagged ingredient's origin is printed.
+        let mut builder = InputBuilder::new().vollstaendig();
+        let mut names: Vec<String> = Vec::new();
+        for ing in &ingredients {
+            let mut filled = ing.clone();
+            if filled.origins.as_ref().is_none_or(|o| o.is_empty()) {
+                filled.origins = Some(vec![Country::FR]);
+            }
+            names.push(filled.name.clone());
+            builder = builder.ingredient(filled);
+        }
+        let printed_output = calculator.execute(builder.build());
+        for &i in &flagged {
+            // Bio markers (*, **) may sit between the name and the origin.
+            let printed = [" (", "* (", "** ("]
+                .iter()
+                .any(|sep| printed_output.label.contains(&format!("{}{}", names[i], sep)));
+            assert!(
+                printed,
+                "recipe {}: validator flagged «{}» but the label does not print \
+                 its origin once declared (Pflicht ⇔ Ausgabe broken). Label: {}",
+                r,
+                names[i],
+                printed_output.label
+            );
+        }
+    }
+}
+
 #[test]
 fn knospe_under_90_validation_eggs_over_10_percent() {
     let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
@@ -493,7 +663,7 @@ fn knospe_under_90_validation_eggs_over_10_percent() {
     let messages = egg_messages.unwrap();
     assert!(messages
         .iter()
-        .any(|msg| msg.contains("Eier/Honig/Fisch ≥10%")));
+        .any(|msg| msg == "Herkunftsland ist erforderlich."));
 }
 
 #[test]
@@ -520,7 +690,7 @@ fn knospe_under_90_validation_honey_over_10_percent() {
     let messages = honey_messages.unwrap();
     assert!(messages
         .iter()
-        .any(|msg| msg.contains("Eier/Honig/Fisch ≥10%")));
+        .any(|msg| msg == "Herkunftsland ist erforderlich."));
 }
 
 #[test]
@@ -546,7 +716,7 @@ fn knospe_under_90_validation_dairy_always_requires_origin() {
     assert!(milk_messages.is_some());
     let messages = milk_messages.unwrap();
     assert!(messages.iter().any(|msg| msg
-        == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
+        == "Herkunftsland ist erforderlich."));
 }
 
 // Regression (Testing 25.06.2026): "Butter" picked from the local food_db resolves
@@ -599,7 +769,7 @@ fn knospe_under_90_validation_butter_without_api_category_requires_origin() {
 
     let butter_messages = output.validation_messages.get("ingredients[1][origin]");
     assert!(butter_messages.is_some_and(|msgs| msgs.iter().any(|msg| msg
-        == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel).")));
+        == "Herkunftsland ist erforderlich.")));
 }
 
 #[test]
@@ -625,7 +795,7 @@ fn knospe_under_90_validation_meat_always_requires_origin() {
     assert!(meat_messages.is_some());
     let messages = meat_messages.unwrap();
     assert!(messages.iter().any(|msg| msg
-        == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
+        == "Herkunftsland ist erforderlich."));
 }
 
 #[test]
@@ -652,7 +822,7 @@ fn knospe_under_90_validation_fish_over_10_percent() {
     let messages = fish_messages.unwrap();
     assert!(messages
         .iter()
-        .any(|msg| msg.contains("Eier/Honig/Fisch ≥10%")));
+        .any(|msg| msg == "Herkunftsland ist erforderlich."));
 }
 
 #[test]
@@ -678,7 +848,7 @@ fn knospe_under_90_validation_insects_always_requires_origin() {
     assert!(insect_messages.is_some());
     let messages = insect_messages.unwrap();
     assert!(messages.iter().any(|msg| msg
-        == "Herkunftsland ist erforderlich für Milch/Fleisch/Insekten (Knospe <90% CH Regel)."));
+        == "Herkunftsland ist erforderlich."));
 }
 
 #[test]
@@ -704,7 +874,7 @@ fn knospe_under_90_validation_plant_over_50_percent() {
     assert!(wheat_messages.is_some());
     let messages = wheat_messages.unwrap();
     assert!(messages.iter().any(|msg| msg
-        == "Herkunftsland ist erforderlich für landwirtschaftliche Zutaten ≥50% (Knospe <90% CH Regel)."));
+        == "Herkunftsland ist erforderlich."));
 }
 
 #[test]
@@ -721,7 +891,7 @@ fn knospe_under_90_validation_monoproduct() {
     assert!(oil_messages.is_some());
     let messages = oil_messages.unwrap();
     assert!(messages.iter().any(
-        |msg| msg == "Herkunftsland ist erforderlich für Monoprodukte (Knospe <90% CH Regel)."
+        |msg| msg == "Herkunftsland ist erforderlich."
     ));
 }
 
@@ -1326,12 +1496,12 @@ fn mirjam_bio_knospe_validation_requires_egg_origin_from_10_percent() {
     );
 }
 
-// --- Validation reason must match the display rule at its boundaries ---------
+// --- Validation must fire at the display rule's boundaries ------------------
 // The display/require rule (`should_show_origin_knospe_under90`) uses ">= 10 %"
-// and ">= 50 %" and recognises eggs/honey by name (DEC-25, Mirjam 02.10.2026,
-// Testing 25.06.2026: «Anteil ≥ 50 %», «≥ 10 %»). The message that explains
-// *why* an origin is missing used ">" and categories only, so exactly at the
-// boundary, or for an egg typed by name, the user got the generic message.
+// and ">= 50 %" and recognises eggs/honey by name (DEC-25, Mirjam 02.10.2026).
+// Since 12.11.2026 all origin messages share one simplified wording
+// («Herkunftsland ist erforderlich.», Mirjam), so these tests now only assert
+// that the validation fires exactly at the boundary.
 
 fn under90_reason(input: Input, key: &str) -> Vec<String> {
     let calculator = calculator_with(vec![RuleDef::Knospe_Under90_Percent_CH_IngredientRules]);
@@ -1353,8 +1523,8 @@ fn under90_egg_by_name_at_exactly_10_percent_names_the_egg_rule() {
         .build();
     let msgs = under90_reason(input, "ingredients[2][origin]");
     assert!(
-        msgs.iter().any(|m| m.contains("Eier/Honig/Fisch")),
-        "egg at 10% must get the egg/honey/fish reason: {msgs:?}"
+        msgs.iter().any(|m| m == "Herkunftsland ist erforderlich."),
+        "egg at 10% must be flagged: {msgs:?}"
     );
 }
 
@@ -1372,8 +1542,8 @@ fn under90_honey_category_at_exactly_10_percent_names_the_honey_rule() {
         .build();
     let msgs = under90_reason(input, "ingredients[1][origin]");
     assert!(
-        msgs.iter().any(|m| m.contains("Eier/Honig/Fisch")),
-        "honey at 10% must get the egg/honey/fish reason: {msgs:?}"
+        msgs.iter().any(|m| m == "Herkunftsland ist erforderlich."),
+        "honey at 10% must be flagged: {msgs:?}"
     );
 }
 
@@ -1392,8 +1562,8 @@ fn under90_plant_at_exactly_50_percent_names_the_50_percent_rule() {
         .build();
     let msgs = under90_reason(input, "ingredients[0][origin]");
     assert!(
-        msgs.iter().any(|m| m.contains("50")),
-        "agri ingredient at 50% must get the 50% reason: {msgs:?}"
+        msgs.iter().any(|m| m == "Herkunftsland ist erforderlich."),
+        "agri ingredient at 50% must be flagged: {msgs:?}"
     );
 }
 
@@ -1411,8 +1581,8 @@ fn under90_uncategorised_agri_at_50_percent_still_names_the_50_percent_rule() {
         .build();
     let msgs = under90_reason(input, "ingredients[0][origin]");
     assert!(
-        msgs.iter().any(|m| m.contains("50")),
-        "uncategorised agri ingredient at 60% must get the 50% reason: {msgs:?}"
+        msgs.iter().any(|m| m == "Herkunftsland ist erforderlich."),
+        "uncategorised agri ingredient at 60% must be flagged: {msgs:?}"
     );
 }
 

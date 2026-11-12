@@ -2186,6 +2186,25 @@ impl Calculator {
         };
 
         // validations
+        //
+        // Pflicht ⇔ Ausgabe (Mirjam 12.11.2026): the origin validators below must
+        // fire exactly when the label output would print the origin. So the
+        // regime the OutputFormatter will use is computed HERE, before the
+        // validators run — mirroring the if-chain in
+        // `format_origin_for_knospe_rules` (100% → none, 90–99% → CH only,
+        // <90% → `should_show_origin_knospe_under90`).
+        let knospe_swiss_percentage = self.swiss_agricultural_percentage(&input.ingredients);
+        let under90_display_active = self
+            .rule_defs
+            .contains(&RuleDef::Knospe_Under90_Percent_CH_IngredientRules)
+            && !(knospe_swiss_percentage >= 100.0
+                && self
+                    .rule_defs
+                    .contains(&RuleDef::Knospe_100_Percent_CH_NoOrigin))
+            && !(knospe_swiss_percentage >= 90.0
+                && self
+                    .rule_defs
+                    .contains(&RuleDef::Knospe_90_99_Percent_CH_ShowOrigin));
         #[cfg(target_arch = "wasm32")]
         web_sys::console::log_1(&"📋 Validation Rules".into());
         for ruleDef in &self.rule_defs {
@@ -2251,23 +2270,58 @@ impl Calculator {
                 }
                 if let RuleDef::Knospe_AlleZutatenHerkunft = ruleDef {
                     self.log_rule_processing(ruleDef, "VALIDATION", Some("Checking origin for Import-Knospe ingredients when the Import-Knospe shows"));
+                    // Pflicht ⇔ Ausgabe: when the <90% output regime is active,
+                    // only flag Import-Knospe ingredients whose origin would
+                    // actually print on the label (Mirjam 12.11.2026 — sugar
+                    // <50% without a country must not raise an error).
+                    let would_print = under90_display_active.then(|| {
+                        let agri_count = input
+                            .ingredients
+                            .iter()
+                            .flat_map(|i| i.leaves())
+                            .filter(|i| i.is_agricultural())
+                            .count();
+                        input
+                            .ingredients
+                            .iter()
+                            .map(|ing| {
+                                let pct = calculate_ingredient_percentage(
+                                    ing.computed_amount(),
+                                    total_amount,
+                                );
+                                should_show_origin_knospe_under90(
+                                    ing,
+                                    pct,
+                                    total_amount,
+                                    agri_count == 1,
+                                )
+                            })
+                            .collect::<Vec<bool>>()
+                    });
                     validate_import_knospe_origin(
                         &input.ingredients,
                         import_knospe_logo_would_show,
+                        would_print.as_deref(),
                         &mut validation_messages,
                     )
                 }
                 if let RuleDef::Knospe_Under90_Percent_CH_IngredientRules = ruleDef {
-                    self.log_rule_processing(
-                        ruleDef,
-                        "VALIDATION",
-                        Some("Checking Knospe <90% specific ingredient origin requirements"),
-                    );
-                    validate_knospe_under90_origin(
-                        &input.ingredients,
-                        total_amount,
-                        &mut validation_messages,
-                    );
+                    // Pflicht ⇔ Ausgabe: only validate the <90% requirements when
+                    // the output actually uses the <90% regime. At ≥90% CH the
+                    // label prints (CH) for Swiss ingredients only — nothing an
+                    // origin-less ingredient could be required to declare.
+                    if under90_display_active {
+                        self.log_rule_processing(
+                            ruleDef,
+                            "VALIDATION",
+                            Some("Checking Knospe <90% specific ingredient origin requirements"),
+                        );
+                        validate_knospe_under90_origin(
+                            &input.ingredients,
+                            total_amount,
+                            &mut validation_messages,
+                        );
+                    }
                 }
             }
             // Non-ingredient validations always run
@@ -2491,13 +2545,31 @@ impl Calculator {
 
                 // Bio/Knospe rule (Testing 25.06.2026): origin is required only for
                 // Import-Knospe ingredients without a country, and only when the
-                // label output is the Import-Knospe.
+                // label output is the Import-Knospe. Pflicht ⇔ Ausgabe (Mirjam
+                // 12.11.2026): in the <90% regime, additionally only when the
+                // label would actually print this ingredient's origin — keeping
+                // the UI marker in sync with the validators above.
                 if has_bio_knospe_rule
                     && import_knospe_logo_would_show
                     && ingredient.has_import_knospe_without_origin()
                 {
-                    requires_herkunft = true;
-                    reasons.push("Import-Knospe ohne Herkunft".to_string());
+                    let would_print = !under90_display_active
+                        || should_show_origin_knospe_under90(
+                            ingredient,
+                            percentage,
+                            total_amount,
+                            input
+                                .ingredients
+                                .iter()
+                                .flat_map(|i| i.leaves())
+                                .filter(|i| i.is_agricultural())
+                                .count()
+                                == 1,
+                        );
+                    if would_print {
+                        requires_herkunft = true;
+                        reasons.push("Import-Knospe ohne Herkunft".to_string());
+                    }
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -3039,15 +3111,26 @@ fn validate_namensgebend_amounts(
 /// carrying the Import-(Umstellungs-)Knospe without a real country, and only
 /// when the label output is the Import-Knospe. Non-agricultural ingredients
 /// (e.g. Dicarbonat) never require an origin.
+///
+/// Pflicht ⇔ Ausgabe (Mirjam 12.11.2026): when `would_print_origin` is given
+/// (the <90% display regime is active), an ingredient is only flagged when the
+/// label would actually print its origin. A declared-but-not-printed country
+/// stays in the recipe without an error; a missing-and-not-printed one too.
 fn validate_import_knospe_origin(
     ingredients: &[Ingredient],
     import_knospe_logo_would_show: bool,
+    would_print_origin: Option<&[bool]>,
     validation_messages: &mut HashMap<String, Vec<String>>,
 ) {
     if !import_knospe_logo_would_show {
         return;
     }
     for (i, ingredient) in ingredients.iter().enumerate() {
+        if let Some(printed) = would_print_origin {
+            if !printed.get(i).copied().unwrap_or(false) {
+                continue;
+            }
+        }
         if ingredient.has_import_knospe_without_origin() {
             validation_messages
                 .entry(format!("ingredients[{}][origin]", i))
@@ -3198,40 +3281,15 @@ fn validate_knospe_under90_origin(
         let has_origin = ingredient.computed_origins().is_some_and(|v| !v.is_empty());
 
         if requires_origin && !has_origin {
-            // The reason mirrors the branches of `should_show_origin_knospe_under90`
-            // in the same order and with the same (inclusive) thresholds, so the
-            // message always names the rule that actually fired.
-            let name = ingredient.canonical.as_deref().unwrap_or(&ingredient.name);
-            let category = ingredient.effective_category();
-            let cat = category.as_deref();
-            let is_egg_or_honey = is_egg_ingredient_name(name)
-                || is_egg_ingredient_name(&ingredient.name)
-                || is_honey_ingredient_name(name)
-                || is_honey_ingredient_name(&ingredient.name)
-                || cat.is_some_and(|c| is_egg_category(c) || is_honey_category(c));
-            let is_dairy_by_name =
-                is_dairy_ingredient_name(name) || is_dairy_ingredient_name(&ingredient.name);
-            let reason = if is_mono_product {
-                t!("validation.knospe_mono_origin_required").to_string()
-            } else if percentage >= 50.0 {
-                t!("validation.knospe_plants_over_50_origin_required").to_string()
-            } else if percentage >= 10.0 && (is_egg_or_honey || cat.is_some_and(is_fish_category)) {
-                t!("validation.knospe_egg_honey_fish_origin_required").to_string()
-            } else if cat.is_some_and(|c| {
-                is_dairy_category(c) || is_meat_category(c) || is_insect_category(c)
-            }) || (cat.is_none() && is_dairy_by_name)
-            {
-                t!("validation.knospe_dairy_meat_insects_origin_required").to_string()
-            } else if ingredient.has_swiss_origin() && percentage >= 10.0 {
-                t!("validation.knospe_over_10_percent_origin_required").to_string()
-            } else {
-                t!("validation.knospe_general_origin_required").to_string()
-            };
-
+            // Mirjam (12.11.2026): one simplified wording for every case —
+            // «Herkunftsland ist erforderlich.» The per-rule texts confused
+            // users because origin is not required for all import ingredients.
+            // Which branch fired is still documented by
+            // `should_show_origin_knospe_under90` (same inputs, same order).
             validation_messages
                 .entry(format!("ingredients[{}][origin]", i))
                 .or_default()
-                .push(reason);
+                .push(t!("validation.knospe_general_origin_required").to_string());
         }
     }
 }
