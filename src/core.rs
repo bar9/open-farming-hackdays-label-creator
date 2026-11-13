@@ -979,6 +979,33 @@ impl Ingredient {
         })
     }
 
+    /// Allergen flag corrected against the curated knowledge: the stored flag,
+    /// OR a known allergen in the food_db (canonical or typed name, comma
+    /// tolerant), OR a milk product by name (milk is a mandatory allergen).
+    /// Mirjam (13.11.2026): a share link stored «Greyerzer, vollfett» with
+    /// is_allergen=false from an earlier BLV pick. Applied when a form is
+    /// loaded (`From<Form> for Input`), recursively for sub-ingredients.
+    pub fn effective_allergen(&self) -> bool {
+        self.is_allergen
+            || self
+                .canonical
+                .as_deref()
+                .is_some_and(|c| lookup_allergen(c) || is_dairy_ingredient_name(c))
+            || lookup_allergen(&self.name)
+            || is_dairy_ingredient_name(&self.name)
+    }
+
+    /// Returns a copy with `is_allergen` upgraded via `effective_allergen`
+    /// on this node and all descendants. Never downgrades a set flag.
+    pub fn with_known_allergens(&self) -> Ingredient {
+        let mut out = self.clone();
+        out.is_allergen = self.effective_allergen();
+        if let Some(children) = &self.children {
+            out.children = Some(children.iter().map(|c| c.with_known_allergens()).collect());
+        }
+        out
+    }
+
     /// Quality and origin aggregate **bottom-up**: when an ingredient has children
     /// (and `override_children` is not forcing leaf treatment), the children are the
     /// authoritative source for quality/origin, regardless of whether they carry
@@ -3038,12 +3065,10 @@ fn should_show_origin_knospe_under90(
     }
 
     // iv. (cont.) Dairy by NAME: «alles aus Milch» needs an origin even when
-    // neither the BLV API nor the food_db supplied a category (Mirjam,
-    // 12.11.2026: Butter, «Greyerzer, vollfett»). Only when no category
-    // contradicts it — a category match was already handled above.
-    if category.is_none()
-        && (is_dairy_ingredient_name(name) || is_dairy_ingredient_name(&ingredient.name))
-    {
+    // the BLV category is missing OR misleading (Mirjam, 13.11.2026, real
+    // share link: Butter arrives as BLV «Fette»). Plant lookalikes
+    // (Kakaobutter, Kokosmilch) are excluded by the name matcher itself.
+    if is_dairy_ingredient_name(name) || is_dairy_ingredient_name(&ingredient.name) {
         return true;
     }
 

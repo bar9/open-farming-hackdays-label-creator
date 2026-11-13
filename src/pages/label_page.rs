@@ -186,7 +186,13 @@ impl From<Form> for Input {
         let ingredients = if val.ignore_ingredients {
             vec![val.mono_quality.synthetic_ingredient()]
         } else {
+            // Links saved earlier may carry is_allergen=false for a known
+            // allergen (Mirjam 13.11.2026: «Greyerzer, vollfett»). Upgrade
+            // from the curated food_db / milk names; never downgrade.
             val.ingredients
+                .iter()
+                .map(|i| i.with_known_allergens())
+                .collect()
         };
         Input {
             ingredients,
@@ -738,5 +744,38 @@ mod tests {
         assert_eq!(form.ingredients.len(), 3);
         assert_eq!(form.ingredients[0].name, "Rohmilch");
         assert!(form.ingredients[0].is_allergen);
+    }
+
+    // Mirjam (12./13.11.2026), declarino.ch/s/HClTnpf: the REAL share link,
+    // not a hand-built recipe. Butter carries the BLV category «Fette» and
+    // Greyerzer the BLV category «Hartkäse» plus is_allergen=false baked into
+    // the URL. Both must still print their origin and Greyerzer must be bold.
+    #[test]
+    fn mirjam_share_link_dairy_shows_origin_and_allergen() {
+        rust_i18n::set_locale("de-CH");
+        let qs = include_str!("../../tests/fixtures/mirjam_HClTnpf.qs").trim();
+        let decoded = urlencoding::decode(qs).unwrap().replace('+', " ");
+        let form: Form = from_query_string(&decoded).expect("share link parses");
+        let input: Input = form.into();
+        let calculator = Calculator::from_registry_config(Configuration::Knospe);
+        let output = calculator.execute(input);
+        let label = output.label.clone();
+        // Index 8 = Quark (Import, no country) → flagged; 9 = Greyerzer (FR) → ok.
+        assert!(
+            output.validation_messages.contains_key("ingredients[8][origin]"),
+            "Quark must be flagged: {:?}",
+            output.validation_messages
+        );
+        assert!(
+            !output.validation_messages.contains_key("ingredients[9][origin]"),
+            "Greyerzer has FR and must not be flagged: {:?}",
+            output.validation_messages
+        );
+
+        assert!(label.contains("<b>Butter</b>* (CH)"), "label: {label}");
+        assert!(label.contains("<b>Greyerzer vollfett</b>* (FR)"), "label: {label}");
+        // Quark: Import without a real country → no country printed, and
+        // «Rezeptur prüfen» flags it (Mirjam: «Fehlermeldung korrekt»).
+        assert!(label.contains("<b>Quark</b>*,"), "label: {label}");
     }
 }

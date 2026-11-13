@@ -339,6 +339,10 @@ pub fn is_dairy_category(category: &str) -> bool {
     category_lower == "rahm" ||
     category_lower == "sahne" ||
     category_lower == "frischkäse" ||
+    // BLV subcategories like «Hartkäse», «Weichkäse», «Halbhartkäse»
+    // (Mirjam 13.11.2026: Greyerzer arrives as «Hartkäse»).
+    category_lower.ends_with("käse") ||
+    category_lower.contains("milchprodukt") ||
 
     // English terms
     category_lower == "milk" ||
