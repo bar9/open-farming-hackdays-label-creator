@@ -18,7 +18,7 @@ A web application for creating food labels compliant with Swiss food labeling la
 - Bio certification tracking with Bio Suisse logo logic
 - Shareable labels via URL query parameters
 - Multilingual: German (de-CH), French (fr-CH), Italian (it-CH)
-- No backend for recipe data -- it stays in the browser (URL params + localStorage). The only server-side pieces are the short-link functions in `api/` and cookieless analytics.
+- No backend for recipe data -- it stays in the browser (URL params + localStorage). The only server-side pieces are the short-link service in `api/` and cookieless analytics.
 
 ## Prerequisites
 
@@ -99,14 +99,14 @@ locales/               # i18n YAML files (de-CH, fr-CH, it-CH)
 | Task runner | GNU Make |
 | i18n | rust-i18n (YAML) |
 | Analytics | Umami Cloud (cookieless, EU) |
-| CI/CD | GitHub Actions → GitHub Pages (staging) / Vercel (production) |
+| CI/CD | GitHub Actions → GitHub Pages (staging) / own VPS with Caddy (production) |
 
 ## Deployment
 
 Both workflows trigger on push to `main`:
 
 - **Staging** (`deploy.yml`): Builds all pages, deploys to `bar9.github.io/open-farming-hackdays-label-creator/`
-- **Production** (`deploy-production.yml`): Builds with `--features hidebio`, deploys to `bar9/declarino` repo → served by Vercel at declarino.ch. Also ships the short-link functions in `api/` (see `api/README.md`)
+- **Production** (`deploy-production.yml`): builds the same release build, deploys it together with the short-link service (`api/`, see `api/README.md`) to our own server, served by Caddy at www.declarino.ch. Runs after a green "Check & Test" on `main` or manually. Server setup and operations: `ops/README.md`. (Production was previously hosted on Vercel.)
 
 ## Analytics & privacy
 
