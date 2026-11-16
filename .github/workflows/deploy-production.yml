@@ -29,9 +29,13 @@ permissions:
 
 jobs:
   deploy:
-    # Automatisch nur nach erfolgreichem "Check & Test" auf main; von Hand
-    # (workflow_dispatch) jederzeit für den gewählten Branch.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Automatisch nur nach erfolgreichem "Check & Test" eines Pushs auf main
+    # (nie nach einem PR-Lauf); von Hand (workflow_dispatch) jederzeit für den
+    # gewählten Branch.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -199,9 +203,11 @@ jobs:
           SMOKE
 
       # Zusätzlich von aussen, direkt an die Server-IP (nicht über DNS). Vor
-      # der DNS-Umstellung hat Caddy noch kein Zertifikat, dann wird HTTP
-      # geprüft. Nur eine Warnung, solange Port 80/443 von aussen nicht
-      # erreichbar ist (Firewall im Infomaniak-Manager).
+      # der DNS-Umstellung hat Caddy kein Zertifikat und beantwortet HTTP nur
+      # mit 308 auf https; das gilt dann als erreichbar. Nach der Umstellung
+      # werden über HTTPS /bio und /knospe geprüft. Nur eine Warnung,
+      # solange Port 80/443 von aussen nicht erreichbar ist (Firewall im
+      # Infomaniak-Manager).
       - name: Smoke test (von aussen, direkt an die IP)
         continue-on-error: true
         env:
@@ -209,8 +215,13 @@ jobs:
         run: |
           H=www.declarino.ch
           if curl -sS -o /dev/null --max-time 10 --resolve "$H:443:$VPS_HOST" "https://$H/"; then
-            BASE="https://$H"; RES="$H:443:$VPS_HOST"
+            for p in /bio /knospe; do
+              test "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 --resolve "$H:443:$VPS_HOST" "https://$H$p")" = 200
+            done
+            echo "HTTPS von aussen ok."
           else
-            BASE="http://$H"; RES="$H:80:$VPS_HOST"
+            OUT=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 10 \
+              --resolve "$H:80:$VPS_HOST" "http://$H/bio")
+            echo "HTTP von aussen (noch kein Zertifikat): $OUT"
+            test "$OUT" = "308 https://$H/bio"
           fi
-          curl -sS --max-time 10 --resolve "$RES" -o /dev/null -w "$BASE/bio -> %{http_code}\n" "$BASE/bio"
