@@ -35,6 +35,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
+            api/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -66,33 +67,15 @@ jobs:
       - name: Cargo test
         run: cargo test --bins --test locale_parity
 
-      # Die Shortener-Funktionen laufen auf Vercel, nicht im WASM-Build, und
-      # würden von cargo also nie angefasst. Ein Syntaxfehler fiele sonst erst
-      # in der Produktion auf. Der volle Selbsttest braucht eine Datenbank und
-      # läuft deshalb nicht in CI (siehe api/README.md).
-      - name: Check shortener functions
+      # Der Kurz-Link-Dienst (api/, eigenes Rust-Paket) läuft auf dem Server,
+      # nicht im WASM-Build. Ohne diesen Schritt fiele ein Fehler erst in der
+      # Produktion auf. Die Tests laufen gegen eine flüchtige Datenbank.
+      - name: Shortener (fmt, clippy, test)
+        working-directory: api
         run: |
-          for f in api/*.mjs; do node --check "$f"; done
-          node -e "import('./api/_lib.mjs').then(m => {
-            if (!m.codeForUrl || !m.isAllowedTarget) throw new Error('api/_lib.mjs exports missing');
-            if (m.codeForUrl('https://a') === m.codeForUrl('https://b')) throw new Error('codeForUrl collides');
-            if (!m.isAllowedTarget('https://www.declarino.ch/x')) throw new Error('declarino.ch must be allowed');
-            if (m.isAllowedTarget('https://example.com/x')) throw new Error('foreign hosts must be rejected');
-            console.log('shortener functions ok');
-          })"
-          node -e "import('./api/_storage.mjs').then(m => {
-            // Ohne Konfiguration darf nichts stillschweigend passieren:
-            // ein falsch gesetztes Projekt soll einen klaren Fehler geben.
-            if (m.storageBackend() !== null) throw new Error('backend detected without env vars');
-            const mustFail = (name, promise) => promise.then(
-              () => { throw new Error(name + ' must fail without storage config'); },
-              (e) => { if (!/Kein Speicher konfiguriert/.test(e.message)) throw e; }
-            );
-            return Promise.all([
-              mustFail('lookup', m.lookup('x')),
-              mustFail('listAll', m.listAll()),
-            ]).then(() => console.log('storage backend selection ok'));
-          })"
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked
 
       # Der Teilen-Link traegt die ganze Rezeptur im Query-String, inklusive
       # producer_name, -address, -phone und -email. Faellt data-exclude-search
@@ -102,8 +85,8 @@ jobs:
       #
       # Der Schritt schuetzt wirklich: Beide Deploy-Workflows haengen per
       # workflow_run an diesem hier und laufen nur bei conclusion == 'success'.
-      # Einen manuellen Deploy-Pfad (workflow_dispatch) gibt es nicht. Schlaegt
-      # die Pruefung fehl, wird also nichts veroeffentlicht.
+      # Der manuelle Produktions-Deploy (workflow_dispatch) baut denselben
+      # Stand und prueft die Flags dort noch einmal selbst.
       - name: Check analytics privacy flags
         run: |
           node -e "
@@ -132,12 +115,18 @@ jobs:
             console.log('analytics privacy flags ok');
           "
 
-      # Die Rewrites in vercel.json entscheiden, ob Kurz-Links funktionieren.
-      # Ein Catch-all ohne die Ausnahme für /s/ würde jeden Kurz-Link stumm
-      # auf die App umleiten (HTTP 200 statt 301) -- gedruckte Etiketten wären
-      # tot. Geprüft wird mit derselben Bibliothek, die Vercel benutzt.
-      - name: Check vercel.json routing
-        run: npm run check:routes
+      # Die Caddy-Konfiguration entscheidet, ob Kurz-Links funktionieren. Ein
+      # SPA-Fallback vor der /s/-Weiterleitung lieferte bei jedem Kurz-Link
+      # die App (HTTP 200 statt 301): gedruckte Etiketten wären still tot.
+      # Geprüft wird die echte ops/caddy/Caddyfile mit dem echten Dienst.
+      - name: Check Caddy routing
+        run: |
+          # Caddy aus Ubuntu (gleiches Paket wie auf dem Debian-Server).
+          sudo apt-get install -y --no-install-recommends caddy >/dev/null
+          sudo systemctl stop caddy || true
+          caddy version
+          (cd api && cargo build --release --locked)
+          bash ops/caddy/test-routing.sh api/target/release/shortener
 
       - name: Dioxus build
         run: dx build --release

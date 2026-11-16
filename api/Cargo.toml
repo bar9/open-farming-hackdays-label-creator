@@ -1,0 +1,28 @@
+[package]
+name = "shortener"
+version = "0.1.0"
+edition = "2024"
+description = "Kurz-Link-Dienst für declarino.ch (/s/<code>)"
+publish = false
+
+[dependencies]
+axum = "0.8"
+rusqlite = { version = "0.43.0", features = ["bundled"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.11.1"
+tokio = { version = "1.54.1", features = ["macros", "rt", "net", "signal"] }
+url = "2.5.8"
+
+[dev-dependencies]
+http-body-util = "0.1.5"
+tower = { version = "0.5.3", features = ["util"] }
+
+# Eigenständiges Paket, nicht Teil des App-Crates im Repo-Wurzelverzeichnis.
+[workspace]
+
+# Klein und schnell genug für den 1-CPU-VPS; Debug-Symbole braucht dort niemand.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

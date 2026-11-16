@@ -61,37 +61,12 @@ const OFH_LOGO_SVG: &str = r##"<svg class="h-10 md:h-12 w-auto" xmlns="http://ww
 pub fn SplashScreen() -> Element {
     let nav = use_navigator();
 
-    // Status badge on the Bio and Knospe cards. In the hidebio build both
-    // regimes are hidden behind "Coming Soon"; otherwise they are marked as in
-    // development. Same badge on both cards, so it is written once.
-    let status_badge = || {
-        rsx! {
-            div {
-                class: if cfg!(feature = "hidebio") {
-                    "badge badge-secondary text-xs px-2 py-1"
-                } else {
-                    "badge badge-warning text-xs px-2 py-1"
-                },
-                {
-                    if cfg!(feature = "hidebio") {
-                        "Coming Soon".to_string()
-                    } else {
-                        t!("badges.in_development").to_string()
-                    }
-                }
-            }
-        }
-    };
-
-    // Animated Trägerschaft/Unterstützt-durch ribbon (non-hidebio build only).
+    // Animated Trägerschaft/Unterstützt-durch ribbon.
     // `logos_visible` drives per-logo opacity; combined with per-logo
     // transition-delay this yields the staggered "logo by logo" fade in both
     // directions. `show_supporters` swaps the caption while the logos are hidden.
-    #[cfg(not(feature = "hidebio"))]
     let mut logos_visible = use_signal(|| true);
-    #[cfg(not(feature = "hidebio"))]
     let mut show_supporters = use_signal(|| false);
-    #[cfg(not(feature = "hidebio"))]
     use_future(move || async move {
         loop {
             gloo::timers::future::TimeoutFuture::new(4000).await; // hold current state
@@ -111,13 +86,8 @@ pub fn SplashScreen() -> Element {
                 class: "flex-none bg-base-200 p-4",
                 div {
                     class: "flex justify-between items-center",
-                    div {
-                        class: "text-2xl font-bold",
-                        {
-                            #[cfg(feature = "hidebio")]
-                            { rsx! { {t!("app.title").to_string()} } }
-                        }
-                    }
+                    // Leerer Platzhalter links, damit die Sprachwahl rechts bleibt.
+                    div { class: "text-2xl font-bold" }
                     LanguageSelect {}
                 }
             }
@@ -127,16 +97,7 @@ pub fn SplashScreen() -> Element {
                     class: "text-center max-w-4xl",
                     h1 {
                         class: "text-4xl md:text-5xl font-bold mb-8 md:mb-10 text-base-content flex justify-center",
-                        {
-                            #[cfg(not(feature = "hidebio"))]
-                            { rsx! { span { class: "inline-block h-28 md:h-32 -mt-4 md:-mt-8 text-black", "aria-label": "Declarino", dangerous_inner_html: crate::layout::locale_logo() } } }
-                            #[cfg(feature = "hidebio")]
-                            { rsx! { {t!("app.title").to_string()} } }
-                        }
-                    }
-                    {
-                        #[cfg(feature = "hidebio")]
-                        { rsx! { h2 { class: "text-3xl md:text-4xl font-semibold mb-8 text-base-content", {t!("splash.subtitle").to_string()} } } }
+                        span { class: "inline-block h-28 md:h-32 -mt-4 md:-mt-8 text-black", "aria-label": "Declarino", dangerous_inner_html: crate::layout::locale_logo() }
                     }
                     p {
                         class: "text-lg md:text-xl text-base-content/70 mb-6 max-w-2xl mx-auto",
@@ -190,17 +151,9 @@ pub fn SplashScreen() -> Element {
                     }
 
                         button {
-                            class: if cfg!(feature = "hidebio") {
-                                "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
-                            } else {
-                                "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
-                            },
-                            disabled: cfg!(feature = "hidebio"),
+                            class: "card bg-green-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
-                                #[cfg(not(feature = "hidebio"))]
-                                {
-                                    nav.push(Route::Bio {});
-                                }
+                                nav.push(Route::Bio {});
                             },
                         div {
                             class: "card-body items-center text-center py-5",
@@ -213,22 +166,13 @@ pub fn SplashScreen() -> Element {
                                 span { class: "text-green-700 font-bold text-2xl leading-none", "CH" }
                                 span { class: "text-green-700 font-bold text-3xl leading-none mt-1", "BIO" }
                             }
-                            {status_badge()}
                         }
                     }
 
                         button {
-                            class: if cfg!(feature = "hidebio") {
-                                "card bg-gray-100 shadow-xl cursor-not-allowed border-0 opacity-50"
-                            } else {
-                                "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0"
-                            },
-                            disabled: cfg!(feature = "hidebio"),
+                            class: "card bg-green-50 shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-0",
                             onclick: move |_| {
-                                #[cfg(not(feature = "hidebio"))]
-                                {
-                                    nav.push(Route::Knospe {});
-                                }
+                                nav.push(Route::Knospe {});
                             },
                         div {
                             class: "card-body items-center text-center py-5",
@@ -240,7 +184,6 @@ pub fn SplashScreen() -> Element {
                                 class: "w-20 h-16 flex items-center justify-center mb-2",
                                 icons::BioSuisseLogo { class: "max-w-full max-h-full" }
                             }
-                            {status_badge()}
                         }
                     }
                     }
@@ -249,8 +192,7 @@ pub fn SplashScreen() -> Element {
 
 
             {
-                #[cfg(not(feature = "hidebio"))]
-                { rsx! {
+                rsx! {
                     // Animated Trägerschaft / Unterstützt-durch logo ribbon.
                     // Per-logo heights are tuned so the lettering reads at a comparable
                     // cap-height across all marks (pure wordmarks like FiBL/Liebegg are
@@ -318,7 +260,7 @@ pub fn SplashScreen() -> Element {
                             }
                         }
                     }
-                } }
+                }
             }
 
             SiteFooter { class: "flex-none" }

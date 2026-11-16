@@ -18,12 +18,12 @@ A web application for creating food labels compliant with Swiss food labeling la
 - Bio certification tracking with Bio Suisse logo logic
 - Shareable labels via URL query parameters
 - Multilingual: German (de-CH), French (fr-CH), Italian (it-CH)
-- No backend for recipe data -- it stays in the browser (URL params + localStorage). The only server-side pieces are the short-link functions in `api/` and cookieless analytics.
+- No backend for recipe data -- it stays in the browser (URL params + localStorage). The only server-side pieces are the short-link service in `api/` and cookieless analytics.
 
 ## Prerequisites
 
 - **Rust** with wasm target: `rustup target add wasm32-unknown-unknown`
-- **Dioxus CLI** v0.7.10 (matches CI): `cargo install dioxus-cli --version 0.7.10`. `dx` refuses to build against a dioxus version other than its own, so `make dev`, `make build` and `make build-production` verify this first; run `make check-dx` to check on its own.
+- **Dioxus CLI** v0.7.10 (matches CI): `cargo install dioxus-cli --version 0.7.10`. `dx` refuses to build against a dioxus version other than its own, so `make dev` and `make build` verify this first; run `make check-dx` to check on its own.
 - **Node.js** + npm (for Tailwind CSS + daisyUI)
 
 ## Setup
@@ -43,11 +43,11 @@ Open http://localhost:8080/open-farming-hackdays-label-creator
 ## Build
 
 ```bash
-make build              # Development build (all pages)
-make build-production   # Production build (Bio/Knospe shown as "Coming Soon")
+make build              # Release build (all pages, also used for production)
+make build-production   # Alias for make build
 ```
 
-The `hidebio` feature flag controls Bio/Knospe page visibility. Production deploys to declarino.ch with this flag enabled.
+There are no feature flags: Bio and Knospe are part of every build. (The former `hidebio` flag, which hid them in production, has been removed.)
 
 ## Checks
 
@@ -99,14 +99,14 @@ locales/               # i18n YAML files (de-CH, fr-CH, it-CH)
 | Task runner | GNU Make |
 | i18n | rust-i18n (YAML) |
 | Analytics | Umami Cloud (cookieless, EU) |
-| CI/CD | GitHub Actions → GitHub Pages (staging) / Vercel (production) |
+| CI/CD | GitHub Actions → GitHub Pages (staging) / own VPS with Caddy (production) |
 
 ## Deployment
 
 Both workflows trigger on push to `main`:
 
 - **Staging** (`deploy.yml`): Builds all pages, deploys to `bar9.github.io/open-farming-hackdays-label-creator/`
-- **Production** (`deploy-production.yml`): Builds with `--features hidebio`, deploys to `bar9/declarino` repo → served by Vercel at declarino.ch. Also ships the short-link functions in `api/` (see `api/README.md`)
+- **Production** (`deploy-production.yml`): builds the same release build, deploys it together with the short-link service (`api/`, see `api/README.md`) to our own server, served by Caddy at www.declarino.ch. Runs after a green "Check & Test" on `main` or manually. Server setup and operations: `ops/README.md`. (Production was previously hosted on Vercel.)
 
 ## Analytics & privacy
 

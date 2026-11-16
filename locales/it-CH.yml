@@ -638,7 +638,6 @@ languages:
 
 badges:
   not_for_meat_dairy: non per carne / latticini
-  in_development: In sviluppo
   bio_qualified: "Bio ✓"
 
 version:

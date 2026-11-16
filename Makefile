@@ -26,8 +26,9 @@ dev: check-dx
 build: check-dx
 	dx build --release
 
-build-production: check-dx
-	dx build --release --features hidebio
+# Alias: Der Produktions-Build ist seit dem Wegfall von `hidebio` identisch
+# mit `make build` (alle Seiten inkl. Bio/Knospe).
+build-production: build
 
 check-rust: css
 	cargo check
@@ -64,7 +65,7 @@ help:
 	@echo "make dev              Start Dioxus dev server (hot-reload)"
 	@echo "make check-dx         Verify the dx CLI matches the pinned version"
 	@echo "make build            Production build (dx build --release)"
-	@echo "make build-production Production build with hidebio feature"
+	@echo "make build-production Alias for make build"
 	@echo "make check-rust       cargo check"
 	@echo "make lint             cargo clippy -D warnings"
 	@echo "make test             cargo test"

@@ -1,0 +1,87 @@
+# Caddy-Konfiguration für declarino.ch (Infomaniak-VPS).
+#
+# Installiert nach /etc/caddy/Caddyfile. Vor jedem Reload prüfen:
+#   sudo caddy validate --config /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Zertifikate holt Caddy selbst, sobald DNS auf den Server zeigt.
+#
+# Die {$…:Standard}-Platzhalter haben auf dem Server keine Umgebungsvariable
+# und ergeben damit die Produktionswerte. Nur der Routing-Test in CI
+# (ops/caddy/test-routing.sh) setzt sie, um genau diese Datei ohne TLS auf
+# Testports und mit einem Testverzeichnis zu prüfen.
+{
+	email rolandbrand11@gmail.com
+}
+
+# Gemeinsame Sicherheits-Header für alle Antworten.
+(sicherheit) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# Die eigentliche Seite. Einmal definiert, damit die Prüfadresse unten exakt
+# dieselben Regeln ausliefert wie www.declarino.ch.
+(declarino) {
+	import sicherheit
+	encode zstd gzip
+
+	# Kurz-Link-Dienst. /s/<code> steht auf gedruckten Etiketten und muss
+	# deshalb vor dem SPA-Fallback greifen, sonst lieferte er die App mit
+	# HTTP 200 statt der 301-Weiterleitung.
+	handle /api/* {
+		reverse_proxy {$SHORTENER_UPSTREAM:127.0.0.1:3000}
+	}
+	handle /s/* {
+		reverse_proxy {$SHORTENER_UPSTREAM:127.0.0.1:3000}
+	}
+
+	handle {
+		root * {$DECLARINO_ROOT:/var/www/declarino/current}
+
+		# `route` erzwingt die geschriebene Reihenfolge. Ohne sie wertet Caddy
+		# `header` vor `try_files` aus, und SPA-Pfade wie /bio bekämen nicht
+		# das no-cache von index.html.
+		route {
+			# SPA-Fallback: unbekannte Pfade (z.B. /bio, /lebensmittelrecht)
+			# liefern die App, die selbst routet.
+			try_files {path} /index.html
+
+			# dx versieht alles unter /assets/ mit einem Inhalts-Hash im
+			# Dateinamen (-dxh<hex>), eine neue Version hat also einen neuen
+			# Namen. Diese Dateien dürfen unbegrenzt gecacht werden.
+			@assets path /assets/*
+			header @assets Cache-Control "public, max-age=31536000, immutable"
+
+			# index.html verweist auf die gehashten Dateien und muss bei jedem
+			# Aufruf neu geprüft werden, sonst sähen Besucher alte Versionen.
+			@html path / /index.html
+			header @html Cache-Control "no-cache"
+
+			file_server
+		}
+	}
+}
+
+# Kanonische Adresse.
+{$DECLARINO_WWW:www.declarino.ch} {
+	import declarino
+}
+
+# Apex leitet dauerhaft auf www um.
+{$DECLARINO_APEX:declarino.ch} {
+	import sicherheit
+	redir https://www.declarino.ch{uri} permanent
+}
+
+# Prüfadresse, nur auf dem Server selbst erreichbar (127.0.0.1, ohne TLS).
+# Der Smoke-Test im Deploy prüft hierüber die echte Konfiguration samt
+# Dienst und aktivem Release, unabhängig von DNS und Zertifikat.
+http://{$DECLARINO_CHECK:127.0.0.1:8081} {
+	bind 127.0.0.1
+	import declarino
+}
