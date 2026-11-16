@@ -35,6 +35,8 @@ trap aufraeumen EXIT
 mkdir -p "$WORK/site/assets"
 { echo '<!doctype html><title>declarino-test</title>'; printf '<!-- %0600d -->\n' 0; } >"$WORK/site/index.html"
 echo 'console.log(1)' >"$WORK/site/assets/app-dxh0123456789abcdef.js"
+# WASM gross genug, dass Caddy es komprimiert (Mindestgrösse 512 Bytes).
+head -c 4096 /dev/zero >"$WORK/site/assets/app_bg-dxh0123456789abcdef.wasm"
 
 SHORTENER_DB="$WORK/links.db" SHORTENER_LISTEN="127.0.0.1:$API_PORT" "$BIN" serve &
 PIDS+=($!)
@@ -96,6 +98,10 @@ echo "$H" | grep -q '^server:'; [ $? != 0 ]; pruefe "kein Server-Header" $?
 
 H=$(kopf -H 'Accept-Encoding: gzip' "$W/")
 echo "$H" | grep -q '^content-encoding: gzip'; pruefe "Kompression aktiv" $?
+
+# Mit GET statt HEAD: Caddy setzt Content-Encoding nur bei echten Antworten.
+H=$(curl -sS -o /dev/null -D - -H 'Accept-Encoding: gzip' "$W/assets/app_bg-dxh0123456789abcdef.wasm" | tr -d '\r' | sed -E 's/^([A-Za-z0-9-]+):/\L\1:/')
+echo "$H" | grep -q '^content-encoding: gzip'; pruefe "WASM wird komprimiert" $?
 
 H=$(kopf "http://127.0.0.1:$APEX_PORT/s/$CODE?x=1")
 echo "$H" | grep -q '^http/1.1 301'; pruefe "Apex -> dauerhafte Umleitung (301)" $?
