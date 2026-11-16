@@ -1,7 +1,9 @@
 # Kurz-Link-Dienst (`declarino.ch/s/…`)
 
-Eigener URL-Shortener als zwei Vercel-Funktionen, weil die Fremddienste für
-Declarino unbrauchbar geworden sind (Begründung und Messwerte im Anhang).
+Eigener URL-Shortener als kleines Rust-Programm (axum + SQLite), weil die
+Fremddienste für Declarino unbrauchbar geworden sind (Begründung und Messwerte
+im Anhang). Läuft auf dem eigenen Server hinter Caddy; Einrichtung und Betrieb
+in [`ops/README.md`](../ops/README.md).
 
 ```
 POST /api/shorten   { "url": "https://www.declarino.ch/..." }
@@ -11,165 +13,103 @@ POST /api/shorten   { "url": "https://www.declarino.ch/..." }
 GET  /s/:code    -> 301 auf die hinterlegte Adresse
 ```
 
+`GET /api/redirect?code=…` antwortet gleich wie `/s/:code`; der Pfad war auf
+der früheren Plattform öffentlich erreichbar und bleibt deshalb bestehen.
+
 | Datei | Zweck |
 |---|---|
-| `_lib.mjs` | Allowlists, CORS, Code-Erzeugung |
-| `_storage.mjs` | Speicherzugriff: Turso **oder** Upstash |
-| `shorten.mjs` | Kürzen (POST) |
-| `redirect.mjs` | Auflösen (301), erreichbar über den Rewrite in `vercel.json` |
-| `selftest.mjs` | End-to-End-Test gegen eine echte Datenbank |
-| `backup.mjs` | Export, Import und Prüfung aller Kurz-Links |
-| `routecheck.cjs` | Prüft die Rewrites in `vercel.json` |
+| `src/rules.rs` | Allowlists, CORS-Herkünfte, Code-Erzeugung |
+| `src/storage.rs` | SQLite-Datei: Schema, Speichern, Nachschlagen, Import |
+| `src/lib.rs` | HTTP-Endpunkte |
+| `src/main.rs` | Dienst starten, `import`/`export`/`verify` |
+| `tests/http.rs` | HTTP-Tests gegen den echten Router |
 | `uitest_share_modal.mjs` | Prüft den Teilen-Dialog im Browser |
-
-`routecheck.cjs` nutzt `@vercel/routing-utils`. Dessen `path-to-regexp` wird von
-`npm audit` als hoch eingestuft (GHSA-9wv6-86v2-598j, ReDoS über
-zurückverfolgende Ausdrücke). Die Meldung bleibt bewusst stehen: das Paket ist
-eine devDependency, läuft nur lokal und in der CI, verarbeitet ausschliesslich
-unsere eigene `vercel.json` und erreicht nie den Browser. `npm audit fix --force`
-würde auf `@vercel/routing-utils@4` zurückfallen, also einen Rückschritt statt
-einer Behebung.
-
-Nur die ersten vier Dateien werden deployt; der Workflow kopiert sie einzeln
-(Positivliste in `deploy-production.yml`).
 
 Antwortformat und Feldname `short_url` sind von spoo.me übernommen, damit die
 Rust-Seite (`src/services/url_shortener.rs`) denselben Parser nutzt.
 
 ## Entwurfsentscheidungen
 
-**Codes sind Hashes, keine Zufallswerte.** Der Code sind die ersten Bits von
+**Codes sind Hashes, keine Zufallswerte.** Der Code sind die ersten 64 Bit von
 SHA-256 der Ziel-URL in Base62. Dasselbe Rezept ergibt damit immer denselben
 Kurz-Link, wiederholtes Teilen erzeugt keine Karteileichen. Bei einer Kollision
 (gleicher Code, anderes Ziel) wächst der Code, statt den fremden Eintrag zu
-überschreiben — sonst landete ein bereits verschickter Link stillschweigend
-woanders.
+überschreiben, sonst landete ein bereits verschickter Link stillschweigend
+woanders. Die Berechnung ist bitgenau dieselbe wie in der früheren
+JavaScript-Fassung; `rules.rs` hält das mit Testwerten fest.
 
 **Kein Ablaufdatum.** Kurz-Links landen auf gedruckten Etiketten und dürfen
 nicht verschwinden.
 
-**Nur Declarino-Adressen.** Die Allowlist in `_lib.mjs` ist der
+**Nur Declarino-Adressen.** Die Allowlist in `rules.rs` ist der
 Missbrauchsschutz: Der Endpunkt taugt nicht als Phishing-Werkzeug und bleibt
 deshalb von den Sperrlisten fern, an denen die Fremddienste scheitern.
 
+**Grenzen und Fehler** sind unverändert übernommen: URL höchstens 16 KiB
+(413 `URL zu lang`), fremdes Ziel 400 `Nur declarino.ch-Adressen`, fremde
+Origin 403 `Herkunft nicht erlaubt`, ungültiges JSON 400, fehlendes Feld 400
+`Feld 'url' fehlt`, unbekannter Code 404 `Unbekannter Link`.
+
 ## Speicher
 
-Vercel-Funktionen haben ein read-only Dateisystem und leben nur Millisekunden;
-eine lokale SQLite-Datei wäre beim nächsten Aufruf weg. Beide unterstützten
-Anbieter sprechen daher **HTTPS** statt eines Verbindungsprotokolls:
+Eine SQLite-Datei auf dem Server, `/var/lib/shortener/links.db` (systemd
+`StateDirectory=shortener`), im WAL-Modus. Schema:
 
-| Anbieter | Erkennungsvariable | Modell |
-|---|---|---|
-| **Turso** (libSQL) | `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` | SQLite über HTTPS |
-| **Upstash** (Redis) | `KV_REST_API_URL` + `KV_REST_API_TOKEN` | Key/Value über HTTPS |
-
-Die Wahl trifft allein die Umgebung, im Code steht keine Festlegung. Sind beide
-gesetzt, gewinnt Turso. Ein Anbieterwechsel ist damit eine Frage der
-Projekteinstellungen — wichtig, weil Kurz-Links auf gedruckten Etiketten landen
-und den Anbieter überleben müssen.
-
-Bei Turso legt der erste Schreibzugriff die Tabelle selbst an; eine frisch
-bereitgestellte Datenbank ist ohne manuellen Schritt benutzbar.
-
-## Einrichtung
-
-Einmalig für das Vercel-Projekt hinter `declarino.ch`:
-
-1. **Datenbank verbinden** — über den Vercel Marketplace, es braucht also kein
-   separates Konto beim Anbieter:
-
-   ```
-   vercel install turso      # oder: vercel install upstash
-   ```
-
-   Alternativ im Dashboard unter *Storage → Marketplace*. Die Integration setzt
-   die Umgebungsvariablen selbst.
-
-2. **Neu deployen.** Umgebungsvariablen greifen erst beim nächsten Deployment;
-   blosses Speichern reicht nicht.
-
-Ohne Konfiguration antwortet `/api/shorten` mit HTTP 500, und das Frontend
-fällt still auf die Fremddienste zurück — der Teilen-Button bleibt also
-funktionsfähig.
-
-Die Zugangsdaten liegen ausschliesslich serverseitig. Im WASM-Frontend wäre
-jedes Geheimnis auslesbar (`strings …wasm | grep`).
-
-## Testen
-
-```bash
-TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… node api/selftest.mjs
-KV_REST_API_URL=…    KV_REST_API_TOKEN=… node api/selftest.mjs
+```sql
+CREATE TABLE links (
+  code TEXT PRIMARY KEY,
+  url TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
 ```
 
-Prüft gegen eine echte Datenbank: Kürzen, 301-Auflösung, Wiederholbarkeit der
-Codes, Ablehnung fremder Ziele und Herkünfte, Preflight, unbekannte Codes,
-Grössenlimit, Auflistbarkeit für die Sicherung.
+Der Dienst legt Datei und Tabelle beim ersten Start selbst an; ein frischer
+Server braucht keinen Migrationsschritt.
 
-Testdatenbanken ohne Anmeldung:
+## Entwickeln und testen
 
 ```bash
-# Turso: echter libSQL-Server lokal, gleiche HTTP-API wie Turso Cloud
-docker run -d -p 8090:8080 -e SQLD_NODE=primary \
-  ghcr.io/tursodatabase/libsql-server:latest
-TURSO_DATABASE_URL=http://localhost:8090 TURSO_AUTH_TOKEN=dummy \
-  node api/selftest.mjs
-
-# Upstash: Wegwerf-Datenbank, gültig 3 Tage
-curl -X POST https://upstash.com/start-redis
+cd api
+cargo test                     # Regeln, Speicher und alle HTTP-Fälle
+cargo clippy --all-targets -- -D warnings
+SHORTENER_DB=/tmp/links.db cargo run    # lokal auf 127.0.0.1:3000
 ```
 
-In CI laufen ohne Datenbank: Syntaxprüfung aller Dateien, die reinen Funktionen
-aus `_lib.mjs`, das Fehlerverhalten ohne Speicherkonfiguration und
-`npm run check:routes`.
+Die HTTP-Tests sind aus dem früheren Selbsttest portiert: Kürzen,
+301-Auflösung, Wiederholbarkeit der Codes, Kollisionen, Ablehnung fremder Ziele
+und Herkünfte, Preflight, unbekannte Codes, Grössenlimits, Auflistbarkeit.
+
+Das Zusammenspiel mit Caddy (der Kurz-Link darf nie vom SPA-Fallback
+verschluckt werden) prüft `ops/caddy/test-routing.sh` mit der echten
+Caddy-Konfiguration; beides läuft in CI.
 
 ## Sicherung
 
 Kurz-Links sind dauerhafter Zustand: Einer auf einem gedruckten Etikett lässt
 sich nicht mehr ändern. Geht die Datenbank verloren, sind alle ausgedruckten
-Etiketten unbrauchbar — die lange URL trägt ihre Daten selbst und ist davon
-nicht betroffen, der Kurz-Link nicht. Der Bestand ist winzig (~1 KB je
-Eintrag), ein vollständiger Export kostet also fast nichts.
+Etiketten unbrauchbar. Der Bestand ist winzig (~1 KB je Eintrag).
 
-```bash
-TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… node api/backup.mjs export > links.json
-node api/backup.mjs import links.json    # nach Verlust oder Anbieterwechsel
-node api/backup.mjs verify links.json    # prüft gegen die Live-Seite
-```
+* Nächtlich `sqlite3 .backup` per systemd-Timer nach
+  `/var/backups/shortener/`, die letzten 14 Kopien bleiben (siehe
+  `ops/shortener/`).
+* Von Hand, auf dem Server:
 
-`verify <datei>` fragt `declarino.ch/s/<code>` ab statt die Datenbank und belegt
-damit, was ein Empfänger tatsächlich erlebt. Es braucht deshalb keine
-Zugangsdaten und eignet sich zur Überwachung aus CI oder von einem beliebigen
-Rechner. Exit-Code 1 bei Fehlern.
+  ```bash
+  sudo -u shortener /opt/shortener/shortener export > links.json
+  sudo -u shortener /opt/shortener/shortener import links.json   # idempotent
+  sudo -u shortener /opt/shortener/shortener verify links.json
+  ```
 
-**Anbieterwechsel** funktioniert ohne Linkverlust: exportieren, die
-Umgebungsvariablen umstellen, importieren. Die Codes bleiben gleich, weil sie
-aus der URL abgeleitet sind. Verifiziert für Turso → Upstash.
+`import` legt nur fehlende Codes an, ändert nie einen bestehenden und meldet
+einen Code mit abweichender URL als Konflikt (Exit-Code 1). Er wendet dieselbe
+Allowlist an wie der Endpunkt: eine manipulierte Sicherungsdatei kann keine
+fremden Ziele einschleusen.
 
-Der Import wendet dieselbe Allowlist an wie der Endpunkt: eine manipulierte
-Sicherungsdatei kann keine fremden Ziele einschleusen.
+`ops/migration/verify-live.sh links.json` prüft jeden Code gegen die
+öffentliche Seite und belegt damit, was ein Empfänger tatsächlich erlebt.
 
-## Deployment
-
-`declarino.ch` wird von Vercel aus dem Repo `bar9/declarino` (Branch `gh-pages`)
-bedient. Der Workflow `deploy-production.yml` publiziert dorthin und ersetzt den
-Inhalt dabei vollständig (`keep_files` ist standardmässig `false`). `api/` und
-`vercel.json` werden deshalb bei jedem Lauf aus diesem Repo mitkopiert — lägen
-sie nur im Zielrepo, wären sie nach dem nächsten Deploy weg.
-
-## SPA-Routing
-
-`vercel.json` enthält neben der Kurz-Link-Regel einen Fallback, der Deep-Links
-wie `/lebensmittelrecht?v=2` auf `index.html` leitet. Ohne ihn antwortete Vercel
-mit HTTP 404: Die App lud zwar, weil `404.html` eine Kopie von `index.html` ist,
-aber Suchmaschinen, Link-Vorschauen und Fehler-Monitoring sahen einen Fehler.
-
-Reihenfolge und Ausschluss sind sicherheitsrelevant: Ein Catch-all `/(.*)` ohne
-die Ausnahme für `/s/` liefert bei einem Kurz-Link die App mit HTTP 200 statt
-der 301-Weiterleitung — **alle gedruckten Etiketten wären still tot**. Deshalb
-prüft `npm run check:routes` die Regeln mit `@vercel/routing-utils`, derselben
-Bibliothek, die Vercel benutzt. Der Test läuft in CI; die Fälle stehen in
-`routecases.json`.
+Exportdateien enthalten Rezepturen samt Produzentendaten und gehören nicht ins
+Repo (`.gitignore`).
 
 ## Oberfläche
 
@@ -210,13 +150,8 @@ DNS. Gemessen am 2026-08-27 aus einem Swisscom-Anschluss:
 
 Dass da.gd und spoo.me *dieselbe* Sperr-IP bekommen, sah zunächst nach
 gemeinsamer Infrastruktur aus. Tatsächlich sind es unabhängige Anbieter (OVH
-bzw. Cloudflare), die nur beide umgeleitet werden — mit umgangenem DNS
+bzw. Cloudflare), die nur beide umgeleitet werden; mit umgangenem DNS
 antworten beide normal.
 
 `declarino.ch` steht auf keiner Shortener-Sperrliste, weil die Domain eine
 eigene Reputation hat.
-
-**In Produktion verifiziert** am 2026-08-27 gegen `declarino.ch` mit Turso: ein
-vollständiges Rezept (4444 Zeichen) ergibt einen 34 Zeichen langen Kurz-Link,
-der mit HTTP 301 und 0 Bytes Body auf die zeichengenau identische Original-URL
-weiterleitet, also ohne Zwischenseite. Weiterleitung ~75 ms, Kürzen ~600 ms.

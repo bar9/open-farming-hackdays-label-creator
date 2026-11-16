@@ -28,3 +28,9 @@ assets/tailwind.css
 requirements/
 temp/
 .claude/
+
+# Shortener-Crate: Build-Ausgaben (auch der musl-Build) und Link-Exporte.
+# Exporte enthalten Rezepturen samt Produzentendaten und gehören nie ins Repo.
+/api/target/
+/api/target-musl/
+/ops/migration/links-*.json

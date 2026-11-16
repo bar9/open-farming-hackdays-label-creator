@@ -1,9 +1,6 @@
 {
   "name": "open-farming-hackdays-label-creator",
   "private": true,
-  "scripts": {
-    "check:routes": "node api/routecheck.cjs vercel.json api/routecases.json"
-  },
   "license": "MIT",
   "dependencies": {
     "@tailwindcss/cli": "^4.3.3",
@@ -11,7 +8,6 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.20",
-    "@vercel/routing-utils": "^6.6.0"
+    "@tailwindcss/typography": "^0.5.20"
   }
 }
