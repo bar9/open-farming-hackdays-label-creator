@@ -1,0 +1,14 @@
+# Löst die nächtliche Sicherung der Kurz-Link-Datenbank aus.
+# Installiert nach /etc/systemd/system/shortener-backup.timer.
+
+[Unit]
+Description=Nächtliche Sicherung der declarino.ch Kurz-Link-Datenbank
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+RandomizedDelaySec=15min
+# Verpasste Läufe (Server war aus) beim nächsten Start nachholen.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
