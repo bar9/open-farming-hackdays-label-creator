@@ -639,7 +639,6 @@ languages:
 
 badges:
   not_for_meat_dairy: pas pour viande / produits laitiers
-  in_development: En développement
   bio_qualified: "Bio ✓"
 
 version:

@@ -23,7 +23,7 @@ A web application for creating food labels compliant with Swiss food labeling la
 ## Prerequisites
 
 - **Rust** with wasm target: `rustup target add wasm32-unknown-unknown`
-- **Dioxus CLI** v0.7.10 (matches CI): `cargo install dioxus-cli --version 0.7.10`. `dx` refuses to build against a dioxus version other than its own, so `make dev`, `make build` and `make build-production` verify this first; run `make check-dx` to check on its own.
+- **Dioxus CLI** v0.7.10 (matches CI): `cargo install dioxus-cli --version 0.7.10`. `dx` refuses to build against a dioxus version other than its own, so `make dev` and `make build` verify this first; run `make check-dx` to check on its own.
 - **Node.js** + npm (for Tailwind CSS + daisyUI)
 
 ## Setup
@@ -43,11 +43,11 @@ Open http://localhost:8080/open-farming-hackdays-label-creator
 ## Build
 
 ```bash
-make build              # Development build (all pages)
-make build-production   # Production build (Bio/Knospe shown as "Coming Soon")
+make build              # Release build (all pages, also used for production)
+make build-production   # Alias for make build
 ```
 
-The `hidebio` feature flag controls Bio/Knospe page visibility. Production deploys to declarino.ch with this flag enabled.
+There are no feature flags: Bio and Knospe are part of every build. (The former `hidebio` flag, which hid them in production, has been removed.)
 
 ## Checks
 

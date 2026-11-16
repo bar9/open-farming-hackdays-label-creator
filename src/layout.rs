@@ -17,7 +17,6 @@ pub struct CopyLinkContext {
 /// by putting `text-primary` on the wrapping element. The wordmark/tagline keep
 /// their own dark fills. Language switches trigger a full page reload, so this is
 /// recomputed fresh on each load — no reactivity needed.
-#[cfg(not(feature = "hidebio"))]
 pub fn locale_logo() -> &'static str {
     let svg = match rust_i18n::locale().as_ref() {
         "fr-CH" => include_str!("../assets/declarino-logo-fr-CH.svg"),
@@ -74,12 +73,7 @@ pub fn SplitLayout() -> Element {
                         Link {
                             to: Route::SplashScreen {},
                             class: "text-2xl font-bold hover:text-primary transition-colors",
-                            {
-                                #[cfg(not(feature = "hidebio"))]
-                                { rsx! { span { class: "inline-block h-16 text-primary", "aria-label": "Declarino", dangerous_inner_html: locale_logo() } } }
-                                #[cfg(feature = "hidebio")]
-                                { rsx! { {t!("app.title").to_string()} } }
-                            }
+                            span { class: "inline-block h-16 text-primary", "aria-label": "Declarino", dangerous_inner_html: locale_logo() }
                         }
                         div {
                             class: "dropdown dropdown-end",
@@ -102,7 +96,6 @@ pub fn SplitLayout() -> Element {
                                             }
                                             {t!("routes.swiss").to_string()}
                                         },
-                                        #[cfg(not(feature = "hidebio"))]
                                         Route::Bio { .. } => rsx! {
                                             div {
                                                 class: "w-5 h-5 mr-2 flex flex-col items-center justify-center bg-green-100 rounded",
@@ -111,7 +104,6 @@ pub fn SplitLayout() -> Element {
                                             }
                                             {t!("routes.bio").to_string()}
                                         },
-                                        #[cfg(not(feature = "hidebio"))]
                                         Route::Knospe { .. } => rsx! {
                                             // Full Bio Suisse logo as on the splash card
                                             // (DEC-18), not just the bud.
@@ -167,54 +159,44 @@ pub fn SplitLayout() -> Element {
                                         }
                                     }
                                 }
-                                if !cfg!(feature = "hidebio") {
-                                    li {
-                                        button {
-                                            class: "flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left",
-                                            onclick: {
-                                                move |_| {
-                                                    #[cfg(not(feature = "hidebio"))]
-                                                    {
-                                                        target_route.set(Some(Route::Bio {}));
-                                                        show_warning.set(true);
-                                                    }
-                                                }
-                                            },
-                                            div {
-                                                class: "w-8 h-8 flex flex-col items-center justify-center bg-green-100 rounded",
-                                                span { class: "text-green-700 font-bold text-xs leading-none", "CH" }
-                                                span { class: "text-green-700 font-bold text-xs leading-none", "BIO" }
+                                li {
+                                    button {
+                                        class: "flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left",
+                                        onclick: {
+                                            move |_| {
+                                                target_route.set(Some(Route::Bio {}));
+                                                show_warning.set(true);
                                             }
-                                            div {
-                                                class: "flex flex-col",
-                                                span { class: "font-medium", {t!("routes.bio").to_string()} }
-                                                span { class: "text-sm text-base-content/70", {t!("routes.bio_desc").to_string()} }
-                                            }
+                                        },
+                                        div {
+                                            class: "w-8 h-8 flex flex-col items-center justify-center bg-green-100 rounded",
+                                            span { class: "text-green-700 font-bold text-xs leading-none", "CH" }
+                                            span { class: "text-green-700 font-bold text-xs leading-none", "BIO" }
+                                        }
+                                        div {
+                                            class: "flex flex-col",
+                                            span { class: "font-medium", {t!("routes.bio").to_string()} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.bio_desc").to_string()} }
                                         }
                                     }
                                 }
-                                if !cfg!(feature = "hidebio") {
-                                    li {
-                                        button {
-                                            class: "flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left",
-                                            onclick: {
-                                                move |_| {
-                                                    #[cfg(not(feature = "hidebio"))]
-                                                    {
-                                                        target_route.set(Some(Route::Knospe {}));
-                                                        show_warning.set(true);
-                                                    }
-                                                }
-                                            },
-                                            div {
-                                                class: "w-8 h-8 flex items-center justify-center",
-                                                icons::BioSuisseLogo { class: "max-w-full max-h-full" }
+                                li {
+                                    button {
+                                        class: "flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 w-full text-left",
+                                        onclick: {
+                                            move |_| {
+                                                target_route.set(Some(Route::Knospe {}));
+                                                show_warning.set(true);
                                             }
-                                            div {
-                                                class: "flex flex-col",
-                                                span { class: "font-medium", {t!("routes.knospe").to_string()} }
-                                                span { class: "text-sm text-base-content/70", {t!("routes.knospe_desc").to_string()} }
-                                            }
+                                        },
+                                        div {
+                                            class: "w-8 h-8 flex items-center justify-center",
+                                            icons::BioSuisseLogo { class: "max-w-full max-h-full" }
+                                        }
+                                        div {
+                                            class: "flex flex-col",
+                                            span { class: "font-medium", {t!("routes.knospe").to_string()} }
+                                            span { class: "text-sm text-base-content/70", {t!("routes.knospe_desc").to_string()} }
                                         }
                                     }
                                 }
