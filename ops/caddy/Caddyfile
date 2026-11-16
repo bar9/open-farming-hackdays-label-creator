@@ -28,7 +28,22 @@
 # dieselben Regeln ausliefert wie www.declarino.ch.
 (declarino) {
 	import sicherheit
-	encode zstd gzip
+
+	# Die Standardliste von Caddy 2.6 enthält application/wasm nicht; das
+	# WASM-Bundle (~2.9 MB) ginge sonst unkomprimiert raus. Die übrigen Typen
+	# entsprechen der Standardliste.
+	encode zstd gzip {
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/javascript*
+			header Content-Type application/xhtml+xml*
+			header Content-Type application/atom+xml*
+			header Content-Type application/rss+xml*
+			header Content-Type application/wasm*
+			header Content-Type image/svg+xml*
+		}
+	}
 
 	# Kurz-Link-Dienst. /s/<code> steht auf gedruckten Etiketten und muss
 	# deshalb vor dem SPA-Fallback greifen, sonst lieferte er die App mit
