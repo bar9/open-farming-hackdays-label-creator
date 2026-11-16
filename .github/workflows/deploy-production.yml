@@ -1,29 +1,51 @@
-name: Deploy Production to GitHub Pages
+name: Deploy Production (VPS)
 
+# Baut die App und den Kurz-Link-Dienst und liefert beides auf den eigenen
+# Server (Infomaniak-VPS, Caddy). Einrichtung des Servers: ops/README.md.
 on:
   workflow_run:
     workflows: ["Check & Test"]
     branches: [main]
     types: [completed]
+  workflow_dispatch:
+
+# Nie zwei Deploys gleichzeitig: das Umschalten von `current` und der
+# Neustart des Dienstes sollen in einer festen Reihenfolge passieren. Ein
+# laufender Deploy wird nicht abgebrochen, der nächste wartet.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 # Keep in sync with the other workflows and with the dioxus version in
 # Cargo.toml. DX_SHA256 is the sha256 of the linux-gnu release tarball.
 env:
   DX_VERSION: v0.7.10
   DX_SHA256: 4363e4ed2a3f1eb7f4d38d2d59aed59ce43271c44c16b425e92c89a64761fbe7
+  PUBLIC_DIR: ./target/dx/open-farming-hackdays-label-creator/release/web/public
+  MUSL_TARGET: x86_64-unknown-linux-musl
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Automatisch nur nach erfolgreichem "Check & Test" auf main; von Hand
+    # (workflow_dispatch) jederzeit für den gewählten Branch.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
+      # Bei workflow_run genau den getesteten Commit bauen, nicht das, was
+      # inzwischen auf main liegt.
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown,${{ env.MUSL_TARGET }}
 
       - name: Cache cargo registry & build
         uses: actions/cache@v4
@@ -32,8 +54,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            api/target
+          key: ${{ runner.os }}-cargo-deploy-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-deploy-
             ${{ runner.os }}-cargo-
 
       - name: Install Dioxus CLI
@@ -50,56 +74,143 @@ jobs:
       - name: Tailwind CSS Generation
         run: npx @tailwindcss/cli -i input.css -o assets/tailwind.css
 
+      # Gleiche Prüfung wie in check.yml; hier noch einmal, weil ein Deploy
+      # per workflow_dispatch "Check & Test" nicht voraussetzt.
+      - name: Check analytics privacy flags
+        run: |
+          for a in 'data-exclude-search="true"' 'data-do-not-track="true"' 'data-domains='; do
+            grep -qF "$a" index.html || { echo "FEHLT in index.html: $a"; exit 1; }
+          done
+
       - name: Update base path for production deployment
         run: |
           sed -i 's/base_path = "open-farming-hackdays-label-creator"/base_path = ""/' Dioxus.toml
-          echo "Updated Dioxus.toml base_path for production deployment"
+          grep -q '^base_path = ""' Dioxus.toml
 
       # The cargo cache restores target/, and dx appends every build's
       # content-hashed wasm/js into web/public/assets without pruning. Stale
       # artifacts otherwise pile up and get published (seen locally: 290 MB
       # of public/ for a 4.4 MB site).
       - name: Clear stale build output
-        run: rm -rf ./target/dx/open-farming-hackdays-label-creator/release/web/public
+        run: rm -rf "$PUBLIC_DIR"
 
-      - name: Build with Dioxus (Production - hidebio feature)
-        run: dx build --release --features hidebio
+      # Ohne Feature-Flags: Bio und Knospe sind Teil jedes Builds.
+      - name: Build with Dioxus
+        run: dx build --release
 
-      - name: Configure SPA routing for production
+      # Nur was der Server ausliefern soll. CNAME war für GitHub Pages; den
+      # SPA-Fallback (früher 404.html) übernimmt Caddy mit try_files.
+      - name: Prepare site
         run: |
-          PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
-          cp "$PUBLIC_DIR/index.html" "$PUBLIC_DIR/404.html"
-          cp "./public/CNAME" "$PUBLIC_DIR/CNAME"
-          rm -f "$PUBLIC_DIR/robots.txt"
+          rm -f "$PUBLIC_DIR/CNAME" "$PUBLIC_DIR/robots.txt" "$PUBLIC_DIR/404.html"
+          test -f "$PUBLIC_DIR/index.html"
+          # Alles unter /assets/ wird von Caddy als unveränderlich gecacht;
+          # das ist nur richtig, solange jede Datei dort einen Inhalts-Hash
+          # im Namen trägt.
+          if find "$PUBLIC_DIR/assets" -type f | grep -v -- '-dxh[0-9a-f]\{12,\}\.[A-Za-z0-9]*$'; then
+            echo "Ungehashte Datei unter assets/ (siehe oben): würde unbegrenzt gecacht."
+            exit 1
+          fi
+          du -sh "$PUBLIC_DIR"
 
-      # declarino.ch wird von Vercel aus bar9/declarino bedient, und der Deploy
-      # unten ersetzt dort den gesamten Inhalt (keep_files ist standardmässig
-      # false). Der Kurz-Link-Endpunkt muss deshalb bei jedem Deploy
-      # mitgeliefert werden — läge er nur im Zielrepo, würde er beim nächsten
-      # Lauf gelöscht.
-      - name: Add URL shortener functions
+      # Statisch gelinkt (musl, SQLite eingebaut): läuft auf dem Server ohne
+      # weitere Pakete.
+      - name: Build shortener (static musl)
+        working-directory: api
         run: |
-          PUBLIC_DIR="./target/dx/open-farming-hackdays-label-creator/release/web/public"
-          # Positivliste statt "alles kopieren und dann aufräumen": Nur die
-          # beiden Endpunkte und ihre Hilfsmodule gehören ins Deployment.
-          # Test-, Sicherungs- und Doku-Dateien wären sonst öffentlich
-          # abrufbar, und eine künftig hinzugefügte Datei würde stillschweigend
-          # mit veröffentlicht.
-          # (_lib.mjs und _storage.mjs sind keine eigenen Funktionen: Vercel
-          # behandelt Dateien mit führendem Unterstrich als Hilfsmodul.)
-          mkdir -p "$PUBLIC_DIR/api"
-          for f in _lib.mjs _storage.mjs shorten.mjs redirect.mjs; do
-            cp "./api/$f" "$PUBLIC_DIR/api/$f"
+          sudo apt-get install -y --no-install-recommends musl-tools >/dev/null
+          cargo build --release --locked --target "$MUSL_TARGET"
+          BIN="target/$MUSL_TARGET/release/shortener"
+          file "$BIN" | tee /dev/stderr | grep -q 'static'
+          "$BIN" version
+
+      - name: Configure SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Hostschlüssel fest hinterlegt (ssh-keyscan bei der Einrichtung),
+          # kein Vertrauen beim ersten Kontakt.
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload release
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          RELEASE="$(date -u +%Y%m%dT%H%M%SZ)-${SHA::12}"
+          echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          SSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes"
+          DEST="deploy@$VPS_HOST"
+          # Neue Seite in ein frisches Release-Verzeichnis; die laufende
+          # Version bleibt unberührt, bis `current` umgeschaltet wird.
+          # --link-dest: unveränderte Dateien werden vom aktiven Release
+          # hart verlinkt statt erneut übertragen.
+          rsync -a --delete -e "$SSH" \
+            --link-dest=/var/www/declarino/current/ \
+            "$PUBLIC_DIR/" "$DEST:/var/www/declarino/releases/$RELEASE/"
+          # Positivliste: nur das Programm und das Umschaltskript.
+          rsync -a -e "$SSH" \
+            "api/target/$MUSL_TARGET/release/shortener" "$DEST:/opt/shortener/shortener.new"
+          rsync -a -e "$SSH" ops/activate-release.sh "$DEST:/opt/shortener/activate-release.sh"
+
+      - name: Activate release
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "deploy@$VPS_HOST" "bash /opt/shortener/activate-release.sh '$RELEASE'"
+
+      # Prüft auf dem Server selbst über die lokale Prüfadresse von Caddy
+      # (127.0.0.1:8081, gleiche Regeln wie www.declarino.ch, siehe
+      # ops/caddy/Caddyfile). Damit ist der Test unabhängig davon, wohin DNS
+      # gerade zeigt (vor der Umstellung noch auf die alte Plattform) und ob
+      # Caddy schon ein Zertifikat hat.
+      - name: Smoke test (auf dem Server)
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          JS=$(grep -o 'assets/open-farming-hackdays-label-creator-dxh[0-9a-f]*\.js' "$PUBLIC_DIR/index.html" | head -1)
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "deploy@$VPS_HOST" "bash -s '$JS' '$RELEASE'" <<'SMOKE'
+          set -euo pipefail
+          JS=$1; RELEASE=$2; B=http://127.0.0.1:8081
+          c() { curl -sS --max-time 15 "$@"; }
+          # Startseite liefert die eben deployte Version.
+          c "$B/" | grep -qF "$JS" || { echo "Startseite liefert nicht die neue Version"; exit 1; }
+          test "$(c -o /dev/null -w '%{http_code}' "$B/$JS")" = 200
+          # SPA-Pfade, inklusive der jetzt freigeschalteten Bio/Knospe-Seiten.
+          for p in /lebensmittelrecht /bio /knospe; do
+            test "$(c -o /dev/null -w '%{http_code}' "$B$p")" = 200 || { echo "$p nicht 200"; exit 1; }
           done
-          cp ./vercel.json "$PUBLIC_DIR/vercel.json"
-          echo "Deployte API-Dateien:" && ls "$PUBLIC_DIR/api"
+          # Kurz-Link-Dienst über Caddy: kürzen, dann auflösen.
+          TARGET="https://www.declarino.ch/?smoke=deploy"
+          CODE=$(c -H 'Content-Type: application/json' -d "{\"url\":\"$TARGET\"}" "$B/api/shorten" \
+            | sed -n 's/.*"code":"\([0-9A-Za-z]*\)".*/\1/p')
+          test -n "$CODE" || { echo "/api/shorten liefert keinen Code"; exit 1; }
+          OUT=$(c -o /dev/null -w '%{http_code} %{redirect_url}' "$B/s/$CODE")
+          test "$OUT" = "301 $TARGET" || { echo "/s/$CODE: $OUT"; exit 1; }
+          test "$(readlink /var/www/declarino/current)" = "releases/$RELEASE"
+          echo "Smoke test ok (Release $RELEASE)."
+          SMOKE
 
-      - name: Deploy to Production GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          deploy_key: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
-          external_repository: bar9/declarino
-          publish_branch: gh-pages
-          publish_dir: ./target/dx/open-farming-hackdays-label-creator/release/web/public
-          # Ohne `keep_files` (Standard: false) wird der Zielinhalt vollständig
-          # ersetzt — deshalb muss api/ oben bei jedem Lauf mitkopiert werden.
+      # Zusätzlich von aussen, direkt an die Server-IP (nicht über DNS). Vor
+      # der DNS-Umstellung hat Caddy noch kein Zertifikat, dann wird HTTP
+      # geprüft. Nur eine Warnung, solange Port 80/443 von aussen nicht
+      # erreichbar ist (Firewall im Infomaniak-Manager).
+      - name: Smoke test (von aussen, direkt an die IP)
+        continue-on-error: true
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          H=www.declarino.ch
+          if curl -sS -o /dev/null --max-time 10 --resolve "$H:443:$VPS_HOST" "https://$H/"; then
+            BASE="https://$H"; RES="$H:443:$VPS_HOST"
+          else
+            BASE="http://$H"; RES="$H:80:$VPS_HOST"
+          fi
+          curl -sS --max-time 10 --resolve "$RES" -o /dev/null -w "$BASE/bio -> %{http_code}\n" "$BASE/bio"
