@@ -143,10 +143,6 @@ pub fn SplashScreen() -> Element {
                                     }
                                 }
                             }
-                            div {
-                                class: "badge badge-info text-xs px-2 py-1",
-                                {t!("badges.not_for_meat_dairy").to_string()}
-                            }
                         }
                     }
 
@@ -186,6 +182,27 @@ pub fn SplashScreen() -> Element {
                             }
                         }
                     }
+
+                        // Gilt für alle drei Regelwerke, deshalb einmal unter den
+                        // Kacheln statt auf jeder einzelnen. Gleiche Farbe wie der
+                        // frühere Badge auf der Lebensmittelrecht-Kachel.
+                        div {
+                            class: "md:col-span-3 flex justify-center",
+                            div {
+                                class: "badge badge-info h-auto text-sm px-4 py-1.5 gap-2",
+                                svg {
+                                    class: "w-4 h-4 shrink-0",
+                                    view_box: "0 0 24 24",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    stroke_width: "2",
+                                    "aria-hidden": "true",
+                                    circle { cx: "12", cy: "12", r: "10" }
+                                    path { stroke_linecap: "round", d: "M12 16v-4M12 8h.01" }
+                                }
+                                {t!("badges.not_for_meat_dairy").to_string()}
+                            }
+                        }
                     }
                 }
             }
