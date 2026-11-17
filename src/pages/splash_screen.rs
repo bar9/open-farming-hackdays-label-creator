@@ -91,10 +91,12 @@ pub fn SplashScreen() -> Element {
                     LanguageSelect {}
                 }
             }
+            // Bei wenig Fensterhöhe scrollt der Mittelteil statt vom Footer
+            // überdeckt zu werden. `my-auto` zentriert, ohne oben abzuschneiden.
             div {
-                class: "flex-1 min-h-0 flex flex-col items-center justify-start md:justify-center px-8 py-4",
+                class: "flex-1 min-h-0 md:overflow-y-auto flex flex-col items-center px-8 py-4",
                 div {
-                    class: "text-center max-w-4xl",
+                    class: "text-center max-w-4xl md:my-auto",
                     h1 {
                         class: "text-4xl md:text-5xl font-bold mb-8 md:mb-10 text-base-content flex justify-center",
                         span { class: "inline-block h-28 md:h-32 -mt-4 md:-mt-8 text-black", "aria-label": "Declarino", dangerous_inner_html: crate::layout::locale_logo() }
@@ -143,10 +145,6 @@ pub fn SplashScreen() -> Element {
                                     }
                                 }
                             }
-                            div {
-                                class: "badge badge-info text-xs px-2 py-1",
-                                {t!("badges.not_for_meat_dairy").to_string()}
-                            }
                         }
                     }
 
@@ -186,6 +184,28 @@ pub fn SplashScreen() -> Element {
                             }
                         }
                     }
+
+                        // Gilt für alle drei Regelwerke, deshalb einmal unter den
+                        // Kacheln statt auf jeder einzelnen. Der Balken geht über die
+                        // volle Breite aller drei Kacheln, damit er nicht als Teil
+                        // einer einzelnen Kachel gelesen wird.
+                        div {
+                            class: "md:col-span-3",
+                            div {
+                                class: "w-full flex items-center justify-center gap-2 rounded-box bg-info text-info-content text-sm md:text-base font-medium px-4 py-2.5",
+                                svg {
+                                    class: "w-4 h-4 shrink-0",
+                                    view_box: "0 0 24 24",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    stroke_width: "2",
+                                    "aria-hidden": "true",
+                                    circle { cx: "12", cy: "12", r: "10" }
+                                    path { stroke_linecap: "round", d: "M12 16v-4M12 8h.01" }
+                                }
+                                {t!("badges.not_for_meat_dairy").to_string()}
+                            }
+                        }
                     }
                 }
             }
