@@ -32,11 +32,64 @@ Internet ──► Caddy :443 ─┬─ /api/*, /s/*  ──► shortener 127.0.
   (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`,
   `MemoryMax=128M`, …) und hört nur auf `127.0.0.1:3000`.
 
+## Grundeinrichtung des Systems
+
+Von Hand erledigt am 16.11.2026, vor `server-setup.sh` (Stand geprüft am
+24.11.2026). Das Setup-Skript setzt diese Schritte voraus und macht sie nicht
+selbst.
+
+* **Ausgangslage:** Infomaniak VPS Lite mit dem Debian-13-Image aus dem
+  Infomaniak-Manager. Admin-Benutzer `debian` (sudo ohne Passwort), Login mit
+  dem beim Bestellen erzeugten Schlüssel:
+  `ssh -i <schlüssel> debian@83.228.242.209`. Zeitzone UTC, Uhr per systemd
+  synchronisiert.
+* **SSH gehärtet:** `/etc/ssh/sshd_config.d/10-hardening.conf`:
+
+  ```
+  PasswordAuthentication no
+  PermitRootLogin no
+  KbdInteractiveAuthentication no
+  ```
+
+  Danach `sudo systemctl reload ssh`, **vorher** in einer zweiten Sitzung
+  prüfen, dass der Schlüssel-Login klappt.
+* **Firewall:** `ufw` installiert, eingehend alles gesperrt ausser
+
+  ```bash
+  sudo ufw allow OpenSSH
+  sudo ufw allow 80,443/tcp
+  sudo ufw enable
+  ```
+
+  Zusätzlich hat der Infomaniak-Manager eine eigene Firewall vor dem VPS. Dort
+  mussten 80 und 443 eigens geöffnet werden, ohne das kommen Web-Anfragen nie
+  an, obwohl ufw sie erlaubt.
+* **Caddy:** `sudo apt install caddy` (Debian-Paket, 2.6.2). Läuft als
+  systemd-Dienst `caddy` und holt die Zertifikate selbst.
+* **Pakete von `server-setup.sh`:** `sqlite3` (Sicherung) und `rsync`
+  (Deploy).
+* **Automatische Updates:** `unattended-upgrades` ist im Debian-Image schon
+  aktiv (`/etc/apt/apt.conf.d/20auto-upgrades`: Paketlisten und Upgrade
+  täglich). Eingespielt werden die Pakete aus Debian und Debian-Security,
+  also auch Caddy. Die Timer `apt-daily.timer` und `apt-daily-upgrade.timer`
+  steuern das, das Protokoll liegt unter
+  `/var/log/unattended-upgrades/unattended-upgrades.log`.
+
+  **Kein automatischer Neustart:** Ein neuer Kernel wird installiert, wirkt
+  aber erst nach einem Reboot. Ob einer fällig ist, zeigt der Vergleich von
+  `uname -r` mit `ls /boot/vmlinuz-*`. Nach einem Neustart (`sudo reboot`)
+  starten Caddy, der Shortener und der Sicherungs-Timer von selbst wieder
+  (alle `enabled`). Danach prüfen: `curl -I https://www.declarino.ch` und ein Kurz-Link.
+
+  ```bash
+  systemctl list-timers 'apt-daily*'
+  sudo tail /var/log/unattended-upgrades/unattended-upgrades.log
+  ```
+
 ## Neuen Server einrichten
 
-1. Voraussetzungen: SSH nur mit Schlüssel, ufw mit 22/80/443, Caddy aus dem
-   Debian-Paket. Ports 80/443 zusätzlich in der Firewall des
-   Infomaniak-Managers freigeben, falls aktiv.
+1. Voraussetzungen: die Grundeinrichtung oben (SSH nur mit Schlüssel, ufw mit
+   22/80/443, Caddy aus dem Debian-Paket, Firewall im Infomaniak-Manager).
 2. Deploy-Schlüssel lokal erzeugen und den Server einrichten:
 
    ```bash
