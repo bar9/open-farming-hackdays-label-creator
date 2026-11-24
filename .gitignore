@@ -26,6 +26,9 @@ assets/tailwind.css
 /target
 /CLAUDE.md
 requirements/
+# Enthält Zugangsdaten (Infomaniak-Login). Zusätzlich zu requirements/ auch
+# einzeln ignoriert, falls requirements/ je wieder versioniert wird.
+**/Hosting Declarino*.docx
 temp/
 .claude/
 
