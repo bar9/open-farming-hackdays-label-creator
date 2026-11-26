@@ -704,7 +704,7 @@ bio_hints:
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Les ingrédients non biologiques autorisés (p. ex. la pectine) ne peuvent représenter plus de 5% des ingrédients agricoles. Cette limite est dépassée – le logo Bourgeon ne peut pas être utilisé et le produit ne peut pas être commercialisé avec le Bourgeon."
 
   knospe_check_pending: "Veuillez vérifier la recette (à gauche) afin de garantir l'exhaustivité de la déclaration sur l'étiquette."
-  knospe_check_ok: "La recette saisie satisfait aux exigences du Bourgeon et le produit peut être commercialisé avec le Bourgeon."
+  knospe_check_ok: "La recette saisie satisfait aux exigences du Bourgeon et le produit peut être commercialisé avec le Bourgeon, pour autant que vous disposiez d'un contrat de production ou de licence valable avec Bio Suisse."
   knospe_check_failed: "La recette ne satisfait pas aux exigences du Bourgeon. Les raisons figurent à gauche sous la vérification de la recette."
 umstellbetrieb:
 
@@ -730,17 +730,62 @@ support:
 faq:
   title: Questions fréquentes
   intro: Réponses aux questions les plus fréquentes sur Declarino et l'étiquetage des denrées alimentaires.
-  # Les questions et les réponses sont associées par leur index :
-  # questions[0] correspond à answers[0]. Les deux listes doivent donc avoir la
-  # même longueur et le même ordre dans tous les fichiers de langue.
-  questions:
-    - Declarino remplace-t-il un conseil juridique ?
-    - Mes recettes sont-elles enregistrées sur un serveur ?
-    - Comment déclarer un mélange, p. ex. un assortiment de biscuits ?
-  answers:
-    - Non. Declarino t'aide à créer une étiquette, mais ne prétend pas être exhaustif et ne remplace pas un examen juridique. La responsabilité de l'exactitude de la déclaration incombe à la personne qui met la denrée alimentaire sur le marché.
-    - Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Partager ». Toute personne disposant de ce lien voit la recette qu'il contient. Seule exception, le lien court, que tu peux choisir expressément dans la fenêtre de partage. Il enregistre la recette, adresse comprise, sur declarino.ch pour que le lien court fonctionne.
-    - "Il est recommandé de saisir chaque sorte comme ingrédient composé avec ses propres ingrédients en grammes, p. ex. « Milanais (farine de blé, beurre, œufs, …), Rochers à la noix de coco (noix de coco, sucre, blanc d'œuf, …) ». On voit ainsi quel biscuit contient quels allergènes. Cela demande un peu plus de place sur l'étiquette. Si tous les ingrédients sont additionnés, les recettes doivent d'abord être adaptées aux proportions dans l'emballage, et les personnes allergiques ne savent plus quelle sorte contient quoi."
+  # Contexte POEditor «faq». qNN = question, aNN = réponse, hNN = intertitre
+  # avant qNN. Les numéros déterminent l'ordre et peuvent comporter des
+  # lacunes. Tous les fichiers de langue doivent contenir les mêmes clés.
+  q01: Declarino remplace-t-il un conseil juridique ?
+  a01: Non. Declarino t'aide à créer une étiquette, mais ne prétend pas être exhaustif et ne remplace pas un examen juridique. La responsabilité de l'exactitude de la déclaration incombe à la personne qui met la denrée alimentaire sur le marché.
+  q02: Mes recettes sont-elles enregistrées sur un serveur ?
+  a02: Non. Declarino fonctionne entièrement dans ton navigateur. Tes saisies sont enregistrées uniquement en local et dans le lien que tu génères via « Partager ». Toute personne disposant de ce lien voit la recette qu'il contient. Seule exception, le lien court, que tu peux choisir expressément dans la fenêtre de partage. Il enregistre la recette, adresse comprise, sur declarino.ch pour que le lien court fonctionne.
+  q03: Comment déclarer un mélange, p. ex. un assortiment de biscuits ?
+  a03: "Il est recommandé de saisir chaque sorte comme ingrédient composé avec ses propres ingrédients en grammes, p. ex. « Milanais (farine de blé, beurre, œufs, …), Rochers à la noix de coco (noix de coco, sucre, blanc d'œuf, …) ». On voit ainsi quel biscuit contient quels allergènes. Cela demande un peu plus de place sur l'étiquette. Si tous les ingrédients sont additionnés, les recettes doivent d'abord être adaptées aux proportions dans l'emballage, et les personnes allergiques ne savent plus quelle sorte contient quoi."
+  q04: Qu'est-ce que Declarino ?
+  a04: Declarino aide les exploitations qui commercialisent elles-mêmes leurs produits à étiqueter correctement leurs denrées alimentaires. Le programme vous guide pas à pas dans la saisie. À la fin, vous obtenez une proposition d'étiquetage conforme au droit alimentaire suisse.
+  q05: Quels produits puis-je saisir avec Declarino ?
+  a05: Actuellement, les domaines « Droit alimentaire CH », « Ordonnance bio CH » et « Bourgeon Bio » sont disponibles. D'autres labels peuvent rejoindre l'organisation responsable. Declarino n'est pas conçu pour les produits carnés et laitiers.
+  h06: Saisir une recette
+  q06: Comment saisir une recette ?
+  a06: Choisissez le standard qui vous convient, « Droit alimentaire CH », « Ordonnance bio CH » ou « Bourgeon Bio ». Saisissez les indications relatives à vos produits à l'aide de la liste des ingrédients. Indiquez pour chaque ingrédient la quantité et l'unité. Les remarques directement à côté des champs de saisie vous aident.
+  q07: Quelles unités de mesure sont prises en charge ?
+  a07: La quantité doit être indiquée dans les unités légales de l'ordonnance sur les unités (p. ex. g, kg, ml, cl, l) ou par le nombre de pièces. La quantité doit être précise. Elle ne doit contenir ni fourchettes de quantités ni expressions comme « env. ».
+  q08: Puis-je créer mes propres ingrédients ?
+  a08: Oui. Vous pouvez saisir un ingrédient vous-même. Vérifiez alors tout particulièrement les allergènes. Declarino ne peut reconnaître automatiquement les allergènes que si vous choisissez un ingrédient dans la base de données.
+  q09: Puis-je saisir des ingrédients composés ?
+  a09: "Oui. Un ingrédient composé est constitué de plusieurs ingrédients. Exemple : le chocolat se compose entre autres de sucre et de cacao. Indiquez tous les composants selon l'emballage. Il existe une exception. L'indication des composants individuels n'est pas nécessaire si l'ingrédient composé représente moins de 2 % du produit final. Si un ingrédient contient un allergène (p. ex. lait, soja), celui-ci doit toujours être déclaré et mis en évidence (indépendamment de la règle des 2 %). Vérifiez aussi l'ordre et les allergènes."
+  q10: Que se passe-t-il si je saisis plusieurs fois le même ingrédient ?
+  a10: Les ingrédients identiques sont additionnés dans la liste des ingrédients. Vérifiez la proposition finale en particulier lorsque le même ingrédient apparaît à plusieurs endroits de la recette.
+  q11: Comment reconnaître les indications obligatoires manquantes ?
+  a11: Declarino vous indique quelles informations manquent ou sont incorrectes. Vérifiez tous les champs marqués avant de reprendre l'étiquette.
+  h12: Étiquette, allergènes et étiquetage
+  q12: Comment la liste des ingrédients et les allergènes sont-ils établis ?
+  a12: Declarino classe les ingrédients selon leur poids. Les ingrédients de la base de données apportent les indications enregistrées. Les allergènes sont mis en évidence en gras. Pour les ingrédients saisis vous-même, vous devez indiquer correctement les allergènes vous-même.
+  q13: Comment indiquer la durabilité ?
+  a13: Choisissez la mention de date appropriée et saisissez la date. Selon le produit, une date de durabilité minimale (« à consommer de préférence avant ») ou une date limite de consommation (« à consommer jusqu'au ») peut être nécessaire. Lisez à ce sujet les remarques dans le formulaire.
+  q14: Comment fonctionnent les indications bio, Bourgeon et de provenance ?
+  a14: Les domaines « Ordonnance bio CH » et « Bourgeon Bio » sont encore en cours d'élaboration. N'utilisez pas encore ces domaines pour une étiquette définitive. Faites en outre vérifier les indications bio et Bourgeon par un service spécialisé.
+  q15: Puis-je utiliser un code QR sur l'étiquette ?
+  a15: Un code QR ne fait pas automatiquement partie de l'étiquette d'une denrée alimentaire. Declarino peut proposer un code QR pour partager les données de recette. Vérifiez avant l'impression ce que contient le code QR. Declarino ne génère pas de code-barres EAN.
+  h16: Coûts et protection des données
+  q16: Declarino est-il gratuit ?
+  a16: Oui. L'utilisation est gratuite. Si vous soutenez Declarino par une contribution volontaire, nous vous en remercions chaleureusement.
+  q17: Ai-je besoin d'un compte utilisateur ?
+  a17: Non. Vous pouvez utiliser Declarino sans vous connecter.
+  h20: Partager et enregistrer
+  q20: Puis-je partager une recette ?
+  a20: Lorsque la fonction Partager est affichée, vous pouvez créer un lien ou un code QR pour les données de recette. Ne partagez le lien qu'avec des personnes autorisées à voir ces informations.
+  q21: Puis-je copier une étiquette terminée ?
+  a21: Oui. Après avoir saisi vos données, vous pouvez reprendre le texte avec la fonction de copie et le coller dans votre modèle d'étiquette.
+  q22: Mes recettes sont-elles enregistrées durablement ?
+  a22: Declarino ne nécessite pas de compte utilisateur. Ne comptez pas sur un enregistrement durable de vos saisies. Copiez ou sauvegardez le résultat avant de fermer ou de recharger la page.
+  h30: Utilisation et dépannage
+  q30: Sur quels appareils et dans quels navigateurs Declarino fonctionne-t-il ?
+  a30: Utilisez de préférence Declarino sur un ordinateur, un ordinateur portable ou une tablette. Utilisez un navigateur à jour. Sur un petit écran de téléphone, l'utilisation peut être plus difficile.
+  q31: Que faire si une saisie ou une liste déroulante ne fonctionne pas ?
+  a31: "Vérifiez d'abord tous les champs marqués. Vérifiez aussi les quantités et les unités. Ne rechargez la page que si nécessaire : les saisies non enregistrées peuvent être perdues."
+  q32: Pourquoi dois-je accepter une clause de non-responsabilité ?
+  a32: Declarino est une aide. Des erreurs sont possibles. Vous êtes vous-même responsable de l'exactitude de l'étiquette. Vérifiez toutes les indications. En cas de doute, adressez-vous à un service spécialisé.
+  q33: Où puis-je signaler une erreur ou une proposition d'amélioration ?
+  a33: "Sur la page d'accueil, vous trouvez l'« Organisation responsable » de Declarino. Adressez-vous à l'une de ces organisations. Décrivez l'erreur aussi précisément que possible : qu'avez-vous saisi ? Que s'est-il passé ? Quel navigateur avez-vous utilisé ?"
 
 impressum: |
   # Mentions légales, Protection des données

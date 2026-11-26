@@ -1,11 +1,11 @@
-use crate::faq;
+use crate::faq::{self, FaqItem};
 use dioxus::prelude::*;
 use rust_i18n::t;
 
 /// FAQ page. Layout mirrors the Impressum/Datenschutz page: a centered
 /// `prose` column inside the shared container, with a back link at the bottom.
 pub fn Faq() -> Element {
-    let entries = faq::entries();
+    let items = faq::items();
 
     rsx! {
         div { class: "container mx-auto p-8",
@@ -14,10 +14,17 @@ pub fn Faq() -> Element {
                     h1 { {faq::title()} }
                     p { {faq::intro()} }
 
-                    for (idx, entry) in entries.iter().enumerate() {
-                        div { key: "faq-{idx}",
-                            h2 { {entry.question.clone()} }
-                            p { {entry.answer.clone()} }
+                    for (idx, item) in items.iter().enumerate() {
+                        match item {
+                            FaqItem::Heading(heading) => rsx! {
+                                h2 { key: "faq-{idx}", {heading.clone()} }
+                            },
+                            FaqItem::Entry(entry) => rsx! {
+                                div { key: "faq-{idx}",
+                                    h3 { {entry.question.clone()} }
+                                    p { {entry.answer.clone()} }
+                                }
+                            },
                         }
                     }
                 }

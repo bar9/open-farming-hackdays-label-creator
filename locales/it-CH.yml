@@ -703,7 +703,7 @@ bio_hints:
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Gli ingredienti non biologici ammessi (p. es. la pectina) non possono superare il 5% degli ingredienti agricoli. Questo limite è superato – il logo Gemma non può essere utilizzato e il prodotto non può essere commercializzato con la Gemma."
 
   knospe_check_pending: "Si prega di verificare la ricetta (a sinistra) per garantire la completezza della dichiarazione sull'etichetta."
-  knospe_check_ok: "La ricetta inserita soddisfa i requisiti della Gemma e il prodotto può essere commercializzato con la Gemma."
+  knospe_check_ok: "La ricetta inserita soddisfa i requisiti della Gemma e il prodotto può essere commercializzato con la Gemma, a condizione che disponiate di un contratto di produzione o di licenza valido con Bio Suisse."
   knospe_check_failed: "La ricetta non soddisfa i requisiti della Gemma. I motivi sono indicati a sinistra sotto la verifica della ricetta."
 umstellbetrieb:
 
@@ -729,17 +729,62 @@ support:
 faq:
   title: Domande frequenti
   intro: Risposte alle domande più frequenti su Declarino e sull'etichettatura delle derrate alimentari.
-  # Le domande e le risposte sono abbinate tramite l'indice:
-  # questions[0] corrisponde a answers[0]. Entrambe le liste devono quindi avere
-  # la stessa lunghezza e lo stesso ordine in tutti i file di lingua.
-  questions:
-    - Declarino sostituisce una consulenza legale?
-    - Le mie ricette vengono salvate su un server?
-    - Come dichiaro una miscela, p. es. un assortimento di biscotti?
-  answers:
-    - No. Declarino ti aiuta a creare un'etichetta, ma non pretende di essere completo e non sostituisce una verifica legale. La responsabilità della correttezza della dichiarazione spetta a chi immette la derrata alimentare sul mercato.
-    - No. Declarino funziona interamente nel tuo browser. I tuoi dati vengono salvati solo localmente e nel link che generi con «Condividi». Chi dispone di questo link vede la ricetta in esso contenuta. Unica eccezione è il link breve, che puoi scegliere espressamente nella finestra di condivisione. Salva la ricetta, indirizzo compreso, su declarino.ch affinché il link breve funzioni.
-    - "Si consiglia di registrare ogni varietà come ingrediente composto con i propri ingredienti in grammi, p. es. «Milanesini (farina di frumento, burro, uova, …), Amaretti al cocco (cocco, zucchero, albume, …)». Così si vede quale biscotto contiene quali allergeni. Serve un po' più di spazio sull'etichetta. Se tutti gli ingredienti vengono sommati, le ricette devono prima essere adattate alle proporzioni nella confezione, e chi soffre di allergie non riconosce più quale varietà contiene cosa."
+  # Contesto POEditor «faq». qNN = domanda, aNN = risposta, hNN = titolo
+  # intermedio prima di qNN. I numeri determinano l'ordine e possono avere
+  # lacune. Tutti i file di lingua devono contenere le stesse chiavi.
+  q01: Declarino sostituisce una consulenza legale?
+  a01: No. Declarino ti aiuta a creare un'etichetta, ma non pretende di essere completo e non sostituisce una verifica legale. La responsabilità della correttezza della dichiarazione spetta a chi immette la derrata alimentare sul mercato.
+  q02: Le mie ricette vengono salvate su un server?
+  a02: No. Declarino funziona interamente nel tuo browser. I tuoi dati vengono salvati solo localmente e nel link che generi con «Condividi». Chi dispone di questo link vede la ricetta in esso contenuta. Unica eccezione è il link breve, che puoi scegliere espressamente nella finestra di condivisione. Salva la ricetta, indirizzo compreso, su declarino.ch affinché il link breve funzioni.
+  q03: Come dichiaro una miscela, p. es. un assortimento di biscotti?
+  a03: "Si consiglia di registrare ogni varietà come ingrediente composto con i propri ingredienti in grammi, p. es. «Milanesini (farina di frumento, burro, uova, …), Amaretti al cocco (cocco, zucchero, albume, …)». Così si vede quale biscotto contiene quali allergeni. Serve un po' più di spazio sull'etichetta. Se tutti gli ingredienti vengono sommati, le ricette devono prima essere adattate alle proporzioni nella confezione, e chi soffre di allergie non riconosce più quale varietà contiene cosa."
+  q04: Che cos'è Declarino?
+  a04: Declarino aiuta le aziende che commercializzano i propri prodotti a etichettare correttamente i propri alimenti. Il programma vi guida passo dopo passo nell'inserimento dei dati. Al termine riceverete una proposta di etichettatura conforme alla legislazione svizzera in materia alimentare.
+  q05: Quali prodotti posso registrare con Declarino?
+  a05: Attualmente sono disponibili le sezioni «Legislazione alimentare svizzera», «Ordinanza sul biologico svizzera» e «Bio Knospe». Altri marchi possono aderire all’iniziativa. Il programma non è destinato ai prodotti a base di carne e latticini.
+  h06: Inserimento di una ricetta
+  q06: Come si registra una ricetta?
+  a06: "Selezionate lo standard più adatto alle vostre esigenze: «Legislazione alimentare svizzera», «Ordinanza sul biologico svizzera» o «Bio Knospe». Inserite i dati relativi ai vostri prodotti utilizzando l’elenco degli ingredienti. Specificate per ogni ingrediente la quantità e l’unità di misura. Le indicazioni riportate direttamente accanto ai campi di inserimento vi aiuteranno nell’operazione."
+  q07: Quali unità di misura sono supportate?
+  a07: "L’indicazione della quantità deve essere espressa in unità di misura previste dalla normativa (ad es. g, kg, ml, cl, l) oppure indicando il numero di pezzi. L’indicazione della quantità deve essere precisa. Non deve contenere intervalli di quantità né espressioni del tipo «circa»."
+  q08: Posso creare ingredienti personalizzati?
+  a08: Sì. È possibile inserire un ingrediente autonomamente. In tal caso, prestare particolare attenzione agli allergeni. Declarino è in grado di riconoscere automaticamente gli allergeni solo se si seleziona un ingrediente dal database.
+  q09: Posso inserire ingredienti composti?
+  a09: "Sì. Un ingrediente composto è costituito da più ingredienti. Esempio: il cioccolato è composto, tra l’altro, da zucchero e cacao. Indicare tutti i componenti come riportati sulla confezione. Esiste tuttavia un’eccezione. Non è necessario indicare i singoli componenti se l’ingrediente composto rappresenta meno del 2% del prodotto finale totale. Se un ingrediente contiene un allergene (ad es. latte, soia), questo deve sempre essere dichiarato ed evidenziato (indipendentemente dalla regola del 2%). Controlla anche l’ordine e gli allergeni."
+  q10: Cosa succede se inserisco più volte lo stesso ingrediente?
+  a10: Gli ingredienti identici vengono sommati nell’elenco degli ingredienti. Controllate attentamente la proposta finale, soprattutto se lo stesso ingrediente compare in più punti della ricetta.
+  q11: Come faccio a individuare le informazioni obbligatorie mancanti?
+  a11: Declarino vi mostra quali informazioni mancano o non sono corrette. Controllate tutti i campi contrassegnati prima di confermare l’etichetta.
+  h12: Etichetta, allergeni ed etichettatura
+  q12: Come vengono generati l’elenco degli ingredienti e gli allergeni?
+  a12: Declarino ordina gli ingredienti in base al loro peso. Gli ingredienti presenti nel database riportano le informazioni memorizzate. Gli allergeni sono evidenziati in grassetto. Per gli ingredienti inseriti manualmente, è necessario specificare correttamente gli allergeni.
+  q13: Come si indica la durata di conservazione?
+  a13: Selezionate la data appropriata e inseritela. A seconda del prodotto, può essere necessaria una data di scadenza o una data di consumo. Leggete le indicazioni nel modulo.
+  q14: Come funzionano le indicazioni relative al biologico, al marchio Knospe e alla provenienza?
+  a14: Le sezioni «Ordinanza sul biologico CH» e «Bio Knospe» sono ancora in fase di elaborazione. Non utilizzate ancora queste sezioni per un’etichetta definitiva. Verificate inoltre le indicazioni relative al biologico e al marchio Knospe con un ente specializzato.
+  q15: Posso utilizzare un codice QR sull’etichetta?
+  a15: Un codice QR non fa automaticamente parte dell’etichetta alimentare. Declarino può fornire un codice QR per condividere i dati delle ricette. Verificate il contenuto del codice QR prima della stampa. Declarino non genera codici a barre EAN.
+  h16: Costi e protezione dei dati
+  q16: Declarino è gratuito?
+  a16: Sì. L’utilizzo è gratuito. Se desiderate sostenere Declarino con un contributo volontario, ve ne saremo sinceramente grati.
+  q17: È necessario un account utente?
+  a17: No. È possibile utilizzare Declarino senza effettuare il login.
+  h20: Condivisione e salvataggio
+  q20: Posso condividere una ricetta?
+  a20: Se viene visualizzata la funzione Condividi, puoi generare un link o un codice QR con i dati della ricetta. Condividi il link solo con le persone autorizzate a visualizzare tali informazioni.
+  q21: Posso copiare un'etichetta già pronta?
+  a21: Sì. Dopo aver inserito i dati, è possibile copiare il testo con la funzione di copia e incollarlo nel proprio modello di etichetta.
+  q22: Le mie ricette vengono salvate in modo permanente?
+  a22: Declarino non richiede un account utente. Non dare per scontato che i dati inseriti vengano salvati in modo permanente. Copia o salva il risultato prima di chiudere la pagina o di ricaricarla.
+  h30: Utilizzo e risoluzione dei problemi
+  q30: Su quali dispositivi e con quali browser funziona Declarino?
+  a30: Si consiglia di utilizzare Declarino su un computer, un portatile o un tablet. Utilizzate un browser aggiornato. Su uno schermo piccolo di cellulare, l’utilizzo potrebbe risultare più difficile.
+  q31: Cosa devo fare se un campo di inserimento o un menu a tendina non funziona?
+  a31: "Controllate innanzitutto tutti i campi contrassegnati. Verificate anche le quantità e le unità di misura. Aggiornate la pagina solo se necessario: i dati non salvati potrebbero andare persi."
+  q32: Perché devo accettare una dichiarazione di non responsabilità?
+  a32: Declarino è uno strumento di supporto. Potrebbero verificarsi degli errori. Sei tu stesso responsabile della correttezza dell’etichetta. Controlla tutte le informazioni. In caso di dubbi, rivolgiti a un ente specializzato.
+  q33: Dove posso segnalare un errore o proporre un miglioramento?
+  a33: "Nella pagina iniziale è possibile visualizzare gli «enti promotori» di Declarino. Rivolgetevi a una di queste organizzazioni. Descrivete l’errore nel modo più preciso possibile: cosa avete digitato? Cosa è successo? Quale browser avete utilizzato?"
 
 impressum: |
   # Impronta, Protezione dei dati

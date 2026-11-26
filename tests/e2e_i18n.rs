@@ -231,6 +231,54 @@ async fn faq_explains_how_to_declare_a_mixture_in_every_language() {
     let _ = c.close().await;
 }
 
+/// FAQ terms from POEditor (Nov 2026): section headings (hNN) render as h2
+/// directly before their first question (h3), in number order.
+#[tokio::test]
+async fn faq_renders_section_headings_before_their_questions() {
+    let c = connect().await;
+    let expected = [
+        (
+            "de-CH",
+            "Rezeptur erfassen",
+            "Wie erfasse ich eine Rezeptur?",
+        ),
+        (
+            "fr-CH",
+            "Saisir une recette",
+            "Comment saisir une recette ?",
+        ),
+        (
+            "it-CH",
+            "Inserimento di una ricetta",
+            "Come si registra una ricetta?",
+        ),
+    ];
+    for (locale, heading, first_question) in expected {
+        goto_with_locale(&c, locale, "faq").await;
+        let pair = c
+            .execute(
+                "const hs = Array.from(document.querySelectorAll('.prose h2, .prose h3'));\
+                 const i = hs.findIndex(h => h.tagName === 'H2' && h.textContent.trim() === arguments[0]);\
+                 return i < 0 ? null : [hs[i].textContent.trim(), (hs[i+1]||{}).tagName, (hs[i+1]||{}).textContent];",
+                vec![serde_json::json!(heading)],
+            )
+            .await
+            .expect("query faq headings");
+        let pair = pair
+            .as_array()
+            .unwrap_or_else(|| panic!("{locale}: heading {heading:?} not rendered as h2"));
+        assert_eq!(pair[1].as_str(), Some("H3"), "{locale}: {pair:?}");
+        assert_eq!(
+            pair[2].as_str().map(str::trim),
+            Some(first_question),
+            "{locale}: heading must precede its first question"
+        );
+    }
+    assert_no_errors(&c, "faq headings").await;
+    goto_with_locale(&c, "de-CH", "faq").await;
+    let _ = c.close().await;
+}
+
 /// The footer link must exist on both footers (splash screen and the app
 /// layout) and point at the FAQ route.
 #[tokio::test]

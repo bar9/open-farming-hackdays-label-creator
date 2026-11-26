@@ -686,7 +686,7 @@ bio_hints:
   knospe_erlaubte_ausnahme_ueber_5_prozent: "Erlaubte nicht-biologische Zutaten (z.B. Pektin) dürfen höchstens 5% der landwirtschaftlichen Zutaten ausmachen. Dieser Anteil ist überschritten – das Knospe-Logo darf nicht verwendet und das Produkt nicht mit der Knospe vermarktet werden."
 
   knospe_check_pending: "Bitte Rezeptur prüfen (links), um Vollständigkeit der Deklaration auf der Etikette zu gewährleisten."
-  knospe_check_ok: "Die Rezeptur-Eingabe erfüllt die Knospe-Anforderungen und das Produkt darf mit der Knospe vermarktet werden."
+  knospe_check_ok: "Die Rezeptur-Eingabe erfüllt die Knospe-Anforderungen und das Produkt darf mit der Knospe vermarktet werden, sofern Sie über einen gültigen Produktions- oder Lizenzvertrag mit Bio Suisse verfügen."
   knospe_check_failed: "Die Rezeptur erfüllt die Knospe-Anforderungen nicht. Die Gründe stehen links unter «Rezeptur vollständig – überprüfen»."
 umstellbetrieb:
 
@@ -732,19 +732,64 @@ support:
   thanks: Herzlichen Dank für deine Unterstützung!
 
 faq:
-  title: Häufige Fragen
+  title: Häufige Fragen zu Declarino
   intro: Antworten auf die häufigsten Fragen rund um Declarino und die Kennzeichnung von Lebensmitteln.
-  # Fragen und Antworten werden paarweise über den Index zugeordnet:
-  # questions[0] gehört zu answers[0]. Beide Listen müssen darum in allen
-  # Sprachdateien gleich lang sein und in derselben Reihenfolge stehen.
-  questions:
-    - Ersetzt Declarino eine rechtliche Beratung?
-    - Werden meine Rezepturen auf einem Server gespeichert?
-    - Wie deklariere ich eine Mischung, z. B. eine Guetzlimischung?
-  answers:
-    - Nein. Declarino unterstützt dich beim Erstellen einer Etikette, erhebt aber keinen Anspruch auf Vollständigkeit und ersetzt keine rechtliche Prüfung. Die Verantwortung für die Richtigkeit der Deklaration liegt bei der Person, die das Lebensmittel in Verkehr bringt.
-    - Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Teilen» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur. Einzige Ausnahme ist der Kurz-Link, den du im Teilen-Fenster ausdrücklich wählen kannst. Er speichert die Rezeptur samt Adresse auf declarino.ch, damit der kurze Link funktioniert.
-    - "Empfohlen ist, jede Sorte als zusammengesetzte Zutat mit ihren eigenen Zutaten in Gramm zu erfassen, z. B. «Mailänderli (Weizenmehl, Butter, Eier, …), Kokosmakronen (Kokosnuss, Zucker, Eiweiss, …)». So sieht man, welches Guetzli welche Allergene enthält. Das braucht etwas mehr Platz auf der Etikette. Werden alle Zutaten zusammengerechnet, müssen die Rezepte vorher auf das Mischverhältnis in der Packung angepasst werden, und Allergiker erkennen nicht mehr, welche Sorte was enthält."
+  # POEditor-Context «faq». qNN = Frage, aNN = Antwort, hNN = Zwischentitel
+  # vor qNN. Die Nummern bestimmen die Reihenfolge und dürfen Lücken haben.
+  # Alle Sprachdateien müssen dieselben Keys enthalten.
+  q01: Ersetzt Declarino eine rechtliche Beratung?
+  a01: Nein. Declarino unterstützt dich beim Erstellen einer Etikette, erhebt aber keinen Anspruch auf Vollständigkeit und ersetzt keine rechtliche Prüfung. Die Verantwortung für die Richtigkeit der Deklaration liegt bei der Person, die das Lebensmittel in Verkehr bringt.
+  q02: Werden meine Rezepturen auf einem Server gespeichert?
+  a02: Nein. Declarino läuft vollständig in deinem Browser. Deine Eingaben werden nur lokal gespeichert und zusätzlich im Link abgelegt, den du über «Teilen» erzeugst. Wer diesen Link hat, sieht die darin enthaltene Rezeptur. Einzige Ausnahme ist der Kurz-Link, den du im Teilen-Fenster ausdrücklich wählen kannst. Er speichert die Rezeptur samt Adresse auf declarino.ch, damit der kurze Link funktioniert.
+  q03: Wie deklariere ich eine Mischung, z. B. eine Guetzlimischung?
+  a03: "Empfohlen ist, jede Sorte als zusammengesetzte Zutat mit ihren eigenen Zutaten in Gramm zu erfassen, z. B. «Mailänderli (Weizenmehl, Butter, Eier, …), Kokosmakronen (Kokosnuss, Zucker, Eiweiss, …)». So sieht man, welches Guetzli welche Allergene enthält. Das braucht etwas mehr Platz auf der Etikette. Werden alle Zutaten zusammengerechnet, müssen die Rezepte vorher auf das Mischverhältnis in der Packung angepasst werden, und Allergiker erkennen nicht mehr, welche Sorte was enthält."
+  q04: Was ist Declarino?
+  a04: Declarino hilft Betrieben mit einer eigenen Produktevermarktung, ihre Lebensmittel richtig auszuzeichnen. Das Programm führt Sie Schritt für Schritt durch die Eingabe. Am Ende erhalten Sie einen Vorschlag für eine Lebensmittelkennzeichnung nach Schweizer Lebensmittelrecht.
+  q05: Welche Produkte kann ich mit Declarino erfassen?
+  a05: Zurzeit gibt es den Bereich «CH-Lebensmittelrecht», «Bio-Verordnung CH» und «Bio Knospe». Weitere Label können sich der Trägerschaft anschliessen. Er ist nicht für Fleisch- und Milchprodukte gedacht.
+  h06: Rezeptur erfassen
+  q06: Wie erfasse ich eine Rezeptur?
+  a06: Wählen Sie den für Sie passenden Standard «CH-Lebensmittelrecht», «Bio-Verordnung CH» oder «Bio Knospe». Tragen Sie mit Hilfe der Zutatenliste die Angaben zu Ihren Produkten ein. Geben Sie für jede Zutat die Menge und die Einheit an. Hinweise direkt bei den Eingabefeldern helfen Ihnen.
+  q07: Welche Mengeneinheiten werden unterstützt?
+  a07: Die Mengenangabe muss in gesetzlichen Einheiten der Einheitenverordnung (z. B. g, kg, ml, cl, l) erfolgen oder durch Angabe der Stückzahl. Die Mengenangabe muss genau sein. Sie darf keine Mengenbereiche und Ausdrücke wie «ca.» enthalten.
+  q08: Kann ich eigene Zutaten anlegen?
+  a08: Ja. Sie können eine Zutat selbst eingeben. Prüfen Sie dabei besonders die Allergene. Declarino kann Allergene nur automatisch erkennen, wenn Sie eine Zutat aus der Datenbank wählen.
+  q09: Kann ich zusammengesetzte Zutaten erfassen?
+  a09: "Ja. Eine zusammengesetzte Zutat besteht aus mehreren Zutaten. Beispiel: Schokolade besteht unter anderem aus Zucker und Kakao. Geben Sie alle Bestandteile gemäss Verpackung an. Hier gibt es eine Ausnahme. Die Angabe der Einzelbestandteile entfällt, wenn die zusammengesetzte Zutat weniger als 2 % des gesamten Enderzeugnisses ausmacht. Enthält eine Zutat einen Allergieauslöser (z. B. Milch, Soja), muss dieser immer (unabhängig von der 2-Prozent-Regel) deklariert und hervorgehoben werden. Prüfen Sie auch die Reihenfolge und die Allergene."
+  q10: Was passiert, wenn ich dieselbe Zutat mehrfach eingebe?
+  a10: Gleiche Zutaten werden in der Zutatenliste zusammengezählt. Prüfen Sie den fertigen Vorschlag besonders dann, wenn dieselbe Zutat an mehreren Stellen im Rezept vorkommt.
+  q11: Wie erkenne ich fehlende Pflichtangaben?
+  a11: Declarino zeigt Ihnen, welche Angaben noch fehlen oder nicht stimmen. Prüfen Sie alle markierten Felder, bevor Sie die Etikette übernehmen.
+  h12: Etikett, Allergene und Kennzeichnung
+  q12: Wie werden die Zutatenliste und die Allergene erstellt?
+  a12: Declarino ordnet die Zutaten nach ihrem Gewicht. Zutaten aus der Datenbank bringen hinterlegte Angaben mit. Allergene werden fett hervorgehoben. Bei selbst eingegebenen Zutaten müssen Sie die Allergene selbst korrekt angeben.
+  q13: Wie gebe ich die Haltbarkeit an?
+  a13: Wählen Sie die passende Datumsangabe und tragen Sie das Datum ein. Je nach Produkt kann ein Mindesthaltbarkeitsdatum oder ein Verbrauchsdatum nötig sein. Lesen Sie dazu die Hinweise im Formular.
+  q14: Wie funktionieren Bio-, Knospe- und Herkunftsangaben?
+  a14: Die Bereiche «Bio-Verordnung CH» und «Bio Knospe» sind noch in Arbeit. Verwenden Sie diese Bereiche noch nicht für eine fertige Etikette. Prüfen Sie Bio- und Knospe-Angaben zusätzlich mit einer Fachstelle.
+  q15: Kann ich einen QR-Code auf dem Etikett verwenden?
+  a15: Ein QR-Code gehört nicht automatisch zur Lebensmittel-Etikette. Declarino kann einen QR-Code zum Teilen von Rezeptdaten anbieten. Prüfen Sie vor dem Drucken, was der QR-Code enthält. Einen EAN-Strichcode erstellt Declarino nicht.
+  h16: Kosten und Datenschutz
+  q16: Ist Declarino kostenlos?
+  a16: Ja. Die Nutzung ist kostenlos. Unterstützen Sie Declarino mit einem freiwilligen Beitrag, danken wir Ihnen herzlich.
+  q17: Brauche ich ein Benutzerkonto?
+  a17: Nein. Sie können Declarino ohne Login nutzen.
+  h20: Teilen und Speichern
+  q20: Kann ich ein Rezept teilen?
+  a20: Wenn die Teilen-Funktion angezeigt wird, können Sie einen Link oder QR-Code für die Rezeptdaten erstellen. Teilen Sie den Link nur mit Personen, die diese Angaben sehen dürfen.
+  q21: Kann ich ein fertiges Etikett kopieren?
+  a21: Ja. Nach der Eingabe Ihrer Daten können Sie den Text mit der Kopierfunktion übernehmen und in Ihre Etikettenvorlage einfügen.
+  q22: Werden meine Rezepte dauerhaft gespeichert?
+  a22: Declarino braucht kein Benutzerkonto. Verlassen Sie sich nicht darauf, dass Ihre Eingaben dauerhaft gespeichert sind. Kopieren oder sichern Sie das Ergebnis, bevor Sie die Seite schliessen oder neu laden.
+  h30: Nutzung und Fehlerbehebung
+  q30: Auf welchen Geräten und in welchen Browsern funktioniert Declarino?
+  a30: Nutzen Sie Declarino am besten auf einem Computer, Notebook oder Tablet. Verwenden Sie einen aktuellen Browser. Auf einem kleinen Handy-Bildschirm kann die Bedienung schwieriger sein.
+  q31: Was mache ich, wenn eine Eingabe oder ein Dropdown nicht funktioniert?
+  a31: "Prüfen Sie zuerst alle markierten Felder. Prüfen Sie auch Mengen und Einheiten. Laden Sie die Seite nur neu, wenn es nötig ist: Nicht gespeicherte Eingaben können dabei verloren gehen."
+  q32: Warum muss ich einen Haftungshinweis akzeptieren?
+  a32: Declarino ist eine Hilfe. Es kann Fehler geben. Sie sind selbst dafür verantwortlich, dass die Etikette stimmt. Prüfen Sie alle Angaben. Fragen Sie bei Unsicherheit eine Fachstelle.
+  q33: Wo kann ich einen Fehler oder Verbesserungsvorschlag melden?
+  a33: "Auf der Startseite sehen Sie die «Trägerschaft» von Declarino. Fragen Sie bei einer dieser Organisationen nach. Beschreiben Sie einen Fehler möglichst genau: Was haben Sie eingegeben? Was ist passiert? Welchen Browser haben Sie benutzt?"
 
 impressum: |
   # Impressum, Datenschutz
